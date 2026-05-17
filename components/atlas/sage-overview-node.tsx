@@ -408,29 +408,19 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
           borderBottom: "1px solid rgba(255,255,255,0.06)"
         }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <img 
-              src="/sage-logo.svg" 
-              alt="Sage" 
-              className="w-7 h-7"
-            />
-            <div 
-              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
-              style={{ 
-                backgroundColor: healthColor,
-                borderColor: "#141414",
-              }}
-            />
-          </div>
-          <div>
-            <span className="text-sm font-semibold text-white tracking-tight" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              Sage Health
-            </span>
-            <div className="text-[10px] capitalize" style={{ color: healthColor, fontFamily: "system-ui, Inter, sans-serif" }}>
-              {healthStatus.replace("-", " ")}
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <img 
+            src="/sage-wordmark.svg" 
+            alt="Sage" 
+            className="h-5"
+          />
+          <div 
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: healthColor }}
+          />
+          <span className="text-[10px] capitalize" style={{ color: healthColor, fontFamily: "system-ui, Inter, sans-serif" }}>
+            {healthStatus.replace("-", " ")}
+          </span>
         </div>
         <div 
           className="px-2.5 py-1 rounded-lg text-sm font-bold"

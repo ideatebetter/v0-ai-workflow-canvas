@@ -180,30 +180,22 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           borderBottom: "1px solid rgba(255,255,255,0.06)"
         }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <img 
-              src="/sage-logo.svg" 
-              alt="Sage" 
-              className="w-7 h-7"
-            />
-            <div 
-              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
-              style={{ 
-                backgroundColor: isLoading ? "#F0FE00" : "#22c55e",
-                borderColor: "#141414",
-                animation: isLoading ? "pulse 1.5s infinite" : "none"
-              }}
-            />
-          </div>
-          <div>
-            <span className="text-sm font-semibold text-white tracking-tight" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              Sage
-            </span>
-            <div className="text-[10px] text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              {isLoading ? "Processing..." : "Online"}
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <img 
+            src="/sage-wordmark.svg" 
+            alt="Sage" 
+            className="h-5"
+          />
+          <div 
+            className="w-2 h-2 rounded-full"
+            style={{ 
+              backgroundColor: isLoading ? "#F0FE00" : "#22c55e",
+              animation: isLoading ? "pulse 1.5s infinite" : "none"
+            }}
+          />
+          <span className="text-[10px] text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            {isLoading ? "Processing..." : "Online"}
+          </span>
         </div>
         <div 
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/5 cursor-pointer"
