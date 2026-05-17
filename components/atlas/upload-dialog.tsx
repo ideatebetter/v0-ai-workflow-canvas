@@ -21,9 +21,6 @@ interface UploadedFileInfo {
   error?: string;
 }
 
-// Max file size: 100MB (Vercel Blob free tier limit)
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
-
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -70,12 +67,6 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
       // Check for unsupported file types
       if (!SUPPORTED_EXTENSIONS.includes(extension as FileExtension)) {
         errors.push(`"${file.name}" has unsupported format (${extension || "no extension"})`);
-        continue;
-      }
-
-      // Check file size limit
-      if (file.size > MAX_FILE_SIZE) {
-        errors.push(`"${file.name}" exceeds 100MB limit (${formatFileSize(file.size)})`);
         continue;
       }
 
