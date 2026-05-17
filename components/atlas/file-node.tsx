@@ -297,7 +297,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
       >
         {/* Media Preview */}
         <div 
-          className="relative w-full overflow-hidden"
+          className="relative w-full"
         >
           {audioUrl ? (
             <div 
