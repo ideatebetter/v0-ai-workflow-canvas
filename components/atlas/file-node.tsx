@@ -291,7 +291,6 @@ export function FileNode({ id, data, selected }: NodeProps) {
           boxShadow: isHovered 
             ? "0 8px 32px rgba(0,0,0,0.4)" 
             : "0 2px 8px rgba(0,0,0,0.2)",
-          overflow: "hidden",
           transition: "box-shadow 0.2s ease",
         }}
       >
@@ -350,6 +349,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 height: "auto",
                 maxHeight: "none",
                 objectFit: "contain",
+                borderRadius: 12,
                 transition: "transform 0.3s ease",
                 transform: isHovered ? "scale(1.02)" : "scale(1)",
               }}
