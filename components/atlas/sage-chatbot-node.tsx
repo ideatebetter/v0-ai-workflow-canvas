@@ -161,55 +161,54 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
 
   return (
     <div
-      className="group rounded-2xl transition-all duration-300 overflow-hidden"
+      className="group transition-all duration-500 ease-out overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #1c1c1c 0%, #141414 100%)",
-        border: selected ? "1.5px solid #F0FE00" : "1px solid rgba(255,255,255,0.08)",
-        width: 300,
-        minHeight: 220,
+        background: "rgba(28, 28, 30, 0.85)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        borderRadius: 20,
+        border: selected ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid rgba(255,255,255,0.08)",
+        width: 320,
+        minHeight: 240,
         boxShadow: selected 
-          ? "0 0 30px rgba(240, 254, 0, 0.15), 0 8px 32px rgba(0,0,0,0.4)" 
-          : "0 8px 32px rgba(0,0,0,0.3)",
+          ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)" 
+          : "0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset",
       }}
     >
-      {/* Header */}
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ 
-          background: "linear-gradient(180deg, rgba(240, 254, 0, 0.04) 0%, transparent 100%)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)"
-        }}
-      >
-        <div className="flex items-center gap-2">
+      {/* Header - Apple style minimal */}
+      <div className="px-5 pt-4 pb-3">
+        <div className="flex items-center justify-between">
           <img 
             src="/sage-wordmark.svg" 
             alt="Sage" 
-            className="h-5"
+            className="h-5 opacity-90"
           />
-          <div 
-            className="w-2 h-2 rounded-full"
-            style={{ 
-              backgroundColor: isLoading ? "#F0FE00" : "#22c55e",
-              animation: isLoading ? "pulse 1.5s infinite" : "none"
-            }}
-          />
-          <span className="text-[10px] text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            {isLoading ? "Processing..." : "Online"}
-          </span>
-        </div>
-        <div 
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/5 cursor-pointer"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500">
-            <circle cx="12" cy="12" r="1"/>
-            <circle cx="19" cy="12" r="1"/>
-            <circle cx="5" cy="12" r="1"/>
-          </svg>
+          <div className="flex items-center gap-1.5">
+            <div 
+              className="w-2 h-2 rounded-full transition-colors duration-300"
+              style={{ 
+                backgroundColor: isLoading ? "#F0FE00" : "#30D158",
+                boxShadow: isLoading ? "0 0 8px rgba(240, 254, 0, 0.5)" : "0 0 8px rgba(48, 209, 88, 0.4)"
+              }}
+            />
+            <span 
+              className="text-[11px] font-medium tracking-tight transition-colors duration-300"
+              style={{ 
+                color: isLoading ? "rgba(240, 254, 0, 0.8)" : "rgba(255,255,255,0.4)",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"
+              }}
+            >
+              {isLoading ? "Thinking" : "Ready"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="px-3 py-3 space-y-2.5 min-h-[140px] max-h-[200px] overflow-y-auto">
+      {/* Subtle divider */}
+      <div className="mx-5 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+
+      {/* Messages - Clean, spacious */}
+      <div className="px-4 py-4 space-y-3 min-h-[160px] max-h-[220px] overflow-y-auto">
         {messages.length > 0 ? (
           messages.slice(-4).map((msg) => {
             const text = getMessageText(msg);
@@ -217,78 +216,88 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             return (
               <div
                 key={msg.id}
-                className={`text-xs leading-relaxed px-3 py-2 rounded-xl ${
-                  msg.role === "user"
-                    ? "ml-6"
-                    : "mr-6"
-                }`}
-                style={{
-                  backgroundColor: msg.role === "user" 
-                    ? "rgba(255,255,255,0.06)" 
-                    : "rgba(240, 254, 0, 0.08)",
-                  color: msg.role === "user" ? "#e5e5e5" : "#d4d4d4",
-                  fontFamily: "system-ui, Inter, sans-serif",
-                  border: msg.role === "assistant" ? "1px solid rgba(240, 254, 0, 0.12)" : "none",
-                }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {text.length > 120 ? text.slice(0, 120) + "..." : text}
+                <div
+                  className="text-[13px] leading-relaxed px-4 py-2.5 max-w-[85%]"
+                  style={{
+                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                    backgroundColor: msg.role === "user" 
+                      ? "rgba(240, 254, 0, 0.15)" 
+                      : "rgba(255,255,255,0.06)",
+                    color: msg.role === "user" ? "rgba(240, 254, 0, 0.95)" : "rgba(255,255,255,0.85)",
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+                    fontWeight: 400,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {text.length > 120 ? text.slice(0, 120) + "..." : text}
+                </div>
               </div>
             );
           })
         ) : (
           <div 
-            className="flex flex-col items-center justify-center py-6 px-4 text-center"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            className="flex flex-col items-center justify-center py-8 px-6"
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
-            <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: "linear-gradient(135deg, rgba(240, 254, 0, 0.15) 0%, rgba(240, 254, 0, 0.05) 100%)" }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="1.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Your operational intelligence layer
+            <p className="text-[13px] text-center leading-relaxed" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
+              Your operational intelligence layer.
             </p>
-            <p className="text-[10px] text-gray-600 mt-1">
-              Surfaces patterns, preserves intent, executes tasks
+            <p className="text-[11px] text-center mt-1.5" style={{ color: "rgba(255,255,255,0.25)", letterSpacing: "0.01em" }}>
+              Surfaces patterns. Preserves intent. Executes tasks.
             </p>
-          </div>
-        )}
-        {isLoading && !messages.length && (
-          <div className="flex items-center gap-2 px-3 py-2 mr-6 rounded-xl" style={{ backgroundColor: "rgba(240, 254, 0, 0.08)", border: "1px solid rgba(240, 254, 0, 0.12)" }}>
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "0ms" }}/>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "150ms" }}/>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "300ms" }}/>
-            </div>
-            <span className="text-xs text-[#F0FE00]" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Thinking</span>
           </div>
         )}
         
-        {/* Show pending suggestion with action buttons */}
-        {pendingSuggestion && (
-          <div className="mt-2 p-3 rounded-xl" style={{ backgroundColor: "rgba(240, 254, 0, 0.06)", border: "1px solid rgba(240, 254, 0, 0.15)" }}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Suggested Statuses
+        {/* Typing indicator - Apple style */}
+        {isLoading && !messages.length && (
+          <div className="flex justify-start">
+            <div 
+              className="flex items-center gap-1 px-4 py-3 rounded-2xl"
+              style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+            >
+              <div className="flex gap-1">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "rgba(240, 254, 0, 0.6)", animationDelay: "0ms", animationDuration: "1s" }}/>
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "rgba(240, 254, 0, 0.6)", animationDelay: "200ms", animationDuration: "1s" }}/>
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "rgba(240, 254, 0, 0.6)", animationDelay: "400ms", animationDuration: "1s" }}/>
               </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Suggestion card - Refined */}
+        {pendingSuggestion && (
+          <div 
+            className="mt-3 p-4 rounded-2xl"
+            style={{ 
+              backgroundColor: "rgba(240, 254, 0, 0.04)",
+              border: "1px solid rgba(240, 254, 0, 0.1)"
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span 
+                className="text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: "rgba(240, 254, 0, 0.7)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+              >
+                Suggested
+              </span>
               <button
                 onClick={() => setPendingSuggestion(null)}
-                className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+                className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:bg-white/10"
+                style={{ color: "rgba(255,255,255,0.4)" }}
               >
                 <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                   <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-2 mb-4">
               {pendingSuggestion.map((pill, i) => (
                 <span
                   key={i}
-                  className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
-                  style={{ backgroundColor: pill.color, color: "#000" }}
+                  className="px-3 py-1.5 rounded-full text-[11px] font-semibold"
+                  style={{ backgroundColor: pill.color, color: "#000", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                 >
                   {pill.label}
                 </span>
@@ -296,11 +305,11 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             </div>
             <button
               onClick={handleCreateFromSuggestion}
-              className="w-full py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
+              className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 active:scale-[0.98]"
               style={{ 
-                background: "linear-gradient(135deg, #F0FE00 0%, #d4e600 100%)", 
+                background: "#F0FE00", 
                 color: "#000",
-                fontFamily: "system-ui, Inter, sans-serif",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
               Add to Canvas
@@ -309,16 +318,14 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
         )}
       </div>
 
-      {/* Input */}
-      <div 
-        className="px-3 pb-3 pt-2 nodrag" 
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-      >
+      {/* Input - Apple style pill */}
+      <div className="px-4 pb-4 pt-2 nodrag">
         <div 
-          className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all"
+          className="flex items-center gap-3 px-4 py-3 transition-all duration-200"
           style={{ 
-            backgroundColor: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundColor: "rgba(255,255,255,0.06)",
+            borderRadius: 24,
+            border: "1px solid rgba(255,255,255,0.06)",
           }}
         >
           <input
@@ -331,40 +338,43 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            placeholder="Ask Sage anything..."
-            className="flex-1 bg-transparent text-xs text-white placeholder-gray-500 outline-none nowheel nopan"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            placeholder="Message Sage..."
+            className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none nowheel nopan"
+            style={{ 
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+              letterSpacing: "-0.01em"
+            }}
             disabled={isLoading}
           />
           <button
             type="button"
             onClick={handleButtonClick}
             disabled={isLoading || !inputValue.trim()}
-            className="p-1.5 rounded-lg transition-all disabled:opacity-30"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-20 active:scale-90"
             style={{ 
-              backgroundColor: inputValue.trim() ? "rgba(240, 254, 0, 0.15)" : "transparent",
-              color: "#F0FE00" 
+              backgroundColor: inputValue.trim() ? "#F0FE00" : "rgba(255,255,255,0.1)",
+              color: inputValue.trim() ? "#000" : "rgba(255,255,255,0.3)"
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Handles */}
+      {/* Handles - Minimal */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #F0FE00", width: 10, height: 10 }}
+        className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
+        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #F0FE00", width: 10, height: 10 }}
+        className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
+        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
       />
     </div>
   );
