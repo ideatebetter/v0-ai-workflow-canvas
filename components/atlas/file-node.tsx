@@ -298,11 +298,10 @@ export function FileNode({ id, data, selected }: NodeProps) {
         {/* Media Preview */}
         <div 
           className="relative w-full overflow-hidden"
-          style={{ height: 140 }}
         >
           {audioUrl ? (
             <div 
-              className="w-full h-full flex flex-col items-center justify-center"
+              className="w-full flex flex-col items-center justify-center py-6"
               style={{ backgroundColor: "#1a1a1a" }}
             >
               {/* Waveform visualization */}
@@ -333,7 +332,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
           ) : videoUrl ? (
             <video
               src={videoUrl}
-              className="w-full h-full object-cover"
+              className="w-full"
+              style={{ display: "block" }}
               muted
               loop
               autoPlay
@@ -343,8 +343,9 @@ export function FileNode({ id, data, selected }: NodeProps) {
             <img
               src={previewImage}
               alt={fileData.label}
-              className="w-full h-full object-cover"
+              className="w-full"
               style={{
+                display: "block",
                 transition: "transform 0.3s ease",
                 transform: isHovered ? "scale(1.05)" : "scale(1)",
               }}
