@@ -387,6 +387,31 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
             {fileData.label}
           </h2>
 
+          {/* Image Preview - Only show for image files */}
+          {[".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "#0d0d0d" }}>
+                <img
+                  src={fileData.uploadedFile?.url || fileData.previewImages?.[0]}
+                  alt={fileData.label}
+                  className="max-w-full max-h-[50vh] object-contain rounded-lg"
+                  style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
+                />
+              </div>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+                <div className="flex items-center gap-2">
+                  <FileTypeIcon extension={fileData.fileExtension} />
+                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.fileName}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {fileData.uploadedFile?.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Video Player - Only show for video files */}
           {[".mp4", ".mov", ".avi", ".webm", ".mkv"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
             <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
