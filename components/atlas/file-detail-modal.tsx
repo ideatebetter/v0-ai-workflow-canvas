@@ -442,6 +442,89 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           )}
 
           {/* Audio Player - Only show for audio files */}
+
+          {/* PDF Preview - Only show for PDF files */}
+          {fileData.fileExtension === ".pdf" && fileData.uploadedFile?.url && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="relative" style={{ backgroundColor: "#0d0d0d" }}>
+                <iframe
+                  src={fileData.uploadedFile.url}
+                  title={fileData.label}
+                  className="w-full border-0"
+                  style={{ height: "60vh", minHeight: "400px" }}
+                />
+              </div>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+                <div className="flex items-center gap-2">
+                  <FileTypeIcon extension={fileData.fileExtension} />
+                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.fileName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={fileData.uploadedFile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10"
+                    style={{ color: "#FF0000", border: "1px solid #FF000040" }}
+                  >
+                    Open in New Tab
+                  </a>
+                  <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.uploadedFile.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Adobe Design Files Preview - PSD, AI, INDD (placeholder with info) */}
+          {[".psd", ".ai", ".indd", ".xd", ".sketch", ".fig"].includes(fileData.fileExtension) && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div 
+                className="relative flex flex-col items-center justify-center py-16 px-8"
+                style={{ backgroundColor: "#0d0d0d" }}
+              >
+                <div 
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4"
+                  style={{ backgroundColor: `${FILE_TYPE_COLORS[fileData.fileExtension as keyof typeof FILE_TYPE_COLORS] || "#666"}20` }}
+                >
+                  <FileTypeIcon extension={fileData.fileExtension} />
+                </div>
+                <p className="text-lg font-medium text-white mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {fileData.fileName}
+                </p>
+                <p className="text-sm text-gray-500 text-center max-w-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Preview not available for {fileData.fileExtension.replace(".", "").toUpperCase()} files. Download to view in the native application.
+                </p>
+                {fileData.uploadedFile?.url && (
+                  <a
+                    href={fileData.uploadedFile.url}
+                    download={fileData.fileName}
+                    className="mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:brightness-110"
+                    style={{ 
+                      backgroundColor: FILE_TYPE_COLORS[fileData.fileExtension as keyof typeof FILE_TYPE_COLORS] || "#666",
+                      color: "#000"
+                    }}
+                  >
+                    Download File
+                  </a>
+                )}
+              </div>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+                <div className="flex items-center gap-2">
+                  <FileTypeIcon extension={fileData.fileExtension} />
+                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.fileExtension.replace(".", "").toUpperCase()} File
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {fileData.uploadedFile?.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                </span>
+              </div>
+            </div>
+          )}
           {[".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
             <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               {/* Waveform visualization */}
