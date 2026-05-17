@@ -390,32 +390,58 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className="group rounded-xl transition-all duration-200"
+      className="group rounded-2xl transition-all duration-300 overflow-hidden"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #F0FE00" : `1px solid ${healthColor}50`,
-        width: viewLayer === "deep" ? 300 : 260,
-        boxShadow: `0 0 20px ${healthColor}15`,
+        background: "linear-gradient(180deg, #1c1c1c 0%, #141414 100%)",
+        border: selected ? "1.5px solid #F0FE00" : `1px solid ${healthColor}30`,
+        width: viewLayer === "deep" ? 320 : 280,
+        boxShadow: selected 
+          ? `0 0 30px rgba(240, 254, 0, 0.15), 0 8px 32px rgba(0,0,0,0.4)` 
+          : `0 0 20px ${healthColor}10, 0 8px 32px rgba(0,0,0,0.3)`,
       }}
     >
       {/* Header */}
       <div
-        className="px-3 py-2 flex items-center gap-2 border-b"
-        style={{ borderColor: `${healthColor}30` }}
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ 
+          background: `linear-gradient(180deg, ${healthColor}08 0%, transparent 100%)`,
+          borderBottom: "1px solid rgba(255,255,255,0.06)"
+        }}
       >
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: `${healthColor}20` }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={healthColor} strokeWidth="2">
-            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
-            <circle cx="12" cy="10" r="3" />
-            <path d="M7 20.662V19c0-2.21 2.239-4 5-4s5 1.79 5 4v1.662" />
-          </svg>
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <img 
+              src="/sage-logo.svg" 
+              alt="Sage" 
+              className="w-7 h-7"
+            />
+            <div 
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+              style={{ 
+                backgroundColor: healthColor,
+                borderColor: "#141414",
+              }}
+            />
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-white tracking-tight" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Sage Health
+            </span>
+            <div className="text-[10px] capitalize" style={{ color: healthColor, fontFamily: "system-ui, Inter, sans-serif" }}>
+              {healthStatus.replace("-", " ")}
+            </div>
+          </div>
         </div>
-        <span className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          Sage Health
-        </span>
+        <div 
+          className="px-2.5 py-1 rounded-lg text-sm font-bold"
+          style={{ 
+            background: `linear-gradient(135deg, ${healthColor}20 0%, ${healthColor}08 100%)`,
+            color: healthColor,
+            fontFamily: "system-ui, Inter, sans-serif"
+          }}
+        >
+          {driftScore}%
+        </div>
       </div>
 
       {/* Render current layer */}
@@ -428,13 +454,13 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
         type="target"
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: `2px solid ${healthColor}`, width: 12, height: 12 }}
+        style={{ background: "#141414", border: `2px solid ${healthColor}`, width: 10, height: 10 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: `2px solid ${healthColor}`, width: 12, height: 12 }}
+        style={{ background: "#141414", border: `2px solid ${healthColor}`, width: 10, height: 10 }}
       />
     </div>
   );
