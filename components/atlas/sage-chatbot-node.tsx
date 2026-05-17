@@ -174,18 +174,13 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
         className="px-3 py-2 flex items-center gap-2 border-b"
         style={{ borderColor: "#F0FE0020" }}
       >
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: "#F0FE0020" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
-            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
-            <circle cx="12" cy="10" r="3" />
-            <path d="M7 20.662V19c0-2.21 2.239-4 5-4s5 1.79 5 4v1.662" />
-          </svg>
-        </div>
+        <img 
+          src="/sage-logo.svg" 
+          alt="Sage" 
+          className="w-6 h-6"
+        />
         <span className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          Sage Chat
+          Sage
         </span>
       </div>
 
@@ -213,8 +208,8 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             );
           })
         ) : (
-          <div className="text-xs text-gray-500 text-center py-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            Ask Sage to create statuses, suggest workflows, or help organize your project
+          <div className="text-xs text-gray-500 text-center py-4 px-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            Your AI creative assistant. Ask Sage to generate status labels, organize assets, or brainstorm ideas for your project.
           </div>
         )}
         {isLoading && (
