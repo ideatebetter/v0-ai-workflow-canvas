@@ -1456,7 +1456,7 @@ All Frameworks
                       Icon
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
-                    <div className="text-[10px] text-gray-500 mt-1">Square, max 2MB</div>
+                    <div className="text-[10px] text-gray-500 mt-1">Square</div>
                   </div>
                   {/* Wordmark */}
                   <div className="text-center">
@@ -1472,7 +1472,7 @@ All Frameworks
                       Wordmark
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
-                    <div className="text-[10px] text-gray-500 mt-1">Horizontal, max 2MB</div>
+                    <div className="text-[10px] text-gray-500 mt-1">Horizontal</div>
                   </div>
                   {/* Profile */}
                   <div className="text-center">
@@ -1488,7 +1488,7 @@ All Frameworks
                       Photo
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
-                    <div className="text-[10px] text-gray-500 mt-1">Square, max 2MB</div>
+                    <div className="text-[10px] text-gray-500 mt-1">Square</div>
                   </div>
                 </div>
               </div>
