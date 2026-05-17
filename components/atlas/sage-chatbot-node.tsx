@@ -209,7 +209,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           })
         ) : (
           <div className="text-xs text-gray-500 text-center py-4 px-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            Your AI creative assistant. Ask Sage to generate status labels, organize assets, or brainstorm ideas for your project.
+            Your operational intelligence layer. Sage surfaces patterns, preserves intent, and executes tasks across your canvas.
           </div>
         )}
         {isLoading && (
