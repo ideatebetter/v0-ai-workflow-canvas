@@ -496,22 +496,29 @@ const reactFlowInstance = useReactFlow();
   }, [nodes, searchQuery]);
 
   // Compute which nodes are part of the presentation (connected by presentation edges)
+  // Only show presentation highlighting when presentationMode is active
   const presentationNodeIds = useMemo(() => {
+    // Don't highlight nodes unless presentation mode is active
+    if (!presentationMode) return new Set<string>();
+    
     const nodeIds = new Set<string>();
     presentationEdges.forEach(edge => {
       nodeIds.add(edge.source);
       nodeIds.add(edge.target);
     });
     return nodeIds;
-  }, [presentationEdges]);
+  }, [presentationEdges, presentationMode]);
 
-  // Combine regular edges with presentation edges
+  // Combine regular edges with presentation edges (only show presentation edges when in presentation mode)
   const allEdges = useMemo(() => {
+    // Don't show presentation edges unless presentation mode is active
+    if (!presentationMode) return edges;
+    
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
     // Filter out presentation edges from regular edges to avoid duplicates
     const regularEdges = edges.filter(e => !presentationEdgeIds.has(e.id));
     return [...regularEdges, ...presentationEdges];
-  }, [edges, presentationEdges]);
+  }, [edges, presentationEdges, presentationMode]);
 
   // Style edges with dashed animation - check if edge ID starts with "presentation-" for presentation edges
   const styledEdges = useMemo(() => {
