@@ -609,9 +609,8 @@ onClick={(event) => {
         nodesDraggable
         nodesConnectable
         elementsSelectable
-        selectionOnDrag={false}
+        selectionOnDrag
         multiSelectionKeyCode="Shift"
-        selectionKeyCode={null}
         panOnScroll={true}
         fitView
         fitViewOptions={{
