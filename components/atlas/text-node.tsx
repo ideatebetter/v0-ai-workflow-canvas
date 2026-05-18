@@ -5,12 +5,12 @@ import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import type { TextNodeData } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
 
-// Text size options
+// Text size options - H1, H2, H3, body
 const TEXT_SIZES = [
-  { value: "small", label: "Small", fontSize: 14, lineHeight: 1.4 },
-  { value: "medium", label: "Medium", fontSize: 18, lineHeight: 1.5 },
-  { value: "large", label: "Large", fontSize: 24, lineHeight: 1.4 },
-  { value: "xlarge", label: "X-Large", fontSize: 32, lineHeight: 1.3 },
+  { value: "h1", label: "H1", fontSize: 32, lineHeight: 1.2, fontWeight: 700 },
+  { value: "h2", label: "H2", fontSize: 24, lineHeight: 1.3, fontWeight: 600 },
+  { value: "h3", label: "H3", fontSize: 18, lineHeight: 1.4, fontWeight: 600 },
+  { value: "body", label: "Body", fontSize: 14, lineHeight: 1.5, fontWeight: 400 },
 ];
 
 // Color options
@@ -61,6 +61,53 @@ interface TextFormatting {
   align: string;
 }
 
+// Rich text segment with inline formatting
+interface TextSegment {
+  text: string;
+  size: string; // h1, h2, h3, body
+}
+
+// Parse content into segments (format: [[h1]]text[[/h1]] or plain text)
+function parseContent(content: string): TextSegment[] {
+  if (!content) return [{ text: "", size: "body" }];
+  
+  const segments: TextSegment[] = [];
+  const regex = /\[\[(h1|h2|h3|body)\]\]([\s\S]*?)\[\[\/\1\]\]/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    // Add plain text before this match
+    if (match.index > lastIndex) {
+      const plainText = content.slice(lastIndex, match.index);
+      if (plainText) segments.push({ text: plainText, size: "body" });
+    }
+    // Add formatted segment
+    segments.push({ text: match[2], size: match[1] });
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining plain text
+  if (lastIndex < content.length) {
+    segments.push({ text: content.slice(lastIndex), size: "body" });
+  }
+
+  return segments.length > 0 ? segments : [{ text: content, size: "body" }];
+}
+
+// Serialize segments back to content string
+function serializeSegments(segments: TextSegment[]): string {
+  return segments.map(seg => {
+    if (seg.size === "body") return seg.text;
+    return `[[${seg.size}]]${seg.text}[[/${seg.size}]]`;
+  }).join("");
+}
+
+// Get plain text from content (for truncation)
+function getPlainText(content: string): string {
+  return content.replace(/\[\[(h1|h2|h3|body)\]\]/g, "").replace(/\[\[\/(h1|h2|h3|body)\]\]/g, "");
+}
+
 export function TextNode({ id, data, selected }: NodeProps) {
   const textData = data as TextNodeData;
   const presentationNodeIds = usePresentationNodes();
@@ -72,22 +119,31 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const [showFontPicker, setShowFontPicker] = useState(false);
   const [showSizePicker, setShowSizePicker] = useState(false);
   const [showAlignPicker, setShowAlignPicker] = useState(false);
+  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const { setNodes } = useReactFlow();
 
   // Get formatting from data or use defaults
   const [formatting, setFormatting] = useState<TextFormatting>({
     color: (textData as any).formatting?.color || "#ffffff",
     font: (textData as any).formatting?.font || "sans",
-    size: (textData as any).formatting?.size || "medium",
+    size: (textData as any).formatting?.size || "body",
     bold: (textData as any).formatting?.bold || false,
     strikethrough: (textData as any).formatting?.strikethrough || false,
     align: (textData as any).formatting?.align || "left",
   });
 
-  const currentSize = TEXT_SIZES.find(s => s.value === formatting.size) || TEXT_SIZES[1];
+  const currentSize = TEXT_SIZES.find(s => s.value === formatting.size) || TEXT_SIZES[3];
   const currentFont = FONT_OPTIONS.find(f => f.value === formatting.font) || FONT_OPTIONS[0];
+
+  // Parse content for rich text display
+  const segments = parseContent(editContent);
+  const plainText = getPlainText(editContent);
+  const isLongText = plainText.length > 100;
+  const truncatedText = isLongText ? plainText.slice(0, 100) + "..." : plainText;
+  const shouldShowFull = isHovered || isEditing || selected;
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -169,6 +225,37 @@ export function TextNode({ id, data, selected }: NodeProps) {
       setIsEditing(false);
     }
   };
+
+  // Apply size formatting to selected text in contenteditable
+  const applyInlineSize = useCallback((size: string) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+    
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) {
+      // No selection, apply to whole content as default size
+      updateFormatting({ size });
+      return;
+    }
+
+    const selectedText = range.toString();
+    if (!selectedText) return;
+
+    // Wrap selected text with size markers
+    const wrappedText = `[[${size}]]${selectedText}[[/${size}]]`;
+    
+    // Get the full content and replace selection
+    const editorContent = editorRef.current.innerText || "";
+    const beforeSelection = editorContent.slice(0, range.startOffset);
+    const afterSelection = editorContent.slice(range.endOffset);
+    
+    // For simplicity with contenteditable, update the raw content
+    // Find and wrap the selected text in the editContent
+    const newContent = editContent.replace(selectedText, wrappedText);
+    setEditContent(newContent);
+    
+    setShowSizePicker(false);
+  }, [editContent, updateFormatting]);
 
   const showToolbar = selected || isEditing;
 
@@ -307,7 +394,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
             )}
           </div>
 
-          {/* Size Picker */}
+          {/* Size Picker - H1, H2, H3, Body */}
           <div className="relative">
             <button
               type="button"
@@ -317,9 +404,9 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 setShowFontPicker(false);
                 setShowAlignPicker(false);
               }}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white min-w-[80px]"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white min-w-[70px]"
             >
-              <span className="text-sm">{currentSize.label}</span>
+              <span className="text-sm font-medium">{currentSize.label}</span>
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400 ml-auto">
                 <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -329,17 +416,25 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[100px] z-50"
                 style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
               >
+                <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider">
+                  {isEditing ? "Select text first" : "Default size"}
+                </div>
                 {TEXT_SIZES.map((size) => (
                   <button
                     key={size.value}
                     type="button"
                     onClick={() => {
-                      updateFormatting({ size: size.value });
+                      if (isEditing) {
+                        applyInlineSize(size.value);
+                      } else {
+                        updateFormatting({ size: size.value });
+                      }
                       setShowSizePicker(false);
                     }}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors ${formatting.size === size.value ? "text-white" : "text-gray-400"}`}
+                    className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors flex items-center justify-between ${formatting.size === size.value ? "text-white" : "text-gray-400"}`}
                   >
-                    {size.label}
+                    <span style={{ fontSize: Math.min(size.fontSize, 18), fontWeight: size.fontWeight }}>{size.label}</span>
+                    <span className="text-[10px] text-gray-500">{size.fontSize}px</span>
                   </button>
                 ))}
               </div>
@@ -420,50 +515,96 @@ export function TextNode({ id, data, selected }: NodeProps) {
 
       {/* Text Content */}
       <div
-        className="cursor-text transition-all duration-200"
+        className="cursor-text transition-all duration-300"
         style={{
           minWidth: 100,
-          maxWidth: 400,
+          maxWidth: shouldShowFull ? 400 : 220,
           outline: selected ? "2px solid white" : (isInPresentation ? "2px dashed #F0FE00" : "none"),
           outlineOffset: 4,
           borderRadius: 4,
         }}
       >
         {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={(e) => setEditContent((e.target as HTMLDivElement).innerText)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className="nodrag w-full bg-transparent border-none focus:outline-none resize-none"
+            className="nodrag w-full bg-transparent border-none focus:outline-none"
             style={{
               color: formatting.color,
               fontFamily: currentFont.fontFamily,
               fontSize: currentSize.fontSize,
               lineHeight: currentSize.lineHeight,
-              fontWeight: formatting.bold ? 700 : 400,
+              fontWeight: formatting.bold ? 700 : currentSize.fontWeight,
               textDecoration: formatting.strikethrough ? "line-through" : "none",
               textAlign: formatting.align as any,
               minHeight: 30,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
             }}
-            placeholder="Type something..."
-          />
+          >
+            {plainText || "Type something..."}
+          </div>
         ) : (
           <div
-            className="whitespace-pre-wrap break-words"
+            className="transition-all duration-300"
             style={{
-              color: formatting.color,
-              fontFamily: currentFont.fontFamily,
-              fontSize: currentSize.fontSize,
-              lineHeight: currentSize.lineHeight,
-              fontWeight: formatting.bold ? 700 : 400,
-              textDecoration: formatting.strikethrough ? "line-through" : "none",
               textAlign: formatting.align as any,
               minHeight: 30,
             }}
           >
-            {editContent || "Double-click to edit"}
+            {shouldShowFull ? (
+              // Show rich text with segments
+              segments.map((seg, idx) => {
+                const segmentSize = TEXT_SIZES.find(s => s.value === seg.size) || TEXT_SIZES[3];
+                return (
+                  <span
+                    key={idx}
+                    className="whitespace-pre-wrap break-words"
+                    style={{
+                      color: formatting.color,
+                      fontFamily: currentFont.fontFamily,
+                      fontSize: segmentSize.fontSize,
+                      lineHeight: segmentSize.lineHeight,
+                      fontWeight: formatting.bold ? 700 : segmentSize.fontWeight,
+                      textDecoration: formatting.strikethrough ? "line-through" : "none",
+                      display: seg.size === "h1" || seg.size === "h2" || seg.size === "h3" ? "block" : "inline",
+                      marginBottom: seg.size === "h1" || seg.size === "h2" || seg.size === "h3" ? "0.5em" : 0,
+                    }}
+                  >
+                    {seg.text || (idx === 0 ? "Double-click to edit" : "")}
+                  </span>
+                );
+              })
+            ) : (
+              // Show truncated preview
+              <div
+                className="whitespace-pre-wrap break-words"
+                style={{
+                  color: formatting.color,
+                  fontFamily: currentFont.fontFamily,
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  fontWeight: 400,
+                  textDecoration: formatting.strikethrough ? "line-through" : "none",
+                  opacity: 0.9,
+                }}
+              >
+                {truncatedText || "Double-click to edit"}
+              </div>
+            )}
+            {/* Show "more" indicator when collapsed and has more text */}
+            {!shouldShowFull && isLongText && (
+              <div 
+                className="text-[10px] mt-1 opacity-50"
+                style={{ color: formatting.color }}
+              >
+                Hover to expand
+              </div>
+            )}
           </div>
         )}
       </div>
