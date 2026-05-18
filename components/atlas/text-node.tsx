@@ -68,8 +68,9 @@ interface TextSegment {
 }
 
 // Parse content into segments (format: [[h1]]text[[/h1]] or plain text)
-function parseContent(content: string): TextSegment[] {
-  if (!content) return [{ text: "", size: "body" }];
+// defaultSize is used for text that has no explicit formatting
+function parseContent(content: string, defaultSize: string = "body"): TextSegment[] {
+  if (!content) return [{ text: "", size: defaultSize }];
   
   const segments: TextSegment[] = [];
   const regex = /\[\[(h1|h2|h3|body)\]\]([\s\S]*?)\[\[\/\1\]\]/g;
@@ -80,7 +81,7 @@ function parseContent(content: string): TextSegment[] {
     // Add plain text before this match
     if (match.index > lastIndex) {
       const plainText = content.slice(lastIndex, match.index);
-      if (plainText) segments.push({ text: plainText, size: "body" });
+      if (plainText) segments.push({ text: plainText, size: defaultSize });
     }
     // Add formatted segment
     segments.push({ text: match[2], size: match[1] });
@@ -89,10 +90,10 @@ function parseContent(content: string): TextSegment[] {
 
   // Add remaining plain text
   if (lastIndex < content.length) {
-    segments.push({ text: content.slice(lastIndex), size: "body" });
+    segments.push({ text: content.slice(lastIndex), size: defaultSize });
   }
 
-  return segments.length > 0 ? segments : [{ text: content, size: "body" }];
+  return segments.length > 0 ? segments : [{ text: content, size: defaultSize }];
 }
 
 // Serialize segments back to content string
@@ -138,8 +139,8 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const currentSize = TEXT_SIZES.find(s => s.value === formatting.size) || TEXT_SIZES[3];
   const currentFont = FONT_OPTIONS.find(f => f.value === formatting.font) || FONT_OPTIONS[0];
 
-  // Parse content for rich text display
-  const segments = parseContent(editContent);
+  // Parse content for rich text display - use formatting.size as default
+  const segments = parseContent(editContent, formatting.size);
   const plainText = getPlainText(editContent);
   const isLongText = plainText.length > 100;
   const truncatedText = isLongText ? plainText.slice(0, 100) + "..." : plainText;
@@ -226,33 +227,41 @@ export function TextNode({ id, data, selected }: NodeProps) {
     }
   };
 
-  // Apply size formatting to selected text in contenteditable
+  // Apply size formatting to selected text in textarea
   const applyInlineSize = useCallback((size: string) => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+    if (!textareaRef.current) {
+      // No selection, apply to whole content as default size
+      updateFormatting({ size });
+      return;
+    }
     
-    const range = selection.getRangeAt(0);
-    if (range.collapsed) {
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    if (start === end) {
       // No selection, apply to whole content as default size
       updateFormatting({ size });
       return;
     }
 
-    const selectedText = range.toString();
+    const selectedText = editContent.slice(start, end);
     if (!selectedText) return;
 
     // Wrap selected text with size markers
     const wrappedText = `[[${size}]]${selectedText}[[/${size}]]`;
+    const newContent = editContent.slice(0, start) + wrappedText + editContent.slice(end);
     
-    // Get the full content and replace selection
-    const editorContent = editorRef.current.innerText || "";
-    const beforeSelection = editorContent.slice(0, range.startOffset);
-    const afterSelection = editorContent.slice(range.endOffset);
-    
-    // For simplicity with contenteditable, update the raw content
-    // Find and wrap the selected text in the editContent
-    const newContent = editContent.replace(selectedText, wrappedText);
     setEditContent(newContent);
+    
+    // Restore cursor position after the wrapped text
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newCursorPos = start + wrappedText.length;
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current.focus();
+      }
+    }, 0);
     
     setShowSizePicker(false);
   }, [editContent, updateFormatting]);
@@ -525,14 +534,13 @@ export function TextNode({ id, data, selected }: NodeProps) {
         }}
       >
         {isEditing ? (
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={(e) => setEditContent((e.target as HTMLDivElement).innerText)}
+          <textarea
+            ref={textareaRef}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className="nodrag w-full bg-transparent border-none focus:outline-none"
+            className="nodrag w-full bg-transparent border-none focus:outline-none resize-none"
             style={{
               color: formatting.color,
               fontFamily: currentFont.fontFamily,
@@ -541,13 +549,12 @@ export function TextNode({ id, data, selected }: NodeProps) {
               fontWeight: formatting.bold ? 700 : currentSize.fontWeight,
               textDecoration: formatting.strikethrough ? "line-through" : "none",
               textAlign: formatting.align as any,
-              minHeight: 30,
+              minHeight: 60,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
-          >
-            {plainText || "Type something..."}
-          </div>
+            placeholder="Type something..."
+          />
         ) : (
           <div
             className="transition-all duration-300"
@@ -580,15 +587,15 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 );
               })
             ) : (
-              // Show truncated preview
+              // Show truncated preview with correct size
               <div
                 className="whitespace-pre-wrap break-words"
                 style={{
                   color: formatting.color,
                   fontFamily: currentFont.fontFamily,
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                  fontWeight: 400,
+                  fontSize: currentSize.fontSize,
+                  lineHeight: currentSize.lineHeight,
+                  fontWeight: formatting.bold ? 700 : currentSize.fontWeight,
                   textDecoration: formatting.strikethrough ? "line-through" : "none",
                   opacity: 0.9,
                 }}
