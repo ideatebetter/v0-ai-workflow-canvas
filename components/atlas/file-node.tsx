@@ -280,6 +280,19 @@ export function FileNode({ id, data, selected }: NodeProps) {
         >
           {fileData.fileExtension.replace(".", "").toUpperCase()}
         </span>
+        {/* Sync indicator */}
+        {fileData.syncGroupId && (
+          <div 
+            className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: "rgba(34, 197, 94, 0.15)" }}
+            title="Synced with other files"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-green-400">
+              <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Main Card with Image Preview */}

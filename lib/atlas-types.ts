@@ -263,6 +263,9 @@ export interface FileNodeData {
   dueDate?: string; // Due date for the file
   assignees?: WorkspaceMember[]; // Team members assigned to this file
   blockers?: number; // Number of blockers
+  // Sync-related fields
+  syncGroupId?: string; // Files with the same syncGroupId are synced together
+  originalNodeId?: string; // The node ID this was copied from (helps identify sync-eligible files)
 }
 
 // Text formatting options

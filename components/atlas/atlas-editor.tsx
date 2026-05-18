@@ -29,6 +29,7 @@ import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
 import { NodeContextMenu } from "./node-context-menu";
+import { SyncFileDialog } from "./sync-file-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -41,6 +42,8 @@ interface AtlasEditorProps {
   onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
+  onSyncFiles?: (sourceNodeId: string, targetNodeId: string, targetCanvasId: string) => void;
+  onUnsyncFile?: (nodeId: string) => void;
 }
 
 // Constants for node positioning
@@ -144,7 +147,7 @@ function findFreePositions(
   return positions;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
@@ -158,6 +161,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     position: { x: number; y: number };
     nodes: AtlasNode[];
   } | null>(null);
+  const [showSyncDialog, setShowSyncDialog] = useState(false);
+  const [syncTargetNode, setSyncTargetNode] = useState<AtlasNode | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -1789,6 +1794,14 @@ presentationMode={presentationMode}
             setEdges(eds => eds.filter(e => !nodeIdsToDelete.includes(e.source) && !nodeIdsToDelete.includes(e.target)));
           }}
           hasOtherCanvases={!!(canvases && canvases.length > 1)}
+          onSyncFile={() => {
+            if (contextMenu.nodes.length === 1 && contextMenu.nodes[0].type === "file") {
+              setSyncTargetNode(contextMenu.nodes[0]);
+              setShowSyncDialog(true);
+            }
+          }}
+          isFileNode={contextMenu.nodes.length === 1 && contextMenu.nodes[0].type === "file"}
+          isSynced={contextMenu.nodes.length === 1 && !!(contextMenu.nodes[0].data as FileNodeData).syncGroupId}
         />
       )}
 
@@ -1821,6 +1834,34 @@ presentationMode={presentationMode}
               }
             }
           }}
+        />
+      )}
+
+      {/* Sync File Dialog */}
+      {canvases && syncTargetNode && (
+        <SyncFileDialog
+          isOpen={showSyncDialog}
+          onClose={() => {
+            setShowSyncDialog(false);
+            setSyncTargetNode(null);
+          }}
+          canvases={canvases}
+          currentCanvasId={canvas.id}
+          selectedNode={syncTargetNode}
+          onSyncFiles={(targetNodeId, targetCanvasId) => {
+            if (onSyncFiles) {
+              onSyncFiles(syncTargetNode.id, targetNodeId, targetCanvasId);
+            }
+            setShowSyncDialog(false);
+            setSyncTargetNode(null);
+            setContextMenu(null);
+          }}
+          onUnsync={onUnsyncFile ? () => {
+            onUnsyncFile(syncTargetNode.id);
+            setShowSyncDialog(false);
+            setSyncTargetNode(null);
+            setContextMenu(null);
+          } : undefined}
         />
       )}
 

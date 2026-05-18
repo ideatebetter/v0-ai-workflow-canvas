@@ -11,6 +11,9 @@ interface NodeContextMenuProps {
   onDuplicate: () => void;
   onDelete: () => void;
   hasOtherCanvases: boolean;
+  onSyncFile?: () => void;
+  isFileNode?: boolean;
+  isSynced?: boolean;
 }
 
 export function NodeContextMenu({
@@ -22,6 +25,9 @@ export function NodeContextMenu({
   onDuplicate,
   onDelete,
   hasOtherCanvases,
+  onSyncFile,
+  isFileNode,
+  isSynced,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -100,6 +106,37 @@ export function NodeContextMenu({
         Duplicate
         <span className="ml-auto text-xs text-gray-500">⌘D</span>
       </button>
+
+      {/* Sync option - only for single file nodes */}
+      {isFileNode && selectedCount === 1 && onSyncFile && (
+        <>
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+          <button
+            type="button"
+            onClick={() => {
+              onSyncFile();
+              onClose();
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={isSynced ? "text-green-400" : "text-gray-400"}>
+              <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            {isSynced ? "Manage Sync..." : "Sync with File..."}
+            {isSynced && (
+              <span 
+                className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium"
+                style={{ backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e" }}
+              >
+                Synced
+              </span>
+            )}
+          </button>
+        </>
+      )}
 
       {/* Divider */}
       {hasOtherCanvases && (
