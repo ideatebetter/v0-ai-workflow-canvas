@@ -74,6 +74,7 @@ interface AtlasCanvasProps {
   onConnect: (connection: Connection) => void;
   onNodesUpdate: (nodes: AtlasNode[]) => void;
   onDoubleClick: (position: { x: number; y: number }, screenPosition: { x: number; y: number }) => void;
+  onRightClick?: (position: { x: number; y: number }, screenPosition: { x: number; y: number }) => void;
   onCanvasClick: (position: { x: number; y: number }) => void;
   onCommentSelect: (commentId: string | null) => void;
   onCommentAdd: (content: string, position: { x: number; y: number }) => void;
@@ -111,6 +112,7 @@ export function AtlasCanvas({
   onConnect,
   onNodesUpdate,
   onDoubleClick,
+  onRightClick,
   onCanvasClick,
   onCommentSelect,
   onCommentAdd,
@@ -173,6 +175,22 @@ const reactFlowInstance = useReactFlow();
     window.addEventListener("atlas:handle-click", handleHandleClick as EventListener);
     return () => {
       window.removeEventListener("atlas:handle-click", handleHandleClick as EventListener);
+    };
+  }, [reactFlowInstance]);
+
+  // Listen for center-on-node events
+  useEffect(() => {
+    const handleCenterOnNode = (e: CustomEvent<{ nodeId: string; position: { x: number; y: number } }>) => {
+      const { position } = e.detail;
+      // Center the view on the new node position with a slight delay to ensure node is rendered
+      setTimeout(() => {
+        reactFlowInstance.setCenter(position.x + 110, position.y + 100, { zoom: 1, duration: 300 });
+      }, 50);
+    };
+
+    window.addEventListener("atlas:center-on-node", handleCenterOnNode as EventListener);
+    return () => {
+      window.removeEventListener("atlas:center-on-node", handleCenterOnNode as EventListener);
     };
   }, [reactFlowInstance]);
 
@@ -594,6 +612,22 @@ onClick={(event) => {
         });
         onCanvasClick(flowPosition);
       }}
+        onPaneContextMenu={(event) => {
+          event.preventDefault();
+          if (!onRightClick) return;
+          const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+          if (!bounds) return;
+          // Convert screen position to flow position for node placement
+          const flowPosition = reactFlowInstance.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          const screenPosition = {
+            x: event.clientX,
+            y: event.clientY,
+          };
+          onRightClick(flowPosition, screenPosition);
+        }}
         onNodeContextMenu={(event, node) => {
           event.preventDefault();
           if (onNodeContextMenu) {

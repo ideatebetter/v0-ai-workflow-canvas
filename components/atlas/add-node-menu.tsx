@@ -151,7 +151,7 @@ export function AddNodeMenu({
           {/* Status Pill */}
           <button
             type="button"
-            onClick={() => { console.log("[v0] Status pill clicked"); onAddStatusPill(); onClose(); }}
+            onClick={() => { onAddStatusPill(); onClose(); }}
             style={{
               width: "100%",
               padding: "8px 12px",
