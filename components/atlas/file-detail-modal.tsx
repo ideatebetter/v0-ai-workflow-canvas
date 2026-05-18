@@ -231,12 +231,48 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<string | null>(null);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(fileData.label);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const [newTodoAssignee, setNewTodoAssignee] = useState<WorkspaceMember | null>(null);
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const versionInputRef = useRef<HTMLInputElement>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Sync editedTitle when fileData changes
+  useEffect(() => {
+    setEditedTitle(fileData.label);
+  }, [fileData.label]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleSave = () => {
+    const trimmedTitle = editedTitle.trim();
+    if (trimmedTitle && trimmedTitle !== fileData.label && onUpdateFile) {
+      // Also update fileName to keep them in sync
+      const newFileName = trimmedTitle + fileData.fileExtension;
+      onUpdateFile({ label: trimmedTitle, fileName: newFileName });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      setEditedTitle(fileData.label);
+      setIsEditingTitle(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -558,13 +594,37 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
         </div>
 
         <div className="overflow-y-auto max-h-[85vh] p-8">
-          {/* Title */}
-          <h2
-            className="text-2xl font-semibold text-white mb-6"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-          >
-            {fileData.label}
-          </h2>
+          {/* Title - Editable */}
+          {isEditingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              className="text-2xl font-semibold text-white mb-6 bg-transparent border-b-2 border-blue-500 outline-none w-full"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            />
+          ) : (
+            <h2
+              className="text-2xl font-semibold text-white mb-6 cursor-pointer hover:text-gray-300 transition-colors group flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              onClick={() => setIsEditingTitle(true)}
+              title="Click to rename"
+            >
+              {fileData.label}
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 16 16" 
+                fill="none" 
+                className="opacity-0 group-hover:opacity-50 transition-opacity"
+              >
+                <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h2>
+          )}
 
           {/* Image Preview - Only show for image files */}
           {[".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
