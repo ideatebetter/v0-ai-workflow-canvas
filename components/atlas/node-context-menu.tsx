@@ -12,7 +12,9 @@ interface NodeContextMenuProps {
   onDelete: () => void;
   hasOtherCanvases: boolean;
   onSyncNode?: () => void;
+  onSyncMultiple?: () => void;
   isSyncableNode?: boolean;
+  hasSyncableNodes?: boolean;
   isSynced?: boolean;
   onOrganize?: () => void;
 }
@@ -27,7 +29,9 @@ export function NodeContextMenu({
   onDelete,
   hasOtherCanvases,
   onSyncNode,
+  onSyncMultiple,
   isSyncableNode,
+  hasSyncableNodes,
   isSynced,
   onOrganize,
 }: NodeContextMenuProps) {
@@ -157,6 +161,29 @@ export function NodeContextMenu({
                 Synced
               </span>
             )}
+          </button>
+        </>
+      )}
+
+      {/* Sync multiple option - for multiple selected nodes */}
+      {selectedCount > 1 && hasSyncableNodes && onSyncMultiple && (
+        <>
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+          <button
+            type="button"
+            onClick={() => {
+              onSyncMultiple();
+              onClose();
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+              <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Sync All...
           </button>
         </>
       )}
