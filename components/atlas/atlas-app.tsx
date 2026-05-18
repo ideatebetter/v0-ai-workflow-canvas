@@ -5,29 +5,13 @@ import type { Canvas, WorkspaceSettings, CanvasFramework } from "@/lib/atlas-typ
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, SAMPLE_FRAMEWORKS } from "@/lib/atlas-types";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
+import { useAuth } from "@/lib/auth-context";
 
 type View = "home" | "canvas";
 
-const STORAGE_KEY = "atlas-canvases";
 const SETTINGS_STORAGE_KEY = "atlas-workspace-settings";
 
-// Load canvases from localStorage
-function loadCanvases(): Canvas[] {
-  if (typeof window === "undefined") return INITIAL_CANVASES;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge with initial canvases to ensure we have defaults
-      return parsed.length > 0 ? parsed : INITIAL_CANVASES;
-    }
-  } catch (e) {
-    console.error("Failed to load canvases from localStorage:", e);
-  }
-  return INITIAL_CANVASES;
-}
-
-// Load settings from localStorage
+// Load settings from localStorage (settings can stay local for now)
 function loadSettings(): WorkspaceSettings {
   if (typeof window === "undefined") return DEFAULT_WORKSPACE_SETTINGS;
   try {
@@ -42,31 +26,138 @@ function loadSettings(): WorkspaceSettings {
 }
 
 export function AtlasApp() {
+  const { user, loading: authLoading } = useAuth();
   const [view, setView] = useState<View>("home");
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
-  const [canvases, setCanvases] = useState<Canvas[]>(INITIAL_CANVASES);
+  const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Load from localStorage on mount (client-side only)
+  // Load canvases from API
+  const loadCanvasesFromAPI = useCallback(async () => {
+    if (!user) {
+      console.log("[v0] No user, using INITIAL_CANVASES");
+      setCanvases(INITIAL_CANVASES);
+      setIsLoadingCanvases(false);
+      return;
+    }
+
+    console.log("[v0] Loading canvases from API for user:", user.id);
+
+    try {
+      const response = await fetch("/api/canvas");
+      console.log("[v0] API response status:", response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("[v0] Loaded canvases from API:", data.canvases?.length || 0);
+        if (data.canvases && data.canvases.length > 0) {
+          // Transform API response to match Canvas type
+          const loadedCanvases: Canvas[] = data.canvases.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            nodes: c.nodes || [],
+            edges: c.edges || [],
+            comments: c.comments || [],
+            createdAt: c.created_at,
+            updatedAt: c.updated_at,
+          }));
+          console.log("[v0] Setting canvases:", loadedCanvases.map(c => c.name));
+          setCanvases(loadedCanvases);
+        } else {
+          // No canvases in database, use initial canvases
+          console.log("[v0] No canvases in DB, using INITIAL_CANVASES");
+          setCanvases(INITIAL_CANVASES);
+        }
+      } else {
+        console.error("[v0] Failed to load canvases from API:", response.statusText);
+        setCanvases(INITIAL_CANVASES);
+      }
+    } catch (error) {
+      console.error("[v0] Error loading canvases:", error);
+      setCanvases(INITIAL_CANVASES);
+    } finally {
+      setIsLoadingCanvases(false);
+    }
+  }, [user]);
+
+  // Save canvas to API (debounced)
+  const saveCanvasToAPI = useCallback(async (canvas: Canvas) => {
+    if (!user) {
+      console.log("[v0] No user, skipping save");
+      return;
+    }
+
+    console.log("[v0] Saving canvas to API:", canvas.name, canvas.id);
+
+    try {
+      // Check if canvas exists in database
+      const checkResponse = await fetch(`/api/canvas?id=${canvas.id}`);
+      const exists = checkResponse.ok;
+      console.log("[v0] Canvas exists in DB:", exists);
+
+      if (exists) {
+        // Update existing canvas
+        console.log("[v0] Updating existing canvas");
+        const updateResponse = await fetch("/api/canvas", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: canvas.id,
+            name: canvas.name,
+            description: canvas.description,
+            nodes: canvas.nodes,
+            edges: canvas.edges,
+            settings: { comments: canvas.comments },
+          }),
+        });
+        console.log("[v0] Update response:", updateResponse.status);
+      } else {
+        // Create new canvas
+        console.log("[v0] Creating new canvas");
+        const response = await fetch("/api/canvas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: canvas.name,
+            description: canvas.description,
+            nodes: canvas.nodes,
+            edges: canvas.edges,
+            settings: { comments: canvas.comments },
+          }),
+        });
+        
+        console.log("[v0] Create response:", response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("[v0] Created canvas with new ID:", data.canvas?.id);
+          // Update local canvas with database ID
+          setCanvases(prev => prev.map(c => 
+            c.id === canvas.id ? { ...c, id: data.canvas.id } : c
+          ));
+        }
+      }
+    } catch (error) {
+      console.error("[v0] Error saving canvas:", error);
+    }
+  }, [user]);
+
+  // Load settings and canvases on mount
   useEffect(() => {
-    setCanvases(loadCanvases());
     setWorkspaceSettings(loadSettings());
     setIsHydrated(true);
   }, []);
 
-  // Save canvases to localStorage whenever they change
+  // Load canvases when user changes
   useEffect(() => {
-    if (isHydrated) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(canvases));
-      } catch (e) {
-        console.error("Failed to save canvases to localStorage:", e);
-      }
+    if (!authLoading) {
+      loadCanvasesFromAPI();
     }
-  }, [canvases, isHydrated]);
+  }, [user, authLoading, loadCanvasesFromAPI]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -94,11 +185,35 @@ export function AtlasApp() {
     setActiveCanvasId(null);
   }, []);
 
+  // Force save all canvases to cloud
+  const handleSaveAllToCloud = useCallback(async () => {
+    if (!user) {
+      console.log("[v0] No user, cannot save to cloud");
+      return;
+    }
+    
+    console.log("[v0] Force saving all canvases to cloud:", canvases.length);
+    
+    for (const canvas of canvases) {
+      await saveCanvasToAPI(canvas);
+    }
+    
+    console.log("[v0] All canvases saved to cloud");
+    alert(`Saved ${canvases.length} canvases to cloud!`);
+  }, [user, canvases, saveCanvasToAPI]);
+
   const handleCanvasChange = useCallback((updatedCanvas: Canvas) => {
     setCanvases((prev) =>
       prev.map((c) => (c.id === updatedCanvas.id ? updatedCanvas : c))
     );
-  }, []);
+    
+    // Debounce API save
+    if (saveTimeout) clearTimeout(saveTimeout);
+    const timeout = setTimeout(() => {
+      saveCanvasToAPI(updatedCanvas);
+    }, 1000); // Save after 1 second of no changes
+    setSaveTimeout(timeout);
+  }, [saveCanvasToAPI, saveTimeout]);
 
   const handleSaveFramework = useCallback((framework: CanvasFramework) => {
     setFrameworks((prev) => [framework, ...prev]);
@@ -134,7 +249,7 @@ export function AtlasApp() {
   }, []);
 
   // Handle creating a new canvas and transferring nodes to it
-  const handleCreateCanvasWithNodes = useCallback((canvasName: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
+  const handleCreateCanvasWithNodes = useCallback(async (canvasName: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
     const newCanvasId = `canvas-${Date.now()}`;
     const newNodes = nodes.map((node) => ({
       ...node,
@@ -157,7 +272,33 @@ export function AtlasApp() {
     };
     
     setCanvases((prev) => [...prev, newCanvas]);
-  }, []);
+    
+    // Save to API if user is logged in
+    if (user) {
+      try {
+        const response = await fetch("/api/canvas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: canvasName,
+            nodes: newNodes,
+            edges: [],
+            settings: { comments: [] },
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Update local canvas with database ID
+          setCanvases(prev => prev.map(c => 
+            c.id === newCanvasId ? { ...c, id: data.canvas.id } : c
+          ));
+        }
+      } catch (error) {
+        console.error("Error creating canvas:", error);
+      }
+    }
+  }, [user]);
 
   // Handle syncing two files together
   const handleSyncFiles = useCallback((sourceNodeId: string, targetNodeId: string, targetCanvasId: string) => {
@@ -222,10 +363,13 @@ export function AtlasApp() {
 
   // Propagate file updates to all synced files
   const handleCanvasChangeWithSync = useCallback((updatedCanvas: import("@/lib/atlas-types").Canvas) => {
+    let canvasesToSave: import("@/lib/atlas-types").Canvas[] = [];
+    
     setCanvases((prev) => {
       // First, find what changed in the updated canvas
       const previousCanvas = prev.find(c => c.id === updatedCanvas.id);
       if (!previousCanvas) {
+        canvasesToSave = [updatedCanvas];
         return prev.map((c) => (c.id === updatedCanvas.id ? updatedCanvas : c));
       }
       
@@ -253,11 +397,12 @@ export function AtlasApp() {
       
       // If no synced nodes changed, just update normally
       if (changedSyncedNodes.length === 0) {
+        canvasesToSave = [updatedCanvas];
         return prev.map((c) => (c.id === updatedCanvas.id ? updatedCanvas : c));
       }
       
       // Propagate changes to all canvases
-      return prev.map((canvas) => {
+      const newCanvases = prev.map((canvas) => {
         if (canvas.id === updatedCanvas.id) {
           return updatedCanvas;
         }
@@ -286,17 +431,31 @@ export function AtlasApp() {
         });
         
         if (hasChanges) {
-          return {
+          const updatedSyncedCanvas = {
             ...canvas,
             nodes: updatedNodes,
             updatedAt: new Date().toISOString(),
           };
+          canvasesToSave.push(updatedSyncedCanvas);
+          return updatedSyncedCanvas;
         }
         
         return canvas;
       });
+      
+      // Add the primary canvas to save list
+      canvasesToSave.unshift(updatedCanvas);
+      
+      return newCanvases;
     });
-  }, []);
+    
+    // Debounce API save for all affected canvases
+    if (saveTimeout) clearTimeout(saveTimeout);
+    const timeout = setTimeout(() => {
+      canvasesToSave.forEach(canvas => saveCanvasToAPI(canvas));
+    }, 1000);
+    setSaveTimeout(timeout);
+  }, [saveCanvasToAPI, saveTimeout]);
 
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
@@ -334,6 +493,8 @@ export function AtlasApp() {
       onWorkspaceSettingsChange={setWorkspaceSettings}
       canvases={canvases}
       onCanvasesChange={setCanvases}
+      onSaveAllToCloud={handleSaveAllToCloud}
+      isLoadingCanvases={isLoadingCanvases}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
       onRemoveFramework={handleRemoveFramework}

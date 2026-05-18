@@ -30,6 +30,7 @@ import { SageExpandedModal } from "./sage-expanded-modal";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
 import { NodeContextMenu } from "./node-context-menu";
 import { SyncFileDialog } from "./sync-file-dialog";
+import { SyncMultipleDialog } from "./sync-multiple-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -165,6 +166,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   } | null>(null);
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [syncTargetNode, setSyncTargetNode] = useState<AtlasNode | null>(null);
+  const [showSyncMultipleDialog, setShowSyncMultipleDialog] = useState(false);
+  const [syncMultipleNodes, setSyncMultipleNodes] = useState<AtlasNode[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -1943,7 +1946,15 @@ presentationMode={presentationMode}
               setShowSyncDialog(true);
             }
           }}
+          onSyncMultiple={() => {
+            const syncableNodes = contextMenu.nodes.filter(n => n.type === "file" || n.type === "text");
+            if (syncableNodes.length > 0) {
+              setSyncMultipleNodes(syncableNodes);
+              setShowSyncMultipleDialog(true);
+            }
+          }}
           isSyncableNode={contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")}
+          hasSyncableNodes={contextMenu.nodes.some(n => n.type === "file" || n.type === "text")}
           isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
         />
       )}
@@ -2005,6 +2016,30 @@ presentationMode={presentationMode}
             setSyncTargetNode(null);
             setContextMenu(null);
           } : undefined}
+        />
+      )}
+
+      {/* Sync Multiple Dialog */}
+      {canvases && syncMultipleNodes.length > 0 && (
+        <SyncMultipleDialog
+          isOpen={showSyncMultipleDialog}
+          onClose={() => {
+            setShowSyncMultipleDialog(false);
+            setSyncMultipleNodes([]);
+          }}
+          canvases={canvases}
+          currentCanvasId={canvas.id}
+          selectedNodes={syncMultipleNodes}
+          onSyncMultiple={(syncPairs) => {
+            if (onSyncFiles) {
+              for (const pair of syncPairs) {
+                onSyncFiles(pair.sourceId, pair.targetId, pair.targetCanvasId);
+              }
+            }
+            setShowSyncMultipleDialog(false);
+            setSyncMultipleNodes([]);
+            setContextMenu(null);
+          }}
         />
       )}
 

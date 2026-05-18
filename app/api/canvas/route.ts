@@ -29,10 +29,10 @@ export async function GET(request: Request) {
 
       return NextResponse.json({ canvas });
     } else {
-      // Fetch all user's canvases
+      // Fetch all user's canvases with full data (nodes, edges, etc.)
       const { data: canvases, error } = await supabase
         .from("canvases")
-        .select("id, name, description, created_at, updated_at")
+        .select("*")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 

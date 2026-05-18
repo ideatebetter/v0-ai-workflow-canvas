@@ -189,9 +189,13 @@ interface HomePageProps {
   frameworks?: CanvasFramework[];
   onFrameworksChange?: (frameworks: CanvasFramework[]) => void;
   onRemoveFramework?: (frameworkId: string) => void;
+  onSaveAllToCloud?: () => void;
+  isLoadingCanvases?: boolean;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases }: HomePageProps) {
+  // Alias for settings change
+  const onSettingsChange = onWorkspaceSettingsChange;
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -1633,6 +1637,242 @@ All Frameworks
                 <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid #222222" }}>
                   <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Preview: </span>
                   <span className="text-sm text-white font-mono">project_logo_v1<span className="text-gray-500">.fig</span></span>
+                </div>
+              </div>
+
+              {/* Data & Sync Section */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Data & Sync
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Sync All Canvases to Cloud</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {isLoadingCanvases ? "Loading..." : `${canvases.length} canvas${canvases.length !== 1 ? "es" : ""} ready to sync`}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onSaveAllToCloud}
+                      disabled={isLoadingCanvases || !onSaveAllToCloud}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ 
+                        backgroundColor: "#F0FE00", 
+                        color: "#000",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Sync Now
+                    </button>
+                  </div>
+                  
+                  {/* Export Backup */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Export Local Backup</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Download your current data as a JSON file
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Export current canvases to JSON file
+                        const exportData = {
+                          exportedAt: new Date().toISOString(),
+                          canvases: canvases,
+                          settings: workspaceSettings,
+                        };
+                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `atlas-backup-${new Date().toISOString().split("T")[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Export
+                    </button>
+                  </div>
+                  
+                  {/* Import from Local Storage */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Restore from Local Storage</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Load canvases saved in this browser
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const stored = localStorage.getItem("atlas-canvases");
+                          if (stored) {
+                            const localCanvases = JSON.parse(stored);
+                            if (localCanvases && localCanvases.length > 0) {
+                              const confirmed = window.confirm(
+                                `Found ${localCanvases.length} canvas(es) in local storage:\n\n${localCanvases.map((c: any) => `• ${c.name}`).join("\n")}\n\nReplace current canvases with these?`
+                              );
+                              if (confirmed) {
+                                onCanvasesChange(localCanvases);
+                                alert("Canvases restored from local storage! Click 'Sync Now' to save them to the cloud.");
+                              }
+                            } else {
+                              alert("No canvases found in local storage.");
+                            }
+                          } else {
+                            alert("No canvases found in local storage.");
+                          }
+                        } catch (e) {
+                          console.error("Failed to restore from localStorage:", e);
+                          alert("Failed to read local storage data.");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                  
+                  {/* Import from File */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Import from File</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Load canvases from a JSON backup file
+                      </p>
+                    </div>
+                    <label
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer hover:bg-[#333]"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Import
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            try {
+                              const content = event.target?.result as string;
+                              let importedCanvases;
+                              
+                              // Try to parse - could be raw array or export object
+                              const parsed = JSON.parse(content);
+                              if (Array.isArray(parsed)) {
+                                importedCanvases = parsed;
+                              } else if (parsed.canvases && Array.isArray(parsed.canvases)) {
+                                importedCanvases = parsed.canvases;
+                              } else {
+                                alert("Invalid file format. Expected canvases array.");
+                                return;
+                              }
+                              
+                              const confirmed = window.confirm(
+                                `Found ${importedCanvases.length} canvas(es):\n\n${importedCanvases.map((c: any) => `• ${c.name}`).join("\n")}\n\nReplace current canvases with these?`
+                              );
+                              if (confirmed) {
+                                onCanvasesChange(importedCanvases);
+                                alert("Canvases imported! Click 'Sync Now' to save them to the cloud.");
+                              }
+                            } catch (err) {
+                              console.error("Failed to parse import file:", err);
+                              alert("Failed to parse file. Make sure it's valid JSON.");
+                            }
+                          };
+                          reader.readAsText(file);
+                          e.target.value = ""; // Reset input
+                        }}
+                      />
+                    </label>
+                  </div>
+                  
+                  {/* Paste JSON directly */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Paste JSON Data</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Paste canvas data directly from clipboard
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const jsonText = window.prompt("Paste your canvas JSON data:");
+                        if (!jsonText) return;
+                        
+                        try {
+                          let importedCanvases;
+                          const parsed = JSON.parse(jsonText);
+                          if (Array.isArray(parsed)) {
+                            importedCanvases = parsed;
+                          } else if (parsed.canvases && Array.isArray(parsed.canvases)) {
+                            importedCanvases = parsed.canvases;
+                          } else {
+                            alert("Invalid format. Expected canvases array.");
+                            return;
+                          }
+                          
+                          const confirmed = window.confirm(
+                            `Found ${importedCanvases.length} canvas(es):\n\n${importedCanvases.slice(0, 10).map((c: any) => `• ${c.name}`).join("\n")}${importedCanvases.length > 10 ? `\n... and ${importedCanvases.length - 10} more` : ""}\n\nReplace current canvases with these?`
+                          );
+                          if (confirmed) {
+                            onCanvasesChange(importedCanvases);
+                            alert("Canvases imported! Click 'Sync Now' to save them to the cloud.");
+                          }
+                        } catch (err) {
+                          console.error("Failed to parse JSON:", err);
+                          alert("Failed to parse JSON. Make sure it's valid.");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Paste
+                    </button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
+                  </p>
                 </div>
               </div>
             </div>
