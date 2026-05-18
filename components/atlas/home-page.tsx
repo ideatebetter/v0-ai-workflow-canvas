@@ -1870,7 +1870,7 @@ All Frameworks
                     </button>
                   </div>
                   
-                  <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>>
+                  <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
                   </p>
                 </div>
