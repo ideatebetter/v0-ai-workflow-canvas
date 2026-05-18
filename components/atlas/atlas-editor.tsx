@@ -27,7 +27,8 @@ import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
-import { CopyToCanvasDialog } from "./copy-to-canvas-dialog";
+import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
+import { NodeContextMenu } from "./node-context-menu";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -37,7 +38,9 @@ interface AtlasEditorProps {
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases?: Canvas[];
-  onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[]) => void;
+  onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
+  onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
+  onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
 }
 
 // Constants for node positioning
@@ -141,7 +144,7 @@ function findFreePositions(
   return positions;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
@@ -149,7 +152,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
-  const [showCopyToCanvasDialog, setShowCopyToCanvasDialog] = useState(false);
+  const [showMoveToCanvasDialog, setShowMoveToCanvasDialog] = useState(false);
+  const [moveToCanvasMode, setMoveToCanvasMode] = useState<"move" | "copy">("move");
+  const [contextMenu, setContextMenu] = useState<{
+    position: { x: number; y: number };
+    nodes: AtlasNode[];
+  } | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -528,8 +536,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         // Cmd/Ctrl + Shift + C to copy to another canvas
         e.preventDefault();
         const selectedNodes = nodes.filter(node => node.selected);
-        if (selectedNodes.length > 0 && canvases && canvases.length > 1) {
-          setShowCopyToCanvasDialog(true);
+        if (selectedNodes.length > 0) {
+          setMoveToCanvasMode("copy");
+          setShowMoveToCanvasDialog(true);
+        }
+      } else if (modifierKey && e.shiftKey && e.key === 'm') {
+        // Cmd/Ctrl + Shift + M to move to another canvas
+        e.preventDefault();
+        const selectedNodes = nodes.filter(node => node.selected);
+        if (selectedNodes.length > 0) {
+          setMoveToCanvasMode("move");
+          setShowMoveToCanvasDialog(true);
         }
       }
     };
@@ -1577,7 +1594,10 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
         onSaveAsFramework={() => setShowSaveFrameworkDialog(true)}
-        onCopyToCanvas={() => setShowCopyToCanvasDialog(true)}
+        onCopyToCanvas={() => {
+          setMoveToCanvasMode("copy");
+          setShowMoveToCanvasDialog(true);
+        }}
         hasSelectedNodes={nodes.some(node => node.selected)}
         hasOtherCanvases={canvases && canvases.length > 1}
       />
@@ -1632,6 +1652,12 @@ presentationMode={presentationMode}
   presentationEdges={presentationEdges}
   onPresentationConnect={handlePresentationConnect}
   onCreatePresentationGroup={handleCreatePresentationGroup}
+  onNodeContextMenu={(event, selectedNodes) => {
+    setContextMenu({
+      position: { x: event.clientX, y: event.clientY },
+      nodes: selectedNodes,
+    });
+  }}
   />
 
 <CanvasSideToolbar
@@ -1727,15 +1753,74 @@ presentationMode={presentationMode}
         }}
       />
 
-      {/* Copy to Canvas Dialog */}
+      {/* Node Context Menu */}
+      {contextMenu && (
+        <NodeContextMenu
+          position={contextMenu.position}
+          selectedCount={contextMenu.nodes.length}
+          onClose={() => setContextMenu(null)}
+          onMoveToCanvas={() => {
+            setMoveToCanvasMode("move");
+            setShowMoveToCanvasDialog(true);
+          }}
+          onDuplicateToCanvas={() => {
+            setMoveToCanvasMode("copy");
+            setShowMoveToCanvasDialog(true);
+          }}
+          onDuplicate={() => {
+            // Duplicate nodes in place
+            const newNodes = contextMenu.nodes.map(node => ({
+              ...node,
+              id: `${node.id}-dup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              position: {
+                x: node.position.x + 30,
+                y: node.position.y + 30,
+              },
+              selected: true,
+            }));
+            setNodes(nds => [
+              ...nds.map(n => ({ ...n, selected: false })),
+              ...newNodes,
+            ]);
+          }}
+          onDelete={() => {
+            const nodeIdsToDelete = contextMenu.nodes.map(n => n.id);
+            setNodes(nds => nds.filter(n => !nodeIdsToDelete.includes(n.id)));
+            setEdges(eds => eds.filter(e => !nodeIdsToDelete.includes(e.source) && !nodeIdsToDelete.includes(e.target)));
+          }}
+          hasOtherCanvases={!!(canvases && canvases.length > 1)}
+        />
+      )}
+
+      {/* Move to Canvas Dialog */}
       {canvases && onCopyNodesToCanvas && (
-        <CopyToCanvasDialog
-          isOpen={showCopyToCanvasDialog}
-          onClose={() => setShowCopyToCanvasDialog(false)}
+        <MoveToCanvasDialog
+          isOpen={showMoveToCanvasDialog}
+          onClose={() => setShowMoveToCanvasDialog(false)}
           canvases={canvases}
           currentCanvasId={canvas.id}
-          selectedNodes={nodes.filter(node => node.selected)}
-          onCopyToCanvas={onCopyNodesToCanvas}
+          selectedNodes={contextMenu?.nodes || nodes.filter(node => node.selected)}
+          defaultMode={moveToCanvasMode}
+          onTransferToCanvas={(targetCanvasId, nodesToTransfer, mode) => {
+            onCopyNodesToCanvas(targetCanvasId, nodesToTransfer, mode);
+            if (mode === "move") {
+              // Remove nodes from current canvas
+              const nodeIds = nodesToTransfer.map(n => n.id);
+              setNodes(nds => nds.filter(n => !nodeIds.includes(n.id)));
+              setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
+            }
+          }}
+          onCreateCanvasAndTransfer={(canvasName, nodesToTransfer, mode) => {
+            if (onCreateCanvasWithNodes) {
+              onCreateCanvasWithNodes(canvasName, nodesToTransfer, mode);
+              if (mode === "move") {
+                // Remove nodes from current canvas
+                const nodeIds = nodesToTransfer.map(n => n.id);
+                setNodes(nds => nds.filter(n => !nodeIds.includes(n.id)));
+                setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
+              }
+            }
+          }}
         />
       )}
 
