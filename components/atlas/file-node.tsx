@@ -216,10 +216,10 @@ export function FileNode({ id, data, selected }: NodeProps) {
   // Get audio URL for audio files
   const audioUrl = isAudio ? fileData.uploadedFile?.url : null;
   
-  // Get preview image - use first preview image, uploaded file (only if renderable), or default
-  const previewImage = fileData.previewImages?.[0] 
-    || (isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
-    || DEFAULT_PREVIEWS[fileData.fileExtension] 
+  // Get preview image - prioritize actual uploaded file for true aspect ratio, then fall back to preview thumbnails
+  const previewImage = (isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
+    || fileData.previewImages?.[0]
+    || DEFAULT_PREVIEWS[fileData.fileExtension]
     || DEFAULT_PREVIEWS.default;
   
   // Get video URL for video files
