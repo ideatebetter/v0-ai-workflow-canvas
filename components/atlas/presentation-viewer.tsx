@@ -363,48 +363,80 @@ export function PresentationViewer({
       const textData = currentNode.data as TextNodeData;
       const formatting = textData.formatting;
       
-      // Map size to Tailwind classes for presentation (larger than normal)
-      const sizeMap: Record<string, string> = {
-        small: "text-2xl md:text-3xl",
-        medium: "text-3xl md:text-5xl", 
-        large: "text-4xl md:text-6xl",
-        xlarge: "text-5xl md:text-8xl",
-      };
+      // Get plain text for display (strip formatting markers)
+      const content = textData.content || textData.label || "";
+      const plainText = content
+        .replace(/\[\[(h1|h2|h3|body)\]\]/g, "")
+        .replace(/\[\[\/(h1|h2|h3|body)\]\]/g, "");
+      
+      // Calculate optimal font size based on text length
+      const textLength = plainText.length;
+      let fontSize: number;
+      let lineHeight: number;
+      let maxWidth: string;
+      
+      if (textLength < 50) {
+        // Very short - headline style
+        fontSize = 72;
+        lineHeight = 1.1;
+        maxWidth = "90%";
+      } else if (textLength < 150) {
+        // Short - large text
+        fontSize = 48;
+        lineHeight = 1.2;
+        maxWidth = "85%";
+      } else if (textLength < 300) {
+        // Medium - readable paragraph
+        fontSize = 32;
+        lineHeight = 1.4;
+        maxWidth = "75%";
+      } else if (textLength < 600) {
+        // Long - smaller but still readable
+        fontSize = 24;
+        lineHeight = 1.5;
+        maxWidth = "70%";
+      } else {
+        // Very long - compact
+        fontSize = 18;
+        lineHeight = 1.6;
+        maxWidth = "65%";
+      }
       
       const fontMap: Record<string, string> = {
-        sans: "font-sans",
-        serif: "font-serif",
-        mono: "font-mono",
+        sans: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        serif: "Georgia, 'Times New Roman', serif",
+        mono: "'SF Mono', Menlo, Monaco, monospace",
       };
       
       const alignMap: Record<string, string> = {
-        left: "text-left items-start",
-        center: "text-center items-center",
-        right: "text-right items-end",
+        left: "text-left",
+        center: "text-center",
+        right: "text-right",
       };
 
-      const textSize = sizeMap[formatting?.size || "large"];
       const textFont = fontMap[formatting?.font || "sans"];
-      const textAlign = alignMap[formatting?.align || "center"];
+      const textAlign = alignMap[formatting?.align || "left"];
       const textColor = formatting?.color || "#ffffff";
       const isBold = formatting?.bold;
 
       return (
-        <div className={`flex flex-col justify-center h-full max-w-4xl mx-auto px-8 ${textAlign}`}>
-          <h2 
-            className={`mb-6 leading-tight ${textSize} ${textFont} ${isBold ? "font-bold" : "font-semibold"}`}
-            style={{ color: textColor }}
+        <div 
+          className={`flex flex-col justify-center h-full w-full px-16 ${textAlign}`}
+          style={{ maxWidth }}
+        >
+          <div 
+            className={`leading-tight ${isBold ? "font-semibold" : "font-normal"}`}
+            style={{ 
+              color: textColor,
+              fontFamily: textFont,
+              fontSize: `${fontSize}px`,
+              lineHeight: lineHeight,
+              letterSpacing: fontSize > 40 ? "-0.02em" : "-0.01em",
+              textWrap: "balance",
+            }}
           >
-            {textData.label}
-          </h2>
-          {textData.content && (
-            <p 
-              className={`text-xl md:text-2xl leading-relaxed ${textFont}`}
-              style={{ color: `${textColor}99` }}
-            >
-              {textData.content}
-            </p>
-          )}
+            {plainText}
+          </div>
         </div>
       );
     }
