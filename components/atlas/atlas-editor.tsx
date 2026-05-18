@@ -1937,14 +1937,14 @@ presentationMode={presentationMode}
 
             setContextMenu(null);
           }}
-          onSyncFile={() => {
-            if (contextMenu.nodes.length === 1 && contextMenu.nodes[0].type === "file") {
+          onSyncNode={() => {
+            if (contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")) {
               setSyncTargetNode(contextMenu.nodes[0]);
               setShowSyncDialog(true);
             }
           }}
-          isFileNode={contextMenu.nodes.length === 1 && contextMenu.nodes[0].type === "file"}
-          isSynced={contextMenu.nodes.length === 1 && !!(contextMenu.nodes[0].data as FileNodeData).syncGroupId}
+          isSyncableNode={contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")}
+          isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
         />
       )}
 

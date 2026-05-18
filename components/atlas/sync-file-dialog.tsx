@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import type { Canvas, AtlasNode, FileNodeData } from "@/lib/atlas-types";
+import type { Canvas, AtlasNode, FileNodeData, TextNodeData } from "@/lib/atlas-types";
 
 interface SyncFileDialogProps {
   isOpen: boolean;
@@ -13,47 +13,74 @@ interface SyncFileDialogProps {
   onUnsync?: () => void;
 }
 
-// Get file nodes from a canvas that are eligible for syncing
-function getEligibleFiles(
+// Get file or text nodes from a canvas that are eligible for syncing
+function getEligibleNodes(
   canvases: Canvas[],
   currentCanvasId: string,
   selectedNode: AtlasNode
 ): Array<{ node: AtlasNode; canvas: Canvas; reason: string }> {
-  const selectedData = selectedNode.data as FileNodeData;
-  const selectedFileName = selectedData.fileName?.toLowerCase() || "";
-  const selectedOriginalId = selectedData.originalNodeId;
+  const isFileNode = selectedNode.type === "file";
+  const isTextNode = selectedNode.type === "text";
+  
+  if (!isFileNode && !isTextNode) return [];
+  
+  const selectedData = selectedNode.data as FileNodeData | TextNodeData;
   const eligible: Array<{ node: AtlasNode; canvas: Canvas; reason: string }> = [];
+
+  // Get sync-related properties
+  const selectedSyncGroupId = (selectedData as any).syncGroupId;
+  const selectedOriginalId = (selectedData as any).originalNodeId;
+  
+  // For file nodes, get file name for matching
+  const selectedFileName = isFileNode ? (selectedData as FileNodeData).fileName?.toLowerCase() || "" : "";
+  
+  // For text nodes, get label/content for matching
+  const selectedLabel = selectedData.label?.toLowerCase() || "";
+  const selectedContent = isTextNode ? (selectedData as TextNodeData).content?.toLowerCase() || "" : "";
 
   for (const canvas of canvases) {
     for (const node of canvas.nodes) {
       // Skip the selected node itself
       if (node.id === selectedNode.id) continue;
       
-      // Only consider file nodes
-      if (node.type !== "file") continue;
+      // Only consider same type nodes
+      if (node.type !== selectedNode.type) continue;
       
-      const nodeData = node.data as FileNodeData;
-      const nodeFileName = nodeData.fileName?.toLowerCase() || "";
+      const nodeData = node.data as FileNodeData | TextNodeData;
+      const nodeSyncGroupId = (nodeData as any).syncGroupId;
+      const nodeOriginalId = (nodeData as any).originalNodeId;
       
       // Skip if already in the same sync group
-      if (selectedData.syncGroupId && nodeData.syncGroupId === selectedData.syncGroupId) continue;
-      
-      // Check eligibility criteria:
-      // 1. Same file name
-      // 2. Is a copy (shares originalNodeId)
-      // 3. One was copied from the other
+      if (selectedSyncGroupId && nodeSyncGroupId === selectedSyncGroupId) continue;
       
       let reason = "";
       
-      if (nodeFileName === selectedFileName && selectedFileName !== "") {
-        reason = "Same file name";
-      } else if (selectedOriginalId && nodeData.originalNodeId === selectedOriginalId) {
-        reason = "Copy of same file";
-      } else if (selectedOriginalId === node.id || nodeData.originalNodeId === selectedNode.id) {
-        reason = "Original or copy";
-      } else if (node.id.includes(selectedNode.id) || selectedNode.id.includes(node.id)) {
-        // Check if IDs suggest copy relationship (e.g., "node-1-copy-xxx")
-        reason = "Related copy";
+      if (isFileNode) {
+        const nodeFileName = (nodeData as FileNodeData).fileName?.toLowerCase() || "";
+        
+        if (nodeFileName === selectedFileName && selectedFileName !== "") {
+          reason = "Same file name";
+        } else if (selectedOriginalId && nodeOriginalId === selectedOriginalId) {
+          reason = "Copy of same file";
+        } else if (selectedOriginalId === node.id || nodeOriginalId === selectedNode.id) {
+          reason = "Original or copy";
+        } else if (node.id.includes(selectedNode.id) || selectedNode.id.includes(node.id)) {
+          reason = "Related copy";
+        }
+      } else if (isTextNode) {
+        const nodeLabel = nodeData.label?.toLowerCase() || "";
+        const nodeContent = (nodeData as TextNodeData).content?.toLowerCase() || "";
+        
+        // Match by label
+        if (nodeLabel === selectedLabel && selectedLabel !== "") {
+          reason = "Same title";
+        } else if (selectedOriginalId && nodeOriginalId === selectedOriginalId) {
+          reason = "Copy of same text";
+        } else if (selectedOriginalId === node.id || nodeOriginalId === selectedNode.id) {
+          reason = "Original or copy";
+        } else if (nodeContent && selectedContent && nodeContent.slice(0, 50) === selectedContent.slice(0, 50)) {
+          reason = "Similar content";
+        }
       }
       
       if (reason) {
@@ -77,24 +104,28 @@ export function SyncFileDialog({
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
   const [selectedTargetCanvasId, setSelectedTargetCanvasId] = useState<string | null>(null);
 
-  const eligibleFiles = useMemo(() => 
-    getEligibleFiles(canvases, currentCanvasId, selectedNode),
+  const isFileNode = selectedNode.type === "file";
+  const isTextNode = selectedNode.type === "text";
+  const nodeTypeLabel = isFileNode ? "File" : "Text";
+
+  const eligibleNodes = useMemo(() => 
+    getEligibleNodes(canvases, currentCanvasId, selectedNode),
     [canvases, currentCanvasId, selectedNode]
   );
 
-  const selectedData = selectedNode.data as FileNodeData;
-  const isAlreadySynced = !!selectedData.syncGroupId;
+  const selectedData = selectedNode.data as FileNodeData | TextNodeData;
+  const isAlreadySynced = !!(selectedData as any).syncGroupId;
 
-  // Group eligible files by canvas
-  const filesByCanvas = useMemo(() => {
+  // Group eligible nodes by canvas
+  const nodesByCanvas = useMemo(() => {
     const grouped: Record<string, Array<{ node: AtlasNode; reason: string }>> = {};
-    for (const item of eligibleFiles) {
+    for (const item of eligibleNodes) {
       const canvasId = item.canvas.id;
       if (!grouped[canvasId]) grouped[canvasId] = [];
       grouped[canvasId].push({ node: item.node, reason: item.reason });
     }
     return grouped;
-  }, [eligibleFiles]);
+  }, [eligibleNodes]);
 
   const handleSync = () => {
     if (selectedTargetId && selectedTargetCanvasId) {
@@ -132,13 +163,13 @@ export function SyncFileDialog({
               className="text-lg font-semibold text-white"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
             >
-              Sync File
+              Sync {nodeTypeLabel}
             </h2>
             <p 
               className="text-sm text-gray-400 mt-0.5"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
             >
-              Keep files in sync across canvases
+              Keep {nodeTypeLabel.toLowerCase()}s in sync across canvases
             </p>
           </div>
           <button
@@ -152,7 +183,7 @@ export function SyncFileDialog({
           </button>
         </div>
 
-        {/* Current file info */}
+        {/* Current item info */}
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div 
             className="text-xs text-gray-500 uppercase tracking-wider mb-2"
@@ -165,16 +196,22 @@ export function SyncFileDialog({
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
             >
-              <span className="text-xs text-gray-400 font-medium">
-                {selectedData.fileExtension?.replace(".", "").toUpperCase() || "FILE"}
-              </span>
+              {isTextNode ? (
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                  <path d="M3 4H13M3 8H10M3 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <span className="text-xs text-gray-400 font-medium">
+                  {(selectedData as FileNodeData).fileExtension?.replace(".", "").toUpperCase() || "FILE"}
+                </span>
+              )}
             </div>
             <div>
               <p className="text-sm text-white font-medium" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                {selectedData.label || selectedData.fileName}
+                {selectedData.label || (isFileNode ? (selectedData as FileNodeData).fileName : "Untitled")}
               </p>
               <p className="text-xs text-gray-500" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                {selectedData.fileName}
+                {isFileNode ? (selectedData as FileNodeData).fileName : (isTextNode && (selectedData as TextNodeData).content ? (selectedData as TextNodeData).content.slice(0, 40) + "..." : nodeTypeLabel + " node")}
               </p>
             </div>
             {isAlreadySynced && (
@@ -219,13 +256,13 @@ export function SyncFileDialog({
                   Remove from sync
                 </p>
                 <p className="text-xs text-gray-500" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                  This file will no longer update with synced copies
+                  This {nodeTypeLabel.toLowerCase()} will no longer update with synced copies
                 </p>
               </div>
             </button>
           )}
 
-          {eligibleFiles.length === 0 ? (
+          {eligibleNodes.length === 0 ? (
             <div className="text-center py-8">
               <div 
                 className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
@@ -237,10 +274,10 @@ export function SyncFileDialog({
                 </svg>
               </div>
               <p className="text-sm text-gray-400" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                No eligible files found
+                No eligible {nodeTypeLabel.toLowerCase()}s found
               </p>
               <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                Files must have the same name or be copies of each other
+                {isFileNode ? "Files must have the same name or be copies of each other" : "Text nodes must have the same title or be copies"}
               </p>
             </div>
           ) : (
@@ -251,7 +288,7 @@ export function SyncFileDialog({
               >
                 Sync with
               </div>
-              {Object.entries(filesByCanvas).map(([canvasId, files]) => {
+              {Object.entries(nodesByCanvas).map(([canvasId, nodes]) => {
                 const canvas = canvases.find(c => c.id === canvasId);
                 if (!canvas) return null;
                 
@@ -270,9 +307,11 @@ export function SyncFileDialog({
                       )}
                     </div>
                     <div className="space-y-2">
-                      {files.map(({ node, reason }) => {
-                        const nodeData = node.data as FileNodeData;
-                        const isSelected = selectedTargetId === node.id;
+                      {nodes.map(({ node, reason }) => {
+                        const nodeData = node.data as FileNodeData | TextNodeData;
+                        const isNodeSelected = selectedTargetId === node.id;
+                        const isTargetFile = node.type === "file";
+                        const isTargetText = node.type === "text";
                         
                         return (
                           <button
@@ -284,35 +323,39 @@ export function SyncFileDialog({
                             }}
                             className="w-full p-3 rounded-xl text-left transition-all flex items-center gap-3"
                             style={{ 
-                              backgroundColor: isSelected ? "rgba(34, 197, 94, 0.1)" : "rgba(255,255,255,0.03)",
-                              border: isSelected ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid rgba(255,255,255,0.06)",
+                              backgroundColor: isNodeSelected ? "rgba(34, 197, 94, 0.1)" : "rgba(255,255,255,0.03)",
+                              border: isNodeSelected ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid rgba(255,255,255,0.06)",
                             }}
                           >
                             <div 
                               className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                               style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
                             >
-                              {nodeData.previewImages?.[0] || nodeData.uploadedFile?.url ? (
+                              {isTargetText ? (
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                                  <path d="M3 4H13M3 8H10M3 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
+                              ) : isTargetFile && ((nodeData as FileNodeData).previewImages?.[0] || (nodeData as FileNodeData).uploadedFile?.url) ? (
                                 <img 
-                                  src={nodeData.uploadedFile?.url || nodeData.previewImages?.[0]} 
+                                  src={(nodeData as FileNodeData).uploadedFile?.url || (nodeData as FileNodeData).previewImages?.[0]} 
                                   alt="" 
                                   className="w-full h-full object-cover rounded-lg"
                                 />
                               ) : (
                                 <span className="text-xs text-gray-400 font-medium">
-                                  {nodeData.fileExtension?.replace(".", "").toUpperCase() || "FILE"}
+                                  {isTargetFile ? (nodeData as FileNodeData).fileExtension?.replace(".", "").toUpperCase() || "FILE" : "TXT"}
                                 </span>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-white font-medium truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                                {nodeData.label || nodeData.fileName}
+                                {nodeData.label || (isTargetFile ? (nodeData as FileNodeData).fileName : "Untitled")}
                               </p>
                               <p className="text-xs text-gray-500 truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                                 {reason}
                               </p>
                             </div>
-                            {isSelected && (
+                            {isNodeSelected && (
                               <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
                                 <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                                   <path d="M4 8L7 11L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -362,7 +405,7 @@ export function SyncFileDialog({
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
-              Sync Files
+              Sync {nodeTypeLabel}s
             </button>
           </div>
         </div>

@@ -286,6 +286,9 @@ export interface TextNodeData {
   formatting?: TextFormatting;
   lastModified: string;
   author?: WorkspaceMember;
+  // Sync support
+  syncGroupId?: string;
+  originalNodeId?: string;
 }
 
 // Sage chatbot node data interface
