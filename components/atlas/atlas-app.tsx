@@ -48,6 +48,7 @@ export function AtlasApp() {
   const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
 
   // Load from localStorage on mount (client-side only)
   useEffect(() => {
@@ -81,6 +82,11 @@ export function AtlasApp() {
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
     setView("canvas");
+    // Track recent canvas history (most recent first, max 5)
+    setRecentCanvasIds(prev => {
+      const filtered = prev.filter(id => id !== canvasId);
+      return [canvasId, ...filtered].slice(0, 5);
+    });
   }, []);
 
   const handleBack = useCallback(() => {
@@ -294,6 +300,13 @@ export function AtlasApp() {
 
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
+  // Get recent canvases (excluding current, max 5)
+  const recentCanvases = recentCanvasIds
+    .filter(id => id !== activeCanvasId)
+    .map(id => canvases.find(c => c.id === id))
+    .filter((c): c is Canvas => c !== undefined)
+    .slice(0, 5);
+
   if (view === "canvas" && activeCanvas) {
     return (
       <AtlasEditor
@@ -308,6 +321,8 @@ export function AtlasApp() {
         onCreateCanvasWithNodes={handleCreateCanvasWithNodes}
         onSyncFiles={handleSyncFiles}
         onUnsyncFile={handleUnsyncFile}
+        recentCanvases={recentCanvases}
+        onSwitchCanvas={handleOpenCanvas}
       />
     );
   }

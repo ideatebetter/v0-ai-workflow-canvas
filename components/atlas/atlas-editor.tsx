@@ -44,6 +44,8 @@ interface AtlasEditorProps {
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
   onSyncFiles?: (sourceNodeId: string, targetNodeId: string, targetCanvasId: string) => void;
   onUnsyncFile?: (nodeId: string) => void;
+  recentCanvases?: Canvas[];
+  onSwitchCanvas?: (canvasId: string) => void;
 }
 
 // Constants for node positioning
@@ -147,7 +149,7 @@ function findFreePositions(
   return positions;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
@@ -1605,6 +1607,8 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         }}
         hasSelectedNodes={nodes.some(node => node.selected)}
         hasOtherCanvases={canvases && canvases.length > 1}
+        recentCanvases={recentCanvases}
+        onSwitchCanvas={onSwitchCanvas}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
