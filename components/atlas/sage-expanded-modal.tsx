@@ -5,6 +5,14 @@ import type { UIMessage } from "@ai-sdk/react";
 
 import { getSageChatStore } from "./sage-chatbot-node";
 
+// Attachment type for uploaded files
+interface ChatAttachment {
+  name: string;
+  type: string;
+  url: string;
+  size: number;
+}
+
 interface SageAction {
   action: string;
   suggestion?: Array<{ label: string; color: string }>;
@@ -25,7 +33,11 @@ export function SageExpandedModal({
 }: SageExpandedModalProps) {
   const [inputValue, setInputValue] = useState("");
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get shared chat state from the node's store
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -71,6 +83,87 @@ export function SageExpandedModal({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // File upload handler
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await processFiles(Array.from(files));
+  }, []);
+
+  // Process files for upload (used by both file input and drag-drop)
+  const processFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const { upload } = await import("@vercel/blob/client");
+      
+      for (const file of files) {
+        // Allow images, text files, and PDFs
+        const isImage = file.type.startsWith("image/");
+        const isPDF = file.type === "application/pdf" || file.name.endsWith(".pdf");
+        const isText = file.type.startsWith("text/") || 
+                       file.name.endsWith(".txt") || 
+                       file.name.endsWith(".md") ||
+                       file.name.endsWith(".json");
+        
+        if (!isImage && !isText && !isPDF) {
+          console.warn("[v0] Skipping unsupported file type:", file.type);
+          continue;
+        }
+
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload/client",
+        });
+
+        const newAttachment: ChatAttachment = {
+          name: file.name,
+          type: file.type,
+          url: blob.url,
+          size: file.size,
+        };
+
+        setAttachments(prev => [...prev, newAttachment]);
+      }
+    } catch (error) {
+      console.error("[v0] Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  }, [processFiles]);
+
+  const removeAttachment = useCallback((index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   const isLoading = status === "streaming" || status === "submitted";
 
   const getMessageText = useCallback((msg: typeof messages[0]): string => {
@@ -90,16 +183,32 @@ export function SageExpandedModal({
   }, [pendingSuggestion]);
 
   const handleSend = useCallback(async () => {
-    if (!inputValue.trim() || isLoading || !sendMessageRef.current) return;
-    const messageToSend = inputValue;
+    if ((!inputValue.trim() && attachments.length === 0) || isLoading || !sendMessageRef.current) return;
+    
+    // Build message with attachments context
+    let messageToSend = inputValue;
+    if (attachments.length > 0) {
+      const attachmentInfo = attachments.map(a => {
+        if (a.type.startsWith("image/")) {
+          return `[Image: ${a.name}](${a.url})`;
+        }
+        return `[File: ${a.name}](${a.url})`;
+      }).join("\n");
+      messageToSend = attachments.length > 0 && inputValue.trim() 
+        ? `${inputValue}\n\nAttachments:\n${attachmentInfo}`
+        : `Attached files:\n${attachmentInfo}`;
+    }
+    
     setInputValue("");
+    setAttachments([]);
+    
     try {
       await sendMessageRef.current({ text: messageToSend });
     } catch (error) {
       console.error("[v0] Error sending message:", error);
-      setInputValue(messageToSend);
+      setInputValue(inputValue);
     }
-  }, [inputValue, isLoading]);
+  }, [inputValue, attachments, isLoading]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -158,13 +267,30 @@ export function SageExpandedModal({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+        className={`relative w-full max-w-2xl max-h-[80vh] rounded-2xl overflow-hidden flex flex-col ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
         style={{
-          backgroundColor: "#0a0a0a",
-          border: "1px solid #F0FE0030",
+          backgroundColor: isDragOver ? "rgba(240, 254, 0, 0.02)" : "#0a0a0a",
+          border: isDragOver ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid #F0FE0030",
           boxShadow: "0 0 60px rgba(240, 254, 0, 0.1)",
         }}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
+        {/* Drag overlay */}
+        {isDragOver && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl pointer-events-none" style={{ background: "rgba(240, 254, 0, 0.05)" }}>
+            <div className="text-[#F0FE00] text-base font-medium flex items-center gap-3">
+              <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+                <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Drop files here
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div
           className="px-5 py-4 flex items-center justify-between border-b shrink-0"
@@ -328,7 +454,74 @@ export function SageExpandedModal({
           className="px-5 py-4 border-t shrink-0"
           style={{ borderColor: "#F0FE0020", backgroundColor: "#111111" }}
         >
+          {/* Attachment previews */}
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {attachments.map((attachment, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "rgba(240, 254, 0, 0.1)", border: "1px solid rgba(240, 254, 0, 0.2)" }}
+                >
+                  {attachment.type.startsWith("image/") ? (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
+                      <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
+                      <path d="M2 11l3-3 2 2 4-4 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
+                      <path d="M9 2H4C3.44772 2 3 2.44772 3 3V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V6L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 2V6H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                  <span className="text-[#F0FE00] max-w-[150px] truncate">{attachment.name}</span>
+                  <button
+                    onClick={() => removeAttachment(index)}
+                    className="ml-1 hover:bg-white/10 rounded p-1 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-[#F0FE00]/60">
+                      <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.txt,.md,.json,.pdf,text/*,application/pdf"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          
           <div className="flex items-center gap-3">
+            {/* Attachment button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isUploading}
+              className="p-3 rounded-xl transition-all disabled:opacity-50 hover:bg-white/10"
+              style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+              title="Attach files"
+            >
+              {isUploading ? (
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="animate-spin text-[#F0FE00]">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="32" strokeDashoffset="8"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                  <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+            
             <input
               type="text"
               value={inputValue}
@@ -342,7 +535,7 @@ export function SageExpandedModal({
             <button
               type="button"
               onClick={handleSend}
-              disabled={isLoading || !inputValue.trim()}
+              disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
               className="p-3 rounded-xl transition-all disabled:opacity-50 hover:brightness-110"
               style={{ backgroundColor: "#F0FE00" }}
             >

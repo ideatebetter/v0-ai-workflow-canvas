@@ -285,48 +285,63 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }>) => {
       const { promptNodeId, sourceNodeId, mockups, prompt } = e.detail;
       
-      // Find the source node
-      const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      if (!sourceNode) return;
+      // Generate IDs upfront so they're consistent between nodes and edges
+      const timestamp = Date.now();
+      const mockupIds = mockups.map((_, index) => `mockup-${timestamp}-${index}`);
       
-      const baseX = sourceNode.position.x + 320;
-      const baseY = sourceNode.position.y;
+      // Use setNodes callback to access current nodes state (avoids stale closure)
+      setNodes(currentNodes => {
+        // Find the source node from current state
+        const sourceNode = currentNodes.find(n => n.id === sourceNodeId);
+        // Also find the prompt node to get its position (which is near the source)
+        const promptNode = currentNodes.find(n => n.id === promptNodeId);
+        
+        if (!sourceNode) return currentNodes;
+        
+        // Use prompt node position if available (it's positioned next to source), otherwise fallback to source
+        const baseX = promptNode?.position.x || (sourceNode.position.x + 320);
+        const baseY = promptNode?.position.y || sourceNode.position.y;
+        
+        // Create mockup image nodes
+        const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
+          id: mockupIds[index],
+          type: "mockupImage" as const,
+          position: { 
+            x: baseX, 
+            y: baseY + (index * 280)
+          },
+          data: {
+            label: mockup.name,
+            imageUrl: mockup.imageUrl,
+            sourceFileName: (sourceNode.data as FileNodeData).fileName,
+            prompt: prompt,
+            generatedAt: "Just now",
+          },
+        }));
+        
+        // Return updated nodes: remove prompt node, add mockup nodes
+        return [
+          ...currentNodes.filter(n => n.id !== promptNodeId),
+          ...newMockupNodes
+        ];
+      });
       
-      // Create mockup image nodes
-      const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
-        id: `mockup-${Date.now()}-${index}`,
-        type: "mockupImage" as const,
-        position: { 
-          x: baseX, 
-          y: baseY + (index * 280)
-        },
-        data: {
-          label: mockup.name,
-          imageUrl: mockup.imageUrl,
-          sourceFileName: (sourceNode.data as FileNodeData).fileName,
-          prompt: prompt,
-          generatedAt: "Just now",
-        },
-      }));
+      // Update edges separately using the same IDs
+      setEdges(currentEdges => {
+        const newEdges: Edge[] = mockupIds.map((mockupId) => ({
+          id: `edge-${sourceNodeId}-${mockupId}`,
+          source: sourceNodeId,
+          target: mockupId,
+          style: { stroke: "#F0FE00", strokeWidth: 2 },
+          animated: true,
+        }));
+        
+        return [
+          ...currentEdges.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
+          ...newEdges
+        ];
+      });
       
-      // Create edges from source node to each mockup
-      const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
-        id: `edge-${sourceNodeId}-${mockupNode.id}`,
-        source: sourceNodeId,
-        target: mockupNode.id,
-        style: { stroke: "#F0FE00", strokeWidth: 2 },
-        animated: true,
-      }));
-      
-      // Remove prompt node (using ID from event) and its edges, add mockup nodes and edges
-      setNodes(nds => [
-        ...nds.filter(n => n.id !== promptNodeId),
-        ...newMockupNodes
-      ]);
-      setEdges(eds => [
-        ...eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
-        ...newEdges
-      ]);
       setActiveAIPromptNodeId(null);
     };
 
@@ -334,7 +349,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return () => {
       window.removeEventListener("atlas:mockups-generated", handleMockupsGenerated as EventListener);
     };
-  }, [nodes, setNodes, setEdges]);
+  }, [setNodes, setEdges]);
   
   // Listen for close AI prompt events
   useEffect(() => {
@@ -630,12 +645,14 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       id: nodeId,
       type: "statusPill",
       position: nodePosition,
+      selected: true, // Select the new node
       data: {
         label: "Status",
         color: "#e5e5e5",
       },
     };
-    setNodes((nds) => [...nds, newNode]);
+    // Deselect all other nodes and add the new one selected
+    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
     // If source node provided, create an edge
     if (sourceNodeId) {
@@ -645,6 +662,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         target: nodeId,
       }]);
     }
+
+    // Center view on the new node
+    window.dispatchEvent(new CustomEvent("atlas:center-on-node", {
+      detail: { nodeId, position: nodePosition }
+    }));
   }, [nodes.length, setNodes, setEdges]);
 
   const handleAddTextNode = useCallback(
@@ -663,6 +685,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         id: nodeId,
         type: "text",
         position: nodePosition,
+        selected: true,
         data: {
           label: "Text",
           content: "",
@@ -677,7 +700,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           },
         },
       };
-      setNodes((nds) => [...nds, newNode]);
+      setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
       // If source node provided, create an edge
       if (sourceNodeId) {
@@ -687,6 +710,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           target: nodeId,
         }]);
       }
+
+      // Center view on the new node
+      window.dispatchEvent(new CustomEvent("atlas:center-on-node", {
+        detail: { nodeId, position: nodePosition }
+      }));
     },
     [nodes.length, setNodes, setEdges]
   );
@@ -703,6 +731,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "sageChatbot",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Sage Chat",
             messages: [],
@@ -714,6 +743,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "sageOverview",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Project Overview",
             projectProgress: 65,
@@ -728,6 +758,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "stakeholder",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Stakeholder",
             stakeholder: WORKSPACE_MEMBERS[0],
@@ -743,7 +774,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         };
       }
 
-      setNodes((nds) => [...nds, newNode]);
+      setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
       // If source node provided, create an edge
       if (sourceNodeId) {
@@ -753,6 +784,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           target: nodeId,
         }]);
       }
+
+      // Center view on the new node
+      window.dispatchEvent(new CustomEvent("atlas:center-on-node", {
+        detail: { nodeId, position: nodePosition }
+      }));
     },
     [nodes.length, setNodes, setEdges]
   );
@@ -769,6 +805,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "capacity",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Capacity & Resourcing",
             teamMembers: WORKSPACE_MEMBERS.slice(0, 3).map((m, idx) => ({
@@ -787,6 +824,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "financial",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Financial Performance",
             projectMargin: 28,
@@ -803,6 +841,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "projectHealth",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Project Health",
             daysSinceClientTouchpoint: 3,
@@ -818,6 +857,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "pipeline",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Pipeline Forecast",
             forecast30Days: [
@@ -840,6 +880,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           id: nodeId,
           type: "teamHealth",
           position: nodePosition,
+          selected: true,
           data: {
             label: "Team Health",
             feedbackLoopVelocity: 18,
@@ -851,7 +892,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         };
       }
 
-      setNodes((nds) => [...nds, newNode]);
+      setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
       // If source node provided, create an edge
       if (sourceNodeId) {
@@ -861,6 +902,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           target: nodeId,
         }]);
       }
+
+      // Center view on the new node
+      window.dispatchEvent(new CustomEvent("atlas:center-on-node", {
+        detail: { nodeId, position: nodePosition }
+      }));
     },
     [nodes.length, setNodes, setEdges]
   );
@@ -1335,6 +1381,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
               type: "file" as const,
               position: freePositions[index] || { x: position.x + index * 260, y: position.y },
+              selected: index === 0, // Select the first uploaded file
               data: {
                 label,
                 fileName: file.fileName,
@@ -1351,7 +1398,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             };
           });
 
-          setNodes((nds) => [...nds, ...newNodes]);
+          // Deselect other nodes and add new ones
+          setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+
+          // Center view on the first new node
+          if (newNodes.length > 0) {
+            const firstNode = newNodes[0];
+            window.dispatchEvent(new CustomEvent("atlas:center-on-node", {
+              detail: { nodeId: firstNode.id, position: firstNode.position }
+            }));
+          }
         }
       }
     },
@@ -1626,6 +1682,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
           onConnect={onConnect}
           onNodesUpdate={handleNodesUpdate}
           onDoubleClick={handleDoubleClickCanvas}
+          onRightClick={handleDoubleClickCanvas}
           onCanvasClick={handleCanvasClick}
           onCommentSelect={handleCommentSelect}
           onCommentAdd={handleCommentAdd}

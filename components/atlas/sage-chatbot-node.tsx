@@ -1,16 +1,27 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
+
+// Attachment type for uploaded files
+interface ChatAttachment {
+  name: string;
+  type: string;
+  url: string;
+  size: number;
+}
 
 // Global store for sharing chat state between node and modal
 const sageChatStores = new Map<string, {
   messages: UIMessage[];
   sendMessage: (message: { text: string }) => Promise<void>;
   status: string;
+  attachments: ChatAttachment[];
+  addAttachment: (attachment: ChatAttachment) => void;
+  clearAttachments: () => void;
 }>();
 
 export function getSageChatStore(nodeId: string) {
@@ -45,6 +56,10 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   const nodeData = data as SageChatbotNodeData;
   const [inputValue, setInputValue] = useState("");
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Emit event for parent to handle actions
   const emitSageAction = useCallback((action: SageAction) => {
@@ -84,13 +99,102 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     },
   });
 
+  // File upload handler
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await processFiles(Array.from(files));
+  }, []);
+
+  // Process files for upload (used by both file input and drag-drop)
+  const processFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const { upload } = await import("@vercel/blob/client");
+      
+      for (const file of files) {
+        // Allow images, text files, and PDFs
+        const isImage = file.type.startsWith("image/");
+        const isPDF = file.type === "application/pdf" || file.name.endsWith(".pdf");
+        const isText = file.type.startsWith("text/") || 
+                       file.name.endsWith(".txt") || 
+                       file.name.endsWith(".md") ||
+                       file.name.endsWith(".json");
+        
+        if (!isImage && !isText && !isPDF) {
+          console.warn("[v0] Skipping unsupported file type:", file.type);
+          continue;
+        }
+
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload/client",
+        });
+
+        const newAttachment: ChatAttachment = {
+          name: file.name,
+          type: file.type,
+          url: blob.url,
+          size: file.size,
+        };
+
+        setAttachments(prev => [...prev, newAttachment]);
+      }
+    } catch (error) {
+      console.error("[v0] Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  }, [processFiles]);
+
+  const addAttachment = useCallback((attachment: ChatAttachment) => {
+    setAttachments(prev => [...prev, attachment]);
+  }, []);
+
+  const clearAttachments = useCallback(() => {
+    setAttachments([]);
+  }, []);
+
+  const removeAttachment = useCallback((index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   // Store chat state in global store so modal can access it
   useEffect(() => {
-    sageChatStores.set(id, { messages, sendMessage, status });
+    sageChatStores.set(id, { messages, sendMessage, status, attachments, addAttachment, clearAttachments });
     return () => {
       // Don't delete on unmount - keep messages available for modal
     };
-  }, [id, messages, sendMessage, status]);
+  }, [id, messages, sendMessage, status, attachments, addAttachment, clearAttachments]);
   
   // Process tool results from messages to detect suggestions
   React.useEffect(() => {
@@ -131,19 +235,35 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   }, [pendingSuggestion, emitSageAction]);
 
   const handleSend = useCallback(async () => {
-    if (!inputValue.trim() || isLoading) {
+    if ((!inputValue.trim() && attachments.length === 0) || isLoading) {
       return;
     }
-    const messageToSend = inputValue;
+    
+    // Build message with attachments context
+    let messageToSend = inputValue;
+    if (attachments.length > 0) {
+      const attachmentInfo = attachments.map(a => {
+        if (a.type.startsWith("image/")) {
+          return `[Image: ${a.name}](${a.url})`;
+        }
+        return `[File: ${a.name}](${a.url})`;
+      }).join("\n");
+      messageToSend = attachments.length > 0 && inputValue.trim() 
+        ? `${inputValue}\n\nAttachments:\n${attachmentInfo}`
+        : `Attached files:\n${attachmentInfo}`;
+    }
+    
     setInputValue("");
+    setAttachments([]);
+    
     try {
-      // In AI SDK 6, sendMessage takes { text } not { content }
       await sendMessage({ text: messageToSend });
     } catch (error) {
       console.error("[v0] Error sending message:", error);
-      setInputValue(messageToSend); // Restore input on error
+      setInputValue(inputValue);
+      setAttachments(attachments);
     }
-  }, [inputValue, isLoading, sendMessage]);
+  }, [inputValue, attachments, isLoading, sendMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation();
@@ -161,20 +281,41 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
 
   return (
     <div
-      className="group transition-all duration-500 ease-out overflow-hidden"
+      className={`group transition-all duration-500 ease-out overflow-hidden ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
       style={{
-        background: "rgba(28, 28, 30, 0.85)",
+        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "rgba(28, 28, 30, 0.85)",
         backdropFilter: "blur(40px) saturate(180%)",
         WebkitBackdropFilter: "blur(40px) saturate(180%)",
         borderRadius: 20,
-        border: selected ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid rgba(255,255,255,0.08)",
+        border: isDragOver 
+          ? "1px solid rgba(240, 254, 0, 0.5)" 
+          : selected 
+            ? "1px solid rgba(240, 254, 0, 0.5)" 
+            : "1px solid rgba(255,255,255,0.08)",
         width: 320,
         minHeight: 240,
         boxShadow: selected 
           ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)" 
           : "0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset",
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] pointer-events-none" style={{ background: "rgba(240, 254, 0, 0.1)" }}>
+          <div className="text-[#F0FE00] text-sm font-medium flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+              <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Drop files here
+          </div>
+        </div>
+      )}
+      
       {/* Header - Apple style minimal */}
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center justify-between">
@@ -320,14 +461,83 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
 
       {/* Input - Apple style pill */}
       <div className="px-4 pb-4 pt-2 nodrag">
+        {/* Attachment previews */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {attachments.map((attachment, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]"
+                style={{ backgroundColor: "rgba(240, 254, 0, 0.1)", border: "1px solid rgba(240, 254, 0, 0.2)" }}
+              >
+                {attachment.type.startsWith("image/") ? (
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
+                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
+                    <path d="M2 11l3-3 2 2 4-4 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
+                    <path d="M9 2H4C3.44772 2 3 2.44772 3 3V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V6L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 2V6H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+                <span className="text-[#F0FE00] max-w-[80px] truncate">{attachment.name}</span>
+                <button
+                  onClick={() => removeAttachment(index)}
+                  className="ml-0.5 hover:bg-white/10 rounded p-0.5 transition-colors"
+                >
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="text-[#F0FE00]/60">
+                    <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.txt,.md,.json,.pdf,text/*,application/pdf"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
+        
         <div 
-          className="flex items-center gap-3 px-4 py-3 transition-all duration-200"
+          className="flex items-center gap-2 px-3 py-2.5 transition-all duration-200"
           style={{ 
             backgroundColor: "rgba(255,255,255,0.06)",
             borderRadius: 24,
             border: "1px solid rgba(255,255,255,0.06)",
           }}
         >
+          {/* Attachment button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            disabled={isLoading || isUploading}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/10 disabled:opacity-30"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+          >
+            {isUploading ? (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="animate-spin">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="32" strokeDashoffset="8"/>
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
+          
           <input
             type="text"
             value={inputValue}
@@ -349,11 +559,11 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           <button
             type="button"
             onClick={handleButtonClick}
-            disabled={isLoading || !inputValue.trim()}
+            disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-20 active:scale-90"
             style={{ 
-              backgroundColor: inputValue.trim() ? "#F0FE00" : "rgba(255,255,255,0.1)",
-              color: inputValue.trim() ? "#000" : "rgba(255,255,255,0.3)"
+              backgroundColor: (inputValue.trim() || attachments.length > 0) ? "#F0FE00" : "rgba(255,255,255,0.1)",
+              color: (inputValue.trim() || attachments.length > 0) ? "#000" : "rgba(255,255,255,0.3)"
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
