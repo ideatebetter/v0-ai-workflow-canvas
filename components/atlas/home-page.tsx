@@ -1712,7 +1712,53 @@ All Frameworks
                     </button>
                   </div>
                   
-                  <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {/* Import from Local Storage */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Restore from Local Storage</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Load canvases saved in this browser
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const stored = localStorage.getItem("atlas-canvases");
+                          if (stored) {
+                            const localCanvases = JSON.parse(stored);
+                            if (localCanvases && localCanvases.length > 0) {
+                              const confirmed = window.confirm(
+                                `Found ${localCanvases.length} canvas(es) in local storage:\n\n${localCanvases.map((c: any) => `• ${c.name}`).join("\n")}\n\nReplace current canvases with these?`
+                              );
+                              if (confirmed) {
+                                onCanvasesChange(localCanvases);
+                                alert("Canvases restored from local storage! Click 'Sync Now' to save them to the cloud.");
+                              }
+                            } else {
+                              alert("No canvases found in local storage.");
+                            }
+                          } else {
+                            alert("No canvases found in local storage.");
+                          }
+                        } catch (e) {
+                          console.error("Failed to restore from localStorage:", e);
+                          alert("Failed to read local storage data.");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>>
                     Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
                   </p>
                 </div>
