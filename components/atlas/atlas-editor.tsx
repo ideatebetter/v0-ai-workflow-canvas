@@ -285,48 +285,63 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }>) => {
       const { promptNodeId, sourceNodeId, mockups, prompt } = e.detail;
       
-      // Find the source node
-      const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      if (!sourceNode) return;
+      // Generate IDs upfront so they're consistent between nodes and edges
+      const timestamp = Date.now();
+      const mockupIds = mockups.map((_, index) => `mockup-${timestamp}-${index}`);
       
-      const baseX = sourceNode.position.x + 320;
-      const baseY = sourceNode.position.y;
+      // Use setNodes callback to access current nodes state (avoids stale closure)
+      setNodes(currentNodes => {
+        // Find the source node from current state
+        const sourceNode = currentNodes.find(n => n.id === sourceNodeId);
+        // Also find the prompt node to get its position (which is near the source)
+        const promptNode = currentNodes.find(n => n.id === promptNodeId);
+        
+        if (!sourceNode) return currentNodes;
+        
+        // Use prompt node position if available (it's positioned next to source), otherwise fallback to source
+        const baseX = promptNode?.position.x || (sourceNode.position.x + 320);
+        const baseY = promptNode?.position.y || sourceNode.position.y;
+        
+        // Create mockup image nodes
+        const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
+          id: mockupIds[index],
+          type: "mockupImage" as const,
+          position: { 
+            x: baseX, 
+            y: baseY + (index * 280)
+          },
+          data: {
+            label: mockup.name,
+            imageUrl: mockup.imageUrl,
+            sourceFileName: (sourceNode.data as FileNodeData).fileName,
+            prompt: prompt,
+            generatedAt: "Just now",
+          },
+        }));
+        
+        // Return updated nodes: remove prompt node, add mockup nodes
+        return [
+          ...currentNodes.filter(n => n.id !== promptNodeId),
+          ...newMockupNodes
+        ];
+      });
       
-      // Create mockup image nodes
-      const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
-        id: `mockup-${Date.now()}-${index}`,
-        type: "mockupImage" as const,
-        position: { 
-          x: baseX, 
-          y: baseY + (index * 280)
-        },
-        data: {
-          label: mockup.name,
-          imageUrl: mockup.imageUrl,
-          sourceFileName: (sourceNode.data as FileNodeData).fileName,
-          prompt: prompt,
-          generatedAt: "Just now",
-        },
-      }));
+      // Update edges separately using the same IDs
+      setEdges(currentEdges => {
+        const newEdges: Edge[] = mockupIds.map((mockupId) => ({
+          id: `edge-${sourceNodeId}-${mockupId}`,
+          source: sourceNodeId,
+          target: mockupId,
+          style: { stroke: "#F0FE00", strokeWidth: 2 },
+          animated: true,
+        }));
+        
+        return [
+          ...currentEdges.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
+          ...newEdges
+        ];
+      });
       
-      // Create edges from source node to each mockup
-      const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
-        id: `edge-${sourceNodeId}-${mockupNode.id}`,
-        source: sourceNodeId,
-        target: mockupNode.id,
-        style: { stroke: "#F0FE00", strokeWidth: 2 },
-        animated: true,
-      }));
-      
-      // Remove prompt node (using ID from event) and its edges, add mockup nodes and edges
-      setNodes(nds => [
-        ...nds.filter(n => n.id !== promptNodeId),
-        ...newMockupNodes
-      ]);
-      setEdges(eds => [
-        ...eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
-        ...newEdges
-      ]);
       setActiveAIPromptNodeId(null);
     };
 
@@ -334,7 +349,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return () => {
       window.removeEventListener("atlas:mockups-generated", handleMockupsGenerated as EventListener);
     };
-  }, [nodes, setNodes, setEdges]);
+  }, [setNodes, setEdges]);
   
   // Listen for close AI prompt events
   useEffect(() => {
