@@ -1672,6 +1672,46 @@ All Frameworks
                       Sync Now
                     </button>
                   </div>
+                  
+                  {/* Export Backup */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Export Local Backup</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Download your current data as a JSON file
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Export current canvases to JSON file
+                        const exportData = {
+                          exportedAt: new Date().toISOString(),
+                          canvases: canvases,
+                          settings: workspaceSettings,
+                        };
+                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `atlas-backup-${new Date().toISOString().split("T")[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Export
+                    </button>
+                  </div>
+                  
                   <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
                   </p>
