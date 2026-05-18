@@ -40,15 +40,20 @@ export function AtlasApp() {
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
     if (!user) {
+      console.log("[v0] No user, using INITIAL_CANVASES");
       setCanvases(INITIAL_CANVASES);
       setIsLoadingCanvases(false);
       return;
     }
 
+    console.log("[v0] Loading canvases from API for user:", user.id);
+
     try {
       const response = await fetch("/api/canvas");
+      console.log("[v0] API response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("[v0] Loaded canvases from API:", data.canvases?.length || 0);
         if (data.canvases && data.canvases.length > 0) {
           // Transform API response to match Canvas type
           const loadedCanvases: Canvas[] = data.canvases.map((c: any) => ({
@@ -61,17 +66,19 @@ export function AtlasApp() {
             createdAt: c.created_at,
             updatedAt: c.updated_at,
           }));
+          console.log("[v0] Setting canvases:", loadedCanvases.map(c => c.name));
           setCanvases(loadedCanvases);
         } else {
           // No canvases in database, use initial canvases
+          console.log("[v0] No canvases in DB, using INITIAL_CANVASES");
           setCanvases(INITIAL_CANVASES);
         }
       } else {
-        console.error("Failed to load canvases from API");
+        console.error("[v0] Failed to load canvases from API:", response.statusText);
         setCanvases(INITIAL_CANVASES);
       }
     } catch (error) {
-      console.error("Error loading canvases:", error);
+      console.error("[v0] Error loading canvases:", error);
       setCanvases(INITIAL_CANVASES);
     } finally {
       setIsLoadingCanvases(false);
@@ -80,16 +87,23 @@ export function AtlasApp() {
 
   // Save canvas to API (debounced)
   const saveCanvasToAPI = useCallback(async (canvas: Canvas) => {
-    if (!user) return;
+    if (!user) {
+      console.log("[v0] No user, skipping save");
+      return;
+    }
+
+    console.log("[v0] Saving canvas to API:", canvas.name, canvas.id);
 
     try {
       // Check if canvas exists in database
       const checkResponse = await fetch(`/api/canvas?id=${canvas.id}`);
       const exists = checkResponse.ok;
+      console.log("[v0] Canvas exists in DB:", exists);
 
       if (exists) {
         // Update existing canvas
-        await fetch("/api/canvas", {
+        console.log("[v0] Updating existing canvas");
+        const updateResponse = await fetch("/api/canvas", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -101,8 +115,10 @@ export function AtlasApp() {
             settings: { comments: canvas.comments },
           }),
         });
+        console.log("[v0] Update response:", updateResponse.status);
       } else {
         // Create new canvas
+        console.log("[v0] Creating new canvas");
         const response = await fetch("/api/canvas", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -115,8 +131,10 @@ export function AtlasApp() {
           }),
         });
         
+        console.log("[v0] Create response:", response.status);
         if (response.ok) {
           const data = await response.json();
+          console.log("[v0] Created canvas with new ID:", data.canvas?.id);
           // Update local canvas with database ID
           setCanvases(prev => prev.map(c => 
             c.id === canvas.id ? { ...c, id: data.canvas.id } : c
@@ -124,7 +142,7 @@ export function AtlasApp() {
         }
       }
     } catch (error) {
-      console.error("Error saving canvas:", error);
+      console.error("[v0] Error saving canvas:", error);
     }
   }, [user]);
 
@@ -166,6 +184,23 @@ export function AtlasApp() {
     setView("home");
     setActiveCanvasId(null);
   }, []);
+
+  // Force save all canvases to cloud
+  const handleSaveAllToCloud = useCallback(async () => {
+    if (!user) {
+      console.log("[v0] No user, cannot save to cloud");
+      return;
+    }
+    
+    console.log("[v0] Force saving all canvases to cloud:", canvases.length);
+    
+    for (const canvas of canvases) {
+      await saveCanvasToAPI(canvas);
+    }
+    
+    console.log("[v0] All canvases saved to cloud");
+    alert(`Saved ${canvases.length} canvases to cloud!`);
+  }, [user, canvases, saveCanvasToAPI]);
 
   const handleCanvasChange = useCallback((updatedCanvas: Canvas) => {
     setCanvases((prev) =>
@@ -452,12 +487,14 @@ export function AtlasApp() {
   }
 
   return (
-    <HomePage
-      onOpenCanvas={handleOpenCanvas}
-      workspaceSettings={workspaceSettings}
-      onWorkspaceSettingsChange={setWorkspaceSettings}
-      canvases={canvases}
-      onCanvasesChange={setCanvases}
+> <HomePage
+  onOpenCanvas={handleOpenCanvas}
+  workspaceSettings={workspaceSettings}
+  onWorkspaceSettingsChange={setWorkspaceSettings}
+  canvases={canvases}
+  onCanvasesChange={setCanvases}
+  onSaveAllToCloud={handleSaveAllToCloud}
+  isLoadingCanvases={isLoadingCanvases}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
       onRemoveFramework={handleRemoveFramework}
