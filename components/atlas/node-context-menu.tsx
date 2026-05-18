@@ -14,6 +14,7 @@ interface NodeContextMenuProps {
   onSyncFile?: () => void;
   isFileNode?: boolean;
   isSynced?: boolean;
+  onOrganize?: () => void;
 }
 
 export function NodeContextMenu({
@@ -28,6 +29,7 @@ export function NodeContextMenu({
   onSyncFile,
   isFileNode,
   isSynced,
+  onOrganize,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -106,6 +108,27 @@ export function NodeContextMenu({
         Duplicate
         <span className="ml-auto text-xs text-gray-500">⌘D</span>
       </button>
+
+      {/* Organize - only show when multiple nodes selected */}
+      {selectedCount > 1 && onOrganize && (
+        <button
+          type="button"
+          onClick={() => {
+            onOrganize();
+            onClose();
+          }}
+          className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
+          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+            <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+          Organize
+        </button>
+      )}
 
       {/* Sync option - only for single file nodes */}
       {isFileNode && selectedCount === 1 && onSyncFile && (

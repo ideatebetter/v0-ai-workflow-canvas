@@ -1794,6 +1794,88 @@ presentationMode={presentationMode}
             setEdges(eds => eds.filter(e => !nodeIdsToDelete.includes(e.source) && !nodeIdsToDelete.includes(e.target)));
           }}
           hasOtherCanvases={!!(canvases && canvases.length > 1)}
+          onOrganize={() => {
+            // Get all selected nodes
+            const selectedNodes = contextMenu.nodes;
+            if (selectedNodes.length < 2) return;
+
+            // Configuration for grid layout
+            const NODE_WIDTH = 240;  // Approximate width of a file node
+            const NODE_HEIGHT = 300; // Approximate height of a file node
+            const GAP_X = 30;        // Horizontal gap between nodes
+            const GAP_Y = 30;        // Vertical gap between nodes
+            const MAX_COLUMNS = 4;   // Maximum columns in grid
+
+            // Find the bounding box of selected nodes
+            let minX = Infinity, minY = Infinity;
+            for (const node of selectedNodes) {
+              minX = Math.min(minX, node.position.x);
+              minY = Math.min(minY, node.position.y);
+            }
+
+            // Check if there's a status pill directly above the selected nodes
+            // A status pill is "above" if it's within a reasonable Y range and overlaps X range
+            const statusPills = nodes.filter(n => n.type === "status-pill");
+            let anchorPill: typeof nodes[0] | null = null;
+            
+            for (const pill of statusPills) {
+              // Check if pill is above the selection (within ~100px above minY)
+              const pillBottom = pill.position.y + 50; // Status pills are ~50px tall
+              if (pillBottom <= minY && pillBottom >= minY - 150) {
+                // Check if pill is horizontally aligned (within range of selection)
+                if (!anchorPill || pill.position.y > anchorPill.position.y) {
+                  anchorPill = pill;
+                }
+              }
+            }
+
+            // Calculate new positions
+            let startX = minX;
+            let startY = minY;
+            let columnsToUse = MAX_COLUMNS;
+
+            if (anchorPill) {
+              // If there's a status pill, arrange in a line below it
+              startX = anchorPill.position.x;
+              startY = anchorPill.position.y + 80; // Below the pill
+              columnsToUse = selectedNodes.length; // All in one row
+            }
+
+            // Create position updates
+            const nodePositionUpdates: Record<string, { x: number; y: number }> = {};
+            
+            // Sort nodes by their current Y position, then X (to maintain some logical order)
+            const sortedNodes = [...selectedNodes].sort((a, b) => {
+              const yDiff = a.position.y - b.position.y;
+              if (Math.abs(yDiff) < 50) {
+                return a.position.x - b.position.x;
+              }
+              return yDiff;
+            });
+
+            for (let i = 0; i < sortedNodes.length; i++) {
+              const col = i % columnsToUse;
+              const row = Math.floor(i / columnsToUse);
+              nodePositionUpdates[sortedNodes[i].id] = {
+                x: startX + col * (NODE_WIDTH + GAP_X),
+                y: startY + row * (NODE_HEIGHT + GAP_Y),
+              };
+            }
+
+            // Apply position updates
+            setNodes(nds => nds.map(node => {
+              const newPos = nodePositionUpdates[node.id];
+              if (newPos) {
+                return {
+                  ...node,
+                  position: newPos,
+                };
+              }
+              return node;
+            }));
+
+            setContextMenu(null);
+          }}
           onSyncFile={() => {
             if (contextMenu.nodes.length === 1 && contextMenu.nodes[0].type === "file") {
               setSyncTargetNode(contextMenu.nodes[0]);
