@@ -487,14 +487,14 @@ export function AtlasApp() {
   }
 
   return (
-> <HomePage
-  onOpenCanvas={handleOpenCanvas}
-  workspaceSettings={workspaceSettings}
-  onWorkspaceSettingsChange={setWorkspaceSettings}
-  canvases={canvases}
-  onCanvasesChange={setCanvases}
-  onSaveAllToCloud={handleSaveAllToCloud}
-  isLoadingCanvases={isLoadingCanvases}
+    <HomePage
+      onOpenCanvas={handleOpenCanvas}
+      workspaceSettings={workspaceSettings}
+      onWorkspaceSettingsChange={setWorkspaceSettings}
+      canvases={canvases}
+      onCanvasesChange={setCanvases}
+      onSaveAllToCloud={handleSaveAllToCloud}
+      isLoadingCanvases={isLoadingCanvases}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
       onRemoveFramework={handleRemoveFramework}
