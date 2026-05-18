@@ -11,8 +11,8 @@ interface NodeContextMenuProps {
   onDuplicate: () => void;
   onDelete: () => void;
   hasOtherCanvases: boolean;
-  onSyncFile?: () => void;
-  isFileNode?: boolean;
+  onSyncNode?: () => void;
+  isSyncableNode?: boolean;
   isSynced?: boolean;
   onOrganize?: () => void;
 }
@@ -26,8 +26,8 @@ export function NodeContextMenu({
   onDuplicate,
   onDelete,
   hasOtherCanvases,
-  onSyncFile,
-  isFileNode,
+  onSyncNode,
+  isSyncableNode,
   isSynced,
   onOrganize,
 }: NodeContextMenuProps) {
@@ -130,14 +130,14 @@ export function NodeContextMenu({
         </button>
       )}
 
-      {/* Sync option - only for single file nodes */}
-      {isFileNode && selectedCount === 1 && onSyncFile && (
+      {/* Sync option - for single file or text nodes */}
+      {isSyncableNode && selectedCount === 1 && onSyncNode && (
         <>
           <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
           <button
             type="button"
             onClick={() => {
-              onSyncFile();
+              onSyncNode();
               onClose();
             }}
             className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
@@ -148,9 +148,9 @@ export function NodeContextMenu({
               <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            {isSynced ? "Manage Sync..." : "Sync with File..."}
+            {isSynced ? "Manage Sync..." : "Sync with..."}
             {isSynced && (
-              <span 
+              <span
                 className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium"
                 style={{ backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e" }}
               >
