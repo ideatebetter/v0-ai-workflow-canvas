@@ -1820,6 +1820,56 @@ All Frameworks
                     </label>
                   </div>
                   
+                  {/* Paste JSON directly */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Paste JSON Data</span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Paste canvas data directly from clipboard
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const jsonText = window.prompt("Paste your canvas JSON data:");
+                        if (!jsonText) return;
+                        
+                        try {
+                          let importedCanvases;
+                          const parsed = JSON.parse(jsonText);
+                          if (Array.isArray(parsed)) {
+                            importedCanvases = parsed;
+                          } else if (parsed.canvases && Array.isArray(parsed.canvases)) {
+                            importedCanvases = parsed.canvases;
+                          } else {
+                            alert("Invalid format. Expected canvases array.");
+                            return;
+                          }
+                          
+                          const confirmed = window.confirm(
+                            `Found ${importedCanvases.length} canvas(es):\n\n${importedCanvases.slice(0, 10).map((c: any) => `• ${c.name}`).join("\n")}${importedCanvases.length > 10 ? `\n... and ${importedCanvases.length - 10} more` : ""}\n\nReplace current canvases with these?`
+                          );
+                          if (confirmed) {
+                            onCanvasesChange(importedCanvases);
+                            alert("Canvases imported! Click 'Sync Now' to save them to the cloud.");
+                          }
+                        } catch (err) {
+                          console.error("Failed to parse JSON:", err);
+                          alert("Failed to parse JSON. Make sure it's valid.");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: "#2a2a2a", 
+                        color: "#fff",
+                        border: "1px solid #333",
+                        fontFamily: "system-ui, Inter, sans-serif" 
+                      }}
+                    >
+                      Paste
+                    </button>
+                  </div>
+                  
                   <p className="text-xs text-gray-500 px-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>>
                     Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
                   </p>
