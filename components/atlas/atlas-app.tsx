@@ -102,6 +102,31 @@ export function AtlasApp() {
     setFrameworks((prev) => prev.filter((f) => f.id !== frameworkId));
   }, []);
 
+  // Handle copying nodes to a different canvas
+  const handleCopyNodesToCanvas = useCallback((targetCanvasId: string, nodes: import("@/lib/atlas-types").AtlasNode[]) => {
+    setCanvases((prev) => 
+      prev.map((canvas) => {
+        if (canvas.id === targetCanvasId) {
+          // Generate new IDs for the copied nodes to avoid conflicts
+          const newNodes = nodes.map((node) => ({
+            ...node,
+            id: `${node.id}-copy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            position: {
+              x: node.position.x + 50,
+              y: node.position.y + 50,
+            },
+            selected: false,
+          }));
+          return {
+            ...canvas,
+            nodes: [...canvas.nodes, ...newNodes],
+          };
+        }
+        return canvas;
+      })
+    );
+  }, []);
+
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
   if (view === "canvas" && activeCanvas) {
@@ -113,6 +138,8 @@ export function AtlasApp() {
         workspaceSettings={workspaceSettings}
         onWorkspaceSettingsChange={setWorkspaceSettings}
         onSaveFramework={handleSaveFramework}
+        canvases={canvases}
+        onCopyNodesToCanvas={handleCopyNodesToCanvas}
       />
     );
   }

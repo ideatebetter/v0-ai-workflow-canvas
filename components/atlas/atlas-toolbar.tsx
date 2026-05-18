@@ -7,9 +7,12 @@ interface AtlasToolbarProps {
   onBack?: () => void;
   onCanvasNameChange?: (name: string) => void;
   onSaveAsFramework?: () => void;
+  onCopyToCanvas?: () => void;
+  hasSelectedNodes?: boolean;
+  hasOtherCanvases?: boolean;
 }
 
-export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsFramework }: AtlasToolbarProps) {
+export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsFramework, onCopyToCanvas, hasSelectedNodes, hasOtherCanvases }: AtlasToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvasName || "");
   const [showMenu, setShowMenu] = useState(false);
@@ -130,6 +133,34 @@ export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsF
                   </svg>
                   Save as Framework
                 </button>
+                {hasOtherCanvases && (
+                  <>
+                    <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onCopyToCanvas?.();
+                        setShowMenu(false);
+                      }}
+                      disabled={!hasSelectedNodes}
+                      className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                        hasSelectedNodes 
+                          ? "text-gray-300 hover:bg-white/10 hover:text-white" 
+                          : "text-gray-600 cursor-not-allowed"
+                      }`}
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M11 5V4C11 3.17157 10.3284 2.5 9.5 2.5H4C3.17157 2.5 2.5 3.17157 2.5 4V9.5C2.5 10.3284 3.17157 11 4 11H5" stroke="currentColor" strokeWidth="1.5"/>
+                      </svg>
+                      Copy to Canvas
+                      {!hasSelectedNodes && (
+                        <span className="text-[10px] text-gray-500 ml-auto">Select nodes first</span>
+                      )}
+                    </button>
+                  </>
+                )}
                 <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
                 <button
                   type="button"

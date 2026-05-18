@@ -27,6 +27,7 @@ import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
+import { CopyToCanvasDialog } from "./copy-to-canvas-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -35,6 +36,8 @@ interface AtlasEditorProps {
   onBack: () => void;
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
+  canvases?: Canvas[];
+  onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[]) => void;
 }
 
 // Constants for node positioning
@@ -138,7 +141,7 @@ function findFreePositions(
   return positions;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
@@ -146,6 +149,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
+  const [showCopyToCanvasDialog, setShowCopyToCanvasDialog] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -520,12 +524,19 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       } else if (modifierKey && e.key === 'v') {
         e.preventDefault();
         handlePasteNodes();
+      } else if (modifierKey && e.shiftKey && e.key === 'c') {
+        // Cmd/Ctrl + Shift + C to copy to another canvas
+        e.preventDefault();
+        const selectedNodes = nodes.filter(node => node.selected);
+        if (selectedNodes.length > 0 && canvases && canvases.length > 1) {
+          setShowCopyToCanvasDialog(true);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleCopyNodes, handlePasteNodes]);
+  }, [handleCopyNodes, handlePasteNodes, nodes, canvases]);
 
   const handleNodesUpdate = useCallback(
     (newNodes: AtlasNode[]) => {
@@ -1566,6 +1577,9 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
         onSaveAsFramework={() => setShowSaveFrameworkDialog(true)}
+        onCopyToCanvas={() => setShowCopyToCanvasDialog(true)}
+        hasSelectedNodes={nodes.some(node => node.selected)}
+        hasOtherCanvases={canvases && canvases.length > 1}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -1712,6 +1726,18 @@ presentationMode={presentationMode}
           setShowSaveFrameworkDialog(false);
         }}
       />
+
+      {/* Copy to Canvas Dialog */}
+      {canvases && onCopyNodesToCanvas && (
+        <CopyToCanvasDialog
+          isOpen={showCopyToCanvasDialog}
+          onClose={() => setShowCopyToCanvasDialog(false)}
+          canvases={canvases}
+          currentCanvasId={canvas.id}
+          selectedNodes={nodes.filter(node => node.selected)}
+          onCopyToCanvas={onCopyNodesToCanvas}
+        />
+      )}
 
       {/* File Detail Modal */}
       {detailModalNodeId && (() => {
