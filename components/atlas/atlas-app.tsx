@@ -102,6 +102,57 @@ export function AtlasApp() {
     setFrameworks((prev) => prev.filter((f) => f.id !== frameworkId));
   }, []);
 
+  // Handle copying/moving nodes to a different canvas
+  const handleCopyNodesToCanvas = useCallback((targetCanvasId: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
+    setCanvases((prev) => 
+      prev.map((canvas) => {
+        if (canvas.id === targetCanvasId) {
+          // Generate new IDs for the copied nodes to avoid conflicts
+          const newNodes = nodes.map((node) => ({
+            ...node,
+            id: `${node.id}-${mode}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            position: {
+              x: node.position.x + 50,
+              y: node.position.y + 50,
+            },
+            selected: false,
+          }));
+          return {
+            ...canvas,
+            nodes: [...canvas.nodes, ...newNodes],
+          };
+        }
+        return canvas;
+      })
+    );
+  }, []);
+
+  // Handle creating a new canvas and transferring nodes to it
+  const handleCreateCanvasWithNodes = useCallback((canvasName: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
+    const newCanvasId = `canvas-${Date.now()}`;
+    const newNodes = nodes.map((node) => ({
+      ...node,
+      id: `${node.id}-${mode}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      position: {
+        x: node.position.x,
+        y: node.position.y,
+      },
+      selected: false,
+    }));
+    
+    const newCanvas: import("@/lib/atlas-types").Canvas = {
+      id: newCanvasId,
+      name: canvasName,
+      nodes: newNodes,
+      edges: [],
+      comments: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    setCanvases((prev) => [...prev, newCanvas]);
+  }, []);
+
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
   if (view === "canvas" && activeCanvas) {
@@ -113,6 +164,9 @@ export function AtlasApp() {
         workspaceSettings={workspaceSettings}
         onWorkspaceSettingsChange={setWorkspaceSettings}
         onSaveFramework={handleSaveFramework}
+        canvases={canvases}
+        onCopyNodesToCanvas={handleCopyNodesToCanvas}
+        onCreateCanvasWithNodes={handleCreateCanvasWithNodes}
       />
     );
   }

@@ -94,6 +94,7 @@ interface AtlasCanvasProps {
   presentationEdges?: Edge[];
   onPresentationConnect?: (connection: Connection) => void;
   onCreatePresentationGroup?: (nodeIds: string[]) => void;
+  onNodeContextMenu?: (event: React.MouseEvent, nodes: AtlasNode[]) => void;
 }
 
 export function AtlasCanvas({
@@ -130,6 +131,7 @@ export function AtlasCanvas({
   presentationEdges = [],
   onPresentationConnect,
   onCreatePresentationGroup,
+  onNodeContextMenu,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -592,6 +594,17 @@ onClick={(event) => {
         });
         onCanvasClick(flowPosition);
       }}
+        onNodeContextMenu={(event, node) => {
+          event.preventDefault();
+          if (onNodeContextMenu) {
+            // Get all selected nodes, or just the right-clicked node if not selected
+            const selectedNodes = nodes.filter(n => n.selected);
+            const nodesToInclude = selectedNodes.length > 0 && selectedNodes.some(n => n.id === node.id)
+              ? selectedNodes
+              : [node];
+            onNodeContextMenu(event, nodesToInclude);
+          }
+        }}
         nodeTypes={nodeTypes}
         nodesDraggable
         nodesConnectable
