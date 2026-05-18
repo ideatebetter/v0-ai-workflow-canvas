@@ -35,6 +35,7 @@ export function SageExpandedModal({
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,20 +87,27 @@ export function SageExpandedModal({
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    await processFiles(Array.from(files));
+  }, []);
+
+  // Process files for upload (used by both file input and drag-drop)
+  const processFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
 
     setIsUploading(true);
     try {
       const { upload } = await import("@vercel/blob/client");
       
-      for (const file of Array.from(files)) {
-        // Only allow images and text files
+      for (const file of files) {
+        // Allow images, text files, and PDFs
         const isImage = file.type.startsWith("image/");
+        const isPDF = file.type === "application/pdf" || file.name.endsWith(".pdf");
         const isText = file.type.startsWith("text/") || 
                        file.name.endsWith(".txt") || 
                        file.name.endsWith(".md") ||
                        file.name.endsWith(".json");
         
-        if (!isImage && !isText) {
+        if (!isImage && !isText && !isPDF) {
           console.warn("[v0] Skipping unsupported file type:", file.type);
           continue;
         }
@@ -127,6 +135,30 @@ export function SageExpandedModal({
       }
     }
   }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  }, [processFiles]);
 
   const removeAttachment = useCallback((index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
@@ -235,13 +267,30 @@ export function SageExpandedModal({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-2xl max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+        className={`relative w-full max-w-2xl max-h-[80vh] rounded-2xl overflow-hidden flex flex-col ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
         style={{
-          backgroundColor: "#0a0a0a",
-          border: "1px solid #F0FE0030",
+          backgroundColor: isDragOver ? "rgba(240, 254, 0, 0.02)" : "#0a0a0a",
+          border: isDragOver ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid #F0FE0030",
           boxShadow: "0 0 60px rgba(240, 254, 0, 0.1)",
         }}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
+        {/* Drag overlay */}
+        {isDragOver && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl pointer-events-none" style={{ background: "rgba(240, 254, 0, 0.05)" }}>
+            <div className="text-[#F0FE00] text-base font-medium flex items-center gap-3">
+              <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
+                <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Drop files here
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div
           className="px-5 py-4 flex items-center justify-between border-b shrink-0"
@@ -445,7 +494,7 @@ export function SageExpandedModal({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/*,.txt,.md,.json,text/*"
+            accept="image/*,.txt,.md,.json,.pdf,text/*,application/pdf"
             className="hidden"
             onChange={handleFileUpload}
           />

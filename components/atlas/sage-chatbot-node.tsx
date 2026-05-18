@@ -58,6 +58,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Emit event for parent to handle actions
@@ -102,20 +103,27 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    await processFiles(Array.from(files));
+  }, []);
+
+  // Process files for upload (used by both file input and drag-drop)
+  const processFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
 
     setIsUploading(true);
     try {
       const { upload } = await import("@vercel/blob/client");
       
-      for (const file of Array.from(files)) {
-        // Only allow images and text files
+      for (const file of files) {
+        // Allow images, text files, and PDFs
         const isImage = file.type.startsWith("image/");
+        const isPDF = file.type === "application/pdf" || file.name.endsWith(".pdf");
         const isText = file.type.startsWith("text/") || 
                        file.name.endsWith(".txt") || 
                        file.name.endsWith(".md") ||
                        file.name.endsWith(".json");
         
-        if (!isImage && !isText) {
+        if (!isImage && !isText && !isPDF) {
           console.warn("[v0] Skipping unsupported file type:", file.type);
           continue;
         }
@@ -143,6 +151,30 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       }
     }
   }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  }, [processFiles]);
 
   const addAttachment = useCallback((attachment: ChatAttachment) => {
     setAttachments(prev => [...prev, attachment]);
@@ -249,20 +281,41 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
 
   return (
     <div
-      className="group transition-all duration-500 ease-out overflow-hidden"
+      className={`group transition-all duration-500 ease-out overflow-hidden ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
       style={{
-        background: "rgba(28, 28, 30, 0.85)",
+        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "rgba(28, 28, 30, 0.85)",
         backdropFilter: "blur(40px) saturate(180%)",
         WebkitBackdropFilter: "blur(40px) saturate(180%)",
         borderRadius: 20,
-        border: selected ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid rgba(255,255,255,0.08)",
+        border: isDragOver 
+          ? "1px solid rgba(240, 254, 0, 0.5)" 
+          : selected 
+            ? "1px solid rgba(240, 254, 0, 0.5)" 
+            : "1px solid rgba(255,255,255,0.08)",
         width: 320,
         minHeight: 240,
         boxShadow: selected 
           ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)" 
           : "0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset",
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] pointer-events-none" style={{ background: "rgba(240, 254, 0, 0.1)" }}>
+          <div className="text-[#F0FE00] text-sm font-medium flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+              <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Drop files here
+          </div>
+        </div>
+      )}
+      
       {/* Header - Apple style minimal */}
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center justify-between">
@@ -448,7 +501,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,.txt,.md,.json,text/*"
+          accept="image/*,.txt,.md,.json,.pdf,text/*,application/pdf"
           className="hidden"
           onChange={handleFileUpload}
         />
