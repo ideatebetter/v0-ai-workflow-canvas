@@ -24,8 +24,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>("pending");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [tempPasswordInfo, setTempPasswordInfo] = useState<{ email: string; password: string } | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const isAdmin = user?.email === "rahmi@ideatebetter.com";
 
@@ -59,6 +58,7 @@ export default function AdminPage() {
 
   const updateStatus = async (id: string, newStatus: "approved" | "rejected") => {
     setUpdatingId(id);
+    setSuccessMessage(null);
     try {
       const response = await fetch("/api/waitlist", {
         method: "PATCH",
@@ -68,15 +68,13 @@ export default function AdminPage() {
 
       if (response.ok) {
         const data = await response.json();
+        const entry = waitlist.find(e => e.id === id);
         
-        // If approved and temp password returned, show the modal
-        if (newStatus === "approved" && data.tempPassword) {
-          const entry = waitlist.find(e => e.id === id);
-          setTempPasswordInfo({
-            email: entry?.email || "",
-            password: data.tempPassword,
-          });
-          setShowPasswordModal(true);
+        // Show success message
+        if (newStatus === "approved") {
+          setSuccessMessage(`Invitation sent to ${entry?.email}`);
+          // Auto-hide after 5 seconds
+          setTimeout(() => setSuccessMessage(null), 5000);
         }
         
         // Update local state
@@ -85,9 +83,13 @@ export default function AdminPage() {
             entry.id === id ? { ...entry, status: newStatus } : entry
           )
         );
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Failed to update status");
       }
     } catch (error) {
       console.error("Failed to update status:", error);
+      alert("Failed to update status");
     } finally {
       setUpdatingId(null);
     }
@@ -270,64 +272,27 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Temp Password Modal */}
-      {showPasswordModal && tempPasswordInfo && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 max-w-md w-full">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-white">Account Created</h2>
-            </div>
-            
-            <p className="text-gray-400 text-sm mb-4">
-              An account has been created for <span className="text-white font-medium">{tempPasswordInfo.email}</span>. 
-              Share these credentials with them:
-            </p>
-            
-            <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-4 mb-4">
-              <div className="mb-3">
-                <p className="text-xs text-gray-500 mb-1">Email</p>
-                <p className="text-white font-mono">{tempPasswordInfo.email}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Temporary Password</p>
-                <p className="text-[#F0FE00] font-mono text-lg">{tempPasswordInfo.password}</p>
-              </div>
-            </div>
-            
-            <p className="text-amber-400/80 text-xs mb-4">
-              The user will be prompted to change their password on first login.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `Your Atlas account is ready!\n\nEmail: ${tempPasswordInfo.email}\nTemporary Password: ${tempPasswordInfo.password}\n\nLogin at: https://atlas-prototype.com/auth/login\n\nPlease change your password after logging in.`
-                  );
-                  alert("Copied to clipboard!");
-                }}
-                className="flex-1 py-2.5 bg-[#2a2a2a] text-white font-medium rounded-lg hover:bg-[#333] transition-colors"
-              >
-                Copy to Clipboard
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setTempPasswordInfo(null);
-                }}
-                className="flex-1 py-2.5 bg-[#F0FE00] text-black font-medium rounded-lg hover:bg-[#d9e500] transition-colors"
-              >
-                Done
-              </button>
-            </div>
+      {/* Success Toast */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-3 flex items-center gap-3 animate-in slide-in-from-bottom-4 z-50">
+          <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <div>
+            <p className="text-green-400 font-medium text-sm">{successMessage}</p>
+            <p className="text-green-400/60 text-xs">They will receive an email to set their password</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="ml-2 text-green-400/60 hover:text-green-400 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
     </div>

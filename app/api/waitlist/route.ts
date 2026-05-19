@@ -2,16 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
-// Generate a random temporary password
-function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-}
-
 export async function POST(request: Request) {
   try {
     const { name, email, company } = await request.json();
@@ -203,39 +193,35 @@ export async function PATCH(request: Request) {
         .single();
 
       if (waitlistEntry) {
-        // Create admin client with service role to create users
+        // Create admin client with service role to invite users
         const supabaseAdmin = createAdminClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!,
           { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
-        // Generate temporary password
-        const tempPassword = generateTempPassword();
+        // Invite the user - Supabase will send them an email with a link to set their password
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+          waitlistEntry.email,
+          {
+            data: {
+              name: waitlistEntry.name,
+            },
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://atlas-prototype.com'}/auth/callback`,
+          }
+        );
 
-        // Create the user account
-        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-          email: waitlistEntry.email,
-          password: tempPassword,
-          email_confirm: true, // Auto-confirm email since admin approved
-          user_metadata: {
-            name: waitlistEntry.name,
-            must_change_password: true,
-          },
-        });
-
-        if (createUserError) {
-          console.error("Failed to create user account:", createUserError);
+        if (inviteError) {
+          console.error("Failed to invite user:", inviteError);
           return NextResponse.json(
-            { error: `Failed to create user account: ${createUserError.message}` },
+            { error: `Failed to send invitation: ${inviteError.message}` },
             { status: 500 }
           );
         }
 
         // Update waitlist with the created user ID
-        updateData.user_id = newUser.user?.id;
+        updateData.user_id = inviteData.user?.id;
 
-        // Return temp password so admin can share it
         const { data, error } = await supabase
           .from("waitlist")
           .update(updateData)
@@ -246,7 +232,7 @@ export async function PATCH(request: Request) {
         if (error) {
           console.error("Failed to update waitlist entry:", error);
           return NextResponse.json(
-            { error: "User created but failed to update waitlist" },
+            { error: "Invitation sent but failed to update waitlist" },
             { status: 500 }
           );
         }
@@ -254,8 +240,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ 
           success: true, 
           entry: data,
-          tempPassword,
-          message: `Account created for ${waitlistEntry.email}. Temporary password: ${tempPassword}`
+          message: `Invitation email sent to ${waitlistEntry.email}`
         });
       }
     }
