@@ -1301,52 +1301,36 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           p.id === uploadId ? { ...p, progress: 5 } : p
         ));
 
+        // Check file size - warn for very large files in preview environment
+        const fileSizeMB = file.size / (1024 * 1024);
+        if (fileSizeMB > 10) {
+          console.log(`[v0] Large file detected: ${file.name} (${fileSizeMB.toFixed(1)}MB)`);
+        }
+
         try {
-          // Try client-side direct upload first (better for large files)
-          // Falls back to server upload if client upload fails
-          let blob: { url: string; pathname: string };
+          // Use server-side upload via FormData
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("canvasId", canvas.id);
           
-          try {
-            // Dynamic import to avoid bundling issues
-            const { upload } = await import("@vercel/blob/client");
-            
-            const uploadResult = await upload(file.name, file, {
-              access: "public",
-              handleUploadUrl: "/api/upload/client",
-              onUploadProgress: (progress) => {
-                setUploadProgress(prev => prev.map(p => 
-                  p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
-                ));
-              },
-            });
-            
-            blob = { url: uploadResult.url, pathname: uploadResult.pathname };
-          } catch (clientUploadError) {
-            console.log("[v0] Client upload failed, trying server upload:", clientUploadError);
-            
-            // Fallback to server-side upload
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("canvasId", canvas.id);
-            
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000);
-            
-            const response = await fetch("/api/upload", {
-              method: "POST",
-              body: formData,
-              signal: controller.signal,
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || "Upload failed");
-            }
-            
-            blob = await response.json();
+          // Set a 5 minute timeout for large files
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 300000);
+          
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Upload failed with status ${response.status}`);
           }
+          
+          const blob = await response.json();
           
           // Update progress
           setUploadProgress(prev => prev.map(p => 
