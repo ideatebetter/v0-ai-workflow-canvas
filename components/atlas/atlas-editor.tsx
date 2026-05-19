@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { upload } from "@vercel/blob/client";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -1303,16 +1302,27 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ));
 
         try {
-          // Use client upload for direct-to-blob uploads (bypasses 4.5MB server limit)
-          const blob = await upload(file.name, file, {
-            access: "public",
-            handleUploadUrl: "/api/upload/client",
-            onUploadProgress: (progress) => {
-              setUploadProgress(prev => prev.map(p => 
-                p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
-              ));
-            },
+          // Use server-side upload via FormData (more reliable than client upload)
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("canvasId", canvas.id);
+          
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
           });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Upload failed");
+          }
+          
+          const blob = await response.json();
+          
+          // Update progress
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: 100 } : p
+          ));
 
           const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
           const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
@@ -1324,7 +1334,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               url: blob.url,
               pathname: blob.pathname,
               size: file.size,
-              uploadedAt: new Date().toISOString(),
+              uploadedAt: blob.uploadedAt || new Date().toISOString(),
             },
             previewUrl: isImage ? blob.url : undefined,
             isVideo: !!isVideo,

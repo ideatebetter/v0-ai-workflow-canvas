@@ -5,10 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as HandleUploadBody;
 
+  console.log("[v0] Client upload request body type:", body.type);
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userPrefix = user?.id || "anonymous";
+
+    console.log("[v0] User for upload:", user?.id || "anonymous");
 
     const jsonResponse = await handleUpload({
       body,
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(jsonResponse);
   } catch (error) {
-    console.error("Client upload error:", error);
+    console.error("[v0] Client upload error:", error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 400 }
