@@ -1,6 +1,64 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AuthErrorPage() {
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(true);
+
+  useEffect(() => {
+    const handleTokenInHash = async () => {
+      // Check if there's actually a token in the hash (invitation link landed here by mistake)
+      const hash = window.location.hash;
+      
+      if (hash && hash.includes("access_token")) {
+        const supabase = createClient();
+        
+        // Parse the hash fragment
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        const type = params.get("type");
+
+        if (accessToken && refreshToken) {
+          // Set the session from the tokens
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (!error) {
+            // If this is an invite, redirect to password change
+            if (type === "invite" || type === "recovery") {
+              router.push("/auth/change-password");
+              return;
+            }
+            router.push("/");
+            return;
+          }
+        }
+      }
+      
+      setIsProcessing(false);
+    };
+
+    handleTokenInHash();
+  }, [router]);
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#F0FE00] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white text-lg">Processing...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
       <div className="w-full max-w-md text-center">
