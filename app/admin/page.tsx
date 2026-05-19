@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>("pending");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const isAdmin = user?.email === "rahmi@ideatebetter.com";
 
@@ -57,6 +58,7 @@ export default function AdminPage() {
 
   const updateStatus = async (id: string, newStatus: "approved" | "rejected") => {
     setUpdatingId(id);
+    setSuccessMessage(null);
     try {
       const response = await fetch("/api/waitlist", {
         method: "PATCH",
@@ -65,15 +67,29 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        const entry = waitlist.find(e => e.id === id);
+        
+        // Show success message
+        if (newStatus === "approved") {
+          setSuccessMessage(`Invitation sent to ${entry?.email}`);
+          // Auto-hide after 5 seconds
+          setTimeout(() => setSuccessMessage(null), 5000);
+        }
+        
         // Update local state
         setWaitlist((prev) =>
           prev.map((entry) =>
             entry.id === id ? { ...entry, status: newStatus } : entry
           )
         );
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Failed to update status");
       }
     } catch (error) {
       console.error("Failed to update status:", error);
+      alert("Failed to update status");
     } finally {
       setUpdatingId(null);
     }
@@ -255,6 +271,30 @@ export default function AdminPage() {
           </table>
         </div>
       </main>
+
+      {/* Success Toast */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-3 flex items-center gap-3 animate-in slide-in-from-bottom-4 z-50">
+          <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-green-400 font-medium text-sm">{successMessage}</p>
+            <p className="text-green-400/60 text-xs">They will receive an email to set their password</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="ml-2 text-green-400/60 hover:text-green-400 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

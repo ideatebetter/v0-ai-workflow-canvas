@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
   try {
@@ -183,6 +184,65 @@ export async function PATCH(request: Request) {
     if (status === "approved") {
       updateData.approved_at = new Date().toISOString();
       updateData.approved_by = user.id;
+
+      // Get the waitlist entry to get user details
+      const { data: waitlistEntry } = await supabase
+        .from("waitlist")
+        .select("name, email")
+        .eq("id", id)
+        .single();
+
+      if (waitlistEntry) {
+        // Create admin client with service role to invite users
+        const supabaseAdmin = createAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        // Invite the user - Supabase will send them an email with a link to set their password
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+          waitlistEntry.email,
+          {
+            data: {
+              name: waitlistEntry.name,
+            },
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://atlas-prototype.com'}/auth/callback`,
+          }
+        );
+
+        if (inviteError) {
+          console.error("Failed to invite user:", inviteError);
+          return NextResponse.json(
+            { error: `Failed to send invitation: ${inviteError.message}` },
+            { status: 500 }
+          );
+        }
+
+        // Update waitlist with the created user ID
+        updateData.user_id = inviteData.user?.id;
+
+        const { data, error } = await supabase
+          .from("waitlist")
+          .update(updateData)
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Failed to update waitlist entry:", error);
+          return NextResponse.json(
+            { error: "Invitation sent but failed to update waitlist" },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ 
+          success: true, 
+          entry: data,
+          message: `Invitation email sent to ${waitlistEntry.email}`
+        });
+      }
     }
 
     const { data, error } = await supabase
