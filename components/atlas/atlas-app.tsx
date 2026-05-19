@@ -202,6 +202,27 @@ export function AtlasApp() {
     alert(`Saved ${canvases.length} canvases to cloud!`);
   }, [user, canvases, saveCanvasToAPI]);
 
+  // Handle canvases change from home page - detects new canvases and saves them
+  const handleCanvasesChange = useCallback((newCanvases: Canvas[] | ((prev: Canvas[]) => Canvas[])) => {
+    setCanvases((prev) => {
+      const updated = typeof newCanvases === 'function' ? newCanvases(prev) : newCanvases;
+      
+      // Find new canvases (ones that don't exist in prev)
+      const prevIds = new Set(prev.map(c => c.id));
+      const newlyCreated = updated.filter(c => !prevIds.has(c.id));
+      
+      // Save new canvases to API
+      if (user && newlyCreated.length > 0) {
+        console.log("[v0] New canvases detected, saving to API:", newlyCreated.map(c => c.name));
+        newlyCreated.forEach(canvas => {
+          saveCanvasToAPI(canvas);
+        });
+      }
+      
+      return updated;
+    });
+  }, [user, saveCanvasToAPI]);
+
   const handleCanvasChange = useCallback((updatedCanvas: Canvas) => {
     setCanvases((prev) =>
       prev.map((c) => (c.id === updatedCanvas.id ? updatedCanvas : c))
@@ -492,7 +513,7 @@ export function AtlasApp() {
       workspaceSettings={workspaceSettings}
       onWorkspaceSettingsChange={setWorkspaceSettings}
       canvases={canvases}
-      onCanvasesChange={setCanvases}
+      onCanvasesChange={handleCanvasesChange}
       onSaveAllToCloud={handleSaveAllToCloud}
       isLoadingCanvases={isLoadingCanvases}
       frameworks={frameworks}
