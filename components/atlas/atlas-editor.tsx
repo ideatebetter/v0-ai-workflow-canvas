@@ -1301,25 +1301,25 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           p.id === uploadId ? { ...p, progress: 5 } : p
         ));
 
-        // Check file size - Vercel serverless functions have a 4.5MB body size limit
+        // Check file size - Vercel serverless functions have a ~4.5MB body size limit
+        // Use client-side direct upload for ALL files to avoid this limit entirely
         const fileSizeMB = file.size / (1024 * 1024);
         console.log(`[v0] File: ${file.name}, Size: ${fileSizeMB.toFixed(2)}MB`);
         
-        // For files larger than 4MB, use client-side direct upload to Blob
-        if (fileSizeMB > 4) {
-          console.log(`[v0] Large file (${fileSizeMB.toFixed(2)}MB), using client direct upload`);
-          try {
-            const { upload } = await import("@vercel/blob/client");
-            
-            const uploadResult = await upload(file.name, file, {
-              access: "public",
-              handleUploadUrl: "/api/upload/client",
-              onUploadProgress: (progress) => {
-                setUploadProgress(prev => prev.map(p => 
-                  p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
-                ));
-              },
-            });
+        // Always use client-side direct upload to Blob (bypasses server size limits)
+        try {
+          console.log(`[v0] Using client direct upload for ${file.name}`);
+          const { upload } = await import("@vercel/blob/client");
+          
+          const uploadResult = await upload(file.name, file, {
+            access: "public",
+            handleUploadUrl: "/api/upload/client",
+            onUploadProgress: (progress) => {
+              setUploadProgress(prev => prev.map(p => 
+                p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
+              ));
+            },
+          });
             
             // Update progress to complete
             setUploadProgress(prev => prev.map(p => 
@@ -1341,92 +1341,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               previewUrl: isImage ? uploadResult.url : undefined,
               isVideo: !!isVideo,
             });
-            continue; // Skip server upload, move to next file
+            continue; // Move to next file
           } catch (clientError) {
             console.error("[v0] Client upload failed:", clientError);
+            const errorMessage = clientError instanceof Error ? clientError.message : "Upload failed";
+            failedFiles.push({ name: file.name, error: errorMessage });
             setUploadProgress(prev => prev.map(p => 
-              p.id === uploadId ? { ...p, status: "error", error: clientError instanceof Error ? clientError.message : "Upload failed" } : p
+              p.id === uploadId ? { ...p, status: "error", error: errorMessage } : p
             ));
-            continue;
           }
-        }
-
-        try {
-          // Use XMLHttpRequest for better large file handling
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("canvasId", canvas.id);
-          
-          const blob = await new Promise<{ url: string; pathname: string; uploadedAt?: string }>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            
-            xhr.upload.onprogress = (event) => {
-              if (event.lengthComputable) {
-                const percent = Math.round((event.loaded / event.total) * 95); // Cap at 95% until complete
-                setUploadProgress(prev => prev.map(p => 
-                  p.id === uploadId ? { ...p, progress: percent } : p
-                ));
-              }
-            };
-            
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                  const response = JSON.parse(xhr.responseText);
-                  resolve(response);
-                } catch {
-                  reject(new Error("Invalid response from server"));
-                }
-              } else {
-                reject(new Error(`Upload failed with status ${xhr.status}`));
-              }
-            };
-            
-            xhr.onerror = () => {
-              reject(new Error("Network error during upload"));
-            };
-            
-            xhr.ontimeout = () => {
-              reject(new Error("Upload timed out"));
-            };
-            
-            xhr.open("POST", "/api/upload");
-            xhr.timeout = 300000; // 5 minutes
-            xhr.send(formData);
-          });
-          
-          // Update progress
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, progress: 100 } : p
-          ));
-
-          const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-          const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
-
-          uploadedResults.push({
-            fileName: file.name,
-            extension: extension as FileExtension,
-            uploadedFile: {
-              url: blob.url,
-              pathname: blob.pathname,
-              size: file.size,
-              uploadedAt: blob.uploadedAt || new Date().toISOString(),
-            },
-            previewUrl: isImage ? blob.url : undefined,
-            isVideo: !!isVideo,
-          });
-
-          // Mark as complete
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, progress: 100, status: "complete" } : p
-          ));
-        } catch (error) {
-          console.error("Error uploading file:", file.name, error);
-          const errorMessage = error instanceof Error ? error.message : "Upload failed";
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, status: "error", error: errorMessage } : p
-          ));
-        }
       }
 
       // Create nodes for uploaded files, positioned to avoid overlapping
