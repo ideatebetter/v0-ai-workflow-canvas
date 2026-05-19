@@ -2862,9 +2862,9 @@ All Frameworks
                                     No files
                                   </div>
                                 ) : (
-                                  getCanvasFiles(canvas).map((node) => (
+                                  getCanvasFiles(canvas).map((node, nodeIndex) => (
                                     <button
-                                      key={node.id}
+                                      key={`${node.id}-${nodeIndex}`}
                                       type="button"
                                       onClick={() => onOpenCanvas(canvas.id)}
                                       className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
@@ -2931,9 +2931,9 @@ All Frameworks
                                 No files
                               </div>
                             ) : (
-                              getCanvasFiles(canvas).map((node) => (
+                              getCanvasFiles(canvas).map((node, nodeIndex) => (
                                 <button
-                                  key={node.id}
+                                  key={`${node.id}-${nodeIndex}`}
                                   type="button"
                                   onClick={() => onOpenCanvas(canvas.id)}
                                   className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
