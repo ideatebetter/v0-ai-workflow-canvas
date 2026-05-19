@@ -89,7 +89,9 @@ export async function GET(request: Request) {
     const supabase = await createClient();
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log("[v0] Waitlist GET - user:", user?.email, "authError:", authError?.message);
 
     if (!user) {
       return NextResponse.json(
@@ -119,6 +121,8 @@ export async function GET(request: Request) {
     }
 
     const { data, error } = await query;
+
+    console.log("[v0] Waitlist GET - data count:", data?.length, "error:", error?.message);
 
     if (error) {
       console.error("Failed to fetch waitlist:", error);
