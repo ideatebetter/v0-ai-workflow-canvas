@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
+// In App Router, formData/blob uploads don't have a 1MB limit like JSON
+// The limit is controlled by the serverless function memory/time limits
+
 // Map file extensions to MIME types for proper Vercel Blob handling
 const EXTENSION_TO_MIME: Record<string, string> = {
   // Design files
