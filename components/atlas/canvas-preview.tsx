@@ -145,8 +145,8 @@ export function CanvasPreview({ nodes, className = "" }: CanvasPreviewProps) {
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
       >
-        {scaledNodes.map((node) => (
-          <g key={node.id}>
+        {scaledNodes.map((node, nodeIndex) => (
+          <g key={`${node.id}-${nodeIndex}`}>
             {/* Node rectangle */}
             <rect
               x={node.x}

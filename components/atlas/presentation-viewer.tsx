@@ -242,7 +242,7 @@ export function PresentationViewer({
     
     return (
       <div 
-        key={node.id} 
+        key={`${node.id}-${index}`} 
         className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`}
         style={{ backgroundColor: "#1a1a1a" }}
       >

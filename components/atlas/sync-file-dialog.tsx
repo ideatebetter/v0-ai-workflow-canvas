@@ -307,15 +307,15 @@ export function SyncFileDialog({
                       )}
                     </div>
                     <div className="space-y-2">
-                      {nodes.map(({ node, reason }) => {
-                        const nodeData = node.data as FileNodeData | TextNodeData;
+                          {nodes.map(({ node, reason }, nodeIdx) => {
+                          const nodeData = node.data as FileNodeData | TextNodeData;
                         const isNodeSelected = selectedTargetId === node.id;
                         const isTargetFile = node.type === "file";
                         const isTargetText = node.type === "text";
                         
                         return (
                           <button
-                            key={node.id}
+                            key={`${node.id}-${nodeIdx}`}
                             type="button"
                             onClick={() => {
                               setSelectedTargetId(node.id);

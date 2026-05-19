@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { Canvas, WorkspaceSettings, CanvasFramework } from "@/lib/atlas-types";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, SAMPLE_FRAMEWORKS } from "@/lib/atlas-types";
 import { HomePage } from "./home-page";
@@ -36,6 +36,7 @@ export function AtlasApp() {
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
 
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
@@ -87,13 +88,17 @@ export function AtlasApp() {
 
   // Save canvas to API (debounced)
   const saveCanvasToAPI = useCallback(async (canvas: Canvas) => {
-    if (!user) {
-      console.log("[v0] No user, skipping save");
+    if (!user) return;
+    
+    // Skip if this canvas is already being saved (prevent double-saves during ID update)
+    if (savingCanvasesRef.current.has(canvas.id)) {
+      console.log("[v0] Canvas already being saved, skipping:", canvas.id);
       return;
     }
-
+    
+    savingCanvasesRef.current.add(canvas.id);
     console.log("[v0] Saving canvas to API:", canvas.name, canvas.id);
-
+    
     try {
       // Check if canvas exists in database
       const checkResponse = await fetch(`/api/canvas?id=${canvas.id}`);
@@ -116,6 +121,7 @@ export function AtlasApp() {
           }),
         });
         console.log("[v0] Update response:", updateResponse.status);
+        savingCanvasesRef.current.delete(canvas.id);
       } else {
         // Create new canvas
         console.log("[v0] Creating new canvas");
@@ -134,15 +140,28 @@ export function AtlasApp() {
         console.log("[v0] Create response:", response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log("[v0] Created canvas with new ID:", data.canvas?.id);
+          const newId = data.canvas?.id;
+          console.log("[v0] Created canvas with new ID:", newId);
+          // Track the new ID as "being saved" to prevent re-detection
+          if (newId) {
+            savingCanvasesRef.current.add(newId);
+          }
           // Update local canvas with database ID
           setCanvases(prev => prev.map(c => 
-            c.id === canvas.id ? { ...c, id: data.canvas.id } : c
+            c.id === canvas.id ? { ...c, id: newId } : c
           ));
+          // Clean up both old and new IDs after state settles
+          setTimeout(() => {
+            savingCanvasesRef.current.delete(canvas.id);
+            if (newId) savingCanvasesRef.current.delete(newId);
+          }, 100);
+        } else {
+          savingCanvasesRef.current.delete(canvas.id);
         }
       }
     } catch (error) {
       console.error("[v0] Error saving canvas:", error);
+      savingCanvasesRef.current.delete(canvas.id);
     }
   }, [user]);
 
@@ -201,6 +220,27 @@ export function AtlasApp() {
     console.log("[v0] All canvases saved to cloud");
     alert(`Saved ${canvases.length} canvases to cloud!`);
   }, [user, canvases, saveCanvasToAPI]);
+
+  // Handle canvases change from home page - detects new canvases and saves them
+  const handleCanvasesChange = useCallback((newCanvases: Canvas[] | ((prev: Canvas[]) => Canvas[])) => {
+    setCanvases((prev) => {
+      const updated = typeof newCanvases === 'function' ? newCanvases(prev) : newCanvases;
+      
+      // Find new canvases (ones that don't exist in prev)
+      const prevIds = new Set(prev.map(c => c.id));
+      const newlyCreated = updated.filter(c => !prevIds.has(c.id));
+      
+      // Save new canvases to API
+      if (user && newlyCreated.length > 0) {
+        console.log("[v0] New canvases detected, saving to API:", newlyCreated.map(c => c.name));
+        newlyCreated.forEach(canvas => {
+          saveCanvasToAPI(canvas);
+        });
+      }
+      
+      return updated;
+    });
+  }, [user, saveCanvasToAPI]);
 
   const handleCanvasChange = useCallback((updatedCanvas: Canvas) => {
     setCanvases((prev) =>
@@ -492,7 +532,7 @@ export function AtlasApp() {
       workspaceSettings={workspaceSettings}
       onWorkspaceSettingsChange={setWorkspaceSettings}
       canvases={canvases}
-      onCanvasesChange={setCanvases}
+      onCanvasesChange={handleCanvasesChange}
       onSaveAllToCloud={handleSaveAllToCloud}
       isLoadingCanvases={isLoadingCanvases}
       frameworks={frameworks}

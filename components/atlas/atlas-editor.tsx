@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { upload } from "@vercel/blob/client";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -1302,17 +1301,60 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           p.id === uploadId ? { ...p, progress: 5 } : p
         ));
 
+        // Check file size - warn for very large files in preview environment
+        const fileSizeMB = file.size / (1024 * 1024);
+        if (fileSizeMB > 10) {
+          console.log(`[v0] Large file detected: ${file.name} (${fileSizeMB.toFixed(1)}MB)`);
+        }
+
         try {
-          // Use client upload for direct-to-blob uploads (bypasses 4.5MB server limit)
-          const blob = await upload(file.name, file, {
-            access: "public",
-            handleUploadUrl: "/api/upload/client",
-            onUploadProgress: (progress) => {
-              setUploadProgress(prev => prev.map(p => 
-                p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
-              ));
-            },
+          // Use XMLHttpRequest for better large file handling
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("canvasId", canvas.id);
+          
+          const blob = await new Promise<{ url: string; pathname: string; uploadedAt?: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 95); // Cap at 95% until complete
+                setUploadProgress(prev => prev.map(p => 
+                  p.id === uploadId ? { ...p, progress: percent } : p
+                ));
+              }
+            };
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const response = JSON.parse(xhr.responseText);
+                  resolve(response);
+                } catch {
+                  reject(new Error("Invalid response from server"));
+                }
+              } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = () => {
+              reject(new Error("Network error during upload"));
+            };
+            
+            xhr.ontimeout = () => {
+              reject(new Error("Upload timed out"));
+            };
+            
+            xhr.open("POST", "/api/upload");
+            xhr.timeout = 300000; // 5 minutes
+            xhr.send(formData);
           });
+          
+          // Update progress
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: 100 } : p
+          ));
 
           const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
           const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
@@ -1324,7 +1366,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               url: blob.url,
               pathname: blob.pathname,
               size: file.size,
-              uploadedAt: new Date().toISOString(),
+              uploadedAt: blob.uploadedAt || new Date().toISOString(),
             },
             previewUrl: isImage ? blob.url : undefined,
             isVideo: !!isVideo,
