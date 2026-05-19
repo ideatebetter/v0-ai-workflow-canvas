@@ -1307,10 +1307,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           formData.append("file", file);
           formData.append("canvasId", canvas.id);
           
+          // Create abort controller with 2 minute timeout for large files
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 120000);
+          
           const response = await fetch("/api/upload", {
             method: "POST",
             body: formData,
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
           
           if (!response.ok) {
             const errorData = await response.json();
