@@ -1301,10 +1301,54 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           p.id === uploadId ? { ...p, progress: 5 } : p
         ));
 
-        // Check file size - warn for very large files in preview environment
+        // Check file size - Vercel serverless functions have a 4.5MB body size limit
         const fileSizeMB = file.size / (1024 * 1024);
-        if (fileSizeMB > 10) {
-          console.log(`[v0] Large file detected: ${file.name} (${fileSizeMB.toFixed(1)}MB)`);
+        console.log(`[v0] File: ${file.name}, Size: ${fileSizeMB.toFixed(2)}MB`);
+        
+        // For files larger than 4MB, use client-side direct upload to Blob
+        if (fileSizeMB > 4) {
+          console.log(`[v0] Large file (${fileSizeMB.toFixed(2)}MB), using client direct upload`);
+          try {
+            const { upload } = await import("@vercel/blob/client");
+            
+            const uploadResult = await upload(file.name, file, {
+              access: "public",
+              handleUploadUrl: "/api/upload/client",
+              onUploadProgress: (progress) => {
+                setUploadProgress(prev => prev.map(p => 
+                  p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
+                ));
+              },
+            });
+            
+            // Update progress to complete
+            setUploadProgress(prev => prev.map(p => 
+              p.id === uploadId ? { ...p, progress: 100, status: "complete" } : p
+            ));
+
+            const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+            const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+
+            uploadedResults.push({
+              fileName: file.name,
+              extension: extension as FileExtension,
+              uploadedFile: {
+                url: uploadResult.url,
+                pathname: uploadResult.pathname,
+                size: file.size,
+                uploadedAt: new Date().toISOString(),
+              },
+              previewUrl: isImage ? uploadResult.url : undefined,
+              isVideo: !!isVideo,
+            });
+            continue; // Skip server upload, move to next file
+          } catch (clientError) {
+            console.error("[v0] Client upload failed:", clientError);
+            setUploadProgress(prev => prev.map(p => 
+              p.id === uploadId ? { ...p, status: "error", error: clientError instanceof Error ? clientError.message : "Upload failed" } : p
+            ));
+            continue;
+          }
         }
 
         try {
