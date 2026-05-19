@@ -66,32 +66,9 @@ export async function POST(request: NextRequest) {
           }),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // This runs after the file is uploaded to Blob storage
-        console.log("Upload completed:", blob.pathname);
-        
-        try {
-          const payload = JSON.parse(tokenPayload || "{}");
-          
-          // Optionally save to database
-          if (payload.userId && payload.userId !== "anonymous") {
-            const supabase = await createClient();
-            await supabase.from("files").insert({
-              user_id: payload.userId,
-              file_name: blob.pathname.split("/").pop() || "unknown",
-              file_type: blob.contentType,
-              file_size: 0, // Size not available in this callback
-              blob_url: blob.url,
-              metadata: {
-                pathname: blob.pathname,
-                contentType: blob.contentType,
-              },
-            });
-          }
-        } catch (error) {
-          console.error("Error in onUploadCompleted:", error);
-        }
-      },
+      // Note: onUploadCompleted removed because it requires VERCEL_BLOB_CALLBACK_URL
+      // which isn't available in preview environments. File metadata can be saved
+      // client-side after upload completes instead.
     });
 
     return NextResponse.json(jsonResponse);
