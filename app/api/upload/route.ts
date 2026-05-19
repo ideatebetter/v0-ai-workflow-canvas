@@ -40,13 +40,16 @@ const EXTENSION_TO_MIME: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] Upload POST request received");
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    console.log("[v0] User:", user?.id || "anonymous");
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const canvasId = formData.get("canvasId") as string | null;
+    console.log("[v0] File:", file?.name, "Size:", file?.size, "CanvasId:", canvasId);
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -73,11 +76,17 @@ export async function POST(request: NextRequest) {
     const contentType = isAudioFile 
       ? "application/octet-stream" 
       : (EXTENSION_TO_MIME[extension] || file.type || "application/octet-stream");
+    
+    console.log("[v0] Starting blob upload. Path:", `atlas/${userPrefix}/${Date.now()}-${fileName}`, "ContentType:", contentType);
+    console.log("[v0] BLOB_READ_WRITE_TOKEN exists:", !!process.env.BLOB_READ_WRITE_TOKEN);
+    
     const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
       access: "public",
       contentType,
       addRandomSuffix: true,
     });
+    
+    console.log("[v0] Blob upload successful:", blob.url);
 
     // Save file metadata to Supabase if user is authenticated
     let fileRecord = null;
