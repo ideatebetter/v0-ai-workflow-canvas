@@ -89,7 +89,9 @@ export async function GET(request: Request) {
     const supabase = await createClient();
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log("[v0] Waitlist GET - user:", user?.email, "authError:", authError?.message);
 
     if (!user) {
       return NextResponse.json(
@@ -119,6 +121,8 @@ export async function GET(request: Request) {
     }
 
     const { data, error } = await query;
+
+    console.log("[v0] Waitlist GET - data count:", data?.length, "error:", error?.message);
 
     if (error) {
       console.error("Failed to fetch waitlist:", error);
@@ -181,6 +185,13 @@ export async function PATCH(request: Request) {
       updated_at: new Date().toISOString(),
     };
 
+    // Create admin client for database operations (bypasses RLS)
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
     if (status === "approved") {
       updateData.approved_at = new Date().toISOString();
       updateData.approved_by = user.id;
@@ -193,13 +204,6 @@ export async function PATCH(request: Request) {
         .single();
 
       if (waitlistEntry) {
-        // Create admin client with service role to invite users
-        const supabaseAdmin = createAdminClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          { auth: { autoRefreshToken: false, persistSession: false } }
-        );
-
         // Invite the user - Supabase will send them an email with a link to set their password
         const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
           waitlistEntry.email,
@@ -219,10 +223,10 @@ export async function PATCH(request: Request) {
           );
         }
 
-        // Update waitlist with the created user ID
+        // Update waitlist with the created user ID (use admin client to bypass RLS)
         updateData.user_id = inviteData.user?.id;
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
           .from("waitlist")
           .update(updateData)
           .eq("id", id)
@@ -245,7 +249,7 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("waitlist")
       .update(updateData)
       .eq("id", id)
