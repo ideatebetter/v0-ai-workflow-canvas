@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+
+// Generate a random temporary password
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
 export async function POST(request: Request) {
   try {
@@ -183,6 +194,70 @@ export async function PATCH(request: Request) {
     if (status === "approved") {
       updateData.approved_at = new Date().toISOString();
       updateData.approved_by = user.id;
+
+      // Get the waitlist entry to get user details
+      const { data: waitlistEntry } = await supabase
+        .from("waitlist")
+        .select("name, email")
+        .eq("id", id)
+        .single();
+
+      if (waitlistEntry) {
+        // Create admin client with service role to create users
+        const supabaseAdmin = createAdminClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        // Generate temporary password
+        const tempPassword = generateTempPassword();
+
+        // Create the user account
+        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+          email: waitlistEntry.email,
+          password: tempPassword,
+          email_confirm: true, // Auto-confirm email since admin approved
+          user_metadata: {
+            name: waitlistEntry.name,
+            must_change_password: true,
+          },
+        });
+
+        if (createUserError) {
+          console.error("Failed to create user account:", createUserError);
+          return NextResponse.json(
+            { error: `Failed to create user account: ${createUserError.message}` },
+            { status: 500 }
+          );
+        }
+
+        // Update waitlist with the created user ID
+        updateData.user_id = newUser.user?.id;
+
+        // Return temp password so admin can share it
+        const { data, error } = await supabase
+          .from("waitlist")
+          .update(updateData)
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Failed to update waitlist entry:", error);
+          return NextResponse.json(
+            { error: "User created but failed to update waitlist" },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ 
+          success: true, 
+          entry: data,
+          tempPassword,
+          message: `Account created for ${waitlistEntry.email}. Temporary password: ${tempPassword}`
+        });
+      }
     }
 
     const { data, error } = await supabase
