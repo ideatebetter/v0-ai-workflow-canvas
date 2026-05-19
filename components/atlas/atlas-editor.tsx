@@ -1308,29 +1308,48 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         }
 
         try {
-          // Use server-side upload via FormData
+          // Use XMLHttpRequest for better large file handling
           const formData = new FormData();
           formData.append("file", file);
           formData.append("canvasId", canvas.id);
           
-          // Set a 5 minute timeout for large files
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 300000);
-          
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
+          const blob = await new Promise<{ url: string; pathname: string; uploadedAt?: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 95); // Cap at 95% until complete
+                setUploadProgress(prev => prev.map(p => 
+                  p.id === uploadId ? { ...p, progress: percent } : p
+                ));
+              }
+            };
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const response = JSON.parse(xhr.responseText);
+                  resolve(response);
+                } catch {
+                  reject(new Error("Invalid response from server"));
+                }
+              } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = () => {
+              reject(new Error("Network error during upload"));
+            };
+            
+            xhr.ontimeout = () => {
+              reject(new Error("Upload timed out"));
+            };
+            
+            xhr.open("POST", "/api/upload");
+            xhr.timeout = 300000; // 5 minutes
+            xhr.send(formData);
           });
-          
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Upload failed with status ${response.status}`);
-          }
-          
-          const blob = await response.json();
           
           // Update progress
           setUploadProgress(prev => prev.map(p => 
