@@ -37,8 +37,15 @@ export default function AuthCallbackPage() {
             return;
           }
 
-          // If this is an invite, redirect to password change
-          if (type === "invite" || type === "recovery") {
+          // If this is a recovery (password reset), redirect to reset password page
+          if (type === "recovery") {
+            setStatus("success");
+            router.push("/auth/reset-password");
+            return;
+          }
+          
+          // If this is an invite, redirect to change password page
+          if (type === "invite") {
             setStatus("success");
             router.push("/auth/change-password");
             return;
