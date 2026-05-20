@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type Tab = "signin" | "request-access";
 
@@ -158,6 +159,15 @@ export default function LoginPage() {
                       className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
                       placeholder="Enter your password"
                     />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm text-gray-400 hover:text-[#F0FE00] transition-colors"
+                    >
+                      Forgot your password?
+                    </Link>
                   </div>
 
                   {error && (

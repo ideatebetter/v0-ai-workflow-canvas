@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth-context";
 import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingConventions } from "@/lib/atlas-types";
 import { DEFAULT_NAMING_CONVENTIONS } from "@/lib/atlas-types";
+
+// Admin emails that can create users
+const ADMIN_EMAILS = ["rahmi@ideatebetter.com"];
 
 const NAMING_TOKENS: { id: NamingToken; label: string; example: string }[] = [
   { id: "project", label: "Project Name", example: "atlas" },
@@ -68,6 +71,77 @@ export function WorkspaceSettingsDialog({
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Admin: Create user state
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [createUserSuccess, setCreateUserSuccess] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [allUsers, setAllUsers] = useState<Array<{ id: string; email: string; name: string; createdAt: string; lastSignIn: string | null }>>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
+  // Fetch all users for admin
+  useEffect(() => {
+    if (open && isAdmin) {
+      setLoadingUsers(true);
+      fetch("/api/admin/users")
+        .then(res => res.json())
+        .then(data => {
+          if (data.users) {
+            setAllUsers(data.users);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingUsers(false));
+    }
+  }, [open, isAdmin]);
+
+  const handleCreateUser = useCallback(async () => {
+    if (!newUserName.trim() || !newUserEmail.trim() || !isAdmin) return;
+
+    setCreateUserLoading(true);
+    setCreateUserError(null);
+    setCreateUserSuccess(null);
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newUserName.trim(),
+          email: newUserEmail.trim().toLowerCase(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCreateUserError(data.error || "Failed to create user");
+        return;
+      }
+
+      setCreateUserSuccess({
+        email: data.user.email,
+        tempPassword: data.tempPassword,
+      });
+      setNewUserName("");
+      setNewUserEmail("");
+
+      // Refresh user list
+      const usersRes = await fetch("/api/admin/users");
+      const usersData = await usersRes.json();
+      if (usersData.users) {
+        setAllUsers(usersData.users);
+      }
+    } catch {
+      setCreateUserError("Failed to create user. Please try again.");
+    } finally {
+      setCreateUserLoading(false);
+    }
+  }, [newUserName, newUserEmail, isAdmin]);
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail.trim() || !user) return;
@@ -664,6 +738,154 @@ export function WorkspaceSettingsDialog({
             </div>
 
             {/* Canvas Actions - At the end */}
+            {isAdmin && (
+              <>
+                <div style={{ borderTop: "1px solid #222222" }} />
+                <div>
+                  <h3
+                    className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
+                      <path d="M14.25 15.75V14.25C14.25 13.0074 13.2426 12 12 12H6C4.75736 12 3.75 13.0074 3.75 14.25V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 9C10.6569 9 12 7.65685 12 6C12 4.34315 10.6569 3 9 3C7.34315 3 6 4.34315 6 6C6 7.65685 7.34315 9 9 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15.75 6.75L15.75 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M17.625 8.625H13.875" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Admin: Add User
+                  </h3>
+                  
+                  {/* Create User Form */}
+                  <div className="space-y-3 mb-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={newUserName}
+                        onChange={(e) => {
+                          setNewUserName(e.target.value);
+                          setCreateUserError(null);
+                          setCreateUserSuccess(null);
+                        }}
+                        placeholder="Full Name"
+                        disabled={createUserLoading}
+                        className="px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      />
+                      <input
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => {
+                          setNewUserEmail(e.target.value);
+                          setCreateUserError(null);
+                          setCreateUserSuccess(null);
+                        }}
+                        placeholder="Email address"
+                        disabled={createUserLoading}
+                        className="px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCreateUser}
+                      disabled={createUserLoading || !newUserName.trim() || !newUserEmail.trim()}
+                      className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                      style={{
+                        backgroundColor: "#F0FE00",
+                        color: "#121212",
+                        fontFamily: "system-ui, Inter, sans-serif",
+                      }}
+                    >
+                      {createUserLoading ? "Creating User..." : "Create User & Send Credentials"}
+                    </button>
+                  </div>
+
+                  {createUserError && (
+                    <div className="p-3 rounded-lg text-sm mb-3" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                      {createUserError}
+                    </div>
+                  )}
+
+                  {createUserSuccess && (
+                    <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.2)" }}>
+                      <div className="text-sm text-green-400 font-medium mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        User created successfully!
+                      </div>
+                      <div className="space-y-1 text-xs text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        <div><span className="text-gray-500">Email:</span> {createUserSuccess.email}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Temp Password:</span>
+                          <code className="px-2 py-0.5 rounded bg-black/50 font-mono">{createUserSuccess.tempPassword}</code>
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(createUserSuccess.tempPassword)}
+                            className="px-2 py-0.5 rounded text-xs hover:bg-white/10 transition-colors"
+                            style={{ color: "#F0FE00" }}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Share this password with the user. They can change it in Settings after logging in.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User List */}
+                  <div className="mt-4">
+                    <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      All Users ({allUsers.length})
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto space-y-1">
+                      {loadingUsers ? (
+                        <div className="text-xs text-gray-500 py-2">Loading users...</div>
+                      ) : allUsers.length === 0 ? (
+                        <div className="text-xs text-gray-500 py-2">No users found</div>
+                      ) : (
+                        allUsers.map((u) => (
+                          <div
+                            key={u.id}
+                            className="flex items-center justify-between px-3 py-2 rounded-lg"
+                            style={{ backgroundColor: "#1a1a1a" }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white"
+                                style={{ backgroundColor: "#333333" }}
+                              >
+                                {u.name?.slice(0, 2).toUpperCase() || u.email?.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                  {u.name}
+                                </div>
+                                <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                  {u.email}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {u.lastSignIn ? `Last login: ${new Date(u.lastSignIn).toLocaleDateString()}` : "Never logged in"}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Canvas Actions */}
             {onMakeFramework && (
               <>
                 <div style={{ borderTop: "1px solid #222222" }} />
