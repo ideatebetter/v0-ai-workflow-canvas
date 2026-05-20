@@ -26,7 +26,51 @@ export default function AdminPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Add User form state
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [createUserSuccess, setCreateUserSuccess] = useState<{ email: string; tempPassword: string } | null>(null);
+
   const isAdmin = user?.email === "rahmi@ideatebetter.com";
+
+  const handleCreateUser = async () => {
+    if (!newUserName.trim() || !newUserEmail.trim() || !isAdmin) return;
+
+    setCreateUserLoading(true);
+    setCreateUserError(null);
+    setCreateUserSuccess(null);
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newUserName.trim(),
+          email: newUserEmail.trim().toLowerCase(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCreateUserError(data.error || "Failed to create user");
+        return;
+      }
+
+      setCreateUserSuccess({
+        email: data.user.email,
+        tempPassword: data.tempPassword,
+      });
+      setNewUserName("");
+      setNewUserEmail("");
+    } catch {
+      setCreateUserError("Failed to create user. Please try again.");
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -139,6 +183,83 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Add User Section */}
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 mb-8">
+          <h2 className="text-xl font-bold mb-2">Add User Directly</h2>
+          <p className="text-gray-400 text-sm mb-4">Create a new user account with a temporary password</p>
+          
+          <div className="flex gap-3 mb-4">
+            <input
+              type="text"
+              value={newUserName}
+              onChange={(e) => {
+                setNewUserName(e.target.value);
+                setCreateUserError(null);
+                setCreateUserSuccess(null);
+              }}
+              placeholder="Full Name"
+              disabled={createUserLoading}
+              className="flex-1 px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors disabled:opacity-50"
+            />
+            <input
+              type="email"
+              value={newUserEmail}
+              onChange={(e) => {
+                setNewUserEmail(e.target.value);
+                setCreateUserError(null);
+                setCreateUserSuccess(null);
+              }}
+              placeholder="Email address"
+              disabled={createUserLoading}
+              className="flex-1 px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={handleCreateUser}
+              disabled={createUserLoading || !newUserName.trim() || !newUserEmail.trim()}
+              className="px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 bg-[#F0FE00] text-black hover:bg-[#d9e500]"
+            >
+              {createUserLoading ? "Creating..." : "Create User"}
+            </button>
+          </div>
+
+          {createUserError && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {createUserError}
+            </div>
+          )}
+
+          {createUserSuccess && (
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-center gap-2 text-green-400 font-medium mb-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                User created successfully!
+              </div>
+              <div className="space-y-1 text-sm">
+                <div className="text-gray-300">
+                  <span className="text-gray-500">Email:</span> {createUserSuccess.email}
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <span className="text-gray-500">Temporary Password:</span>
+                  <code className="px-3 py-1 rounded bg-black/50 font-mono text-[#F0FE00]">{createUserSuccess.tempPassword}</code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(createUserSuccess.tempPassword)}
+                    className="px-3 py-1 rounded text-sm bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-gray-500">
+                Share this password with the user. They can change it in Settings after logging in.
+              </p>
+            </div>
+          )}
+        </div>
+
         <h1 className="text-3xl font-bold mb-2">Access Requests</h1>
         <p className="text-gray-400 mb-8">Manage who can access Atlas</p>
 
