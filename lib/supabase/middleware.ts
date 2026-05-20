@@ -50,6 +50,8 @@ export async function updateSession(request: NextRequest) {
     '/auth/callback',
     '/auth/error',
     '/auth/change-password',
+    '/auth/forgot-password',
+    '/auth/reset-password',
     '/api/waitlist', // Allow waitlist submissions without auth
   ]
 

@@ -57,10 +57,11 @@ export default function AuthCallbackPage() {
         }
       }
 
-      // Check for code in search params (OAuth flow)
+      // Check for code in search params (OAuth/PKCE flow)
       const searchParams = new URLSearchParams(window.location.search);
       const code = searchParams.get("code");
-      
+      const next = searchParams.get("next");
+
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
@@ -70,7 +71,7 @@ export default function AuthCallbackPage() {
           return;
         }
         setStatus("success");
-        router.push("/");
+        router.push(next ?? "/");
         return;
       }
 
