@@ -160,6 +160,16 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
             {user.email}
           </div>
         </div>
+        <Link
+          href="/auth/change-password"
+          className="p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          title="Change password"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </Link>
         <button
           type="button"
           onClick={async () => {
