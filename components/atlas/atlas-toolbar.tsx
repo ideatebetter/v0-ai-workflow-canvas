@@ -132,7 +132,7 @@ export function AtlasToolbar({
       {/* Separator and Canvas Name */}
       {canvasName && (
         <>
-          <span className="text-gray-600">|</span>
+          <span className="text-muted-foreground">|</span>
           <div 
             className="relative"
             ref={recentDropdownRef}
@@ -147,14 +147,14 @@ export function AtlasToolbar({
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={handleSave}
                 onKeyDown={handleKeyDown}
-                className="text-sm text-white bg-transparent border-b border-gray-500 focus:border-white focus:outline-none px-0 py-0.5 min-w-[100px]"
+                className="text-sm text-foreground bg-transparent border-b border-muted-foreground focus:border-foreground focus:outline-none px-0 py-0.5 min-w-[100px]"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="text-sm text-gray-400 hover:text-white transition-colors cursor-text flex items-center gap-1.5"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-text flex items-center gap-1.5"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 {canvasName}
@@ -175,16 +175,14 @@ export function AtlasToolbar({
             {/* Recent Canvases Dropdown */}
             {showRecentDropdown && recentCanvases && recentCanvases.length > 0 && !isEditing && (
               <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-xl shadow-2xl min-w-[220px]"
+                className="absolute top-full left-0 mt-2 py-1 rounded-xl shadow-2xl min-w-[220px] bg-card border border-border"
                 style={{ 
-                  backgroundColor: "rgba(26, 26, 26, 0.95)", 
-                  border: "1px solid rgba(255,255,255,0.08)",
                   backdropFilter: "blur(20px)",
                 }}
                 onMouseEnter={handleDropdownMouseEnter}
                 onMouseLeave={handleDropdownMouseLeave}
               >
-                <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Recent Canvases
                 </div>
                 {recentCanvases.map((canvas, index) => (
@@ -195,23 +193,22 @@ export function AtlasToolbar({
                       onSwitchCanvas?.(canvas.id);
                       setShowRecentDropdown(false);
                     }}
-                    className="w-full px-3 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                    className="w-full px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-3"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted"
                     >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-gray-500">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-muted-foreground">
                         <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                         <path d="M5 6H11M5 8H11M5 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="truncate">{canvas.name}</div>
-                      <div className="text-[10px] text-gray-500">{canvas.nodes.length} items</div>
+                      <div className="text-[10px] text-muted-foreground">{canvas.nodes.length} items</div>
                     </div>
-                    <span className="text-[10px] text-gray-600 flex-shrink-0">
+                    <span className="text-[10px] text-muted-foreground flex-shrink-0">
                       {index === 0 ? "Previous" : ""}
                     </span>
                   </button>
@@ -225,7 +222,7 @@ export function AtlasToolbar({
             <button
               type="button"
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="8" cy="3" r="1.5" fill="currentColor"/>
@@ -236,8 +233,7 @@ export function AtlasToolbar({
 
             {showMenu && (
               <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[180px]"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[180px] bg-card border border-border"
               >
                 <button
                   type="button"
@@ -245,7 +241,7 @@ export function AtlasToolbar({
                     onSaveAsFramework?.();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -256,7 +252,7 @@ export function AtlasToolbar({
                 </button>
                 {hasOtherCanvases && (
                   <>
-                    <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                    <div className="h-px mx-2 my-1 bg-border" />
                     <button
                       type="button"
                       onClick={() => {
@@ -266,8 +262,8 @@ export function AtlasToolbar({
                       disabled={!hasSelectedNodes}
                       className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
                         hasSelectedNodes 
-                          ? "text-gray-300 hover:bg-white/10 hover:text-white" 
-                          : "text-gray-600 cursor-not-allowed"
+                          ? "text-muted-foreground hover:bg-muted hover:text-foreground" 
+                          : "text-muted-foreground/50 cursor-not-allowed"
                       }`}
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
@@ -277,19 +273,19 @@ export function AtlasToolbar({
                       </svg>
                       Copy to Canvas
                       {!hasSelectedNodes && (
-                        <span className="text-[10px] text-gray-500 ml-auto">Select nodes first</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">Select nodes first</span>
                       )}
                     </button>
                   </>
                 )}
-                <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                <div className="h-px mx-2 my-1 bg-border" />
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditing(true);
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

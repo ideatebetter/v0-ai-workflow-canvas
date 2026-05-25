@@ -12,28 +12,52 @@ import { useEffect } from "react";
  */
 export function ResizeObserverErrorSuppressor() {
   useEffect(() => {
+    // Capture errors at the earliest possible phase
     const errorHandler = (event: ErrorEvent) => {
-      if (event.message?.includes("ResizeObserver loop")) {
+      if (
+        event.message?.includes("ResizeObserver loop") ||
+        event.error?.message?.includes("ResizeObserver loop")
+      ) {
         event.stopImmediatePropagation();
         event.preventDefault();
-        return true;
+        return;
       }
     };
 
-    // Also handle unhandled rejections that might contain this error
+    // Handle unhandled rejections that might contain this error
     const rejectionHandler = (event: PromiseRejectionEvent) => {
-      if (event.reason?.message?.includes("ResizeObserver loop")) {
+      const message = event.reason?.message || String(event.reason);
+      if (message?.includes("ResizeObserver loop")) {
         event.preventDefault();
-        return true;
+        return;
       }
     };
 
-    window.addEventListener("error", errorHandler);
-    window.addEventListener("unhandledrejection", rejectionHandler);
+    // Use capture phase to intercept errors before they propagate
+    window.addEventListener("error", errorHandler, true);
+    window.addEventListener("unhandledrejection", rejectionHandler, true);
+
+    // Override the global ResizeObserver to wrap callbacks with error suppression
+    const OriginalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver = class SuppressedResizeObserver extends OriginalResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        super((entries, observer) => {
+          // Use requestAnimationFrame to defer the callback and prevent the loop warning
+          window.requestAnimationFrame(() => {
+            try {
+              callback(entries, observer);
+            } catch {
+              // Silently ignore ResizeObserver errors
+            }
+          });
+        });
+      }
+    };
 
     return () => {
-      window.removeEventListener("error", errorHandler);
-      window.removeEventListener("unhandledrejection", rejectionHandler);
+      window.removeEventListener("error", errorHandler, true);
+      window.removeEventListener("unhandledrejection", rejectionHandler, true);
+      window.ResizeObserver = OriginalResizeObserver;
     };
   }, []);
 

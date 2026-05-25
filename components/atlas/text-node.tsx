@@ -305,11 +305,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
       {showToolbar && (
         <div
           ref={toolbarRef}
-          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-lg z-50"
-          style={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #333333",
-          }}
+          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-lg z-50 bg-card border border-border"
         >
           {/* Color Picker */}
           <div className="relative">
@@ -333,8 +329,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
             </button>
             {showColorPicker && (
               <div
-                className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-lg z-50"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-lg z-50 bg-card border border-border"
               >
                 <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(3, 28px)" }}>
                   {TEXT_COLORS.map((color) => (
@@ -360,7 +355,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-gray-600 mx-1" />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Font Picker */}
           <div className="relative">
@@ -382,8 +377,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
             </button>
             {showFontPicker && (
               <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[120px] z-50"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[120px] z-50 bg-card border border-border"
               >
                 {FONT_OPTIONS.map((font) => (
                   <button
@@ -393,7 +387,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
                       updateFormatting({ font: font.value });
                       setShowFontPicker(false);
                     }}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors ${formatting.font === font.value ? "text-white" : "text-gray-400"}`}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors ${formatting.font === font.value ? "text-foreground" : "text-muted-foreground"}`}
                     style={{ fontFamily: font.fontFamily }}
                   >
                     {font.value === "sans" ? "Sans-serif" : font.value === "serif" ? "Serif" : "Monospace"}
@@ -422,10 +416,9 @@ export function TextNode({ id, data, selected }: NodeProps) {
             </button>
             {showSizePicker && (
               <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[100px] z-50"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[100px] z-50 bg-card border border-border"
               >
-                <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider">
+                <div className="px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider">
                   {isEditing ? "Select text first" : "Default size"}
                 </div>
                 {TEXT_SIZES.map((size) => (
@@ -440,10 +433,10 @@ export function TextNode({ id, data, selected }: NodeProps) {
                       }
                       setShowSizePicker(false);
                     }}
-                    className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors flex items-center justify-between ${formatting.size === size.value ? "text-white" : "text-gray-400"}`}
+                    className={`w-full px-3 py-2 text-left hover:bg-muted transition-colors flex items-center justify-between ${formatting.size === size.value ? "text-foreground" : "text-muted-foreground"}`}
                   >
                     <span style={{ fontSize: Math.min(size.fontSize, 18), fontWeight: size.fontWeight }}>{size.label}</span>
-                    <span className="text-[10px] text-gray-500">{size.fontSize}px</span>
+                    <span className="text-[10px] text-muted-foreground">{size.fontSize}px</span>
                   </button>
                 ))}
               </div>
@@ -451,13 +444,13 @@ export function TextNode({ id, data, selected }: NodeProps) {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-gray-600 mx-1" />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Bold */}
           <button
             type="button"
             onClick={() => updateFormatting({ bold: !formatting.bold })}
-            className={`p-2 rounded-lg transition-colors ${formatting.bold ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
+            className={`p-2 rounded-lg transition-colors ${formatting.bold ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3.5 2.5H8C9.38071 2.5 10.5 3.61929 10.5 5C10.5 6.38071 9.38071 7.5 8 7.5H3.5V2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -469,7 +462,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
           <button
             type="button"
             onClick={() => updateFormatting({ strikethrough: !formatting.strikethrough })}
-            className={`p-2 rounded-lg transition-colors ${formatting.strikethrough ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
+            className={`p-2 rounded-lg transition-colors ${formatting.strikethrough ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -479,7 +472,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
           </button>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-gray-600 mx-1" />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* Alignment */}
           <div className="relative">
@@ -491,7 +484,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 setShowFontPicker(false);
                 setShowSizePicker(false);
               }}
-              className="flex items-center gap-1 p-2 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="flex items-center gap-1 p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
               {ALIGN_OPTIONS.find(a => a.value === formatting.align)?.icon}
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">

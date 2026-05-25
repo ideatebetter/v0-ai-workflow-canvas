@@ -75,8 +75,7 @@ export function CanvasSideToolbar({
 
   return (
     <div
-      className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 rounded-xl z-40"
-      style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
+      className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 rounded-xl z-40 bg-card border border-border shadow-lg"
     >
       {/* Comment Mode Toggle */}
       <div className="relative">
@@ -84,7 +83,7 @@ export function CanvasSideToolbar({
           type="button"
           onClick={() => onCommentModeChange(!commentMode)}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            commentMode ? "text-[#121212]" : "text-gray-400 hover:text-white hover:bg-white/10"
+            commentMode ? "text-[#121212]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={{
             backgroundColor: commentMode ? "#F0FE00" : "transparent",
@@ -126,7 +125,7 @@ export function CanvasSideToolbar({
             }
           }}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            presentationMode ? "text-[#121212]" : "text-gray-400 hover:text-white hover:bg-white/10"
+            presentationMode ? "text-[#121212]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={{
             backgroundColor: presentationMode ? "#F0FE00" : "transparent",
@@ -173,7 +172,7 @@ export function CanvasSideToolbar({
           type="button"
           onClick={() => setShowSearch(!showSearch)}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            showSearch ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
+            showSearch ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           title="Search canvas"
         >
@@ -185,15 +184,14 @@ export function CanvasSideToolbar({
 
         {showSearch && (
           <div
-            className="absolute right-full mr-2 top-0 flex items-center rounded-lg overflow-hidden"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            className="absolute right-full mr-2 top-0 flex items-center rounded-lg overflow-hidden bg-card border border-border"
           >
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search nodes..."
-              className="w-48 px-3 py-2 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+              className="w-48 px-3 py-2 bg-transparent text-sm text-foreground placeholder-muted-foreground focus:outline-none"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               autoFocus
             />
@@ -201,7 +199,7 @@ export function CanvasSideToolbar({
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
-                className="px-2 text-gray-500 hover:text-white"
+                className="px-2 text-muted-foreground hover:text-foreground"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -213,7 +211,7 @@ export function CanvasSideToolbar({
       </div>
 
       {/* Divider */}
-      <div className="h-px mx-1" style={{ backgroundColor: "#333333" }} />
+      <div className="h-px mx-1 bg-border" />
 
       {/* Add Node */}
       <div className="relative">
@@ -222,7 +220,7 @@ export function CanvasSideToolbar({
           type="button"
           onClick={handleOpenAddMenu}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            showAddMenu ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
+            showAddMenu ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           title="Add node"
         >
@@ -247,13 +245,13 @@ export function CanvasSideToolbar({
       )}
 
       {/* Divider */}
-      <div className="h-px mx-1" style={{ backgroundColor: "#333333" }} />
+      <div className="h-px mx-1 bg-border" />
 
       {/* Settings */}
       <button
         type="button"
         onClick={onSettingsClick}
-        className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+        className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         title="Settings"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

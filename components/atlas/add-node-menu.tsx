@@ -77,10 +77,8 @@ export function AddNodeMenu({
       
       {/* Main Menu */}
       <div
+        className="bg-card border border-border rounded-lg"
         style={{ 
-          backgroundColor: "#1a1a1a", 
-          border: "1px solid #333333",
-          borderRadius: 8,
           width: 180,
           position: "fixed",
           left: menuPosition.x,
@@ -90,24 +88,24 @@ export function AddNodeMenu({
           maxHeight: "80vh",
           overflowY: "auto",
           zIndex: 9999,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         }}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
         {/* Drag Handle */}
         <div 
+          className="border-b border-border"
           style={{ 
             padding: "8px 12px", 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "space-between",
-            borderBottom: "1px solid #333333",
             cursor: isDragging ? "grabbing" : "grab",
           }}
           onMouseDown={handleMouseDown}
         >
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#9ca3af", ...fontStyle }}>
+          <span className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500, ...fontStyle }}>
             Add Node
           </span>
           <div style={{ display: "flex", gap: 2 }}>
@@ -146,7 +144,7 @@ export function AddNodeMenu({
           </button>
 
           {/* Divider */}
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          <div className="h-px mx-2 my-1 bg-border" />
 
           {/* Status Pill */}
           <button
@@ -172,7 +170,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          <div className="h-px mx-2 my-1 bg-border" />
           
           {/* Sage */}
           <button
@@ -203,7 +201,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          <div className="h-px mx-2 my-1 bg-border" />
           
           {/* Ops Data */}
           <button
@@ -239,7 +237,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          <div className="h-px mx-2 my-1 bg-border" />
           
           {/* AI Generate */}
           <button
@@ -274,7 +272,7 @@ Generate
           </button>
           
           {/* Divider */}
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          <div className="h-px mx-2 my-1 bg-border" />
           
           {/* File Upload */}
           <input
@@ -320,16 +318,14 @@ Generate
       {/* Submenu Panel - appears to the right */}
       {activeSubmenu && (
         <div
+          className="bg-card border border-border rounded-lg"
           style={{ 
-            backgroundColor: "#1a1a1a", 
-            border: "1px solid #333333",
-            borderRadius: 8,
             width: 160,
             position: "fixed",
             left: menuPosition.x + (sourceHandlePosition === "left" ? -180 : 180) + 8,
             top: menuPosition.y + (activeSubmenu === "sage" ? 90 : activeSubmenu === "ops" ? 145 : 200),
             zIndex: 51,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
             padding: "4px 0",
           }}
         >

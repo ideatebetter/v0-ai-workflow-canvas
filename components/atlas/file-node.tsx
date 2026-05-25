@@ -271,12 +271,12 @@ export function FileNode({ id, data, selected }: NodeProps) {
           {fileIcon}
         </div>
         <span 
-          className="text-sm text-white font-medium truncate flex-1"
+          className="text-sm text-foreground font-medium truncate flex-1"
         >
           {fileData.label}
         </span>
         <span 
-          className="text-xs text-gray-500 flex-shrink-0"
+          className="text-xs text-muted-foreground flex-shrink-0"
         >
           {fileData.fileExtension.replace(".", "").toUpperCase()}
         </span>
@@ -297,13 +297,12 @@ export function FileNode({ id, data, selected }: NodeProps) {
 
       {/* Main Card with Image Preview */}
       <div
+        className="bg-card border border-border"
         style={{
-          background: "#141414",
           borderRadius: 12,
-          border: "1px solid #2a2a2a",
           boxShadow: isHovered 
-            ? "0 8px 32px rgba(0,0,0,0.4)" 
-            : "0 2px 8px rgba(0,0,0,0.2)",
+            ? "0 8px 32px rgba(0,0,0,0.15)" 
+            : "0 2px 8px rgba(0,0,0,0.08)",
           transition: "box-shadow 0.2s ease",
         }}
       >
@@ -313,8 +312,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
         >
           {audioUrl ? (
             <div 
-              className="w-full flex flex-col items-center justify-center py-6"
-              style={{ backgroundColor: "#1a1a1a" }}
+              className="w-full flex flex-col items-center justify-center py-6 bg-muted"
             >
               {/* Waveform visualization */}
               <div className="flex items-center justify-center gap-0.5 mb-3">
