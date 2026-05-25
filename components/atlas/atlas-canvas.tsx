@@ -664,15 +664,15 @@ onClick={(event) => {
         maxZoom={4}
         defaultEdgeOptions={{
           type: "default",
-          style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
+          style: { strokeWidth: 2, stroke: "var(--atlas-edge-color)", strokeDasharray: "5 5" },
           animated: true,
         }}
         connectionLineStyle={{
           strokeWidth: presentationMode ? 3 : 2,
-          stroke: presentationMode ? "#F0FE00" : "#52525b",
+          stroke: presentationMode ? "#F0FE00" : "var(--atlas-edge-color)",
           strokeDasharray: presentationMode ? "8 4" : "5 5",
         }}
-        style={{ backgroundColor: "#0a0a0a" }}
+        style={{ backgroundColor: "var(--atlas-canvas-bg)" }}
         panOnDrag={commentMode ? false : [1, 2]}
         zoomOnScroll={true}
         zoomOnPinch={true}
@@ -682,15 +682,15 @@ onClick={(event) => {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="#27272a"
+          color="var(--atlas-canvas-dot)"
         />
         <Controls showInteractive={false} />
         <MiniMap
-          nodeColor="#3f3f46"
-          maskColor="rgba(0, 0, 0, 0.7)"
+          nodeColor="var(--atlas-minimap-node)"
+          maskColor="var(--atlas-minimap-mask)"
           style={{
-            backgroundColor: "#111111",
-            border: "1px solid #222222",
+            backgroundColor: "var(--atlas-minimap-bg)",
+            border: "1px solid var(--atlas-minimap-border)",
             borderRadius: 8,
           }}
         />
@@ -769,11 +769,11 @@ onClick={(event) => {
       {commentMode && !newCommentPosition && (
         <div
           className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none"
-          style={{ backgroundColor: "rgba(20, 20, 20, 0.9)", border: "1px solid #2a2a2a" }}
+          style={{ backgroundColor: "var(--atlas-overlay-bg)", border: "1px solid var(--atlas-overlay-border)" }}
         >
           <span
-            className="text-sm text-gray-300"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            className="text-sm"
+            style={{ color: "var(--atlas-node-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Click anywhere to add a comment
           </span>
@@ -784,29 +784,29 @@ onClick={(event) => {
       {isDraggingFiles && (
         <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
-          style={{ backgroundColor: "rgba(10, 10, 10, 0.85)" }}
+          style={{ backgroundColor: "var(--atlas-overlay-bg)" }}
         >
           <div
             className="flex flex-col items-center gap-4 p-8 rounded-2xl"
-            style={{ 
-              backgroundColor: "#141414", 
-              border: "2px dashed #3a3a3a",
+            style={{
+              backgroundColor: "var(--atlas-node-bg)",
+              border: "2px dashed var(--atlas-node-border)",
             }}
           >
-            <div 
+            <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#1f1f1f" }}
+              style={{ backgroundColor: "var(--atlas-node-bg-elevated)" }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="1.5">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--atlas-node-text-muted)" strokeWidth="1.5">
                 <path d="M12 16V4M12 4L8 8M12 4L16 8" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" strokeLinecap="round"/>
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-lg font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-lg font-medium" style={{ color: "var(--atlas-node-text)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 Drop files to upload
               </p>
-              <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-sm mt-1" style={{ color: "var(--atlas-node-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 Images, documents, and media files
               </p>
             </div>

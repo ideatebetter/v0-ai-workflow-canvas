@@ -47,6 +47,47 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Atlas canvas — light mode */
+    --atlas-canvas-bg: #f4f4f5;
+    --atlas-canvas-dot: #d4d4d8;
+    --atlas-node-bg: #ffffff;
+    --atlas-node-bg-elevated: #f9f9fb;
+    --atlas-node-border: #e4e4e7;
+    --atlas-node-text: #09090b;
+    --atlas-node-text-muted: #71717a;
+    --atlas-node-text-subtle: #a1a1aa;
+    --atlas-dropdown-bg: rgba(255, 255, 255, 0.97);
+    --atlas-dropdown-border: rgba(0, 0, 0, 0.08);
+    --atlas-minimap-bg: #ffffff;
+    --atlas-minimap-border: #e4e4e7;
+    --atlas-minimap-node: #a1a1aa;
+    --atlas-minimap-mask: rgba(244, 244, 245, 0.75);
+    --atlas-edge-color: #a1a1aa;
+    --atlas-overlay-bg: rgba(244, 244, 245, 0.92);
+    --atlas-overlay-border: rgba(0, 0, 0, 0.06);
+    --atlas-shadow-sm: rgba(0, 0, 0, 0.05);
+    --atlas-shadow-md: rgba(0, 0, 0, 0.08);
+    --atlas-shadow-lg: rgba(0, 0, 0, 0.14);
+    --atlas-sage-bg: rgba(255, 255, 255, 0.97);
+    --atlas-sage-border: rgba(0, 0, 0, 0.08);
+    --atlas-sage-divider: rgba(0, 0, 0, 0.05);
+    --atlas-sage-msg-user-bg: rgba(200, 210, 0, 0.12);
+    --atlas-sage-msg-user-text: rgba(80, 85, 0, 0.9);
+    --atlas-sage-msg-ai-bg: rgba(0, 0, 0, 0.04);
+    --atlas-sage-msg-ai-text: rgba(0, 0, 0, 0.82);
+    --atlas-sage-empty-text: rgba(0, 0, 0, 0.4);
+    --atlas-sage-empty-text-subtle: rgba(0, 0, 0, 0.25);
+    --atlas-sage-input-bg: rgba(0, 0, 0, 0.04);
+    --atlas-sage-input-border: rgba(0, 0, 0, 0.06);
+    --atlas-sage-status-text: rgba(0, 0, 0, 0.35);
+    --atlas-sage-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) inset;
+    --atlas-sage-shadow-selected: 0 0 0 4px rgba(240, 254, 0, 0.15), 0 20px 40px rgba(0,0,0,0.1);
+    --atlas-toolbar-bg: rgba(255, 255, 255, 0.95);
+    --atlas-toolbar-border: rgba(0, 0, 0, 0.08);
+    --atlas-toolbar-text: #09090b;
+    --atlas-toolbar-text-muted: #71717a;
+    --atlas-toolbar-hover: rgba(0, 0, 0, 0.06);
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -81,6 +122,47 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Atlas canvas — dark mode */
+    --atlas-canvas-bg: #0a0a0a;
+    --atlas-canvas-dot: #27272a;
+    --atlas-node-bg: #141414;
+    --atlas-node-bg-elevated: #1a1a1a;
+    --atlas-node-border: #2a2a2a;
+    --atlas-node-text: #ffffff;
+    --atlas-node-text-muted: #71717a;
+    --atlas-node-text-subtle: #52525b;
+    --atlas-dropdown-bg: rgba(26, 26, 26, 0.97);
+    --atlas-dropdown-border: rgba(255, 255, 255, 0.08);
+    --atlas-minimap-bg: #111111;
+    --atlas-minimap-border: #222222;
+    --atlas-minimap-node: #3f3f46;
+    --atlas-minimap-mask: rgba(0, 0, 0, 0.7);
+    --atlas-edge-color: #52525b;
+    --atlas-overlay-bg: rgba(20, 20, 20, 0.9);
+    --atlas-overlay-border: #2a2a2a;
+    --atlas-shadow-sm: rgba(0, 0, 0, 0.2);
+    --atlas-shadow-md: rgba(0, 0, 0, 0.3);
+    --atlas-shadow-lg: rgba(0, 0, 0, 0.5);
+    --atlas-sage-bg: rgba(28, 28, 30, 0.85);
+    --atlas-sage-border: rgba(255, 255, 255, 0.08);
+    --atlas-sage-divider: rgba(255, 255, 255, 0.06);
+    --atlas-sage-msg-user-bg: rgba(240, 254, 0, 0.15);
+    --atlas-sage-msg-user-text: rgba(240, 254, 0, 0.95);
+    --atlas-sage-msg-ai-bg: rgba(255, 255, 255, 0.06);
+    --atlas-sage-msg-ai-text: rgba(255, 255, 255, 0.85);
+    --atlas-sage-empty-text: rgba(255, 255, 255, 0.5);
+    --atlas-sage-empty-text-subtle: rgba(255, 255, 255, 0.25);
+    --atlas-sage-input-bg: rgba(255, 255, 255, 0.06);
+    --atlas-sage-input-border: rgba(255, 255, 255, 0.06);
+    --atlas-sage-status-text: rgba(255, 255, 255, 0.4);
+    --atlas-sage-shadow: 0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    --atlas-sage-shadow-selected: 0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5);
+    --atlas-toolbar-bg: rgba(18, 18, 18, 0.9);
+    --atlas-toolbar-border: rgba(255, 255, 255, 0.06);
+    --atlas-toolbar-text: #ffffff;
+    --atlas-toolbar-text-muted: #71717a;
+    --atlas-toolbar-hover: rgba(255, 255, 255, 0.08);
   }
 }
 

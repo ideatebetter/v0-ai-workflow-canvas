@@ -76,7 +76,7 @@ export function CanvasSideToolbar({
   return (
     <div
       className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 rounded-xl z-40"
-      style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
+      style={{ backgroundColor: "var(--atlas-node-bg)", border: "1px solid var(--atlas-node-border)" }}
     >
       {/* Comment Mode Toggle */}
       <div className="relative">
@@ -84,8 +84,9 @@ export function CanvasSideToolbar({
           type="button"
           onClick={() => onCommentModeChange(!commentMode)}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            commentMode ? "text-[#121212]" : "text-gray-400 hover:text-white hover:bg-white/10"
+            commentMode ? "text-[#121212]" : "hover:bg-black/10 dark:hover:bg-white/10"
           }`}
+          style={{ color: commentMode ? "#121212" : "var(--atlas-toolbar-text-muted)" }}
           style={{
             backgroundColor: commentMode ? "#F0FE00" : "transparent",
           }}
@@ -126,8 +127,9 @@ export function CanvasSideToolbar({
             }
           }}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            presentationMode ? "text-[#121212]" : "text-gray-400 hover:text-white hover:bg-white/10"
+            presentationMode ? "text-[#121212]" : "hover:bg-black/10 dark:hover:bg-white/10"
           }`}
+          style={{ color: presentationMode ? "#121212" : "var(--atlas-toolbar-text-muted)" }}
           style={{
             backgroundColor: presentationMode ? "#F0FE00" : "transparent",
           }}
@@ -172,9 +174,8 @@ export function CanvasSideToolbar({
         <button
           type="button"
           onClick={() => setShowSearch(!showSearch)}
-          className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            showSearch ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
-          }`}
+          className="flex items-center justify-center w-10 h-10 rounded-lg transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+          style={{ color: showSearch ? "var(--atlas-toolbar-text)" : "var(--atlas-toolbar-text-muted)" }}
           title="Search canvas"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -186,14 +187,15 @@ export function CanvasSideToolbar({
         {showSearch && (
           <div
             className="absolute right-full mr-2 top-0 flex items-center rounded-lg overflow-hidden"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--atlas-dropdown-bg)", border: "1px solid var(--atlas-dropdown-border)" }}
           >
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search nodes..."
-              className="w-48 px-3 py-2 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+              className="w-48 px-3 py-2 bg-transparent text-sm focus:outline-none"
+              style={{ color: "var(--atlas-toolbar-text)" }}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               autoFocus
             />
@@ -213,7 +215,7 @@ export function CanvasSideToolbar({
       </div>
 
       {/* Divider */}
-      <div className="h-px mx-1" style={{ backgroundColor: "#333333" }} />
+      <div className="h-px mx-1" style={{ backgroundColor: "var(--atlas-node-border)" }} />
 
       {/* Add Node */}
       <div className="relative">
@@ -221,9 +223,8 @@ export function CanvasSideToolbar({
           ref={addButtonRef}
           type="button"
           onClick={handleOpenAddMenu}
-          className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            showAddMenu ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
-          }`}
+          className="flex items-center justify-center w-10 h-10 rounded-lg transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+          style={{ color: showAddMenu ? "var(--atlas-toolbar-text)" : "var(--atlas-toolbar-text-muted)" }}
           title="Add node"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -247,13 +248,14 @@ export function CanvasSideToolbar({
       )}
 
       {/* Divider */}
-      <div className="h-px mx-1" style={{ backgroundColor: "#333333" }} />
+      <div className="h-px mx-1" style={{ backgroundColor: "var(--atlas-node-border)" }} />
 
       {/* Settings */}
       <button
         type="button"
         onClick={onSettingsClick}
-        className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+        className="flex items-center justify-center w-10 h-10 rounded-lg transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+        style={{ color: "var(--atlas-toolbar-text-muted)" }}
         title="Settings"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useTheme } from "next-themes";
 import type { Canvas } from "@/lib/atlas-types";
 
 interface AtlasToolbarProps {
@@ -26,6 +27,7 @@ export function AtlasToolbar({
   recentCanvases,
   onSwitchCanvas,
 }: AtlasToolbarProps) {
+  const { resolvedTheme, setTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvasName || "");
   const [showMenu, setShowMenu] = useState(false);
@@ -147,15 +149,15 @@ export function AtlasToolbar({
                 onChange={(e) => setEditValue(e.target.value)}
                 onBlur={handleSave}
                 onKeyDown={handleKeyDown}
-                className="text-sm text-white bg-transparent border-b border-gray-500 focus:border-white focus:outline-none px-0 py-0.5 min-w-[100px]"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                className="text-sm bg-transparent border-b focus:outline-none px-0 py-0.5 min-w-[100px]"
+                style={{ color: "var(--atlas-toolbar-text)", borderColor: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="text-sm text-gray-400 hover:text-white transition-colors cursor-text flex items-center gap-1.5"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                className="text-sm transition-colors cursor-text flex items-center gap-1.5"
+                style={{ color: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 {canvasName}
                 {recentCanvases && recentCanvases.length > 0 && (
@@ -176,15 +178,15 @@ export function AtlasToolbar({
             {showRecentDropdown && recentCanvases && recentCanvases.length > 0 && !isEditing && (
               <div
                 className="absolute top-full left-0 mt-2 py-1 rounded-xl shadow-2xl min-w-[220px]"
-                style={{ 
-                  backgroundColor: "rgba(26, 26, 26, 0.95)", 
-                  border: "1px solid rgba(255,255,255,0.08)",
+                style={{
+                  backgroundColor: "var(--atlas-dropdown-bg)",
+                  border: "1px solid var(--atlas-dropdown-border)",
                   backdropFilter: "blur(20px)",
                 }}
                 onMouseEnter={handleDropdownMouseEnter}
                 onMouseLeave={handleDropdownMouseLeave}
               >
-                <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <div className="px-3 py-2 text-[10px] uppercase tracking-wider" style={{ color: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                   Recent Canvases
                 </div>
                 {recentCanvases.map((canvas, index) => (
@@ -195,12 +197,12 @@ export function AtlasToolbar({
                       onSwitchCanvas?.(canvas.id);
                       setShowRecentDropdown(false);
                     }}
-                    className="w-full px-3 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="w-full px-3 py-2.5 text-left text-sm transition-colors flex items-center gap-3"
+                    style={{ color: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                      style={{ backgroundColor: "var(--atlas-toolbar-hover)" }}
                     >
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-gray-500">
                         <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -237,7 +239,7 @@ export function AtlasToolbar({
             {showMenu && (
               <div
                 className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[180px]"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                style={{ backgroundColor: "var(--atlas-dropdown-bg)", border: "1px solid var(--atlas-dropdown-border)" }}
               >
                 <button
                   type="button"
@@ -245,8 +247,8 @@ export function AtlasToolbar({
                     onSaveAsFramework?.();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2"
+                  style={{ color: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -256,7 +258,7 @@ export function AtlasToolbar({
                 </button>
                 {hasOtherCanvases && (
                   <>
-                    <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                    <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--atlas-dropdown-border)" }} />
                     <button
                       type="button"
                       onClick={() => {
@@ -264,12 +266,12 @@ export function AtlasToolbar({
                         setShowMenu(false);
                       }}
                       disabled={!hasSelectedNodes}
-                      className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
-                        hasSelectedNodes 
-                          ? "text-gray-300 hover:bg-white/10 hover:text-white" 
-                          : "text-gray-600 cursor-not-allowed"
-                      }`}
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2"
+                      style={{
+                        color: hasSelectedNodes ? "var(--atlas-toolbar-text-muted)" : "var(--atlas-node-text-subtle)",
+                        cursor: hasSelectedNodes ? "pointer" : "not-allowed",
+                        fontFamily: "system-ui, Inter, sans-serif",
+                      }}
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -277,20 +279,20 @@ export function AtlasToolbar({
                       </svg>
                       Copy to Canvas
                       {!hasSelectedNodes && (
-                        <span className="text-[10px] text-gray-500 ml-auto">Select nodes first</span>
+                        <span className="text-[10px] ml-auto" style={{ color: "var(--atlas-node-text-subtle)" }}>Select nodes first</span>
                       )}
                     </button>
                   </>
                 )}
-                <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--atlas-dropdown-border)" }} />
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditing(true);
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  className="w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2"
+                  style={{ color: "var(--atlas-toolbar-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -302,6 +304,26 @@ export function AtlasToolbar({
           </div>
         </>
       )}
+
+      {/* Theme toggle */}
+      <button
+        type="button"
+        onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+        className="p-1.5 rounded-lg transition-colors"
+        style={{ color: "var(--atlas-toolbar-text-muted)" }}
+        title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {resolvedTheme === "dark" ? (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.45 4.45M11.55 11.55L12.6 12.6M12.6 3.4L11.55 4.45M4.45 11.55L3.4 12.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M13.5 9.5A6 6 0 1 1 6.5 2.5a4.5 4.5 0 0 0 7 7z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </button>
     </div>
   );
 }

@@ -270,13 +270,15 @@ export function FileNode({ id, data, selected }: NodeProps) {
         <div className="flex-shrink-0">
           {fileIcon}
         </div>
-        <span 
-          className="text-sm text-white font-medium truncate flex-1"
+        <span
+          className="text-sm font-medium truncate flex-1"
+          style={{ color: "var(--atlas-node-text)" }}
         >
           {fileData.label}
         </span>
-        <span 
-          className="text-xs text-gray-500 flex-shrink-0"
+        <span
+          className="text-xs flex-shrink-0"
+          style={{ color: "var(--atlas-node-text-subtle)" }}
         >
           {fileData.fileExtension.replace(".", "").toUpperCase()}
         </span>
@@ -298,12 +300,12 @@ export function FileNode({ id, data, selected }: NodeProps) {
       {/* Main Card with Image Preview */}
       <div
         style={{
-          background: "#141414",
+          background: "var(--atlas-node-bg)",
           borderRadius: 12,
-          border: "1px solid #2a2a2a",
-          boxShadow: isHovered 
-            ? "0 8px 32px rgba(0,0,0,0.4)" 
-            : "0 2px 8px rgba(0,0,0,0.2)",
+          border: "1px solid var(--atlas-node-border)",
+          boxShadow: isHovered
+            ? `0 8px 32px var(--atlas-shadow-lg)`
+            : `0 2px 8px var(--atlas-shadow-sm)`,
           transition: "box-shadow 0.2s ease",
         }}
       >
@@ -312,9 +314,9 @@ export function FileNode({ id, data, selected }: NodeProps) {
           className="relative w-full"
         >
           {audioUrl ? (
-            <div 
+            <div
               className="w-full flex flex-col items-center justify-center py-6"
-              style={{ backgroundColor: "#1a1a1a" }}
+              style={{ backgroundColor: "var(--atlas-node-bg-elevated)" }}
             >
               {/* Waveform visualization */}
               <div className="flex items-center justify-center gap-0.5 mb-3">
@@ -407,9 +409,9 @@ export function FileNode({ id, data, selected }: NodeProps) {
           <div className="px-3 py-3 space-y-2">
             {/* Status Badge */}
             <div className="flex items-center justify-between">
-              <span 
+              <span
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--atlas-node-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Status
               </span>
@@ -427,20 +429,20 @@ export function FileNode({ id, data, selected }: NodeProps) {
 
             {/* Tasks */}
             <div className="flex items-center justify-between">
-              <span 
+              <span
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--atlas-node-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Tasks
               </span>
               <div className="flex items-center gap-1.5">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="#666666" strokeWidth="1.25"/>
-                  <path d="M5 7L6.5 8.5L9 5.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="var(--atlas-node-text-muted)" strokeWidth="1.25"/>
+                  <path d="M5 7L6.5 8.5L9 5.5" stroke="var(--atlas-node-text-muted)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span 
+                <span
                   className="text-xs"
-                  style={{ color: "#999999", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ color: "var(--atlas-node-text-subtle)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {completedTasks}/{taskCount}
                 </span>
@@ -449,15 +451,15 @@ export function FileNode({ id, data, selected }: NodeProps) {
 
             {/* Last Modified */}
             <div className="flex items-center justify-between">
-              <span 
+              <span
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--atlas-node-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Modified
               </span>
-              <span 
+              <span
                 className="text-xs"
-                style={{ color: "#999999", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--atlas-node-text-subtle)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 {fileData.lastModified}
               </span>

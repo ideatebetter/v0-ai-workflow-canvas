@@ -283,20 +283,20 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     <div
       className={`group transition-all duration-500 ease-out overflow-hidden ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
       style={{
-        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "rgba(28, 28, 30, 0.85)",
+        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "var(--atlas-sage-bg)",
         backdropFilter: "blur(40px) saturate(180%)",
         WebkitBackdropFilter: "blur(40px) saturate(180%)",
         borderRadius: 20,
-        border: isDragOver 
-          ? "1px solid rgba(240, 254, 0, 0.5)" 
-          : selected 
-            ? "1px solid rgba(240, 254, 0, 0.5)" 
-            : "1px solid rgba(255,255,255,0.08)",
+        border: isDragOver
+          ? "1px solid rgba(240, 254, 0, 0.5)"
+          : selected
+            ? "1px solid rgba(240, 254, 0, 0.5)"
+            : "1px solid var(--atlas-sage-border)",
         width: 320,
         minHeight: 240,
-        boxShadow: selected 
-          ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)" 
-          : "0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset",
+        boxShadow: selected
+          ? "var(--atlas-sage-shadow-selected)"
+          : "var(--atlas-sage-shadow)",
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -325,17 +325,17 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             className="h-5 opacity-90"
           />
           <div className="flex items-center gap-1.5">
-            <div 
+            <div
               className="w-2 h-2 rounded-full transition-colors duration-300"
-              style={{ 
+              style={{
                 backgroundColor: isLoading ? "#F0FE00" : "#30D158",
                 boxShadow: isLoading ? "0 0 8px rgba(240, 254, 0, 0.5)" : "0 0 8px rgba(48, 209, 88, 0.4)"
               }}
             />
-            <span 
+            <span
               className="text-[11px] font-medium tracking-tight transition-colors duration-300"
-              style={{ 
-                color: isLoading ? "rgba(240, 254, 0, 0.8)" : "rgba(255,255,255,0.4)",
+              style={{
+                color: isLoading ? "rgba(240, 254, 0, 0.8)" : "var(--atlas-sage-status-text)",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"
               }}
             >
@@ -346,7 +346,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       </div>
 
       {/* Subtle divider */}
-      <div className="mx-5 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+      <div className="mx-5 h-px" style={{ background: `linear-gradient(90deg, transparent, var(--atlas-sage-divider), transparent)` }} />
 
       {/* Messages - Clean, spacious */}
       <div className="px-4 py-4 space-y-3 min-h-[160px] max-h-[220px] overflow-y-auto">
@@ -363,10 +363,10 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
                   className="text-[13px] leading-relaxed px-4 py-2.5 max-w-[85%]"
                   style={{
                     borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                    backgroundColor: msg.role === "user" 
-                      ? "rgba(240, 254, 0, 0.15)" 
-                      : "rgba(255,255,255,0.06)",
-                    color: msg.role === "user" ? "rgba(240, 254, 0, 0.95)" : "rgba(255,255,255,0.85)",
+                    backgroundColor: msg.role === "user"
+                      ? "var(--atlas-sage-msg-user-bg)"
+                      : "var(--atlas-sage-msg-ai-bg)",
+                    color: msg.role === "user" ? "var(--atlas-sage-msg-user-text)" : "var(--atlas-sage-msg-ai-text)",
                     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                     fontWeight: 400,
                     letterSpacing: "-0.01em",
@@ -382,10 +382,10 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             className="flex flex-col items-center justify-center py-8 px-6"
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
-            <p className="text-[13px] text-center leading-relaxed" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
+            <p className="text-[13px] text-center leading-relaxed" style={{ color: "var(--atlas-sage-empty-text)", letterSpacing: "-0.01em" }}>
               Your operational intelligence layer.
             </p>
-            <p className="text-[11px] text-center mt-1.5" style={{ color: "rgba(255,255,255,0.25)", letterSpacing: "0.01em" }}>
+            <p className="text-[11px] text-center mt-1.5" style={{ color: "var(--atlas-sage-empty-text-subtle)", letterSpacing: "0.01em" }}>
               Surfaces patterns. Preserves intent. Executes tasks.
             </p>
           </div>
@@ -396,7 +396,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           <div className="flex justify-start">
             <div 
               className="flex items-center gap-1 px-4 py-3 rounded-2xl"
-              style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+              style={{ backgroundColor: "var(--atlas-sage-msg-ai-bg)" }}
             >
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "rgba(240, 254, 0, 0.6)", animationDelay: "0ms", animationDuration: "1s" }}/>
@@ -506,12 +506,12 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           onChange={handleFileUpload}
         />
         
-        <div 
+        <div
           className="flex items-center gap-2 px-3 py-2.5 transition-all duration-200"
-          style={{ 
-            backgroundColor: "rgba(255,255,255,0.06)",
+          style={{
+            backgroundColor: "var(--atlas-sage-input-bg)",
             borderRadius: 24,
-            border: "1px solid rgba(255,255,255,0.06)",
+            border: "1px solid var(--atlas-sage-input-border)",
           }}
         >
           {/* Attachment button */}
@@ -522,8 +522,8 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
               fileInputRef.current?.click();
             }}
             disabled={isLoading || isUploading}
-            className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/10 disabled:opacity-30"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30"
+            style={{ color: "var(--atlas-sage-status-text)" }}
           >
             {isUploading ? (
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="animate-spin">
@@ -549,8 +549,9 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             placeholder="Message Sage..."
-            className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none nowheel nopan"
-            style={{ 
+            className="flex-1 bg-transparent text-[13px] outline-none nowheel nopan"
+            style={{
+              color: "var(--atlas-sage-msg-ai-text)",
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               letterSpacing: "-0.01em"
             }}
@@ -561,9 +562,9 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             onClick={handleButtonClick}
             disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-20 active:scale-90"
-            style={{ 
-              backgroundColor: (inputValue.trim() || attachments.length > 0) ? "#F0FE00" : "rgba(255,255,255,0.1)",
-              color: (inputValue.trim() || attachments.length > 0) ? "#000" : "rgba(255,255,255,0.3)"
+            style={{
+              backgroundColor: (inputValue.trim() || attachments.length > 0) ? "#F0FE00" : "var(--atlas-sage-input-bg)",
+              color: (inputValue.trim() || attachments.length > 0) ? "#000" : "var(--atlas-sage-status-text)"
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -578,13 +579,13 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
         type="target"
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
+        style={{ background: "var(--atlas-sage-bg)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
+        style={{ background: "var(--atlas-sage-bg)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
       />
     </div>
   );
