@@ -77,7 +77,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
@@ -89,9 +89,9 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-lg">
           {/* Tabs */}
-          <div className="flex border-b border-[#2a2a2a]">
+          <div className="flex border-b border-border">
             <button
               type="button"
               onClick={() => {
@@ -101,8 +101,8 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-4 px-4 text-sm font-medium transition-colors ${
                 activeTab === "signin"
-                  ? "text-white bg-[#1a1a1a] border-b-2 border-[#F0FE00]"
-                  : "text-gray-400 hover:text-white bg-[#141414]"
+                  ? "text-foreground bg-card border-b-2 border-[#F0FE00]"
+                  : "text-muted-foreground hover:text-foreground bg-muted"
               }`}
             >
               Sign In
@@ -116,8 +116,8 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-4 px-4 text-sm font-medium transition-colors ${
                 activeTab === "request-access"
-                  ? "text-white bg-[#1a1a1a] border-b-2 border-[#F0FE00]"
-                  : "text-gray-400 hover:text-white bg-[#141414]"
+                  ? "text-foreground bg-card border-b-2 border-[#F0FE00]"
+                  : "text-muted-foreground hover:text-foreground bg-muted"
               }`}
             >
               Request Access
@@ -127,12 +127,12 @@ export default function LoginPage() {
           <div className="p-8">
             {activeTab === "signin" ? (
               <>
-                <h1 className="text-2xl font-semibold text-white mb-2 text-center">Welcome back</h1>
-                <p className="text-gray-400 text-center mb-6">Sign in to your account</p>
+                <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">Welcome back</h1>
+                <p className="text-muted-foreground text-center mb-6">Sign in to your account</p>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                       Email
                     </label>
                     <input
@@ -141,13 +141,13 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
                       placeholder="you@example.com"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                       Password
                     </label>
                     <input
@@ -156,7 +156,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
                       placeholder="Enter your password"
                     />
                   </div>
@@ -164,14 +164,14 @@ export default function LoginPage() {
                   <div className="flex justify-end">
                     <Link
                       href="/auth/forgot-password"
-                      className="text-sm text-gray-400 hover:text-[#F0FE00] transition-colors"
+                      className="text-sm text-muted-foreground hover:text-[#F0FE00] transition-colors"
                     >
                       Forgot your password?
                     </Link>
                   </div>
 
                   {error && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
                       {error}
                     </div>
                   )}
@@ -188,21 +188,21 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-semibold text-white mb-2 text-center">Get Access</h1>
-                <p className="text-gray-400 text-center mb-6">Join the waitlist to get access to Atlas</p>
+                <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">Get Access</h1>
+                <p className="text-muted-foreground text-center mb-6">Join the waitlist to get access to Atlas</p>
 
                 {success ? (
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-center">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-center">
+                    <svg className="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p className="font-medium mb-1">Request Submitted!</p>
-                    <p className="text-sm text-green-400/80">{success}</p>
+                    <p className="text-sm text-green-500/80">{success}</p>
                   </div>
                 ) : (
                   <form onSubmit={handleRequestAccess} className="space-y-4">
                     <div>
-                      <label htmlFor="request-name" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="request-name" className="block text-sm font-medium text-foreground mb-2">
                         Full Name
                       </label>
                       <input
@@ -211,13 +211,13 @@ export default function LoginPage() {
                         value={requestName}
                         onChange={(e) => setRequestName(e.target.value)}
                         required
-                        className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
+                        className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
                         placeholder="John Doe"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="request-email" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="request-email" className="block text-sm font-medium text-foreground mb-2">
                         Email
                       </label>
                       <input
@@ -226,13 +226,13 @@ export default function LoginPage() {
                         value={requestEmail}
                         onChange={(e) => setRequestEmail(e.target.value)}
                         required
-                        className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
+                        className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
                         placeholder="you@company.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="request-company" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="request-company" className="block text-sm font-medium text-foreground mb-2">
                         Company
                       </label>
                       <input
@@ -240,13 +240,13 @@ export default function LoginPage() {
                         type="text"
                         value={requestCompany}
                         onChange={(e) => setRequestCompany(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:border-[#F0FE00] transition-colors"
+                        className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
                         placeholder="Your company name (optional)"
                       />
                     </div>
 
                     {error && (
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
                         {error}
                       </div>
                     )}

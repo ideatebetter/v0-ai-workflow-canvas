@@ -283,20 +283,18 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     <div
       className={`group transition-all duration-500 ease-out overflow-hidden ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
       style={{
-        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "rgba(28, 28, 30, 0.85)",
-        backdropFilter: "blur(40px) saturate(180%)",
-        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        background: isDragOver ? "rgba(240, 254, 0, 0.05)" : "hsl(var(--card))",
         borderRadius: 20,
         border: isDragOver 
           ? "1px solid rgba(240, 254, 0, 0.5)" 
           : selected 
             ? "1px solid rgba(240, 254, 0, 0.5)" 
-            : "1px solid rgba(255,255,255,0.08)",
+            : "1px solid hsl(var(--border))",
         width: 320,
         minHeight: 240,
         boxShadow: selected 
-          ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)" 
-          : "0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset",
+          ? "0 0 0 4px rgba(240, 254, 0, 0.1), 0 25px 50px -12px rgba(0,0,0,0.15)" 
+          : "0 8px 32px -12px rgba(0,0,0,0.1)",
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -382,10 +380,10 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             className="flex flex-col items-center justify-center py-8 px-6"
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
-            <p className="text-[13px] text-center leading-relaxed" style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
+            <p className="text-[13px] text-center leading-relaxed text-muted-foreground" style={{ letterSpacing: "-0.01em" }}>
               Your operational intelligence layer.
             </p>
-            <p className="text-[11px] text-center mt-1.5" style={{ color: "rgba(255,255,255,0.25)", letterSpacing: "0.01em" }}>
+            <p className="text-[11px] text-center mt-1.5 text-muted-foreground/60" style={{ letterSpacing: "0.01em" }}>
               Surfaces patterns. Preserves intent. Executes tasks.
             </p>
           </div>

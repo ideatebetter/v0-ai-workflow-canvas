@@ -31,7 +31,7 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(nodes);
   
   return (
-    <div className="w-full h-full" style={{ backgroundColor: "#0A0A0A" }}>
+    <div className="w-full h-full bg-background">
       <ReactFlow
         nodes={flowNodes}
         edges={[]}
@@ -49,11 +49,8 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
         zoomOnPinch
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#1a1a1a" gap={20} />
-        <Controls 
-          className="!bg-[#1a1a1a] !border-[#2a2a2a] !rounded-lg"
-          style={{ button: { backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" } }}
-        />
+        <Background className="[&>pattern>circle]:fill-muted-foreground/30" gap={20} />
+        <Controls showInteractive={false} />
         
         {/* Canvas Group Labels */}
         {groups.map((group) => (
@@ -70,16 +67,13 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
             <button
               type="button"
               onClick={() => onOpenCanvas(group.canvasId)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:scale-105"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:scale-105 bg-card border border-border text-foreground"
               style={{
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #2a2a2a",
-                color: "#ffffff",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
               {group.canvasName}
-              <span className="ml-2 text-gray-500">({group.nodeCount})</span>
+              <span className="ml-2 text-muted-foreground">({group.nodeCount})</span>
             </button>
           </div>
         ))}
@@ -90,8 +84,7 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <div
-              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-card border border-border"
             >
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="4" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>

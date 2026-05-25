@@ -14,19 +14,19 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 220 14% 96%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover-foreground: 0 0% 9%;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
+    --secondary: 220 14% 96%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
+    --muted: 220 14% 96%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
+    --accent: 220 14% 96%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -49,7 +49,7 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Workflow editor tokens - Light mode */
-    --workflow-bg: 0 0% 96%;
+    --workflow-bg: 220 14% 96%;
     --workflow-surface: 0 0% 100%;
     --workflow-surface-hover: 0 0% 98%;
     --workflow-border: 0 0% 85%;
@@ -63,6 +63,16 @@ body {
     --workflow-edge: 0 0% 60%;
     --workflow-handle: 0 0% 50%;
     --workflow-handle-border: 0 0% 70%;
+    
+    /* Atlas canvas tokens - Light mode */
+    --atlas-canvas-bg: 220 14% 96%;
+    --atlas-node-bg: 0 0% 100%;
+    --atlas-node-border: 0 0% 90%;
+    --atlas-toolbar-bg: 0 0% 100%;
+    --atlas-toolbar-border: 0 0% 90%;
+    --atlas-text-primary: 0 0% 9%;
+    --atlas-text-secondary: 0 0% 45%;
+    --atlas-text-muted: 0 0% 60%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -143,28 +153,46 @@ body {
   padding: 0 !important;
 }
 
-/* React Flow controls theme support */
+/* React Flow controls theme support - Light mode */
 .react-flow__controls {
-  background: #111111 !important;
-  border: 1px solid #222222 !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
 }
 
 .react-flow__controls-button {
-  background: #111111 !important;
-  border-bottom: 1px solid #222222 !important;
-  fill: #888888 !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  fill: #666666 !important;
   transition: all 0.15s ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background: #1a1a1a !important;
-  fill: #ffffff !important;
+  background: #f5f5f5 !important;
+  fill: #171717 !important;
 }
 
 .react-flow__controls-button:last-child {
   border-bottom: none !important;
+}
+
+/* Dark mode controls */
+.dark .react-flow__controls {
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
+}
+
+.dark .react-flow__controls-button {
+  background: #111111 !important;
+  border-bottom: 1px solid #222222 !important;
+  fill: #888888 !important;
+}
+
+.dark .react-flow__controls-button:hover {
+  background: #1a1a1a !important;
+  fill: #ffffff !important;
 }
 
 /* Highlight nodes as valid drop targets when dragging a connection */
@@ -178,17 +206,28 @@ body {
   z-index: 1000 !important;
 }
 
-/* React Flow minimap theme support */
+/* React Flow minimap theme support - Light mode */
 .react-flow__minimap {
-  background: #111111 !important;
-  border: 1px solid #222222 !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
   border-radius: 0.5rem !important;
 }
 
-/* React Flow edges theme support */
+/* Dark mode minimap */
+.dark .react-flow__minimap {
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
+}
+
+/* React Flow edges theme support - Light mode */
 .react-flow__edge-path {
-  stroke: #52525b !important;
+  stroke: #a3a3a3 !important;
   stroke-dasharray: 5 5 !important;
+}
+
+/* Dark mode edges */
+.dark .react-flow__edge-path {
+  stroke: #52525b !important;
 }
 
 /* React Flow attribution hide */
