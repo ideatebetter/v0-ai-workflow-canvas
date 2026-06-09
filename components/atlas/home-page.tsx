@@ -15,8 +15,8 @@ import { DefaultChatTransport } from "ai";
 import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
 
-type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas" | "settings" | "all-files";
+type SidebarFilter = "all" | "workspace" | "private";
+type HomeView = "home" | "canvases" | "community" | "workspace-canvas" | "settings" | "all-files";
 type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
@@ -438,17 +438,11 @@ const [showSageChat, setShowSageChat] = useState(false);
     return { nodes: allNodes, groups: canvasGroups };
   }, [canvases]);
 
-  const favoriteCanvases = useMemo(() => {
-    return canvases.filter((c) => c.isFavorite);
-  }, [canvases]);
-
   const filteredCanvases = useMemo(() => {
     let filtered = canvases;
 
-    // Apply view/sidebar filter
-    if (activeView === "favorites" || sidebarFilter === "favorites") {
-      filtered = filtered.filter((c) => c.isFavorite);
-    } else if (sidebarFilter === "workspace") {
+    // Apply sidebar filter
+    if (sidebarFilter === "workspace") {
       filtered = filtered.filter((c) => c.visibility === "workspace");
     } else if (sidebarFilter === "private") {
       filtered = filtered.filter((c) => c.visibility === "private");
@@ -464,8 +458,12 @@ const [showSageChat, setShowSageChat] = useState(false);
       );
     }
 
-    return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [canvases, sidebarFilter, searchQuery, activeView]);
+    // Sort: favorites first, then by most recently updated
+    return filtered.sort((a, b) => {
+      if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [canvases, sidebarFilter, searchQuery]);
 
   const handleCreateCanvas = () => {
     if (!newCanvasName.trim()) return;
@@ -526,11 +524,21 @@ const [showSageChat, setShowSageChat] = useState(false);
   };
 
   const getProjectCanvases = (projectId: string) => {
-    return canvases.filter(c => c.projectId === projectId);
+    return canvases
+      .filter(c => c.projectId === projectId)
+      .sort((a, b) => {
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
   };
 
   const getUngroupedCanvases = () => {
-    return canvases.filter(c => !c.projectId);
+    return canvases
+      .filter(c => !c.projectId)
+      .sort((a, b) => {
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
   };
 
   const toggleFilesProjectExpanded = (projectId: string) => {
@@ -761,19 +769,6 @@ const [showSageChat, setShowSageChat] = useState(false);
             </button>
             <button
               type="button"
-              onClick={() => { setSidebarFilter("favorites"); setActiveView("favorites"); }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "favorites" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Favorites
-            </button>
-            <button
-              type="button"
               onClick={() => setActiveView("all-files")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 activeView === "all-files" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -856,31 +851,6 @@ const [showSageChat, setShowSageChat] = useState(false);
                     </svg>
                     <span className="truncate">{framework.name}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Favorites Section */}
-          {favoriteCanvases.length > 0 && (
-            <div className="mb-6">
-              <div
-                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                Favorites
-              </div>
-              <div className="space-y-1">
-                {favoriteCanvases.map((canvas) => (
-                  <button
-                    key={canvas.id}
-                    type="button"
-                    onClick={() => onOpenCanvas(canvas.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <span className="truncate">{canvas.name}</span>
-                  </button>
                 ))}
               </div>
             </div>
@@ -986,7 +956,6 @@ const [showSageChat, setShowSageChat] = useState(false);
           >
             {activeView === "home" && "Home"}
             {activeView === "canvases" && "All Canvases"}
-            {activeView === "favorites" && "Favorites"}
             {activeView === "all-files" && "All Files"}
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
@@ -3033,7 +3002,7 @@ All Frameworks
               )}
             </div>
           </>
-        ) : (activeView === "canvases" || activeView === "favorites") ? (
+        ) : activeView === "canvases" ? (
           /* Canvas/Files View with Tab Switcher */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Tab Switcher - Only show on canvases view, not favorites */}
@@ -3067,7 +3036,7 @@ All Frameworks
             )}
 
             {/* Content Area */}
-            {(activeView === "favorites" || canvasSubView === "canvases") ? (
+            {canvasSubView === "canvases" ? (
               <div className="flex-1 overflow-y-auto p-6">
               {filteredCanvases.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -3235,7 +3204,7 @@ All Frameworks
                 className="text-gray-500 text-sm mb-4"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                {activeView === "favorites" ? "No favorite canvases yet" : "No canvases yet"}
+                {"No canvases yet"}
               </p>
               <button
                 type="button"
