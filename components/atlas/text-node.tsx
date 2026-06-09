@@ -283,8 +283,8 @@ export function TextNode({ id, data, selected }: NodeProps) {
         style={{
           background: isInPresentation ? "#F0FE00" : "#1a1a1a",
           border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252",
-          width: 12,
-          height: 12,
+          width: 20,
+          height: 20,
           opacity: isHovered || isInPresentation ? 1 : 0,
         }}
       />
@@ -295,8 +295,8 @@ export function TextNode({ id, data, selected }: NodeProps) {
         style={{
           background: isInPresentation ? "#F0FE00" : "#1a1a1a",
           border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252",
-          width: 12,
-          height: 12,
+          width: 20,
+          height: 20,
           opacity: isHovered || isInPresentation ? 1 : 0,
         }}
       />

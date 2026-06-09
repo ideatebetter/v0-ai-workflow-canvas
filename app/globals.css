@@ -153,46 +153,28 @@ body {
   padding: 0 !important;
 }
 
-/* React Flow controls theme support - Light mode */
+/* React Flow controls - always dark */
 .react-flow__controls {
-  background: #ffffff !important;
-  border: 1px solid #e5e5e5 !important;
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
 }
 
 .react-flow__controls-button {
-  background: #ffffff !important;
-  border-bottom: 1px solid #e5e5e5 !important;
-  fill: #666666 !important;
+  background: #111111 !important;
+  border-bottom: 1px solid #222222 !important;
+  fill: #888888 !important;
   transition: all 0.15s ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background: #f5f5f5 !important;
-  fill: #171717 !important;
+  background: #1a1a1a !important;
+  fill: #ffffff !important;
 }
 
 .react-flow__controls-button:last-child {
   border-bottom: none !important;
-}
-
-/* Dark mode controls */
-.dark .react-flow__controls {
-  background: #111111 !important;
-  border: 1px solid #222222 !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
-}
-
-.dark .react-flow__controls-button {
-  background: #111111 !important;
-  border-bottom: 1px solid #222222 !important;
-  fill: #888888 !important;
-}
-
-.dark .react-flow__controls-button:hover {
-  background: #1a1a1a !important;
-  fill: #ffffff !important;
 }
 
 /* Highlight nodes as valid drop targets when dragging a connection */
@@ -206,28 +188,17 @@ body {
   z-index: 1000 !important;
 }
 
-/* React Flow minimap theme support - Light mode */
+/* React Flow minimap - always dark */
 .react-flow__minimap {
-  background: #ffffff !important;
-  border: 1px solid #e5e5e5 !important;
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
   border-radius: 0.5rem !important;
 }
 
-/* Dark mode minimap */
-.dark .react-flow__minimap {
-  background: #111111 !important;
-  border: 1px solid #222222 !important;
-}
-
-/* React Flow edges theme support - Light mode */
+/* React Flow edges - always dark */
 .react-flow__edge-path {
-  stroke: #a3a3a3 !important;
-  stroke-dasharray: 5 5 !important;
-}
-
-/* Dark mode edges */
-.dark .react-flow__edge-path {
   stroke: #52525b !important;
+  stroke-dasharray: 5 5 !important;
 }
 
 /* React Flow attribution hide */

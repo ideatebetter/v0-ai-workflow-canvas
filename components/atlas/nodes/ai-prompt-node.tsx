@@ -114,11 +114,11 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
         type="target"
         position={Position.Left}
         style={{
-          width: 12,
-          height: 12,
+          width: 20,
+          height: 20,
           background: "#333",
           border: "2px solid #555",
-          left: -6,
+          left: -10,
         }}
       />
 

@@ -1712,16 +1712,35 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
 onAddOperationalNode={handleAddOperationalNode}
-  onOpenAIGenerate={(type) => {
+  onOpenAIGenerate={(type, sourceNodeId) => {
     if (type === "mockup") {
       const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
-        createAIPromptNode(fileNode.id, fileNode.data as FileNodeData);
+        createAIPromptNode(sourceNodeId ?? fileNode.id, fileNode.data as FileNodeData);
       } else {
         alert("Please upload an image first to generate mockups from.");
       }
     } else if (type === "collateral") {
-      alert("Collateral generation coming soon!");
+      const nodeId = `text-${Date.now()}`;
+      const sourceNode = sourceNodeId ? nodes.find(n => n.id === sourceNodeId) : null;
+      const nodePosition = sourceNode
+        ? { x: sourceNode.position.x + 320, y: sourceNode.position.y }
+        : { x: 400, y: 300 };
+      setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), {
+        id: nodeId,
+        type: "text",
+        position: nodePosition,
+        selected: true,
+        data: {
+          label: "Collateral Generation",
+          content: "Collateral generation coming soon. Use this node to plan your collateral needs.",
+          lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          formatting: { color: "#ffffff", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
+        },
+      }]);
+      if (sourceNodeId) {
+        setEdges(eds => [...eds, { id: `edge-${sourceNodeId}-${nodeId}`, source: sourceNodeId, target: nodeId }]);
+      }
     }
   }}
   onCreateMoodboard={handleCreateMoodboard}
@@ -1753,7 +1772,19 @@ presentationMode={presentationMode}
         alert("Please upload an image first to generate mockups from.");
       }
     } else if (type === "collateral") {
-      alert("Collateral generation coming soon!");
+      const nodeId = `text-${Date.now()}`;
+      setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), {
+        id: nodeId,
+        type: "text",
+        position: { x: 400, y: 300 },
+        selected: true,
+        data: {
+          label: "Collateral Generation",
+          content: "Collateral generation coming soon. Use this node to plan your collateral needs.",
+          lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          formatting: { color: "#ffffff", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
+        },
+      }]);
     }
   }}
   onSettingsClick={() => setShowSettingsDialog(true)}
@@ -1868,83 +1899,44 @@ presentationMode={presentationMode}
           }}
           hasOtherCanvases={!!(canvases && canvases.length > 1)}
           onOrganize={() => {
-            // Get all selected nodes
             const selectedNodes = contextMenu.nodes;
             if (selectedNodes.length < 2) return;
 
-            // Configuration for grid layout
-            const NODE_WIDTH = 240;  // Approximate width of a file node
-            const NODE_HEIGHT = 300; // Approximate height of a file node
-            const GAP_X = 30;        // Horizontal gap between nodes
-            const GAP_Y = 30;        // Vertical gap between nodes
-            const MAX_COLUMNS = 4;   // Maximum columns in grid
+            // Uniform grid constants — consistent spacing, no overlap
+            const CELL_WIDTH = 280;
+            const CELL_HEIGHT = 340;
+            const GAP_X = 32;
+            const GAP_Y = 32;
+            const COLS = Math.ceil(Math.sqrt(selectedNodes.length));
 
-            // Find the bounding box of selected nodes
+            // Anchor to the top-left corner of the current bounding box
             let minX = Infinity, minY = Infinity;
             for (const node of selectedNodes) {
               minX = Math.min(minX, node.position.x);
               minY = Math.min(minY, node.position.y);
             }
 
-            // Check if there's a status pill directly above the selected nodes
-            // A status pill is "above" if it's within a reasonable Y range and overlaps X range
-            const statusPills = nodes.filter(n => n.type === "status-pill");
-            let anchorPill: typeof nodes[0] | null = null;
-            
-            for (const pill of statusPills) {
-              // Check if pill is above the selection (within ~100px above minY)
-              const pillBottom = pill.position.y + 50; // Status pills are ~50px tall
-              if (pillBottom <= minY && pillBottom >= minY - 150) {
-                // Check if pill is horizontally aligned (within range of selection)
-                if (!anchorPill || pill.position.y > anchorPill.position.y) {
-                  anchorPill = pill;
-                }
-              }
-            }
-
-            // Calculate new positions
-            let startX = minX;
-            let startY = minY;
-            let columnsToUse = MAX_COLUMNS;
-
-            if (anchorPill) {
-              // If there's a status pill, arrange in a line below it
-              startX = anchorPill.position.x;
-              startY = anchorPill.position.y + 80; // Below the pill
-              columnsToUse = selectedNodes.length; // All in one row
-            }
-
-            // Create position updates
-            const nodePositionUpdates: Record<string, { x: number; y: number }> = {};
-            
-            // Sort nodes by their current Y position, then X (to maintain some logical order)
+            // Sort by reading order (top-to-bottom, left-to-right)
             const sortedNodes = [...selectedNodes].sort((a, b) => {
-              const yDiff = a.position.y - b.position.y;
-              if (Math.abs(yDiff) < 50) {
-                return a.position.x - b.position.x;
-              }
-              return yDiff;
+              const rowA = Math.round(a.position.y / 50);
+              const rowB = Math.round(b.position.y / 50);
+              if (rowA !== rowB) return rowA - rowB;
+              return a.position.x - b.position.x;
             });
 
-            for (let i = 0; i < sortedNodes.length; i++) {
-              const col = i % columnsToUse;
-              const row = Math.floor(i / columnsToUse);
-              nodePositionUpdates[sortedNodes[i].id] = {
-                x: startX + col * (NODE_WIDTH + GAP_X),
-                y: startY + row * (NODE_HEIGHT + GAP_Y),
+            const updates: Record<string, { x: number; y: number }> = {};
+            sortedNodes.forEach((node, i) => {
+              const col = i % COLS;
+              const row = Math.floor(i / COLS);
+              updates[node.id] = {
+                x: minX + col * (CELL_WIDTH + GAP_X),
+                y: minY + row * (CELL_HEIGHT + GAP_Y),
               };
-            }
+            });
 
-            // Apply position updates
             setNodes(nds => nds.map(node => {
-              const newPos = nodePositionUpdates[node.id];
-              if (newPos) {
-                return {
-                  ...node,
-                  position: newPos,
-                };
-              }
-              return node;
+              const pos = updates[node.id];
+              return pos ? { ...node, position: pos } : node;
             }));
 
             setContextMenu(null);

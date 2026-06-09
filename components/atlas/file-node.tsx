@@ -246,8 +246,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
         style={{ 
           background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
           border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
-          width: 12,
-          height: 12,
+          width: 20,
+          height: 20,
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -471,8 +471,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
         style={{ 
           background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
           border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
-          width: 12,
-          height: 12,
+          width: 20,
+          height: 20,
         }}
         onClick={(e) => {
           e.stopPropagation();
