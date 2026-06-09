@@ -218,7 +218,15 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [newCanvasProjectId, setNewCanvasProjectId] = useState<string | undefined>(undefined);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("atlas-collections");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
 const [showSageChat, setShowSageChat] = useState(false);
@@ -493,6 +501,15 @@ const [showSageChat, setShowSageChat] = useState(false);
     onOpenCanvas(newCanvas.id);
   };
 
+  // Persist collections to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("atlas-collections", JSON.stringify(projects));
+    } catch {
+      // ignore
+    }
+  }, [projects]);
+
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
 
@@ -506,7 +523,8 @@ const [showSageChat, setShowSageChat] = useState(false);
       isExpanded: true,
     };
 
-    setProjects([...projects, newProject]);
+    const updatedProjects = [...projects, newProject];
+    setProjects(updatedProjects);
     setShowNewProjectDialog(false);
     setNewProjectName("");
     setNewProjectColor(PROJECT_COLORS[0]);
@@ -563,10 +581,21 @@ const [showSageChat, setShowSageChat] = useState(false);
   };
 
   const [canvasToDelete, setCanvasToDelete] = useState<string | null>(null);
-  
-const deleteCanvas = (canvasId: string) => {
+  const [collectionMenuCanvasId, setCollectionMenuCanvasId] = useState<string | null>(null);
+
+  const deleteCanvas = (canvasId: string) => {
     onCanvasesChange(canvases.filter((c) => c.id !== canvasId));
     setCanvasToDelete(null);
+  };
+
+  const handleSetCanvasCollection = (canvasId: string, projectId: string | undefined) => {
+    onCanvasesChange(canvases.map(c => c.id === canvasId ? { ...c, projectId } : c));
+    setCollectionMenuCanvasId(null);
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    onCanvasesChange(canvases.map(c => c.projectId === projectId ? { ...c, projectId: undefined } : c));
   };
 
   const handleUpvoteFramework = (frameworkId: string) => {
@@ -836,37 +865,49 @@ const deleteCanvas = (canvasId: string) => {
             </div>
           )}
 
-          {/* Projects Section */}
+          {/* Collections Section */}
           {projects.length > 0 && (
             <div className="mb-6">
               <div
                 className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                Projects
+                Collections
               </div>
               <div className="space-y-1">
                 {projects.map((project) => (
-                  <div key={project.id}>
-                    <button
-                      type="button"
-                      onClick={() => toggleProjectExpanded(project.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                    >
-                      <svg 
-                        width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        className={`transition-transform ${project.isExpanded ? "rotate-90" : ""}`}
+                  <div key={project.id} className="group/collection">
+                    <div className="flex items-center rounded-lg hover:bg-white/5 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => toggleProjectExpanded(project.id)}
+                        className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors min-w-0"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <div
-                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      <span className="truncate flex-1 text-left">{project.name}</span>
-                      <span className="text-xs text-gray-600">{getProjectCanvases(project.id).length}</span>
-                    </button>
+                        <svg
+                          width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                          className={`flex-shrink-0 transition-transform ${project.isExpanded ? "rotate-90" : ""}`}
+                        >
+                          <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <div
+                          className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                          style={{ backgroundColor: project.color }}
+                        />
+                        <span className="truncate flex-1 text-left">{project.name}</span>
+                        <span className="text-xs text-gray-600 group-hover/collection:hidden">{getProjectCanvases(project.id).length}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="hidden group-hover/collection:flex items-center justify-center w-6 h-6 mr-2 rounded text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
+                        title="Delete collection"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1.5 3.5H11.5M4.5 3.5V2.5C4.5 2.224 4.724 2 5 2H8C8.276 2 8.5 2.224 8.5 2.5V3.5M10.5 3.5V10.5C10.5 10.776 10.276 11 10 11H3C2.724 11 2.5 10.776 2.5 10.5V3.5H10.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                     {project.isExpanded && (
                       <div className="ml-4 space-y-0.5">
                         {getProjectCanvases(project.id).map((canvas) => (
@@ -1127,7 +1168,7 @@ const deleteCanvas = (canvasId: string) => {
                         </svg>
                       </div>
                       <div>
-                        <div className="font-medium">New Project</div>
+                        <div className="font-medium">New Collection</div>
                         <div className="text-xs text-gray-500">Group canvases together</div>
                       </div>
                     </button>
@@ -2641,8 +2682,65 @@ All Frameworks
                         </div>
                       )}
                     </div>
-                    <div className="text-gray-500 text-xs mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {formatDate(canvas.updatedAt)}
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {formatDate(canvas.updatedAt)}
+                      </div>
+                      {projects.length > 0 && (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10"
+                            style={{
+                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                            title="Set collection"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/>
+                            </svg>
+                            <span className="max-w-[70px] truncate">
+                              {canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}
+                            </span>
+                          </button>
+                          {collectionMenuCanvasId === canvas.id && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
+                              <div
+                                className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]"
+                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }}
+                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                  No collection
+                                </button>
+                                {projects.map(p => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }}
+                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                  >
+                                    <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
+                                    <span className="truncate">{p.name}</span>
+                                    {canvas.projectId === p.id && (
+                                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2772,8 +2870,65 @@ All Frameworks
                         </div>
                       )}
                     </div>
-                    <div className="text-gray-500 text-xs mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {formatDate(canvas.updatedAt)}
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {formatDate(canvas.updatedAt)}
+                      </div>
+                      {projects.length > 0 && (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10"
+                            style={{
+                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                            title="Set collection"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/>
+                            </svg>
+                            <span className="max-w-[70px] truncate">
+                              {canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}
+                            </span>
+                          </button>
+                          {collectionMenuCanvasId === canvas.id && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
+                              <div
+                                className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]"
+                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }}
+                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                  No collection
+                                </button>
+                                {projects.map(p => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }}
+                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                  >
+                                    <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
+                                    <span className="truncate">{p.name}</span>
+                                    {canvas.projectId === p.id && (
+                                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2994,7 +3149,7 @@ All Frameworks
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/60"
-            onClick={() => setShowNewCanvasDialog(false)}
+            onClick={() => { setShowNewCanvasDialog(false); setNewCanvasProjectId(undefined); setNewCanvasName(""); }}
           />
           <div
             className="relative w-full max-w-md rounded-xl p-6"
@@ -3009,7 +3164,7 @@ All Frameworks
               </h2>
               <button
                 type="button"
-                onClick={() => setShowNewCanvasDialog(false)}
+                onClick={() => { setShowNewCanvasDialog(false); setNewCanvasProjectId(undefined); setNewCanvasName(""); }}
                 className="text-gray-500 hover:text-white transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3042,14 +3197,14 @@ All Frameworks
                 />
               </div>
 
-              {/* Project Selection */}
+              {/* Collection Selection */}
               {projects.length > 0 && (
                 <div>
                   <label
                     className="block text-xs text-gray-500 mb-1.5"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    Project (Optional)
+                    Collection (Optional)
                   </label>
                   <select
                     value={newCanvasProjectId || ""}
@@ -3061,7 +3216,7 @@ All Frameworks
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
-                    <option value="">No project</option>
+                    <option value="">No collection</option>
                     {projects.map(project => (
                       <option key={project.id} value={project.id}>
                         {project.name}
@@ -3118,7 +3273,7 @@ All Frameworks
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                onClick={() => setShowNewCanvasDialog(false)}
+                onClick={() => { setShowNewCanvasDialog(false); setNewCanvasProjectId(undefined); setNewCanvasName(""); }}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
@@ -3141,7 +3296,7 @@ All Frameworks
         </div>
       )}
 
-      {/* New Project Dialog */}
+      {/* New Collection Dialog */}
       {showNewProjectDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -3157,7 +3312,7 @@ All Frameworks
                 className="text-lg font-semibold text-white"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                New Project
+                New Collection
               </h2>
               <button
                 type="button"
@@ -3176,11 +3331,11 @@ All Frameworks
                   className="block text-xs text-gray-500 mb-1.5"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  Project Name
+                  Collection Name
                 </label>
                 <input
                   type="text"
-                  placeholder="My Project"
+                  placeholder="My Collection"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateProject()}
@@ -3238,7 +3393,7 @@ All Frameworks
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
-                Create Project
+                Create Collection
               </button>
             </div>
           </div>

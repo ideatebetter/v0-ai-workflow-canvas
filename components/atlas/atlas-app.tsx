@@ -221,23 +221,30 @@ export function AtlasApp() {
     alert(`Saved ${canvases.length} canvases to cloud!`);
   }, [user, canvases, saveCanvasToAPI]);
 
-  // Handle canvases change from home page - detects new canvases and saves them
+  // Handle canvases change from home page - detects new canvases and saves them, detects deleted ones and removes them
   const handleCanvasesChange = useCallback((newCanvases: Canvas[] | ((prev: Canvas[]) => Canvas[])) => {
     setCanvases((prev) => {
       const updated = typeof newCanvases === 'function' ? newCanvases(prev) : newCanvases;
-      
-      // Find new canvases (ones that don't exist in prev)
+
       const prevIds = new Set(prev.map(c => c.id));
+      const updatedIds = new Set(updated.map(c => c.id));
+
+      // Find new canvases (ones that don't exist in prev) and save them
       const newlyCreated = updated.filter(c => !prevIds.has(c.id));
-      
-      // Save new canvases to API
       if (user && newlyCreated.length > 0) {
-        console.log("[v0] New canvases detected, saving to API:", newlyCreated.map(c => c.name));
-        newlyCreated.forEach(canvas => {
-          saveCanvasToAPI(canvas);
+        newlyCreated.forEach(canvas => saveCanvasToAPI(canvas));
+      }
+
+      // Find deleted canvases (ones in prev but not in updated) and delete from API
+      const deleted = prev.filter(c => !updatedIds.has(c.id));
+      if (user && deleted.length > 0) {
+        deleted.forEach(canvas => {
+          fetch(`/api/canvas?id=${canvas.id}`, { method: "DELETE" }).catch(err =>
+            console.error("[v0] Failed to delete canvas from API:", err)
+          );
         });
       }
-      
+
       return updated;
     });
   }, [user, saveCanvasToAPI]);
