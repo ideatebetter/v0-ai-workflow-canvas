@@ -7,7 +7,7 @@ figma.showUI(__html__, { width: 340, height: 520, title: "Sync with Ideate" });
 var syncedFrames = {};
 var debounceTimer = null;
 
-// On load, send current selection to UI
+// Send current selection to UI on load
 sendCurrentSelection();
 
 function sendCurrentSelection() {
@@ -20,7 +20,6 @@ function sendCurrentSelection() {
   }
 }
 
-// Re-send selection when it changes
 figma.on("selectionchange", function () {
   sendCurrentSelection();
 });
@@ -29,29 +28,30 @@ figma.on("selectionchange", function () {
 figma.ui.onmessage = function (msg) {
 
   if (msg.type === "export-frame") {
-    var node = figma.getNodeById(msg.frameId);
-    if (!node) {
-      figma.ui.postMessage({ type: "export-error", message: "Frame not found" });
-      return;
-    }
-    if (typeof node.exportAsync !== "function") {
-      figma.ui.postMessage({ type: "export-error", message: "Cannot export this node type" });
-      return;
-    }
-    node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
-      .then(function (bytes) {
-        figma.ui.postMessage({
-          type: "frame-exported",
-          bytes: Array.from(bytes),
-          frameId: msg.frameId,
-          frameName: node.name,
-          canvasId: msg.canvasId,
-          nodeId: msg.nodeId || null,
+    // getNodeByIdAsync is required when documentAccess is "dynamic-page"
+    figma.getNodeByIdAsync(msg.frameId).then(function (node) {
+      if (!node) {
+        figma.ui.postMessage({ type: "export-error", message: "Frame not found" });
+        return;
+      }
+      if (typeof node.exportAsync !== "function") {
+        figma.ui.postMessage({ type: "export-error", message: "Cannot export this node type" });
+        return;
+      }
+      return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
+        .then(function (bytes) {
+          figma.ui.postMessage({
+            type: "frame-exported",
+            bytes: Array.from(bytes),
+            frameId: msg.frameId,
+            frameName: node.name,
+            canvasId: msg.canvasId,
+            nodeId: msg.nodeId || null,
+          });
         });
-      })
-      .catch(function (err) {
-        figma.ui.postMessage({ type: "export-error", message: String(err) });
-      });
+    }).catch(function (err) {
+      figma.ui.postMessage({ type: "export-error", message: String(err) });
+    });
   }
 
   if (msg.type === "sync-registered") {
@@ -64,7 +64,7 @@ figma.ui.onmessage = function (msg) {
   }
 };
 
-// documentchange requires all pages to be loaded first in incremental mode
+// documentchange requires loadAllPagesAsync first in incremental/dynamic-page mode
 figma.loadAllPagesAsync().then(function () {
   figma.on("documentchange", function () {
     if (Object.keys(syncedFrames).length === 0) return;
@@ -72,13 +72,11 @@ figma.loadAllPagesAsync().then(function () {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function () {
       var frameIds = Object.keys(syncedFrames);
-      for (var i = 0; i < frameIds.length; i++) {
-        (function (frameId) {
-          var info = syncedFrames[frameId];
-          var node = figma.getNodeById(frameId);
+      frameIds.forEach(function (frameId) {
+        var info = syncedFrames[frameId];
+        figma.getNodeByIdAsync(frameId).then(function (node) {
           if (!node || typeof node.exportAsync !== "function") return;
-
-          node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
+          return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
             .then(function (bytes) {
               figma.ui.postMessage({
                 type: "auto-sync",
@@ -88,10 +86,9 @@ figma.loadAllPagesAsync().then(function () {
                 canvasId: info.canvasId,
                 nodeId: info.nodeId,
               });
-            })
-            .catch(function () {});
-        })(frameIds[i]);
-      }
+            });
+        }).catch(function () {});
+      });
     }, 3000);
   });
 });
