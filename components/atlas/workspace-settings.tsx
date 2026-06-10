@@ -86,13 +86,16 @@ export function WorkspaceSettingsDialog({
   // Figma sync token
   const [figmaToken, setFigmaToken] = useState<string | null>(null);
   const [figmaTokenCopied, setFigmaTokenCopied] = useState(false);
+  const [figmaTokenError, setFigmaTokenError] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setFigmaToken(null);
+    setFigmaTokenError(false);
     fetch("/api/figma/token")
-      .then(r => r.json())
-      .then(d => { if (d.token) setFigmaToken(d.token); })
-      .catch(() => {});
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(d => { if (d.token) setFigmaToken(d.token); else throw new Error("no token"); })
+      .catch(() => setFigmaTokenError(true));
   }, [open]);
 
   function copyFigmaToken() {
@@ -342,6 +345,82 @@ export function WorkspaceSettingsDialog({
 
           {/* Scrollable Content */}
           <div className="flex-1 p-6 overflow-y-auto space-y-8">
+
+            {/* Figma Sync */}
+            <div>
+              <h3
+                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-blue-400">
+                  <path d="M6 1.5H4.5C3.4 1.5 2.5 2.4 2.5 3.5C2.5 4.6 3.4 5.5 4.5 5.5H6V1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 5.5H7.5C8.6 5.5 9.5 4.6 9.5 3.5C9.5 2.4 8.6 1.5 7.5 1.5H6V5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 5.5H4.5C3.4 5.5 2.5 6.4 2.5 7.5C2.5 8.6 3.4 9.5 4.5 9.5C5.6 9.5 6 8.6 6 7.5V5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 9.5V7.5C6 8.6 6.9 9.5 8 9.5C9.1 9.5 10 8.6 10 7.5C10 6.4 9.1 5.5 8 5.5H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8 9.5C9.1 9.5 10 10.4 10 11.5C10 12.6 9.1 13.5 8 13.5C6.9 13.5 6 12.6 6 11.5V9.5H8Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Figma Sync
+              </h3>
+              <div
+                className="rounded-xl p-4"
+                style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}
+              >
+                <p className="text-xs text-gray-500 mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Copy this token and paste it into the <strong className="text-gray-400">Sync with Ideate</strong> Figma plugin to enable live frame syncing.
+                </p>
+                {figmaTokenError ? (
+                  <p className="text-xs text-red-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Failed to load token — make sure you&apos;re signed in.
+                  </p>
+                ) : figmaToken ? (
+                  <div className="flex items-center gap-2">
+                    <code
+                      className="flex-1 text-xs px-3 py-2 rounded-lg select-all overflow-hidden"
+                      style={{
+                        background: "#0d0d0d",
+                        color: "#60a5fa",
+                        fontFamily: "monospace",
+                        border: "1px solid #2a2a2a",
+                        wordBreak: "break-all",
+                        display: "block",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {figmaToken}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={copyFigmaToken}
+                      className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-all"
+                      style={{
+                        background: figmaTokenCopied ? "#0a3a1a" : "#F0FE00",
+                        color: figmaTokenCopied ? "#4ade80" : "#000",
+                        border: "none",
+                        minWidth: 64,
+                      }}
+                    >
+                      {figmaTokenCopied ? (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="4" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M4 4V3C4 2.4 4.4 2 5 2H9C9.6 2 10 2.4 10 3V7C10 7.6 9.6 8 9 8H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-gray-600 animate-pulse" />
+                    <span className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Loading token…</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Workspace Details Section */}
             <div>
               <h3
@@ -916,52 +995,6 @@ export function WorkspaceSettingsDialog({
                   >
                     Canvas Actions
                   </h3>
-                  <div className="flex flex-col gap-3">
-                  {/* Figma Sync */}
-                  <div
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: "#0a1a3a" }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 7.4 4.1 8.6 5.1 9.4C4.1 9.8 3.5 10.8 3.5 12C3.5 13.4 4.6 14.5 6 14.5C7 14.5 7.9 14 8.4 13.1C8.9 14 9.8 14.5 10.8 14.5C12.2 14.5 13.3 13.4 13.3 12C13.3 10.8 12.7 9.8 11.7 9.4C12.7 8.6 13.3 7.4 13.3 6C13.3 3.5 11.3 1.5 8.8 1.5H8Z" stroke="#60a5fa" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-white mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Figma Sync</div>
-                      <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                        Paste this token into the Ideate Figma plugin to sync frames.
-                      </div>
-                      {figmaToken ? (
-                        <div className="flex items-center gap-2">
-                          <code
-                            className="flex-1 text-xs px-2 py-1 rounded truncate"
-                            style={{ background: "#111", color: "#60a5fa", fontFamily: "monospace", border: "1px solid #222" }}
-                          >
-                            {figmaToken.slice(0, 20)}…
-                          </code>
-                          <button
-                            type="button"
-                            onClick={copyFigmaToken}
-                            className="flex-shrink-0 text-xs px-3 py-1 rounded transition-colors"
-                            style={{
-                              background: figmaTokenCopied ? "#0a3a1a" : "#222",
-                              color: figmaTokenCopied ? "#4ade80" : "#aaa",
-                              border: "1px solid #333",
-                            }}
-                          >
-                            {figmaTokenCopied ? "Copied!" : "Copy"}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-600">Loading…</div>
-                      )}
-                    </div>
-                  </div>
-
                   <button
                   type="button"
                     onClick={onMakeFramework}
@@ -985,7 +1018,6 @@ export function WorkspaceSettingsDialog({
                       <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
-                  </div>{/* end flex-col gap-3 */}
                 </div>
               </>
             )}
