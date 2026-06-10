@@ -1,9 +1,166 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Node, Edge } from "@xyflow/react";
-import type { FileNodeData, TextNodeData } from "@/lib/atlas-types";
+import type { FileNodeData, TextNodeData, MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 import Image from "next/image";
+
+// ─── Moodboard Slide ────────────────────────────────────────────────────────
+
+type MoodboardView = "masonry" | "grid" | "freeform";
+
+function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
+  const [view, setView] = useState<MoodboardView>("masonry");
+
+  const images = data.images ?? [];
+
+  // Compute stable freeform positions once per render (seeded by image id)
+  const freeformPositions = useMemo<Record<string, MoodboardImagePosition>>(() => {
+    if (data.freeformPositions && Object.keys(data.freeformPositions).length > 0) {
+      return data.freeformPositions;
+    }
+    const result: Record<string, MoodboardImagePosition> = {};
+    images.forEach((img, index) => {
+      const seed = (s: number) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
+      const s = img.id.charCodeAt(0) + index * 137;
+      const angle = (index / images.length) * Math.PI * 2 + seed(s) * 0.8;
+      const radius = 120 + seed(s + 1) * 220 + (index % 3) * 80;
+      result[img.id] = {
+        x: Math.max(20, Math.min(820, 450 + Math.cos(angle) * radius * 0.9 + seed(s + 2) * 80 - 40)),
+        y: Math.max(20, Math.min(480, 260 + Math.sin(angle) * radius * 0.6 + seed(s + 3) * 60 - 30)),
+        zIndex: index + 1,
+        rotation: (seed(s + 4) - 0.5) * 20,
+        scale: 0.75 + seed(s + 5) * 0.35,
+      };
+    });
+    return result;
+  }, [data.freeformPositions, images]);
+
+  const viewIcons: Record<MoodboardView, React.ReactNode> = {
+    masonry: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="5" height="8" rx="1" fill="currentColor"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor"/>
+        <rect x="1" y="11" width="5" height="2" rx="1" fill="currentColor"/>
+      </svg>
+    ),
+    grid: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor"/>
+        <rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor"/>
+      </svg>
+    ),
+    freeform: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="2" y="1" width="6" height="6" rx="1" fill="currentColor" transform="rotate(8 5 4)"/>
+        <rect x="6" y="6" width="6" height="6" rx="1" fill="currentColor" transform="rotate(-10 9 9)"/>
+      </svg>
+    ),
+  };
+
+  return (
+    <div className="relative flex flex-col w-full h-full">
+      {/* View switcher — top right of slide area */}
+      <div className="absolute top-0 right-0 z-10 flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+        {(["masonry", "grid", "freeform"] as MoodboardView[]).map(v => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
+            style={{
+              backgroundColor: view === v ? "#F0FE00" : "transparent",
+              color: view === v ? "#000" : "rgba(255,255,255,0.4)",
+              fontFamily: "system-ui, Inter, sans-serif",
+            }}
+          >
+            {viewIcons[v]}
+            <span className="capitalize">{v}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Moodboard label */}
+      <div className="absolute top-0 left-0 z-10">
+        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "system-ui, Inter, sans-serif" }}>
+          {data.label || "Moodboard"}
+        </span>
+      </div>
+
+      {/* Image area */}
+      <div className="flex-1 w-full pt-10 overflow-hidden">
+        {view === "masonry" && (
+          <div className="w-full h-full" style={{ columns: images.length <= 3 ? images.length : 4, columnGap: "10px" }}>
+            {images.map((img) => (
+              <div key={img.id} className="break-inside-avoid mb-2.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
+                {img.fileType === "video" ? (
+                  <video src={img.url} className="w-full object-cover" muted loop autoPlay playsInline />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={img.thumbnail || img.url} alt={img.fileName} className="w-full object-cover block" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {view === "grid" && (
+          <div
+            className="w-full h-full"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(images.length))}, 1fr)`,
+              gap: "10px",
+            }}
+          >
+            {images.map((img) => (
+              <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
+                {img.fileType === "video" ? (
+                  <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                ) : (
+                  <Image src={img.thumbnail || img.url} alt={img.fileName} fill className="object-cover" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {view === "freeform" && (
+          <div className="relative w-full h-full" style={{ minHeight: 500 }}>
+            {images.map((img) => {
+              const pos = freeformPositions[img.id] ?? { x: 100, y: 100, zIndex: 1, rotation: 0, scale: 1 };
+              const w = 180 * (pos.scale ?? 1);
+              return (
+                <div
+                  key={img.id}
+                  className="absolute rounded-lg overflow-hidden shadow-xl"
+                  style={{
+                    left: `${(pos.x / 960) * 100}%`,
+                    top: `${(pos.y / 540) * 100}%`,
+                    width: w,
+                    zIndex: pos.zIndex ?? 1,
+                    transform: `rotate(${pos.rotation ?? 0}deg)`,
+                    backgroundColor: "#1a1a1a",
+                  }}
+                >
+                  {img.fileType === "video" ? (
+                    <video src={img.url} className="w-full object-cover" muted loop autoPlay playsInline style={{ display: "block" }} />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img.thumbnail || img.url} alt={img.fileName} className="w-full object-cover block" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface PresentationGroup {
   id: string;
@@ -441,17 +598,27 @@ export function PresentationViewer({
       );
     }
 
+    // Moodboard slide — full layout with view switcher
+    if (currentNode.type === "moodboard") {
+      const moodboardData = currentNode.data as unknown as MoodboardNodeData;
+      return (
+        <div className="flex flex-col items-start justify-start h-full w-full max-w-6xl">
+          <MoodboardSlide data={moodboardData} />
+        </div>
+      );
+    }
+
     // Default render for other node types
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div 
+        <div
           className="w-64 h-64 rounded-lg flex items-center justify-center"
           style={{ backgroundColor: "#1a1a1a" }}
         >
           <span className="text-xl text-gray-400">{currentNode.type}</span>
         </div>
         <h2 className="text-2xl font-medium text-white mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          {currentNode.data.label || "Untitled"}
+          {String(currentNode.data.label ?? "Untitled")}
         </h2>
       </div>
     );
