@@ -4,8 +4,9 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
+import { FileDetailModal } from "./file-detail-modal";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
@@ -15,8 +16,8 @@ import { DefaultChatTransport } from "ai";
 import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
 
-type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas" | "settings";
+type SidebarFilter = "all" | "workspace" | "private";
+type HomeView = "home" | "canvases" | "community" | "workspace-canvas" | "settings" | "all-files";
 type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
@@ -222,6 +223,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   });
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
+  const [allFilesCollapsedCollections, setAllFilesCollapsedCollections] = useState<Set<string>>(new Set());
+  const [allFilesExpandedCanvases, setAllFilesExpandedCanvases] = useState<Set<string>>(new Set());
+  const [fileDetail, setFileDetail] = useState<{ nodeId: string; canvasId: string } | null>(null);
 const [showSageChat, setShowSageChat] = useState(false);
   const [sageInput, setSageInput] = useState("");
   const [showChatHistory, setShowChatHistory] = useState(false);
@@ -436,23 +440,11 @@ const [showSageChat, setShowSageChat] = useState(false);
     return { nodes: allNodes, groups: canvasGroups };
   }, [canvases]);
 
-  const recentCanvases = useMemo(() => {
-    return [...canvases]
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 5);
-  }, [canvases]);
-
-  const favoriteCanvases = useMemo(() => {
-    return canvases.filter((c) => c.isFavorite);
-  }, [canvases]);
-
   const filteredCanvases = useMemo(() => {
     let filtered = canvases;
 
-    // Apply view/sidebar filter
-    if (activeView === "favorites" || sidebarFilter === "favorites") {
-      filtered = filtered.filter((c) => c.isFavorite);
-    } else if (sidebarFilter === "workspace") {
+    // Apply sidebar filter
+    if (sidebarFilter === "workspace") {
       filtered = filtered.filter((c) => c.visibility === "workspace");
     } else if (sidebarFilter === "private") {
       filtered = filtered.filter((c) => c.visibility === "private");
@@ -468,8 +460,12 @@ const [showSageChat, setShowSageChat] = useState(false);
       );
     }
 
-    return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [canvases, sidebarFilter, searchQuery, activeView]);
+    // Sort: favorites first, then by most recently updated
+    return filtered.sort((a, b) => {
+      if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [canvases, sidebarFilter, searchQuery]);
 
   const handleCreateCanvas = () => {
     if (!newCanvasName.trim()) return;
@@ -530,11 +526,21 @@ const [showSageChat, setShowSageChat] = useState(false);
   };
 
   const getProjectCanvases = (projectId: string) => {
-    return canvases.filter(c => c.projectId === projectId);
+    return canvases
+      .filter(c => c.projectId === projectId)
+      .sort((a, b) => {
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
   };
 
   const getUngroupedCanvases = () => {
-    return canvases.filter(c => !c.projectId);
+    return canvases
+      .filter(c => !c.projectId)
+      .sort((a, b) => {
+        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
   };
 
   const toggleFilesProjectExpanded = (projectId: string) => {
@@ -575,6 +581,7 @@ const [showSageChat, setShowSageChat] = useState(false);
 
   const [canvasToDelete, setCanvasToDelete] = useState<string | null>(null);
   const [collectionMenuCanvasId, setCollectionMenuCanvasId] = useState<string | null>(null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
   const deleteCanvas = (canvasId: string) => {
     onCanvasesChange(canvases.filter((c) => c.id !== canvasId));
@@ -670,6 +677,23 @@ const [showSageChat, setShowSageChat] = useState(false);
     });
   };
 
+  const timeAgo = (dateString: string) => {
+    if (!dateString) return "";
+    const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+  };
+
   return (
     <div className="flex h-screen" style={{ backgroundColor: "#0A0A0A" }}>
       {/* Sidebar */}
@@ -747,16 +771,17 @@ const [showSageChat, setShowSageChat] = useState(false);
             </button>
             <button
               type="button"
-              onClick={() => { setSidebarFilter("favorites"); setActiveView("favorites"); }}
+              onClick={() => setActiveView("all-files")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "favorites" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "all-files" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 4C2 2.89543 2.89543 2 4 2H8L10 4H14C15.1046 4 16 4.89543 16 6V14C16 15.1046 15.1046 16 14 16H4C2.89543 16 2 15.1046 2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 10H12M9 7V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-              Favorites
+              All Files
             </button>
             <button
               type="button"
@@ -832,129 +857,6 @@ const [showSageChat, setShowSageChat] = useState(false);
               </div>
             </div>
           )}
-
-          {/* Favorites Section */}
-          {favoriteCanvases.length > 0 && (
-            <div className="mb-6">
-              <div
-                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                Favorites
-              </div>
-              <div className="space-y-1">
-                {favoriteCanvases.map((canvas) => (
-                  <button
-                    key={canvas.id}
-                    type="button"
-                    onClick={() => onOpenCanvas(canvas.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <span className="truncate">{canvas.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Collections Section */}
-          {projects.length > 0 && (
-            <div className="mb-6">
-              <div
-                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                Collections
-              </div>
-              <div className="space-y-1">
-                {projects.map((project) => (
-                  <div key={project.id} className="group/collection">
-                    <div className="flex items-center rounded-lg hover:bg-white/5 transition-colors">
-                      <button
-                        type="button"
-                        onClick={() => toggleProjectExpanded(project.id)}
-                        className="flex-1 flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors min-w-0"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        <svg
-                          width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
-                          className={`flex-shrink-0 transition-transform ${project.isExpanded ? "rotate-90" : ""}`}
-                        >
-                          <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <div
-                          className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        <span className="truncate flex-1 text-left">{project.name}</span>
-                        <span className="text-xs text-gray-600 group-hover/collection:hidden">{getProjectCanvases(project.id).length}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="hidden group-hover/collection:flex items-center justify-center w-6 h-6 mr-2 rounded text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
-                        title="Delete collection"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1.5 3.5H11.5M4.5 3.5V2.5C4.5 2.224 4.724 2 5 2H8C8.276 2 8.5 2.224 8.5 2.5V3.5M10.5 3.5V10.5C10.5 10.776 10.276 11 10 11H3C2.724 11 2.5 10.776 2.5 10.5V3.5H10.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                    {project.isExpanded && (
-                      <div className="ml-4 space-y-0.5">
-                        {getProjectCanvases(project.id).map((canvas) => (
-                          <button
-                            key={canvas.id}
-                            type="button"
-                            onClick={() => onOpenCanvas(canvas.id)}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors truncate"
-                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                          >
-                            <span className="truncate">{canvas.name}</span>
-                          </button>
-                        ))}
-                        {getProjectCanvases(project.id).length === 0 && (
-                          <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                            No canvases
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recent Canvases */}
-          <div className="mb-6">
-            <div
-              className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-            >
-              Recent Canvases
-            </div>
-            <div className="space-y-1">
-              {recentCanvases.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  No canvases yet
-                </div>
-              ) : (
-                recentCanvases.map((canvas) => (
-                  <button
-                    key={canvas.id}
-                    type="button"
-                    onClick={() => onOpenCanvas(canvas.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <span className="truncate">{canvas.name}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
 
           {/* Workspace / Private filters */}
           <div className="mb-6">
@@ -1056,7 +958,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           >
             {activeView === "home" && "Home"}
             {activeView === "canvases" && "All Canvases"}
-            {activeView === "favorites" && "Favorites"}
+            {activeView === "all-files" && "All Files"}
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
             {activeView === "settings" && "Settings"}
@@ -1195,7 +1097,213 @@ const [showSageChat, setShowSageChat] = useState(false);
           </div>
         </div>
 
-        {activeView === "community" ? (
+        {activeView === "all-files" ? (
+          /* All Files - Google Drive-style list view */
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Column Headers */}
+            <div
+              className="flex items-center gap-0 px-6 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider select-none"
+              style={{ borderBottom: "1px solid #222222", fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="flex-1 min-w-0">Name</div>
+              <div className="w-36 flex-shrink-0">Owner</div>
+              <div className="w-40 flex-shrink-0">Location</div>
+              <div className="w-44 flex-shrink-0">Last Modified</div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {/* Collections */}
+              {projects.map((project) => {
+                const collapsed = allFilesCollapsedCollections.has(project.id);
+                const projectCanvases = getProjectCanvases(project.id);
+                return (
+                  <div key={project.id}>
+                    {/* Collection row */}
+                    <button
+                      type="button"
+                      onClick={() => setAllFilesCollapsedCollections(prev => {
+                        const next = new Set(prev);
+                        if (next.has(project.id)) next.delete(project.id); else next.add(project.id);
+                        return next;
+                      })}
+                      className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-200 hover:bg-white/5 transition-colors"
+                      style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <svg
+                          width="12" height="12" viewBox="0 0 12 12" fill="none"
+                          className={`flex-shrink-0 transition-transform ${collapsed ? "" : "rotate-90"}`}
+                        >
+                          <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" fill={project.color} fillOpacity="0.2" stroke={project.color} strokeWidth="1.5"/>
+                        </svg>
+                        <span className="truncate font-medium">{project.name}</span>
+                        <span className="text-xs text-gray-600 ml-1 flex-shrink-0">{projectCanvases.length} canvases</span>
+                      </div>
+                      <div className="w-36 flex-shrink-0 text-xs text-gray-600">—</div>
+                      <div className="w-40 flex-shrink-0 text-xs text-gray-600">Collection</div>
+                      <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{timeAgo(project.updatedAt)}</div>
+                    </button>
+                    {/* Canvases under collection */}
+                    {!collapsed && projectCanvases.map((canvas) => {
+                      const canvasExpanded = allFilesExpandedCanvases.has(canvas.id);
+                      const fileNodes = getCanvasFiles(canvas);
+                      return (
+                        <div key={canvas.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (fileNodes.length > 0) {
+                                setAllFilesExpandedCanvases(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(canvas.id)) next.delete(canvas.id); else next.add(canvas.id);
+                                  return next;
+                                });
+                              } else {
+                                onOpenCanvas(canvas.id);
+                              }
+                            }}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                            style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                              {fileNodes.length > 0 ? (
+                                <svg
+                                  width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                  className={`flex-shrink-0 transition-transform ${canvasExpanded ? "rotate-90" : ""}`}
+                                >
+                                  <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              ) : (
+                                <div className="w-3 flex-shrink-0" />
+                              )}
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                                <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                              </svg>
+                              <span className="truncate">{canvas.name}</span>
+                            </div>
+                            <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
+                            <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{project.name}</div>
+                            <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                          </button>
+                          {/* File nodes under canvas */}
+                          {canvasExpanded && fileNodes.map((node, idx) => (
+                            <button
+                              key={`${node.id}-${idx}`}
+                              type="button"
+                              onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
+                              className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
+                              style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                                  <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
+                              </div>
+                              <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
+                              <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.name}</div>
+                              <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+              {/* Uncollected canvases */}
+              {getUngroupedCanvases().length > 0 && (
+                <>
+                  {projects.length > 0 && (
+                    <div
+                      className="px-6 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider"
+                      style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Uncollected
+                    </div>
+                  )}
+                  {getUngroupedCanvases().map((canvas) => {
+                    const canvasExpanded = allFilesExpandedCanvases.has(canvas.id);
+                    const fileNodes = getCanvasFiles(canvas);
+                    return (
+                      <div key={canvas.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (fileNodes.length > 0) {
+                              setAllFilesExpandedCanvases(prev => {
+                                const next = new Set(prev);
+                                if (next.has(canvas.id)) next.delete(canvas.id); else next.add(canvas.id);
+                                return next;
+                              });
+                            } else {
+                              onOpenCanvas(canvas.id);
+                            }
+                          }}
+                          className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                          style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            {fileNodes.length > 0 ? (
+                              <svg
+                                width="12" height="12" viewBox="0 0 12 12" fill="none"
+                                className={`flex-shrink-0 transition-transform ${canvasExpanded ? "rotate-90" : ""}`}
+                              >
+                                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            ) : (
+                              <div className="w-3 flex-shrink-0" />
+                            )}
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                              <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span className="truncate">{canvas.name}</span>
+                          </div>
+                          <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
+                          <div className="w-40 flex-shrink-0 text-xs text-gray-600">No collection</div>
+                          <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                        </button>
+                        {canvasExpanded && fileNodes.map((node, idx) => (
+                          <button
+                            key={`${node.id}-${idx}`}
+                            type="button"
+                            onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
+                            style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                                <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
+                            </div>
+                            <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
+                            <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.name}</div>
+                            <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+              {/* Empty state */}
+              {projects.length === 0 && canvases.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H22C23.6569 10 25 11.3431 25 13V22C25 23.6569 23.6569 25 22 25H7C5.34315 25 4 23.6569 4 22V9Z" stroke="#444" strokeWidth="2"/></svg>
+                  </div>
+                  <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No files yet</div>
+                  <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create a canvas and add files to see them here</div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeView === "community" ? (
           /* Community Frameworks View */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Category Filter Bar */}
@@ -2560,39 +2668,39 @@ All Frameworks
                 </div>
               </div>
 
-              {/* Canvas Grid */}
-              {filteredCanvases.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: "#1a1a1a" }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4" y="4" width="10" height="10" rx="2" stroke="#444444" strokeWidth="2"/>
-                  <rect x="18" y="4" width="10" height="10" rx="2" stroke="#444444" strokeWidth="2"/>
-                  <rect x="4" y="18" width="10" height="10" rx="2" stroke="#444444" strokeWidth="2"/>
-                  <rect x="18" y="18" width="10" height="10" rx="2" stroke="#444444" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                No canvases yet
-              </div>
-              <div className="text-gray-500 text-sm mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Create your first canvas to get started
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowNewCanvasDialog(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: "#F0FE00",
-                  color: "#121212",
-                  fontFamily: "system-ui, Inter, sans-serif",
-                }}
-              >
-                New canvas
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredCanvases.map((canvas) => (
+              {/* Collection detail view */}
+              {selectedCollectionId && projects.find(p => p.id === selectedCollectionId) ? (
+                <>
+                  {/* Back header */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCollectionId(null)}
+                      className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors text-sm"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      All Collections
+                    </button>
+                    <span className="text-gray-700">/</span>
+                    <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      {projects.find(p => p.id === selectedCollectionId)!.name}
+                    </h2>
+                    <span className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      {getProjectCanvases(selectedCollectionId).length} {getProjectCanvases(selectedCollectionId).length === 1 ? "canvas" : "canvases"}
+                    </span>
+                  </div>
+                  {/* Collection canvases grid */}
+                  {getProjectCanvases(selectedCollectionId).length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases in this collection</div>
+                      <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Add canvases using the folder icon on any canvas card</div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {getProjectCanvases(selectedCollectionId).map((canvas) => (
                 <div
                   key={canvas.id}
                   className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
@@ -2738,11 +2846,165 @@ All Frameworks
                   </div>
                 </div>
               ))}
-              </div>
-            )}
-          </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Collections horizontal scroll */}
+                  {projects.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Collections</h2>
+                        <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{projects.length} {projects.length === 1 ? "collection" : "collections"}</span>
+                      </div>
+                      <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
+                        {projects.map((project) => {
+                          const projectCanvases = getProjectCanvases(project.id);
+                          return (
+                            <div
+                              key={project.id}
+                              className="group/collectioncard flex-shrink-0 w-44 cursor-pointer"
+                              onClick={() => setSelectedCollectionId(project.id)}
+                            >
+                              <div
+                                className="relative w-44 h-32 rounded-xl overflow-hidden"
+                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                              >
+                                {projectCanvases.length === 0 ? (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" opacity="0.3">
+                                      <path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H27C28.6569 10 30 11.3431 30 13V25C30 26.6569 28.6569 28 27 28H7C5.34315 28 4 26.6569 4 25V9Z" stroke="white" strokeWidth="2"/>
+                                    </svg>
+                                  </div>
+                                ) : projectCanvases.length === 1 ? (
+                                  <div className="w-full h-full">
+                                    <CanvasPreview nodes={projectCanvases[0].nodes} />
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-2 grid-rows-2 gap-px w-full h-full">
+                                    {projectCanvases.slice(0, 4).map((c, i) => (
+                                      <div key={i} className="overflow-hidden" style={{ backgroundColor: "#111111" }}>
+                                        <CanvasPreview nodes={c.nodes} />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}
+                                  className="absolute top-2 right-2 hidden group-hover/collectioncard:flex p-1 rounded-lg items-center justify-center"
+                                  style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
+                                  </svg>
+                                </button>
+                              </div>
+                              <div className="mt-2">
+                                <div className="text-sm font-bold text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{project.name}</div>
+                                <div className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{projectCanvases.length} {projectCanvases.length === 1 ? "canvas" : "canvases"} • {timeAgo(project.updatedAt)}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {/* Uncollected canvases */}
+                  {filteredCanvases.filter(c => !c.projectId).length > 0 ? (
+                    <>
+                      {projects.length > 0 && (
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Canvases</h2>
+                          <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{filteredCanvases.filter(c => !c.projectId).length} {filteredCanvases.filter(c => !c.projectId).length === 1 ? "canvas" : "canvases"}</span>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredCanvases.filter(c => !c.projectId).map((canvas) => (
+                          <div
+                            key={canvas.id}
+                            className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
+                            style={{ backgroundColor: "#1a1a1a" }}
+                            onClick={() => onOpenCanvas(canvas.id)}
+                          >
+                            <div className="aspect-[16/10] overflow-hidden relative">
+                              <CanvasPreview nodes={canvas.nodes} />
+                              <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); toggleFavorite(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                                  <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setCanvasToDelete(canvas.id); }} className="p-1.5 rounded-lg hover:bg-red-500/20" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{canvas.name}</div>
+                                {canvas.collaborators && canvas.collaborators.length > 0 && (
+                                  <div className="flex -space-x-1.5 ml-2 flex-shrink-0">
+                                    {canvas.collaborators.slice(0, 3).map((collaborator) => (
+                                      <div key={collaborator.id} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]" style={{ backgroundColor: collaborator.avatar ? "transparent" : "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }} title={collaborator.name}>
+                                        {collaborator.avatar ? <img src={collaborator.avatar} alt={collaborator.name} className="w-full h-full rounded-full object-cover" /> : collaborator.initials}
+                                      </div>
+                                    ))}
+                                    {canvas.collaborators.length > 3 && (
+                                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]" style={{ backgroundColor: "#252525", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}>+{canvas.collaborators.length - 3}</div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <div className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{formatDate(canvas.updatedAt)}</div>
+                                {projects.length > 0 && (
+                                  <div className="relative">
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10" style={{ color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666", fontFamily: "system-ui, Inter, sans-serif" }} title="Set collection">
+                                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/></svg>
+                                      <span className="max-w-[70px] truncate">{canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}</span>
+                                    </button>
+                                    {collectionMenuCanvasId === canvas.id && (
+                                      <>
+                                        <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
+                                        <div className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}>
+                                          <button type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }} className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                            No collection
+                                          </button>
+                                          {projects.map(p => (
+                                            <button key={p.id} type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }} className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                              <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
+                                              <span className="truncate">{p.name}</span>
+                                              {canvas.projectId === p.id && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : filteredCanvases.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="#444" strokeWidth="2"/><path d="M10 14H18M14 10V18" stroke="#444" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </div>
+                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases yet</div>
+                      <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create your first canvas to get started</div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
           </>
-        ) : (activeView === "canvases" || activeView === "favorites") ? (
+        ) : activeView === "canvases" ? (
           /* Canvas/Files View with Tab Switcher */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Tab Switcher - Only show on canvases view, not favorites */}
@@ -2776,7 +3038,7 @@ All Frameworks
             )}
 
             {/* Content Area */}
-            {(activeView === "favorites" || canvasSubView === "canvases") ? (
+            {canvasSubView === "canvases" ? (
               <div className="flex-1 overflow-y-auto p-6">
               {filteredCanvases.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -2944,7 +3206,7 @@ All Frameworks
                 className="text-gray-500 text-sm mb-4"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                {activeView === "favorites" ? "No favorite canvases yet" : "No canvases yet"}
+                {"No canvases yet"}
               </p>
               <button
                 type="button"
@@ -3931,6 +4193,27 @@ All Frameworks
           </div>
         </div>
       )}
+
+      {/* File Detail Modal — opened from All Files list view */}
+      {fileDetail && (() => {
+        const detailCanvas = canvases.find(c => c.id === fileDetail.canvasId);
+        const detailNode = detailCanvas?.nodes.find(n => n.id === fileDetail.nodeId);
+        if (!detailCanvas || !detailNode) return null;
+        return (
+          <FileDetailModal
+            isOpen={true}
+            onClose={() => setFileDetail(null)}
+            fileData={detailNode.data as FileNodeData}
+            onUpdateFile={(updates) => {
+              onCanvasesChange(canvases.map(c =>
+                c.id === fileDetail.canvasId
+                  ? { ...c, nodes: c.nodes.map(n => n.id === fileDetail.nodeId ? { ...n, data: { ...n.data, ...updates } } : n) }
+                  : c
+              ));
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

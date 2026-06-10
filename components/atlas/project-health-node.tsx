@@ -118,13 +118,13 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
         type="target"
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 10, height: 10 }}
+        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 18, height: 18 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 10, height: 10 }}
+        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 18, height: 18 }}
       />
     </div>
   );

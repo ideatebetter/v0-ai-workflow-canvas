@@ -9,7 +9,7 @@ interface AddNodeMenuProps {
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
-  onOpenAIGenerate: (type: "mockup" | "collateral") => void;
+  onOpenAIGenerate: (type: "mockup" | "collateral", sourceNodeId?: string) => void;
   onClose: () => void;
   position?: { x: number; y: number };
   sourceNodeId?: string;
@@ -77,8 +77,7 @@ export function AddNodeMenu({
       
       {/* Main Menu */}
       <div
-        className="bg-card border border-border rounded-lg"
-        style={{ 
+        style={{
           width: 180,
           position: "fixed",
           left: menuPosition.x,
@@ -88,14 +87,17 @@ export function AddNodeMenu({
           maxHeight: "80vh",
           overflowY: "auto",
           zIndex: 9999,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          backgroundColor: "#111111",
+          border: "1px solid #222222",
+          borderRadius: 8,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
         }}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
         {/* Drag Handle */}
         <div 
-          className="border-b border-border"
+          style={{ borderBottom: "1px solid #222222" }}
           style={{ 
             padding: "8px 12px", 
             display: "flex", 
@@ -105,7 +107,7 @@ export function AddNodeMenu({
           }}
           onMouseDown={handleMouseDown}
         >
-          <span className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500, ...fontStyle }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "#888888", ...fontStyle }}>
             Add Node
           </span>
           <div style={{ display: "flex", gap: 2 }}>
@@ -144,7 +146,7 @@ export function AddNodeMenu({
           </button>
 
           {/* Divider */}
-          <div className="h-px mx-2 my-1 bg-border" />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
 
           {/* Status Pill */}
           <button
@@ -170,7 +172,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div className="h-px mx-2 my-1 bg-border" />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
           
           {/* Sage */}
           <button
@@ -201,7 +203,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div className="h-px mx-2 my-1 bg-border" />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
           
           {/* Ops Data */}
           <button
@@ -237,7 +239,7 @@ export function AddNodeMenu({
           </button>
           
           {/* Divider */}
-          <div className="h-px mx-2 my-1 bg-border" />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
           
           {/* AI Generate */}
           <button
@@ -272,7 +274,7 @@ Generate
           </button>
           
           {/* Divider */}
-          <div className="h-px mx-2 my-1 bg-border" />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
           
           {/* File Upload */}
           <input
@@ -318,14 +320,16 @@ Generate
       {/* Submenu Panel - appears to the right */}
       {activeSubmenu && (
         <div
-          className="bg-card border border-border rounded-lg"
-          style={{ 
+          style={{
             width: 160,
             position: "fixed",
             left: menuPosition.x + (sourceHandlePosition === "left" ? -180 : 180) + 8,
             top: menuPosition.y + (activeSubmenu === "sage" ? 90 : activeSubmenu === "ops" ? 145 : 200),
             zIndex: 51,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            backgroundColor: "#111111",
+            border: "1px solid #222222",
+            borderRadius: 8,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
             padding: "4px 0",
           }}
         >

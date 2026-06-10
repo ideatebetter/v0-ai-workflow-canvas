@@ -42,8 +42,8 @@ function MockupImageNodeComponent({
         type="target"
         position={Position.Left}
         style={{
-          width: 8,
-          height: 8,
+          width: 16,
+          height: 16,
           background: "#F0FE00",
           border: "2px solid #121212",
         }}
@@ -52,8 +52,8 @@ function MockupImageNodeComponent({
         type="source"
         position={Position.Right}
         style={{
-          width: 8,
-          height: 8,
+          width: 16,
+          height: 16,
           background: "#F0FE00",
           border: "2px solid #121212",
         }}

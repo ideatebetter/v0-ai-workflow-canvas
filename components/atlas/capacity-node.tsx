@@ -103,13 +103,13 @@ export function CapacityNode({ id, data, selected }: NodeProps) {
         type="target"
         position={Position.Left}
         className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #3b82f6", width: 12, height: 12 }}
+        style={{ background: "#1a1a1a", border: "2px solid #3b82f6", width: 20, height: 20 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #3b82f6", width: 12, height: 12 }}
+        style={{ background: "#1a1a1a", border: "2px solid #3b82f6", width: 20, height: 20 }}
       />
     </div>
   );

@@ -88,7 +88,7 @@ interface AtlasCanvasProps {
   onAddTextNode?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
-  onOpenAIGenerate?: (type: "mockup" | "collateral") => void;
+  onOpenAIGenerate?: (type: "mockup" | "collateral", sourceNodeId?: string) => void;
   onCreateMoodboard?: (nodeIds: string[]) => void;
   onMoodboardClick?: (nodeId: string) => void;
   presentationMode?: boolean;
@@ -327,10 +327,10 @@ const reactFlowInstance = useReactFlow();
 
   const handleMenuOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
     if (onOpenAIGenerate) {
-      onOpenAIGenerate(type);
+      onOpenAIGenerate(type, handleMenu?.sourceNodeId);
     }
     setHandleMenu(null);
-  }, [onOpenAIGenerate]);
+  }, [handleMenu, onOpenAIGenerate]);
   
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -682,13 +682,13 @@ onClick={(event) => {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          className="[&>pattern>circle]:fill-muted-foreground/30"
+          color="#333333"
         />
         <Controls showInteractive={false} />
         <MiniMap
-          nodeColor="hsl(var(--muted-foreground))"
-          maskColor="hsla(var(--background), 0.8)"
-          className="bg-card border border-border rounded-lg"
+          nodeColor="#444444"
+          maskColor="rgba(10,10,10,0.7)"
+          style={{ backgroundColor: "#111111", border: "1px solid #222222", borderRadius: 8 }}
         />
       </ReactFlow>
       </PresentationNodesContext.Provider>
@@ -764,10 +764,12 @@ onClick={(event) => {
       {/* Comment mode overlay hint */}
       {commentMode && !newCommentPosition && (
         <div
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none bg-card border border-border shadow-lg"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none shadow-lg"
+          style={{ backgroundColor: "#111111", border: "1px solid #222222" }}
         >
           <span
-            className="text-sm text-muted-foreground"
+            className="text-sm"
+            style={{ color: "#888888" }}
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Click anywhere to add a comment
@@ -778,24 +780,27 @@ onClick={(event) => {
       {/* File drop overlay */}
       {isDraggingFiles && (
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none z-50 bg-background/90"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+          style={{ backgroundColor: "rgba(10,10,10,0.9)" }}
         >
           <div
-            className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-card border-2 border-dashed border-border"
+            className="flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-dashed"
+            style={{ backgroundColor: "#111111", borderColor: "#333333" }}
           >
-            <div 
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-muted"
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "#1a1a1a" }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="1.5">
                 <path d="M12 16V4M12 4L8 8M12 4L16 8" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" strokeLinecap="round"/>
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-lg font-medium text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-lg font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Drop files to upload
               </p>
-              <p className="text-sm text-muted-foreground mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-sm mt-1" style={{ color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}>
                 Images, documents, and media files
               </p>
             </div>

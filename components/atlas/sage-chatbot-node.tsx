@@ -576,13 +576,13 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
         type="target"
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
+        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 18, height: 18, borderRadius: 9 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 10, height: 10, borderRadius: 5 }}
+        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 18, height: 18, borderRadius: 9 }}
       />
     </div>
   );
