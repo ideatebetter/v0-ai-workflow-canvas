@@ -21,6 +21,7 @@ export async function OPTIONS() {
 // }
 
 export async function POST(request: Request) {
+  try {
   const token = tokenFromHeader(request);
   const userId = token ? validateFigmaSyncToken(token) : null;
   if (!userId) return NextResponse.json({ error: "Invalid token" }, { status: 401, headers: FIGMA_CORS_HEADERS });
@@ -181,4 +182,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ nodeId: resultNodeId, blobUrl: blob.url }, { headers: FIGMA_CORS_HEADERS });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500, headers: FIGMA_CORS_HEADERS });
+  }
 }
