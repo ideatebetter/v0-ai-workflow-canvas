@@ -20,6 +20,7 @@ interface CanvasSideToolbarProps {
   onPresentationModeChange: (enabled: boolean) => void;
   onStartPresentation: () => void;
   presentationEdgeCount: number;
+  hasPlayableFlow: boolean;
 }
 
 export function CanvasSideToolbar({
@@ -39,6 +40,7 @@ export function CanvasSideToolbar({
   onPresentationModeChange,
   onStartPresentation,
   presentationEdgeCount,
+  hasPlayableFlow,
 }: CanvasSideToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addMenuPosition, setAddMenuPosition] = useState({ x: 0, y: 0 });
@@ -113,11 +115,9 @@ export function CanvasSideToolbar({
           type="button"
           onClick={() => {
             if (presentationMode) {
-              // If in build mode and has edges, start presentation
-              if (presentationEdgeCount > 0) {
+              if (hasPlayableFlow) {
                 onStartPresentation();
               } else {
-                // No edges, just exit
                 onPresentationModeChange(false);
               }
             } else {
@@ -130,7 +130,7 @@ export function CanvasSideToolbar({
           style={{
             backgroundColor: presentationMode ? "#F0FE00" : "transparent",
           }}
-          title={presentationMode ? (presentationEdgeCount > 0 ? "Start presentation" : "Exit presentation mode") : "Build presentation"}
+          title={presentationMode ? (hasPlayableFlow ? "Start presentation" : "Exit presentation mode") : "Build presentation"}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <rect x="2" y="3" width="16" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>

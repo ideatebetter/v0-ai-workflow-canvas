@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -159,6 +159,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }>;
   }>>([]);
   const [isPresenting, setIsPresenting] = useState(false);
+
+  // Saved presentation flows
+  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  const [savingFlow, setSavingFlow] = useState(false);
+  const [newFlowName, setNewFlowName] = useState("");
 
   // Clipboard state for copy/paste
   const [copiedNodes, setCopiedNodes] = useState<AtlasNode[]>([]);
@@ -1077,6 +1082,45 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
   }, [presentationEdges, presentationGroups]);
 
+  // Load a saved flow's edges/groups into the builder view (for highlighting / playing)
+  const handleSelectFlow = useCallback((id: string | null) => {
+    setSelectedFlowId(id);
+    if (id === null) {
+      setPresentationEdges([]);
+      setPresentationGroups([]);
+    } else {
+      const flow = (canvas.presentationFlows ?? []).find(f => f.id === id);
+      if (flow) {
+        setPresentationEdges(flow.edges);
+        setPresentationGroups(flow.groups);
+      }
+    }
+  }, [canvas.presentationFlows]);
+
+  // Persist current builder edges/groups as a named flow on the canvas
+  const handleSaveFlow = useCallback((name: string) => {
+    const id = `flow-${Date.now()}`;
+    const newFlow: SavedPresentationFlow = {
+      id,
+      name: name.trim() || "Untitled Flow",
+      edges: [...presentationEdges],
+      groups: [...presentationGroups],
+    };
+    onCanvasChange({ ...canvas, presentationFlows: [...(canvas.presentationFlows ?? []), newFlow] });
+    // Select the newly saved flow so its edges stay highlighted
+    setSelectedFlowId(id);
+  }, [canvas, onCanvasChange, presentationEdges, presentationGroups]);
+
+  // Remove a saved flow from the canvas
+  const handleDeleteFlow = useCallback((id: string) => {
+    onCanvasChange({ ...canvas, presentationFlows: (canvas.presentationFlows ?? []).filter(f => f.id !== id) });
+    if (selectedFlowId === id) {
+      setSelectedFlowId(null);
+      setPresentationEdges([]);
+      setPresentationGroups([]);
+    }
+  }, [canvas, onCanvasChange, selectedFlowId]);
+
   // Handle presentation mode change - ungroup when exiting, re-group when entering
   const handlePresentationModeChange = useCallback((enabled: boolean) => {
     setPresentationMode(enabled);
@@ -1116,7 +1160,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     } else {
       // Exiting presentation mode - restore original nodes, clear groups and edges
       const groupNodes = nodes.filter(n => n.type === "presentationGroup");
-      
+      setSelectedFlowId(null);
+      setSavingFlow(false);
       // Always clear presentation edges when exiting
       setPresentationEdges([]);
       
@@ -1760,9 +1805,106 @@ presentationMode={presentationMode}
   onPresentationModeChange={handlePresentationModeChange}
   onStartPresentation={handleStartPresentation}
   presentationEdgeCount={new Set(presentationEdges.flatMap(e => [e.source, e.target])).size}
+  hasPlayableFlow={selectedFlowId !== null || presentationEdges.length > 0 || presentationGroups.length > 0}
   />
 
-        
+      {/* Saved presentation flows panel — top-right of canvas, shown in builder mode */}
+      {presentationMode && (
+        <div className="absolute top-4 z-40 flex flex-col gap-2 items-end" style={{ right: 80 }}>
+          {(canvas.presentationFlows ?? []).map(flow => (
+            <div key={flow.id} className="group flex items-center gap-1">
+              {/* Delete button, visible on hover */}
+              <button
+                type="button"
+                onClick={() => handleDeleteFlow(flow.id)}
+                className="invisible group-hover:visible w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                title="Delete flow"
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M6 2L2 6M2 2L6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+              {/* Flow chip */}
+              <button
+                type="button"
+                onClick={() => handleSelectFlow(selectedFlowId === flow.id ? null : flow.id)}
+                className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: selectedFlowId === flow.id ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                  color: selectedFlowId === flow.id ? "#121212" : "rgba(255,255,255,0.7)",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="2" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M4 12H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  <path d="M7 10V12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                {flow.name}
+              </button>
+            </div>
+          ))}
+
+          {/* Save current builder flow */}
+          {presentationEdges.length > 0 && selectedFlowId === null && (
+            savingFlow ? (
+              <div
+                className="flex items-center gap-2 h-9 px-3 rounded-lg"
+                style={{ backgroundColor: "rgba(255,255,255,0.08)", fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                <input
+                  autoFocus
+                  value={newFlowName}
+                  onChange={e => setNewFlowName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") { handleSaveFlow(newFlowName); setSavingFlow(false); setNewFlowName(""); }
+                    if (e.key === "Escape") { setSavingFlow(false); setNewFlowName(""); }
+                  }}
+                  placeholder="Flow name…"
+                  className="bg-transparent outline-none text-xs text-foreground placeholder-muted-foreground w-28"
+                />
+                <button
+                  type="button"
+                  onClick={() => { handleSaveFlow(newFlowName); setSavingFlow(false); setNewFlowName(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSavingFlow(false); setNewFlowName(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSavingFlow(true)}
+                className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs transition-colors"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px dashed rgba(255,255,255,0.2)",
+                  color: "rgba(255,255,255,0.5)",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Save flow
+              </button>
+            )
+          )}
+        </div>
+      )}
+
       </div>
 
       {/* Double-click Add Node Menu */}

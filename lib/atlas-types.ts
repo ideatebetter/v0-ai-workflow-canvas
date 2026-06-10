@@ -931,6 +931,25 @@ export interface PresentationGroup {
   label?: string;
 }
 
+// A named, saved presentation flow — edges + groups frozen at save time
+export interface SavedPresentationFlow {
+  id: string;
+  name: string;
+  edges: Edge[];
+  groups: Array<{
+    id: string;
+    nodeIds: string[];
+    label?: string;
+    thumbnails: string[];
+    originalNodes: Array<{
+      id: string;
+      type: string;
+      position: { x: number; y: number };
+      data: Record<string, unknown>;
+    }>;
+  }>;
+}
+
 // Presentation group node data
 export interface PresentationGroupNodeData {
   label?: string;
@@ -962,6 +981,7 @@ export interface Canvas {
   visibility: CanvasVisibility;
   presentationName?: string; // Optional name for presentation mode
   presentationGroups?: PresentationGroup[]; // Grouped nodes for presentation
+  presentationFlows?: SavedPresentationFlow[]; // Saved named presentation flows
 }
 
 // Sample comments for initial canvas
