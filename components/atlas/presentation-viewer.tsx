@@ -157,16 +157,18 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
         ))}
       </div>
 
-      {/* Image area */}
-      <div className="flex-1 w-full pt-10 min-h-0">
-
-        {/* Masonry — scrollable CSS columns */}
+      {/* Image area — flex-1 with min-h-0 so it can shrink; IS the scroll container for masonry/grid */}
+      <div
+        className="flex-1 w-full pt-10 min-h-0"
+        style={{
+          overflowY: view === "freeform" ? "hidden" : "auto",
+          overflowX: "hidden",
+        }}
+        onWheel={e => { if (view !== "freeform") e.stopPropagation(); }}
+      >
+        {/* Masonry — CSS columns, no inner wrapper needed */}
         {view === "masonry" && (
-          <div
-            className="w-full h-full overflow-y-auto"
-            style={{ columns: Math.min(images.length, 4), columnGap: "10px" }}
-            onWheel={e => e.stopPropagation()}
-          >
+          <div style={{ columns: Math.min(images.length, 4), columnGap: "10px" }}>
             {images.map((img) => (
               <div key={img.id} className="break-inside-avoid mb-2.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
                 {img.fileType === "video" ? (
@@ -180,37 +182,33 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
           </div>
         )}
 
-        {/* Grid — scrollable uniform cells */}
+        {/* Grid — uniform cells, scrolls via parent */}
         {view === "grid" && (
           <div
-            className="w-full h-full overflow-y-auto"
-            onWheel={e => e.stopPropagation()}
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(images.length))}, 1fr)`,
+              gap: "10px",
+            }}
           >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(images.length))}, 1fr)`,
-                gap: "10px",
-              }}
-            >
-              {images.map((img) => (
-                <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
-                  {img.fileType === "video" ? (
-                    <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                  ) : (
-                    <Image src={img.thumbnail || img.url} alt={img.fileName} fill className="object-cover" />
-                  )}
-                </div>
-              ))}
-            </div>
+            {images.map((img) => (
+              <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
+                {img.fileType === "video" ? (
+                  <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                ) : (
+                  <Image src={img.thumbnail || img.url} alt={img.fileName} fill className="object-cover" />
+                )}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Freeform — draggable images on a scrollable canvas */}
+        {/* Freeform — draggable images; inner div handles its own scroll */}
         {view === "freeform" && (
           <div
             ref={containerRef}
-            className="w-full h-full overflow-auto"
+            className="w-full overflow-auto"
+            style={{ height: "100%" }}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerUp}
