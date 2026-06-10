@@ -279,20 +279,22 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ];
       });
       
-      // Update edges separately using the same IDs
-      setEdges(currentEdges => {
+      // Remove prompt edges immediately, then defer mockup edges by one frame so
+      // ReactFlow has time to register the new mockup nodes before validating edges.
+      setEdges(currentEdges =>
+        currentEdges.filter(e => e.source !== promptNodeId && e.target !== promptNodeId)
+      );
+
+      requestAnimationFrame(() => {
         const newEdges: Edge[] = mockupIds.map((mockupId) => ({
-          id: `edge-${sourceNodeId}-${mockupId}`,
+          id: `mockup-edge-${sourceNodeId}-${mockupId}`,
           source: sourceNodeId,
           target: mockupId,
-          style: { stroke: "#F0FE00", strokeWidth: 2 },
-          animated: true,
+          type: "default",
+          style: { stroke: "#888", strokeWidth: 1.5, strokeDasharray: "6 4" },
+          animated: false,
         }));
-        
-        return [
-          ...currentEdges.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
-          ...newEdges
-        ];
+        setEdges(currentEdges => [...currentEdges, ...newEdges]);
       });
       
       setActiveAIPromptNodeId(null);

@@ -520,22 +520,19 @@ const reactFlowInstance = useReactFlow();
     return [...regularEdges, ...presentationEdges];
   }, [edges, presentationEdges, presentationMode]);
 
-  // Style edges with dashed animation - check if edge ID starts with "presentation-" for presentation edges
+  // Style edges based on type
   const styledEdges = useMemo(() => {
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
     return allEdges.map((edge) => {
-      // Check both the set and the edge ID prefix for presentation edges
       const isPresentation = presentationEdgeIds.has(edge.id) || edge.id.startsWith("presentation-");
-      return {
-        ...edge,
-        type: "default",
-        style: {
-          strokeWidth: isPresentation ? 3 : 2,
-          stroke: isPresentation ? "#F0FE00" : "#52525b",
-          strokeDasharray: isPresentation ? "8 4" : "5 5",
-        },
-        animated: !isPresentation, // Disable animation for presentation edges to ensure styles apply
-      };
+      const isMockup = edge.id.startsWith("mockup-edge-");
+      if (isPresentation) {
+        return { ...edge, type: "default", style: { strokeWidth: 3, stroke: "#F0FE00", strokeDasharray: "8 4" }, animated: false };
+      }
+      if (isMockup) {
+        return { ...edge, type: "default", style: { strokeWidth: 1.5, stroke: "#888", strokeDasharray: "6 4" }, animated: false };
+      }
+      return { ...edge, type: "default", style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" }, animated: true };
     });
   }, [allEdges, presentationEdges]);
 
