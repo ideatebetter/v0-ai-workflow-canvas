@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import type { FileNodeData, TextNodeData, MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 import Image from "next/image";
@@ -9,32 +9,95 @@ import Image from "next/image";
 
 type MoodboardView = "masonry" | "grid" | "freeform";
 
+function seededRandom(s: number) {
+  const x = Math.sin(s) * 10000;
+  return x - Math.floor(x);
+}
+
+function buildInitialPositions(
+  images: MoodboardNodeData["images"],
+  saved: Record<string, MoodboardImagePosition> | undefined,
+): Record<string, MoodboardImagePosition> {
+  if (saved && Object.keys(saved).length > 0) return { ...saved };
+  const result: Record<string, MoodboardImagePosition> = {};
+  images.forEach((img, index) => {
+    const s = img.id.charCodeAt(0) + index * 137;
+    const angle = (index / images.length) * Math.PI * 2 + seededRandom(s) * 0.8;
+    const radius = 120 + seededRandom(s + 1) * 220 + (index % 3) * 80;
+    result[img.id] = {
+      x: Math.max(20, Math.min(820, 450 + Math.cos(angle) * radius * 0.9 + seededRandom(s + 2) * 80 - 40)),
+      y: Math.max(20, Math.min(480, 260 + Math.sin(angle) * radius * 0.6 + seededRandom(s + 3) * 60 - 30)),
+      zIndex: index + 1,
+      rotation: (seededRandom(s + 4) - 0.5) * 20,
+      scale: 0.75 + seededRandom(s + 5) * 0.35,
+    };
+  });
+  return result;
+}
+
 function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
   const [view, setView] = useState<MoodboardView>("masonry");
-
   const images = data.images ?? [];
 
-  // Compute stable freeform positions once per render (seeded by image id)
-  const freeformPositions = useMemo<Record<string, MoodboardImagePosition>>(() => {
-    if (data.freeformPositions && Object.keys(data.freeformPositions).length > 0) {
-      return data.freeformPositions;
+  // Freeform — mutable positions in local state
+  const [positions, setPositions] = useState<Record<string, MoodboardImagePosition>>(() =>
+    buildInitialPositions(images, data.freeformPositions),
+  );
+  const [maxZ, setMaxZ] = useState(images.length + 1);
+  const dragRef = useRef<{
+    id: string;
+    startMouseX: number;
+    startMouseY: number;
+    startPosX: number;
+    startPosY: number;
+  } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Re-seed when switching to freeform
+  useEffect(() => {
+    if (view === "freeform") {
+      setPositions(buildInitialPositions(images, data.freeformPositions));
     }
-    const result: Record<string, MoodboardImagePosition> = {};
-    images.forEach((img, index) => {
-      const seed = (s: number) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
-      const s = img.id.charCodeAt(0) + index * 137;
-      const angle = (index / images.length) * Math.PI * 2 + seed(s) * 0.8;
-      const radius = 120 + seed(s + 1) * 220 + (index % 3) * 80;
-      result[img.id] = {
-        x: Math.max(20, Math.min(820, 450 + Math.cos(angle) * radius * 0.9 + seed(s + 2) * 80 - 40)),
-        y: Math.max(20, Math.min(480, 260 + Math.sin(angle) * radius * 0.6 + seed(s + 3) * 60 - 30)),
-        zIndex: index + 1,
-        rotation: (seed(s + 4) - 0.5) * 20,
-        scale: 0.75 + seed(s + 5) * 0.35,
-      };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const pos = positions[id] ?? { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
+    const newZ = maxZ + 1;
+    setMaxZ(newZ);
+    setPositions(prev => ({ ...prev, [id]: { ...pos, zIndex: newZ } }));
+    dragRef.current = { id, startMouseX: e.clientX, startMouseY: e.clientY, startPosX: pos.x, startPosY: pos.y };
+  }, [positions, maxZ]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    e.stopPropagation();
+    const { id, startMouseX, startMouseY, startPosX, startPosY } = dragRef.current;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const scaleX = 960 / rect.width;
+    const scaleY = 540 / rect.height;
+    const dx = (e.clientX - startMouseX) * scaleX;
+    const dy = (e.clientY - startMouseY) * scaleY;
+    setPositions(prev => {
+      const p = prev[id];
+      if (!p) return prev;
+      return { ...prev, [id]: { ...p, x: startPosX + dx, y: startPosY + dy } };
     });
-    return result;
-  }, [data.freeformPositions, images]);
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation();
+    dragRef.current = null;
+  }, []);
+
+  // Stop arrow/space keys from navigating slides while hovering the moodboard
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (["ArrowLeft", "ArrowRight", " "].includes(e.key)) e.stopPropagation();
+  }, []);
 
   const viewIcons: Record<MoodboardView, React.ReactNode> = {
     masonry: (
@@ -62,9 +125,20 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
   };
 
   return (
-    <div className="relative flex flex-col w-full h-full">
-      {/* View switcher — top right of slide area */}
-      <div className="absolute top-0 right-0 z-10 flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+    <div
+      className="relative flex flex-col w-full h-full outline-none"
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
+    >
+      {/* Moodboard label */}
+      <div className="absolute top-0 left-0 z-10 pointer-events-none">
+        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "system-ui, Inter, sans-serif" }}>
+          {data.label || "Moodboard"}
+        </span>
+      </div>
+
+      {/* View switcher */}
+      <div className="absolute top-0 right-0 z-20 flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
         {(["masonry", "grid", "freeform"] as MoodboardView[]).map(v => (
           <button
             key={v}
@@ -83,17 +157,16 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
         ))}
       </div>
 
-      {/* Moodboard label */}
-      <div className="absolute top-0 left-0 z-10">
-        <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.25)", fontFamily: "system-ui, Inter, sans-serif" }}>
-          {data.label || "Moodboard"}
-        </span>
-      </div>
-
       {/* Image area */}
-      <div className="flex-1 w-full pt-10 overflow-hidden">
+      <div className="flex-1 w-full pt-10 min-h-0">
+
+        {/* Masonry — scrollable CSS columns */}
         {view === "masonry" && (
-          <div className="w-full h-full" style={{ columns: images.length <= 3 ? images.length : 4, columnGap: "10px" }}>
+          <div
+            className="w-full h-full overflow-y-auto"
+            style={{ columns: Math.min(images.length, 4), columnGap: "10px" }}
+            onWheel={e => e.stopPropagation()}
+          >
             {images.map((img) => (
               <div key={img.id} className="break-inside-avoid mb-2.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
                 {img.fileType === "video" ? (
@@ -107,60 +180,81 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
           </div>
         )}
 
+        {/* Grid — scrollable uniform cells */}
         {view === "grid" && (
           <div
-            className="w-full h-full"
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(images.length))}, 1fr)`,
-              gap: "10px",
-            }}
+            className="w-full h-full overflow-y-auto"
+            onWheel={e => e.stopPropagation()}
           >
-            {images.map((img) => (
-              <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
-                {img.fileType === "video" ? (
-                  <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                ) : (
-                  <Image src={img.thumbnail || img.url} alt={img.fileName} fill className="object-cover" />
-                )}
-              </div>
-            ))}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(images.length))}, 1fr)`,
+                gap: "10px",
+              }}
+            >
+              {images.map((img) => (
+                <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
+                  {img.fileType === "video" ? (
+                    <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                  ) : (
+                    <Image src={img.thumbnail || img.url} alt={img.fileName} fill className="object-cover" />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Freeform — draggable images on a scrollable canvas */}
         {view === "freeform" && (
-          <div className="relative w-full h-full" style={{ minHeight: 500 }}>
-            {images.map((img) => {
-              const pos = freeformPositions[img.id] ?? { x: 100, y: 100, zIndex: 1, rotation: 0, scale: 1 };
-              const w = 180 * (pos.scale ?? 1);
-              return (
-                <div
-                  key={img.id}
-                  className="absolute rounded-lg overflow-hidden shadow-xl"
-                  style={{
-                    left: `${(pos.x / 960) * 100}%`,
-                    top: `${(pos.y / 540) * 100}%`,
-                    width: w,
-                    zIndex: pos.zIndex ?? 1,
-                    transform: `rotate(${pos.rotation ?? 0}deg)`,
-                    backgroundColor: "#1a1a1a",
-                  }}
-                >
-                  {img.fileType === "video" ? (
-                    <video src={img.url} className="w-full object-cover" muted loop autoPlay playsInline style={{ display: "block" }} />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={img.thumbnail || img.url} alt={img.fileName} className="w-full object-cover block" />
-                  )}
-                </div>
-              );
-            })}
+          <div
+            ref={containerRef}
+            className="w-full h-full overflow-auto"
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onWheel={e => e.stopPropagation()}
+          >
+            {/* Virtual 960×540 canvas */}
+            <div className="relative" style={{ width: 960, height: 540 }}>
+              {images.map((img) => {
+                const pos = positions[img.id] ?? { x: 100, y: 100, zIndex: 1, rotation: 0, scale: 1 };
+                const w = Math.round(180 * (pos.scale ?? 1));
+                return (
+                  <div
+                    key={img.id}
+                    className="absolute rounded-lg overflow-hidden shadow-xl select-none"
+                    style={{
+                      left: pos.x,
+                      top: pos.y,
+                      width: w,
+                      zIndex: pos.zIndex ?? 1,
+                      transform: `rotate(${pos.rotation ?? 0}deg)`,
+                      backgroundColor: "#1a1a1a",
+                      cursor: "grab",
+                      touchAction: "none",
+                    }}
+                    onPointerDown={e => handlePointerDown(e, img.id)}
+                  >
+                    {img.fileType === "video" ? (
+                      <video src={img.url} className="w-full object-cover pointer-events-none" muted loop autoPlay playsInline style={{ display: "block" }} />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img.thumbnail || img.url} alt={img.fileName} className="w-full object-cover block pointer-events-none" draggable={false} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+// ─── Presentation Viewer ─────────────────────────────────────────────────────
 
 interface PresentationGroup {
   id: string;
@@ -192,68 +286,49 @@ export function PresentationViewer({
   const [editedName, setEditedName] = useState(presentationName);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Slide can be either a single node or a group of nodes
-  type Slide = { type: 'single'; nodeId: string } | { type: 'group'; nodeIds: string[] };
+  type Slide = { type: "single"; nodeId: string } | { type: "group"; nodeIds: string[] };
 
-  // Build ordered slides from presentation edges
   const slides = React.useMemo<Slide[]>(() => {
     const result: Slide[] = [];
-    
-    // Get node IDs that are in groups (from presentationGroups data)
     const groupedNodeIds = new Set(presentationGroups.flatMap(g => g.nodeIds));
-    
-    // Build sequence from edges
+
     if (presentationEdges.length > 0) {
       const sources = new Set(presentationEdges.map(e => e.source));
       const targets = new Set(presentationEdges.map(e => e.target));
-      
       let startNodeId = "";
       for (const source of sources) {
-        if (!targets.has(source)) {
-          startNodeId = source;
-          break;
-        }
+        if (!targets.has(source)) { startNodeId = source; break; }
       }
-
-      if (!startNodeId && presentationEdges.length > 0) {
-        startNodeId = presentationEdges[0].source;
-      }
+      if (!startNodeId && presentationEdges.length > 0) startNodeId = presentationEdges[0].source;
 
       const sequence: string[] = [startNodeId];
       const visited = new Set([startNodeId]);
       let currentId = startNodeId;
-
       while (true) {
         const nextEdge = presentationEdges.find(e => e.source === currentId && !visited.has(e.target));
         if (!nextEdge) break;
-        
         sequence.push(nextEdge.target);
         visited.add(nextEdge.target);
         currentId = nextEdge.target;
       }
 
-      // Add slides based on sequence
       for (const nodeId of sequence) {
-        // Skip nodes that are part of a group (they'll be shown via the group node)
         if (groupedNodeIds.has(nodeId)) continue;
-        
-        // Check if this is a presentation group node
         const node = nodes.find(n => n.id === nodeId);
         if (node?.type === "presentationGroup") {
           const groupData = node.data as { nodeIds?: string[] };
           if (groupData.nodeIds && groupData.nodeIds.length > 0) {
-            result.push({ type: 'group', nodeIds: groupData.nodeIds });
+            result.push({ type: "group", nodeIds: groupData.nodeIds });
           }
         } else {
-          result.push({ type: 'single', nodeId });
+          result.push({ type: "single", nodeId });
         }
       }
     }
 
-    // If no edges but we have group nodes, add them as slides
     if (presentationEdges.length === 0 && presentationGroups.length > 0) {
       for (const group of presentationGroups) {
-        result.push({ type: 'group', nodeIds: group.nodeIds });
+        result.push({ type: "group", nodeIds: group.nodeIds });
       }
     }
 
@@ -261,87 +336,55 @@ export function PresentationViewer({
   }, [presentationEdges, presentationGroups, nodes]);
 
   const currentSlide = slides[currentIndex];
-  
-  // Get node(s) for current slide
+
   const currentNodes = React.useMemo(() => {
     if (!currentSlide) return [];
-    if (currentSlide.type === 'single') {
+    if (currentSlide.type === "single") {
       const node = nodes.find(n => n.id === currentSlide.nodeId);
-      // If it's a presentationGroup node, use its originalNodes data
       if (node?.type === "presentationGroup") {
         const groupData = node.data as { originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }> };
         if (groupData.originalNodes) {
-          return groupData.originalNodes.map(orig => ({
-            id: orig.id,
-            type: orig.type,
-            position: orig.position,
-            data: orig.data,
-          })) as Node[];
+          return groupData.originalNodes.map(orig => ({ id: orig.id, type: orig.type, position: orig.position, data: orig.data })) as Node[];
         }
       }
       return node ? [node] : [];
     } else {
-      // For grouped slides, try to find nodes or use originalNodes from group
       const foundNodes = currentSlide.nodeIds
         .map(id => nodes.find(n => n.id === id))
         .filter((n): n is Node => n !== undefined);
-      
-      // If we didn't find the nodes (they're inside a group), look in presentationGroup nodes
+
       if (foundNodes.length === 0) {
         for (const node of nodes) {
           if (node.type === "presentationGroup") {
             const groupData = node.data as { nodeIds?: string[]; originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }> };
             if (groupData.nodeIds?.some(id => currentSlide.nodeIds.includes(id)) && groupData.originalNodes) {
-              return groupData.originalNodes.map(orig => ({
-                id: orig.id,
-                type: orig.type,
-                position: orig.position,
-                data: orig.data,
-              })) as Node[];
+              return groupData.originalNodes.map(orig => ({ id: orig.id, type: orig.type, position: orig.position, data: orig.data })) as Node[];
             }
           }
         }
       }
-      
       return foundNodes;
     }
   }, [currentSlide, nodes]);
 
   const goNext = useCallback(() => {
-    if (currentIndex < slides.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    }
+    if (currentIndex < slides.length - 1) setCurrentIndex(prev => prev + 1);
   }, [currentIndex, slides.length]);
 
   const goPrev = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
   }, [currentIndex]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger navigation shortcuts while editing the presentation name
       if (isEditingName) {
-        if (e.key === "Escape") {
-          setIsEditingName(false);
-          setEditedName(presentationName);
-        }
+        if (e.key === "Escape") { setIsEditingName(false); setEditedName(presentationName); }
         return;
       }
-      
-      if (e.key === "ArrowRight" || e.key === " ") {
-        e.preventDefault();
-        goNext();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goPrev();
-      } else if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goNext(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      else if (e.key === "Escape") { onClose(); }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goNext, goPrev, onClose, isEditingName, presentationName]);
@@ -352,73 +395,39 @@ export function PresentationViewer({
         <div className="text-center">
           <p className="text-white text-lg mb-4">No presentation slides found.</p>
           <p className="text-gray-400 text-sm mb-6">Connect nodes with presentation edges or group images to create a presentation.</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-white"
-            style={{ backgroundColor: "#333333" }}
-          >
-            Close
-          </button>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-white" style={{ backgroundColor: "#333333" }}>Close</button>
         </div>
       </div>
     );
   }
 
-  // Get bento grid layout based on number of images
   const getBentoLayout = (count: number): string => {
     switch (count) {
-      case 2:
-        return "grid-cols-2 grid-rows-1";
-      case 3:
-        return "grid-cols-2 grid-rows-2";
-      case 4:
-        return "grid-cols-2 grid-rows-2";
-      case 5:
-        return "grid-cols-3 grid-rows-2";
-      case 6:
-        return "grid-cols-3 grid-rows-2";
-      default:
-        if (count > 6) return "grid-cols-3 grid-rows-3";
-        return "grid-cols-1 grid-rows-1";
+      case 2: return "grid-cols-2 grid-rows-1";
+      case 3: return "grid-cols-2 grid-rows-2";
+      case 4: return "grid-cols-2 grid-rows-2";
+      case 5: return "grid-cols-3 grid-rows-2";
+      case 6: return "grid-cols-3 grid-rows-2";
+      default: return count > 6 ? "grid-cols-3 grid-rows-3" : "grid-cols-1 grid-rows-1";
     }
   };
 
-  // Get span class for bento items
   const getBentoItemClass = (index: number, total: number): string => {
     if (total === 3 && index === 0) return "row-span-2";
     if (total === 5 && index === 0) return "row-span-2";
     return "";
   };
 
-  // Render a single media item (image or video) in a bento cell
   const renderBentoMedia = (node: Node, index: number, total: number) => {
     const fileData = node.data as FileNodeData;
     const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
     const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
-    
     return (
-      <div 
-        key={`${node.id}-${index}`} 
-        className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`}
-        style={{ backgroundColor: "#1a1a1a" }}
-      >
+      <div key={`${node.id}-${index}`} className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`} style={{ backgroundColor: "#1a1a1a" }}>
         {isVideo && mediaUrl ? (
-          <video
-            src={mediaUrl}
-            className="w-full h-full object-cover"
-            muted
-            loop
-            autoPlay
-            playsInline
-          />
+          <video src={mediaUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
         ) : mediaUrl ? (
-          <Image
-            src={mediaUrl}
-            alt={fileData.fileName || "Image"}
-            fill
-            className="object-cover"
-          />
+          <Image src={mediaUrl} alt={fileData.fileName || "Image"} fill className="object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-2xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
@@ -428,26 +437,20 @@ export function PresentationViewer({
     );
   };
 
-  // Render content based on slide type
   const renderSlideContent = () => {
     if (!currentSlide) return null;
 
-    // Grouped slide - render bento grid
-    if (currentSlide.type === 'group' && currentNodes.length > 1) {
+    if (currentSlide.type === "group" && currentNodes.length > 1) {
       const count = currentNodes.length;
       return (
         <div className="flex flex-col items-center justify-center h-full w-full px-8">
-          <div 
-            className={`grid ${getBentoLayout(count)} gap-3 w-full max-w-6xl`}
-            style={{ height: '65vh' }}
-          >
+          <div className={`grid ${getBentoLayout(count)} gap-3 w-full max-w-6xl`} style={{ height: "65vh" }}>
             {currentNodes.map((node, index) => renderBentoMedia(node, index, count))}
           </div>
         </div>
       );
     }
 
-    // Single node slide
     const currentNode = currentNodes[0];
     if (!currentNode) return null;
 
@@ -456,60 +459,29 @@ export function PresentationViewer({
       const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
       const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
 
-      // Video slide
       if (isVideo && mediaUrl) {
         return (
           <div className="flex flex-col items-center justify-center h-full w-full">
-            <video
-              key={currentNode.id}
-              src={mediaUrl}
-              controls
-              autoPlay
-              className="max-w-6xl max-h-[70vh] rounded-lg"
-              style={{ backgroundColor: "#000" }}
-            />
-            <span 
-              className="mt-4 text-xs font-normal tracking-wide"
-              style={{ 
-                fontFamily: "system-ui, Inter, sans-serif",
-                color: "rgba(255,255,255,0.35)",
-                fontStyle: "italic"
-              }}
-            >
+            <video key={currentNode.id} src={mediaUrl} controls autoPlay className="max-w-6xl max-h-[70vh] rounded-lg" style={{ backgroundColor: "#000" }} />
+            <span className="mt-4 text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
               {fileData.fileName || fileData.label}
             </span>
           </div>
         );
       }
 
-      // Image slide
       return (
         <div className="flex flex-col items-center justify-center h-full w-full">
           {mediaUrl ? (
             <div className="relative w-full max-w-6xl h-[70vh]">
-              <Image
-                src={mediaUrl}
-                alt={fileData.fileName || "Slide"}
-                fill
-                className="object-contain rounded-lg"
-              />
+              <Image src={mediaUrl} alt={fileData.fileName || "Slide"} fill className="object-contain rounded-lg" />
             </div>
           ) : (
-            <div 
-              className="w-64 h-64 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#1a1a1a" }}
-            >
+            <div className="w-64 h-64 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
               <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
             </div>
           )}
-          <span 
-            className="mt-4 text-xs font-normal tracking-wide"
-            style={{ 
-              fontFamily: "system-ui, Inter, sans-serif",
-              color: "rgba(255,255,255,0.35)",
-              fontStyle: "italic"
-            }}
-          >
+          <span className="mt-4 text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
             {fileData.fileName || fileData.label}
           </span>
         </div>
@@ -519,78 +491,26 @@ export function PresentationViewer({
     if (currentNode.type === "text") {
       const textData = currentNode.data as TextNodeData;
       const formatting = textData.formatting;
-      
-      // Get plain text for display (strip formatting markers)
       const content = textData.content || textData.label || "";
-      const plainText = content
-        .replace(/\[\[(h1|h2|h3|body)\]\]/g, "")
-        .replace(/\[\[\/(h1|h2|h3|body)\]\]/g, "");
-      
-      // Calculate optimal font size based on text length
+      const plainText = content.replace(/\[\[(h1|h2|h3|body)\]\]/g, "").replace(/\[\[\/(h1|h2|h3|body)\]\]/g, "");
       const textLength = plainText.length;
-      let fontSize: number;
-      let lineHeight: number;
-      let maxWidth: string;
-      
-      if (textLength < 50) {
-        // Very short - headline style
-        fontSize = 72;
-        lineHeight = 1.1;
-        maxWidth = "90%";
-      } else if (textLength < 150) {
-        // Short - large text
-        fontSize = 48;
-        lineHeight = 1.2;
-        maxWidth = "85%";
-      } else if (textLength < 300) {
-        // Medium - readable paragraph
-        fontSize = 32;
-        lineHeight = 1.4;
-        maxWidth = "75%";
-      } else if (textLength < 600) {
-        // Long - smaller but still readable
-        fontSize = 24;
-        lineHeight = 1.5;
-        maxWidth = "70%";
-      } else {
-        // Very long - compact
-        fontSize = 18;
-        lineHeight = 1.6;
-        maxWidth = "65%";
-      }
-      
+      let fontSize: number, lineHeight: number, maxWidth: string;
+      if (textLength < 50)       { fontSize = 72; lineHeight = 1.1; maxWidth = "90%"; }
+      else if (textLength < 150) { fontSize = 48; lineHeight = 1.2; maxWidth = "85%"; }
+      else if (textLength < 300) { fontSize = 32; lineHeight = 1.4; maxWidth = "75%"; }
+      else if (textLength < 600) { fontSize = 24; lineHeight = 1.5; maxWidth = "70%"; }
+      else                       { fontSize = 18; lineHeight = 1.6; maxWidth = "65%"; }
       const fontMap: Record<string, string> = {
         sans: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
         serif: "Georgia, 'Times New Roman', serif",
         mono: "'SF Mono', Menlo, Monaco, monospace",
       };
-      
-      const alignMap: Record<string, string> = {
-        left: "text-left",
-        center: "text-center",
-        right: "text-right",
-      };
-
-      const textFont = fontMap[formatting?.font || "sans"];
-      const textAlign = alignMap[formatting?.align || "left"];
-      const textColor = formatting?.color || "#ffffff";
-      const isBold = formatting?.bold;
-
+      const alignMap: Record<string, string> = { left: "text-left", center: "text-center", right: "text-right" };
       return (
-        <div 
-          className={`flex flex-col justify-center h-full w-full px-16 ${textAlign}`}
-          style={{ maxWidth }}
-        >
-          <div 
-            className={`leading-tight ${isBold ? "font-semibold" : "font-normal"}`}
-            style={{ 
-              color: textColor,
-              fontFamily: textFont,
-              fontSize: `${fontSize}px`,
-              lineHeight: lineHeight,
-              letterSpacing: fontSize > 40 ? "-0.02em" : "-0.01em",
-              textWrap: "balance",
-            }}
+        <div className={`flex flex-col justify-center h-full w-full px-16 ${alignMap[formatting?.align || "left"]}`} style={{ maxWidth }}>
+          <div
+            className={`leading-tight ${formatting?.bold ? "font-semibold" : "font-normal"}`}
+            style={{ color: formatting?.color || "#ffffff", fontFamily: fontMap[formatting?.font || "sans"], fontSize: `${fontSize}px`, lineHeight, letterSpacing: fontSize > 40 ? "-0.02em" : "-0.01em", textWrap: "balance" }}
           >
             {plainText}
           </div>
@@ -608,13 +528,9 @@ export function PresentationViewer({
       );
     }
 
-    // Default render for other node types
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div
-          className="w-64 h-64 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: "#1a1a1a" }}
-        >
+        <div className="w-64 h-64 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
           <span className="text-xl text-gray-400">{currentNode.type}</span>
         </div>
         <h2 className="text-2xl font-medium text-white mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -625,53 +541,20 @@ export function PresentationViewer({
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex flex-col"
-      style={{ backgroundColor: "#0a0a0a" }}
-    >
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-1">
-          {/* Previous arrow */}
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={currentIndex === 0}
-            className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <button type="button" onClick={goPrev} disabled={currentIndex === 0} className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-          
-          <div 
-            className="px-2 py-1 rounded text-xs text-gray-400"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-          >
-            {currentIndex + 1} / {slides.length}
-          </div>
-          
-          {/* Next arrow */}
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={currentIndex === slides.length - 1}
-            className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18L15 12L9 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="px-2 py-1 rounded text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{currentIndex + 1} / {slides.length}</div>
+          <button type="button" onClick={goNext} disabled={currentIndex === slides.length - 1} className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-            <path d="M15 5L5 15M5 5L15 15" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+        <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/></svg>
         </button>
       </div>
 
@@ -683,7 +566,6 @@ export function PresentationViewer({
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
         <div className="border-t border-white/10 pt-4 flex items-center justify-between">
-          {/* Presentation name (editable) */}
           <div className="flex items-center">
             {isEditingName ? (
               <input
@@ -692,54 +574,29 @@ export function PresentationViewer({
                 onChange={(e) => setEditedName(e.target.value)}
                 onBlur={() => {
                   setIsEditingName(false);
-                  if (editedName.trim() && editedName !== presentationName) {
-                    onPresentationNameChange(editedName.trim());
-                  } else {
-                    setEditedName(presentationName);
-                  }
+                  if (editedName.trim() && editedName !== presentationName) onPresentationNameChange(editedName.trim());
+                  else setEditedName(presentationName);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setIsEditingName(false);
-                    if (editedName.trim() && editedName !== presentationName) {
-                      onPresentationNameChange(editedName.trim());
-                    }
-                  } else if (e.key === "Escape") {
-                    setIsEditingName(false);
-                    setEditedName(presentationName);
-                  }
+                  if (e.key === "Enter") { setIsEditingName(false); if (editedName.trim() && editedName !== presentationName) onPresentationNameChange(editedName.trim()); }
+                  else if (e.key === "Escape") { setIsEditingName(false); setEditedName(presentationName); }
                 }}
                 autoFocus
                 className="bg-transparent text-xs text-gray-400 border-b border-gray-600 outline-none px-0 py-0.5"
                 style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "120px" }}
               />
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsEditingName(true)}
-                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
+              <button type="button" onClick={() => setIsEditingName(true)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {presentationName || "Untitled Presentation"}
               </button>
             )}
           </div>
-
-          {/* Workspace wordmark or name */}
           <div className="flex items-center">
             {workspaceWordmark ? (
-              <img 
-                src={workspaceWordmark} 
-                alt={workspaceName} 
-                className="h-4 opacity-40"
-              />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={workspaceWordmark} alt={workspaceName} className="h-4 opacity-40" />
             ) : (
-              <span 
-                className="text-xs text-gray-600"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                {workspaceName}
-              </span>
+              <span className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{workspaceName}</span>
             )}
           </div>
         </div>
@@ -747,3 +604,4 @@ export function PresentationViewer({
     </div>
   );
 }
+
