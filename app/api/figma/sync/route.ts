@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const { canvasId, figmaFrameId, figmaFrameName, figmaFileKey, imageData, nodeId } = body;
 
   if (!canvasId || !figmaFrameId || !imageData) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: FIGMA_CORS_HEADERS });
   }
 
   const admin = createAdminClient();
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     .single();
 
   if (canvasErr || !canvas) {
-    return NextResponse.json({ error: "Canvas not found" }, { status: 404 });
+    return NextResponse.json({ error: "Canvas not found" }, { status: 404, headers: FIGMA_CORS_HEADERS });
   }
 
   // Upload the PNG to Vercel Blob
@@ -177,8 +177,8 @@ export async function POST(request: Request) {
     .eq("user_id", userId);
 
   if (updateErr) {
-    return NextResponse.json({ error: "Failed to update canvas" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update canvas" }, { status: 500, headers: FIGMA_CORS_HEADERS });
   }
 
-  return NextResponse.json({ nodeId: resultNodeId, blobUrl: blob.url });
+  return NextResponse.json({ nodeId: resultNodeId, blobUrl: blob.url }, { headers: FIGMA_CORS_HEADERS });
 }
