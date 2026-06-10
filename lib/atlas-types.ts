@@ -266,6 +266,13 @@ export interface FileNodeData {
   // Sync-related fields
   syncGroupId?: string; // Files with the same syncGroupId are synced together
   originalNodeId?: string; // The node ID this was copied from (helps identify sync-eligible files)
+  // Figma live sync
+  figmaSync?: {
+    figmaFileKey: string;   // Figma file key (from URL)
+    figmaFrameId: string;   // Figma frame/component node ID
+    figmaFrameName: string; // Frame name at time of last sync
+    lastSynced: string;     // ISO timestamp
+  };
 }
 
 // Text formatting options

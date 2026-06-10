@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 13px;
+      background: #1c1c1e;
+      color: #e5e5e5;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 16px; overflow-y: auto; }
+    .screen[hidden] { display: none; }
+
+    h2 { font-size: 15px; font-weight: 600; color: #fff; }
+    p  { font-size: 12px; color: #888; line-height: 1.5; }
+    label { font-size: 11px; color: #888; display: block; margin-bottom: 4px; }
+
+    input, select {
+      width: 100%;
+      background: #2a2a2c;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      color: #e5e5e5;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: #F0FE00; }
+    select option { background: #2a2a2c; }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    button:disabled { opacity: .4; cursor: default; }
+
+    .btn-primary { background: #F0FE00; color: #000; }
+    .btn-primary:hover:not(:disabled) { opacity: .85; }
+    .btn-ghost { background: transparent; color: #888; border: 1px solid #3a3a3c; }
+    .btn-ghost:hover:not(:disabled) { border-color: #888; color: #e5e5e5; }
+
+    .divider { height: 1px; background: #2a2a2c; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #2a2a2c; border-radius: 6px;
+      padding: 4px 8px; font-size: 11px; color: #ccc;
+    }
+    .badge.green { background: #0a3a1a; color: #4ade80; }
+    .badge.yellow { background: #3a3a00; color: #F0FE00; }
+    .badge.red { background: #3a0a0a; color: #f87171; }
+
+    .frame-box {
+      background: #2a2a2c;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .frame-icon { flex-shrink: 0; color: #888; }
+    .frame-name { font-weight: 500; color: #fff; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .log-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 11px; color: #888; padding: 4px 0;
+      border-bottom: 1px solid #2a2a2c;
+    }
+    .log-item .time { flex-shrink: 0; color: #555; }
+    .log-item .msg  { color: #aaa; }
+    .log-item.ok .msg { color: #4ade80; }
+    .log-item.err .msg { color: #f87171; }
+  </style>
+</head>
+<body>
+
+<!-- ── Setup screen (enter token) ─────────────────────────── -->
+<div id="setup-screen" class="screen">
+  <div>
+    <h2>Connect to Ideate</h2>
+    <p style="margin-top:6px">Paste your Figma sync token from Ideate workspace settings.</p>
+  </div>
+
+  <div>
+    <label>Sync token</label>
+    <input id="token-input" type="password" placeholder="Paste your token here…" />
+  </div>
+
+  <button class="btn-primary" id="connect-btn">Connect</button>
+
+  <p>Get your token at <strong>atlas-prototype.com → Settings → Figma Sync</strong></p>
+</div>
+
+<!-- ── Main screen ────────────────────────────────────────── -->
+<div id="main-screen" class="screen" hidden>
+
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <h2>Sync with Ideate</h2>
+    <button class="btn-ghost" id="disconnect-btn" style="width:auto;padding:4px 10px;font-size:11px">Disconnect</button>
+  </div>
+
+  <!-- Selected frame -->
+  <div>
+    <label>Selected frame</label>
+    <div class="frame-box" id="frame-box">
+      <svg class="frame-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      <span class="frame-name" id="frame-name">No frame selected</span>
+    </div>
+  </div>
+
+  <!-- Target canvas -->
+  <div>
+    <label>Ideate canvas</label>
+    <select id="canvas-select">
+      <option value="">Loading canvases…</option>
+    </select>
+  </div>
+
+  <button class="btn-primary" id="sync-btn" disabled>Sync to canvas</button>
+
+  <div class="divider"></div>
+
+  <!-- Live sync toggle status -->
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:12px;color:#888">Live sync while plugin is open</span>
+    <span class="badge" id="live-badge">Idle</span>
+  </div>
+
+  <!-- Activity log -->
+  <div>
+    <label>Activity</label>
+    <div id="log" style="max-height:120px;overflow-y:auto;border-radius:6px;border:1px solid #2a2a2c;padding:4px 8px;"></div>
+  </div>
+</div>
+
+<script>
+  const API = 'https://atlas-prototype.com';
+  var token = localStorage.getItem('ideate_sync_token') || '';
+  var currentFrameId = null;
+  var currentFrameName = '';
+  var canvases = [];
+  var syncedNodeId = null; // nodeId returned after first sync of the current frame
+
+  // ── DOM refs ──────────────────────────────────────────────
+  var setupScreen = document.getElementById('setup-screen');
+  var mainScreen  = document.getElementById('main-screen');
+  var tokenInput  = document.getElementById('token-input');
+  var connectBtn  = document.getElementById('connect-btn');
+  var disconnectBtn = document.getElementById('disconnect-btn');
+  var frameName   = document.getElementById('frame-name');
+  var canvasSelect = document.getElementById('canvas-select');
+  var syncBtn     = document.getElementById('sync-btn');
+  var liveBadge   = document.getElementById('live-badge');
+  var logEl       = document.getElementById('log');
+
+  // ── Init ─────────────────────────────────────────────────
+  if (token) {
+    showMain();
+  }
+
+  function showMain() {
+    setupScreen.hidden = true;
+    mainScreen.hidden  = false;
+    fetchCanvases();
+  }
+
+  function showSetup() {
+    mainScreen.hidden  = true;
+    setupScreen.hidden = false;
+    token = '';
+  }
+
+  // ── Connect ───────────────────────────────────────────────
+  connectBtn.addEventListener('click', function () {
+    var t = tokenInput.value.trim();
+    if (!t) return;
+    token = t;
+    localStorage.setItem('ideate_sync_token', token);
+    showMain();
+  });
+
+  disconnectBtn.addEventListener('click', function () {
+    localStorage.removeItem('ideate_sync_token');
+    showSetup();
+  });
+
+  // ── Fetch canvases ────────────────────────────────────────
+  function fetchCanvases() {
+    fetch(API + '/api/figma/canvases', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(function (r) {
+      if (r.status === 401) { showSetup(); throw new Error('Unauthorized'); }
+      return r.json();
+    })
+    .then(function (data) {
+      canvases = data.canvases || [];
+      canvasSelect.innerHTML = canvases.length
+        ? '<option value="">Pick a canvas…</option>' + canvases.map(function (c) {
+            return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>';
+          }).join('')
+        : '<option value="">No canvases found</option>';
+      updateSyncBtn();
+    })
+    .catch(function (err) {
+      log('Failed to load canvases: ' + err.message, 'err');
+    });
+  }
+
+  // ── Sync button ───────────────────────────────────────────
+  canvasSelect.addEventListener('change', updateSyncBtn);
+
+  function updateSyncBtn() {
+    syncBtn.disabled = !(currentFrameId && canvasSelect.value);
+  }
+
+  syncBtn.addEventListener('click', function () {
+    if (!currentFrameId || !canvasSelect.value) return;
+    syncBtn.disabled = true;
+    syncBtn.textContent = 'Exporting…';
+    parent.postMessage({ pluginMessage: {
+      type: 'export-frame',
+      frameId: currentFrameId,
+      canvasId: canvasSelect.value,
+      nodeId: syncedNodeId,
+    }}, '*');
+  });
+
+  // ── Upload helper ─────────────────────────────────────────
+  function uploadSync(bytes, frameId, name, canvasId, existingNodeId) {
+    var base64 = bytesToBase64(bytes);
+    // Extract Figma file key from URL if possible (not available in plugin, so leave blank for now)
+    return fetch(API + '/api/figma/sync', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        canvasId: canvasId,
+        figmaFrameId: frameId,
+        figmaFrameName: name,
+        figmaFileKey: '',
+        imageData: base64,
+        nodeId: existingNodeId || null,
+      }),
+    })
+    .then(function (r) { return r.json(); });
+  }
+
+  // ── Messages from plugin main thread ─────────────────────
+  window.onmessage = function (event) {
+    var msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === 'selection') {
+      currentFrameId   = msg.id;
+      currentFrameName = msg.name;
+      frameName.textContent = msg.name;
+      updateSyncBtn();
+    }
+
+    if (msg.type === 'no-selection') {
+      currentFrameId   = null;
+      currentFrameName = '';
+      frameName.textContent = 'No frame selected — select a frame in Figma';
+      updateSyncBtn();
+    }
+
+    if (msg.type === 'frame-exported') {
+      syncBtn.textContent = 'Uploading…';
+      uploadSync(msg.bytes, msg.frameId, msg.frameName, msg.canvasId, msg.nodeId)
+        .then(function (data) {
+          if (data.nodeId) {
+            syncedNodeId = data.nodeId;
+            // Tell main thread so it can watch for live-sync
+            parent.postMessage({ pluginMessage: {
+              type: 'sync-registered',
+              frameId: msg.frameId,
+              canvasId: msg.canvasId,
+              nodeId: data.nodeId,
+            }}, '*');
+            log('Synced "' + msg.frameName + '" → ' + getCanvasName(msg.canvasId), 'ok');
+            setBadge('Live', 'yellow');
+          } else {
+            log('Sync failed: ' + (data.error || 'unknown'), 'err');
+          }
+        })
+        .catch(function (err) {
+          log('Upload error: ' + err.message, 'err');
+        })
+        .finally(function () {
+          syncBtn.textContent = 'Sync to canvas';
+          syncBtn.disabled = !(currentFrameId && canvasSelect.value);
+        });
+    }
+
+    if (msg.type === 'auto-sync') {
+      setBadge('Syncing…', 'yellow');
+      uploadSync(msg.bytes, msg.frameId, msg.frameName, msg.canvasId, msg.nodeId)
+        .then(function (data) {
+          if (data.nodeId) {
+            log('Auto-synced "' + msg.frameName + '"', 'ok');
+            setBadge('Live', 'green');
+          }
+        })
+        .catch(function () {
+          setBadge('Error', 'red');
+        });
+    }
+
+    if (msg.type === 'export-error') {
+      log('Export error: ' + msg.message, 'err');
+      syncBtn.textContent = 'Sync to canvas';
+      syncBtn.disabled = false;
+    }
+  };
+
+  // ── Helpers ───────────────────────────────────────────────
+  function getCanvasName(id) {
+    var c = canvases.find(function (x) { return x.id === id; });
+    return c ? c.name : id;
+  }
+
+  function log(msg, type) {
+    var now = new Date();
+    var time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    var el = document.createElement('div');
+    el.className = 'log-item' + (type ? ' ' + type : '');
+    el.innerHTML = '<span class="time">' + time + '</span><span class="msg">' + escHtml(msg) + '</span>';
+    logEl.insertBefore(el, logEl.firstChild);
+  }
+
+  function setBadge(text, color) {
+    liveBadge.textContent = text;
+    liveBadge.className = 'badge' + (color ? ' ' + color : '');
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function bytesToBase64(bytes) {
+    var arr = new Uint8Array(bytes);
+    var str = '';
+    for (var i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
+    return btoa(str);
+  }
+</script>
+</body>
+</html>

@@ -83,6 +83,26 @@ export function WorkspaceSettingsDialog({
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
 
+  // Figma sync token
+  const [figmaToken, setFigmaToken] = useState<string | null>(null);
+  const [figmaTokenCopied, setFigmaTokenCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/figma/token")
+      .then(r => r.json())
+      .then(d => { if (d.token) setFigmaToken(d.token); })
+      .catch(() => {});
+  }, [open]);
+
+  function copyFigmaToken() {
+    if (!figmaToken) return;
+    navigator.clipboard.writeText(figmaToken).then(() => {
+      setFigmaTokenCopied(true);
+      setTimeout(() => setFigmaTokenCopied(false), 2000);
+    });
+  }
+
   // Fetch all users for admin
   useEffect(() => {
     if (open && isAdmin) {
@@ -896,8 +916,54 @@ export function WorkspaceSettingsDialog({
                   >
                     Canvas Actions
                   </h3>
+                  <div className="flex flex-col gap-3">
+                  {/* Figma Sync */}
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: "#0a1a3a" }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 7.4 4.1 8.6 5.1 9.4C4.1 9.8 3.5 10.8 3.5 12C3.5 13.4 4.6 14.5 6 14.5C7 14.5 7.9 14 8.4 13.1C8.9 14 9.8 14.5 10.8 14.5C12.2 14.5 13.3 13.4 13.3 12C13.3 10.8 12.7 9.8 11.7 9.4C12.7 8.6 13.3 7.4 13.3 6C13.3 3.5 11.3 1.5 8.8 1.5H8Z" stroke="#60a5fa" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Figma Sync</div>
+                      <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Paste this token into the Ideate Figma plugin to sync frames.
+                      </div>
+                      {figmaToken ? (
+                        <div className="flex items-center gap-2">
+                          <code
+                            className="flex-1 text-xs px-2 py-1 rounded truncate"
+                            style={{ background: "#111", color: "#60a5fa", fontFamily: "monospace", border: "1px solid #222" }}
+                          >
+                            {figmaToken.slice(0, 20)}…
+                          </code>
+                          <button
+                            type="button"
+                            onClick={copyFigmaToken}
+                            className="flex-shrink-0 text-xs px-3 py-1 rounded transition-colors"
+                            style={{
+                              background: figmaTokenCopied ? "#0a3a1a" : "#222",
+                              color: figmaTokenCopied ? "#4ade80" : "#aaa",
+                              border: "1px solid #333",
+                            }}
+                          >
+                            {figmaTokenCopied ? "Copied!" : "Copy"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-600">Loading…</div>
+                      )}
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
+                  type="button"
                     onClick={onMakeFramework}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-white/5 text-left"
                     style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
@@ -919,6 +985,7 @@ export function WorkspaceSettingsDialog({
                       <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
+                  </div>{/* end flex-col gap-3 */}
                 </div>
               </>
             )}
