@@ -50,7 +50,8 @@ export async function updateSession(request: NextRequest) {
     '/auth/callback',
     '/auth/error',
     '/auth/change-password',
-    '/api/waitlist', // Allow waitlist submissions without auth
+    '/api/waitlist',  // Allow waitlist submissions without auth
+    '/api/figma/',    // Figma plugin routes use their own HMAC token auth
   ]
 
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
