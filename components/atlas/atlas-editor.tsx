@@ -92,6 +92,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
+  const isInitialMount = useRef(true);
+  const lastCanvasNodeCount = useRef(canvas.nodes.length);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -340,10 +342,26 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     });
   }, [canvas, nodes, edges, comments, onCanvasChange]);
 
-  // Auto-save nodes and edges when they change (debounced)
+  // Merge nodes added externally (e.g. Figma sync) into local state without overwriting local edits
   useEffect(() => {
+    const incomingCount = canvas.nodes.length;
+    if (incomingCount <= lastCanvasNodeCount.current) return;
+    lastCanvasNodeCount.current = incomingCount;
+    setNodes(current => {
+      const existingIds = new Set(current.map(n => n.id));
+      const added = canvas.nodes.filter(n => !existingIds.has(n.id));
+      return added.length > 0 ? [...current, ...added] : current;
+    });
+  }, [canvas.nodes]);
+
+  // Auto-save nodes and edges when they change (debounced); skip the very first render
+  // so opening a canvas doesn't immediately overwrite externally-added nodes in the DB.
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     const timeoutId = setTimeout(() => {
-      // Only save if there are actual changes (compare by length as a quick check)
       if (nodes.length > 0 || edges.length > 0) {
         onCanvasChange({
           ...canvas,
@@ -353,7 +371,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           updatedAt: new Date().toISOString(),
         });
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [nodes, edges]); // Only trigger on nodes/edges changes, not canvas/comments to avoid loops
