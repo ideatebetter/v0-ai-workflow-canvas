@@ -1,7 +1,22 @@
 import { updateSession } from '@/lib/supabase/middleware'
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+
+const FIGMA_CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+}
 
 export async function middleware(request: NextRequest) {
+  // Short-circuit Figma plugin routes before any Supabase auth processing.
+  // Plugin UI runs from a null origin so standard auth middleware would redirect it.
+  if (request.nextUrl.pathname.startsWith('/api/figma/')) {
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, { status: 204, headers: FIGMA_CORS_HEADERS })
+    }
+    return NextResponse.next({ request })
+  }
+
   return await updateSession(request)
 }
 

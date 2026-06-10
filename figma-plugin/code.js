@@ -38,7 +38,7 @@ figma.ui.onmessage = function (msg) {
         figma.ui.postMessage({ type: "export-error", message: "Cannot export this node type" });
         return;
       }
-      return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
+      return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } })
         .then(function (bytes) {
           figma.ui.postMessage({
             type: "frame-exported",
@@ -76,7 +76,7 @@ figma.loadAllPagesAsync().then(function () {
         var info = syncedFrames[frameId];
         figma.getNodeByIdAsync(frameId).then(function (node) {
           if (!node || typeof node.exportAsync !== "function") return;
-          return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
+          return node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } })
             .then(function (bytes) {
               figma.ui.postMessage({
                 type: "auto-sync",

@@ -43,23 +43,6 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // Figma plugin routes: handle CORS preflight before any auth check.
-  // Plugin UI runs from an opaque (null) origin so we must allow * and
-  // short-circuit OPTIONS before the redirect logic below touches it.
-  if (pathname.startsWith('/api/figma/')) {
-    if (request.method === 'OPTIONS') {
-      return new NextResponse(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-        },
-      });
-    }
-    return NextResponse.next({ request });
-  }
-
   // Public paths that don't require authentication
   const publicPaths = [
     '/auth/login',
