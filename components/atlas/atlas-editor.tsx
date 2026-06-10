@@ -17,6 +17,7 @@ import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
 import { FileDetailModal } from "./file-detail-modal";
+import type { AIPromptNodeData } from "./nodes/ai-prompt-node";
 import { UploadDialog } from "./upload-dialog";
 import { UploadProgress } from "./upload-progress";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
@@ -360,12 +361,20 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   
   // Listen for close AI prompt events
   useEffect(() => {
-    const handleClosePrompt = () => {
-      if (activeAIPromptNodeId) {
-        setNodes(nds => nds.filter(n => n.id !== activeAIPromptNodeId));
-        setEdges(eds => eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId));
+    const handleClosePrompt = (e: CustomEvent<{ sourceNodeId?: string }>) => {
+      // Find the aiPrompt node by sourceNodeId from the event, or fall back to activeAIPromptNodeId
+      setNodes(nds => {
+        const promptNode = nds.find(n =>
+          n.type === "aiPrompt" &&
+          (e.detail?.sourceNodeId
+            ? (n.data as AIPromptNodeData).sourceNodeId === e.detail.sourceNodeId
+            : n.id === activeAIPromptNodeId)
+        );
+        if (!promptNode) return nds;
+        setEdges(eds => eds.filter(ed => ed.source !== promptNode.id && ed.target !== promptNode.id));
         setActiveAIPromptNodeId(null);
-      }
+        return nds.filter(n => n.id !== promptNode.id);
+      });
     };
 
     window.addEventListener("atlas:close-ai-prompt", handleClosePrompt as EventListener);
