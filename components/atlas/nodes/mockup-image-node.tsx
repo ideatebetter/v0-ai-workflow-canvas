@@ -63,10 +63,9 @@ function MockupImageNodeComponent({
       <div
         style={{
           width: "100%",
-          aspectRatio: "16/10",
+          minHeight: imageLoaded ? undefined : 160,
           backgroundColor: "#0d0d0d",
           position: "relative",
-          overflow: "hidden",
         }}
       >
         {!imageLoaded && (
@@ -96,15 +95,14 @@ function MockupImageNodeComponent({
           alt={data.label}
           style={{
             width: "100%",
-            height: "100%",
-            objectFit: "cover",
+            height: "auto",
+            display: "block",
             opacity: imageLoaded ? 1 : 0,
             transition: "opacity 0.2s",
           }}
           onLoad={() => setImageLoaded(true)}
         />
-
-        </div>
+      </div>
 
       {/* Footer */}
       <div style={{ padding: "10px 12px" }}>
