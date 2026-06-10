@@ -34,7 +34,6 @@ figma.ui.onmessage = function (msg) {
       figma.ui.postMessage({ type: "export-error", message: "Frame not found" });
       return;
     }
-    // exportAsync must be called on a node that supports it
     if (typeof node.exportAsync !== "function") {
       figma.ui.postMessage({ type: "export-error", message: "Cannot export this node type" });
       return;
@@ -56,7 +55,6 @@ figma.ui.onmessage = function (msg) {
   }
 
   if (msg.type === "sync-registered") {
-    // UI confirmed a successful sync; remember it for live-sync
     syncedFrames[msg.frameId] = { canvasId: msg.canvasId, nodeId: msg.nodeId };
     figma.notify("Synced to Ideate ✓", { timeout: 2000 });
   }
@@ -66,32 +64,34 @@ figma.ui.onmessage = function (msg) {
   }
 };
 
-// Watch for document changes and re-export synced frames (live sync while plugin is open)
-figma.on("documentchange", function () {
-  if (Object.keys(syncedFrames).length === 0) return;
+// documentchange requires all pages to be loaded first in incremental mode
+figma.loadAllPagesAsync().then(function () {
+  figma.on("documentchange", function () {
+    if (Object.keys(syncedFrames).length === 0) return;
 
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(function () {
-    var frameIds = Object.keys(syncedFrames);
-    for (var i = 0; i < frameIds.length; i++) {
-      (function (frameId) {
-        var info = syncedFrames[frameId];
-        var node = figma.getNodeById(frameId);
-        if (!node || typeof node.exportAsync !== "function") return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function () {
+      var frameIds = Object.keys(syncedFrames);
+      for (var i = 0; i < frameIds.length; i++) {
+        (function (frameId) {
+          var info = syncedFrames[frameId];
+          var node = figma.getNodeById(frameId);
+          if (!node || typeof node.exportAsync !== "function") return;
 
-        node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
-          .then(function (bytes) {
-            figma.ui.postMessage({
-              type: "auto-sync",
-              bytes: Array.from(bytes),
-              frameId: frameId,
-              frameName: node.name,
-              canvasId: info.canvasId,
-              nodeId: info.nodeId,
-            });
-          })
-          .catch(function () {});
-      })(frameIds[i]);
-    }
-  }, 3000); // 3-second debounce to avoid hammering on rapid edits
+          node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 2 } })
+            .then(function (bytes) {
+              figma.ui.postMessage({
+                type: "auto-sync",
+                bytes: Array.from(bytes),
+                frameId: frameId,
+                frameName: node.name,
+                canvasId: info.canvasId,
+                nodeId: info.nodeId,
+              });
+            })
+            .catch(function () {});
+        })(frameIds[i]);
+      }
+    }, 3000);
+  });
 });
