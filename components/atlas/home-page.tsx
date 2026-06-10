@@ -212,15 +212,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [newCanvasProjectId, setNewCanvasProjectId] = useState<string | undefined>(undefined);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0]);
-  const [projects, setProjects] = useState<Project[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const stored = localStorage.getItem("atlas-collections");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [projects, setProjects] = useState<Project[]>([]);
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
   const [allFilesCollapsedCollections, setAllFilesCollapsedCollections] = useState<Set<string>>(new Set());
@@ -489,6 +481,16 @@ const [showSageChat, setShowSageChat] = useState(false);
     setNewCanvasProjectId(undefined);
     onOpenCanvas(newCanvas.id);
   };
+
+  // Load collections from localStorage after hydration
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("atlas-collections");
+      if (stored) setProjects(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Persist collections to localStorage
   useEffect(() => {
