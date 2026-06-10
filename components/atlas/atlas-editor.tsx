@@ -49,105 +49,43 @@ interface AtlasEditorProps {
   onSwitchCanvas?: (canvasId: string) => void;
 }
 
-// Constants for node positioning
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 180;
-const NODE_GAP = 40;
-const GRID_COLS = 4;
+// Auto-layout configuration — tweak these to adjust placement behaviour
+const LAYOUT_CONFIG = {
+  direction: "horizontal" as const, // left-to-right
+  gap: 48,                          // px between nodes
+  originX: 100,                     // x of the first node when canvas is empty
+  originY: 100,                     // y axis all new nodes share
+};
 
-// Helper function to find free positions for new nodes that don't overlap with existing ones
+// Fallback width used when a node hasn't been measured by the DOM yet
+const DEFAULT_NODE_WIDTH = 220;
+
+// Returns the position for the next appended node.
+// Uses measured node.width when available so mixed-width nodes are handled correctly.
+function getNextPosition(existingNodes: AtlasNode[]): { x: number; y: number } {
+  if (existingNodes.length === 0) {
+    return { x: LAYOUT_CONFIG.originX, y: LAYOUT_CONFIG.originY };
+  }
+  const rightmost = existingNodes.reduce((maxX, n) => {
+    const w = (n.width ?? DEFAULT_NODE_WIDTH);
+    return Math.max(maxX, n.position.x + w);
+  }, -Infinity);
+  return { x: rightmost + LAYOUT_CONFIG.gap, y: LAYOUT_CONFIG.originY };
+}
+
+// Multi-node batch placement (used for paste and drag-drop file uploads).
+// Lays out `count` nodes left-to-right starting from `startPosition`,
+// or appended after existing nodes when no startPosition is given.
 function findFreePositions(
   existingNodes: AtlasNode[],
   count: number,
   startPosition?: { x: number; y: number }
 ): Array<{ x: number; y: number }> {
-  const positions: Array<{ x: number; y: number }> = [];
-  
-  // Get bounding boxes of existing nodes
-  const existingBounds = existingNodes.map(node => ({
-    left: node.position.x,
-    right: node.position.x + NODE_WIDTH,
-    top: node.position.y,
-    bottom: node.position.y + NODE_HEIGHT,
+  const base = startPosition ?? getNextPosition(existingNodes);
+  return Array.from({ length: count }, (_, i) => ({
+    x: base.x + i * (DEFAULT_NODE_WIDTH + LAYOUT_CONFIG.gap),
+    y: base.y,
   }));
-
-  // Check if a position overlaps with any existing node
-  const isOverlapping = (x: number, y: number) => {
-    const newBounds = {
-      left: x,
-      right: x + NODE_WIDTH,
-      top: y,
-      bottom: y + NODE_HEIGHT,
-    };
-    
-    // Check against existing nodes and already placed new nodes
-    const allBounds = [
-      ...existingBounds,
-      ...positions.map(p => ({
-        left: p.x,
-        right: p.x + NODE_WIDTH,
-        top: p.y,
-        bottom: p.y + NODE_HEIGHT,
-      }))
-    ];
-    
-    return allBounds.some(bounds => 
-      !(newBounds.right < bounds.left || 
-        newBounds.left > bounds.right || 
-        newBounds.bottom < bounds.top || 
-        newBounds.top > bounds.bottom)
-    );
-  };
-
-  // Find the bottom-most and right-most positions of existing nodes
-  let maxY = 100;
-  let maxX = 100;
-  for (const node of existingNodes) {
-    maxY = Math.max(maxY, node.position.y + NODE_HEIGHT);
-    maxX = Math.max(maxX, node.position.x + NODE_WIDTH);
-  }
-
-  // Start position: either provided, or below existing content
-  const baseX = startPosition?.x ?? 100;
-  const baseY = startPosition?.y ?? (existingNodes.length > 0 ? maxY + NODE_GAP : 100);
-
-  // Place nodes in a grid pattern, finding non-overlapping positions
-  for (let i = 0; i < count; i++) {
-    let placed = false;
-    
-    // First try to place in grid pattern from base position
-    const gridX = baseX + (i % GRID_COLS) * (NODE_WIDTH + NODE_GAP);
-    const gridY = baseY + Math.floor(i / GRID_COLS) * (NODE_HEIGHT + NODE_GAP);
-    
-    if (!isOverlapping(gridX, gridY)) {
-      positions.push({ x: gridX, y: gridY });
-      placed = true;
-    }
-    
-    // If grid position overlaps, search for a free spot
-    if (!placed) {
-      // Search in expanding rows below existing content
-      for (let row = 0; row < 20 && !placed; row++) {
-        for (let col = 0; col < GRID_COLS && !placed; col++) {
-          const x = 100 + col * (NODE_WIDTH + NODE_GAP);
-          const y = maxY + NODE_GAP + row * (NODE_HEIGHT + NODE_GAP);
-          
-          if (!isOverlapping(x, y)) {
-            positions.push({ x, y });
-            placed = true;
-          }
-        }
-      }
-    }
-    
-    // Fallback: place at the very bottom
-    if (!placed) {
-      const fallbackY = maxY + NODE_GAP + positions.length * (NODE_HEIGHT + NODE_GAP);
-      positions.push({ x: 100, y: fallbackY });
-    }
-  }
-
-  return positions;
 }
 
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
@@ -624,7 +562,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       });
 
       const nodeId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const nodePosition = position || { x: 100 + nodes.length * 50, y: 100 + nodes.length * 30 };
+      const nodePosition = position ?? getNextPosition(nodes);
 
       const newNode: AtlasNode = {
         id: nodeId,
@@ -655,7 +593,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   const handleAddStatusPill = useCallback((position?: { x: number; y: number }, sourceNodeId?: string) => {
     const nodeId = `status-${Date.now()}`;
-    const nodePosition = position || { x: 150 + nodes.length * 30, y: 80 + nodes.length * 20 };
+    const nodePosition = position ?? getNextPosition(nodes);
 
     const newNode: AtlasNode = {
       id: nodeId,
@@ -695,7 +633,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       });
 
       const nodeId = `text-${Date.now()}`;
-      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+      const nodePosition = position ?? getNextPosition(nodes);
 
       const newNode: AtlasNode = {
         id: nodeId,
@@ -738,7 +676,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const handleAddSageNode = useCallback(
     (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => {
       const nodeId = `sage-${Date.now()}`;
-      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+      const nodePosition = position ?? getNextPosition(nodes);
 
       let newNode: AtlasNode;
 
@@ -812,7 +750,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const handleAddOperationalNode = useCallback(
     (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => {
       const nodeId = `op-${Date.now()}`;
-      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+      const nodePosition = position ?? getNextPosition(nodes);
 
       let newNode: AtlasNode;
 
