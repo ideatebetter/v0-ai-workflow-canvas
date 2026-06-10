@@ -1068,11 +1068,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Create presentation group from selected nodes (like moodboard - combines into one node)
   const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
     if (nodeIds.length < 2) return;
-    
+
+    // Deduplicate and ignore any IDs already in an existing group
+    const alreadyGrouped = new Set(presentationGroups.flatMap(g => g.nodeIds));
+    const freshIds = [...new Set(nodeIds)].filter(id => !alreadyGrouped.has(id));
+    if (freshIds.length < 2) return;
+
     const groupId = `presentationGroup-${Date.now()}`;
-    
+
     // Get the selected nodes
-    const selectedNodes = nodes.filter(n => nodeIds.includes(n.id));
+    const selectedNodes = nodes.filter(n => freshIds.includes(n.id));
     if (selectedNodes.length < 2) return;
     
     // Calculate center position of selected nodes
@@ -1101,31 +1106,31 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       type: "presentationGroup",
       position: { x: avgX, y: avgY },
       data: {
-        label: `Slide Group (${nodeIds.length} images)`,
-        nodeIds,
+        label: `Slide Group (${freshIds.length} images)`,
+        nodeIds: freshIds,
         thumbnails,
         originalNodes,
       },
     };
-    
+
     // Store the full group data for persistence across mode changes
-    setPresentationGroups(groups => [...groups, { 
-      id: groupId, 
-      nodeIds, 
-      label: `Slide Group (${nodeIds.length})`,
+    setPresentationGroups(groups => [...groups, {
+      id: groupId,
+      nodeIds: freshIds,
+      label: `Slide Group (${freshIds.length})`,
       thumbnails,
       originalNodes,
     }]);
-    
-    // Remove original nodes and add the group node (like moodboard)
+
+    // Remove original nodes and add the group node
     setNodes(nds => [
-      ...nds.filter(n => !nodeIds.includes(n.id)),
+      ...nds.filter(n => !freshIds.includes(n.id)),
       groupNode,
     ]);
-    
+
     // Remove edges connected to the grouped nodes
-    setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
-  }, [nodes, setNodes, setEdges]);
+    setEdges(eds => eds.filter(e => !freshIds.includes(e.source) && !freshIds.includes(e.target)));
+  }, [nodes, setNodes, setEdges, presentationGroups]);
 
   // Start presentation
   const handleStartPresentation = useCallback(() => {
@@ -1162,9 +1167,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           },
         }));
         
-        // Remove individual nodes that are part of groups and add group nodes
+        // Remove individual nodes and any stale group nodes, then add reconstructed group nodes.
+        // Stale group nodes can exist if presentation mode was exited without full cleanup
+        // (e.g. closing PresentationViewer directly).
         setNodes(nds => [
-          ...nds.filter(n => !nodeIdsToGroup.has(n.id)),
+          ...nds.filter(n => !nodeIdsToGroup.has(n.id) && n.type !== "presentationGroup"),
           ...groupNodesToAdd,
         ]);
       }
@@ -2196,7 +2203,7 @@ presentationMode={presentationMode}
   presentationGroups={presentationGroups}
   onClose={() => {
   setIsPresenting(false);
-  setPresentationMode(false);
+  handlePresentationModeChange(false);
   }}
   presentationName={canvas.presentationName || "Untitled Presentation"}
   onPresentationNameChange={(name) => {
