@@ -626,12 +626,12 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
             </h2>
           )}
 
-          {/* Image Preview - Only show for image files */}
-          {[".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
+          {/* Image Preview - show for image files or any node with a previewImage (e.g. Figma sync) */}
+          {([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) || (fileData.previewImages && fileData.previewImages.length > 0)) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
             <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "#0d0d0d" }}>
                 <img
-                  src={fileData.uploadedFile?.url || fileData.previewImages?.[0]}
+                  src={fileData.previewImages?.[0] || fileData.uploadedFile?.url}
                   alt={fileData.label}
                   className="max-w-full max-h-[50vh] object-contain rounded-lg"
                   style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
