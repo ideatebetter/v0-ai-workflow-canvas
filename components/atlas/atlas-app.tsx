@@ -192,12 +192,26 @@ export function AtlasApp() {
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
     setView("canvas");
-    // Track recent canvas history (most recent first, max 5)
     setRecentCanvasIds(prev => {
       const filtered = prev.filter(id => id !== canvasId);
       return [canvasId, ...filtered].slice(0, 5);
     });
-  }, []);
+    // Refresh canvas data from DB so Figma-synced nodes are visible immediately
+    if (user) {
+      fetch(`/api/canvas?id=${canvasId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data?.canvas) return;
+          const c = data.canvas;
+          setCanvases(prev => prev.map(canvas =>
+            canvas.id === canvasId
+              ? { ...canvas, nodes: c.nodes || [], edges: c.edges || [], updatedAt: c.updated_at }
+              : canvas
+          ));
+        })
+        .catch(() => {});
+    }
+  }, [user]);
 
   const handleBack = useCallback(() => {
     setView("home");
