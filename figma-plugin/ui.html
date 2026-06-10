@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,8 +15,7 @@
       flex-direction: column;
     }
 
-    .screen { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 16px; overflow-y: auto; }
-    .screen[hidden] { display: none; }
+    .screen { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; overflow-y: auto; }
 
     h2 { font-size: 15px; font-weight: 600; color: #fff; }
     p  { font-size: 12px; color: #888; line-height: 1.5; }
@@ -32,205 +30,232 @@
       font-size: 13px;
       padding: 8px 12px;
       outline: none;
-      transition: border-color .15s;
     }
     input:focus, select:focus { border-color: #F0FE00; }
     select option { background: #2a2a2c; }
 
-    button {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .15s;
+    .btn {
+      width: 100%; padding: 10px; border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
     }
-    button:disabled { opacity: .4; cursor: default; }
-
+    .btn:disabled { opacity: .45; cursor: default; }
     .btn-primary { background: #F0FE00; color: #000; }
-    .btn-primary:hover:not(:disabled) { opacity: .85; }
     .btn-ghost { background: transparent; color: #888; border: 1px solid #3a3a3c; }
-    .btn-ghost:hover:not(:disabled) { border-color: #888; color: #e5e5e5; }
 
     .divider { height: 1px; background: #2a2a2c; }
 
-    .badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: #2a2a2c; border-radius: 6px;
-      padding: 4px 8px; font-size: 11px; color: #ccc;
-    }
-    .badge.green { background: #0a3a1a; color: #4ade80; }
-    .badge.yellow { background: #3a3a00; color: #F0FE00; }
-    .badge.red { background: #3a0a0a; color: #f87171; }
-
     .frame-box {
-      background: #2a2a2c;
-      border: 1px solid #3a3a3c;
-      border-radius: 8px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      background: #2a2a2c; border: 1px solid #3a3a3c; border-radius: 8px;
+      padding: 10px 12px; display: flex; align-items: center; gap: 8px;
     }
-    .frame-icon { flex-shrink: 0; color: #888; }
-    .frame-name { font-weight: 500; color: #fff; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .frame-name { font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .frame-empty { color: #555; font-style: italic; }
 
-    .log-item {
-      display: flex; gap: 8px; align-items: flex-start;
-      font-size: 11px; color: #888; padding: 4px 0;
-      border-bottom: 1px solid #2a2a2c;
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+    .badge-idle   { background: #2a2a2c; color: #666; }
+    .badge-live   { background: #0a3a1a; color: #4ade80; }
+    .badge-sync   { background: #3a3a00; color: #F0FE00; }
+    .badge-err    { background: #3a0a0a; color: #f87171; }
+
+    #log { max-height: 100px; overflow-y: auto; }
+    .log-row { display: flex; gap: 6px; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #242424; }
+    .log-time { color: #444; flex-shrink: 0; }
+    .log-msg  { color: #888; }
+    .log-ok   { color: #4ade80; }
+    .log-err  { color: #f87171; }
+
+    .row { display: flex; align-items: center; justify-content: space-between; }
+    .small-btn {
+      background: transparent; border: 1px solid #3a3a3c; color: #888;
+      border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer;
     }
-    .log-item .time { flex-shrink: 0; color: #555; }
-    .log-item .msg  { color: #aaa; }
-    .log-item.ok .msg { color: #4ade80; }
-    .log-item.err .msg { color: #f87171; }
+    .small-btn:hover { border-color: #888; color: #e5e5e5; }
   </style>
 </head>
 <body>
 
-<!-- ── Setup screen (enter token) ─────────────────────────── -->
+<!-- Setup screen -->
 <div id="setup-screen" class="screen">
   <div>
     <h2>Connect to Ideate</h2>
-    <p style="margin-top:6px">Paste your Figma sync token from Ideate workspace settings.</p>
+    <p style="margin-top:6px">Paste your sync token from Ideate → Settings → Figma Sync, then tap Connect.</p>
   </div>
-
   <div>
-    <label>Sync token</label>
-    <input id="token-input" type="password" placeholder="Paste your token here…" />
+    <label for="token-input">Sync token</label>
+    <input id="token-input" type="text" placeholder="Paste token here…" />
   </div>
-
-  <button class="btn-primary" id="connect-btn">Connect</button>
-
-  <p>Get your token at <strong>atlas-prototype.com → Settings → Figma Sync</strong></p>
+  <button class="btn btn-primary" id="connect-btn">Connect</button>
+  <p id="connect-error" style="color:#f87171;display:none">Could not connect — check your token and try again.</p>
 </div>
 
-<!-- ── Main screen ────────────────────────────────────────── -->
-<div id="main-screen" class="screen" hidden>
-
-  <div style="display:flex;align-items:center;justify-content:space-between">
+<!-- Main screen -->
+<div id="main-screen" class="screen" style="display:none">
+  <div class="row">
     <h2>Sync with Ideate</h2>
-    <button class="btn-ghost" id="disconnect-btn" style="width:auto;padding:4px 10px;font-size:11px">Disconnect</button>
+    <button class="small-btn" id="disconnect-btn">Disconnect</button>
   </div>
 
-  <!-- Selected frame -->
   <div>
     <label>Selected frame</label>
-    <div class="frame-box" id="frame-box">
-      <svg class="frame-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
-        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
-        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
-        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+    <div class="frame-box">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;color:#555">
+        <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
       </svg>
-      <span class="frame-name" id="frame-name">No frame selected</span>
+      <span id="frame-name" class="frame-name frame-empty">No frame selected — select a frame in Figma</span>
     </div>
   </div>
 
-  <!-- Target canvas -->
   <div>
-    <label>Ideate canvas</label>
+    <label for="canvas-select">Target canvas</label>
     <select id="canvas-select">
       <option value="">Loading canvases…</option>
     </select>
   </div>
 
-  <button class="btn-primary" id="sync-btn" disabled>Sync to canvas</button>
+  <button class="btn btn-primary" id="sync-btn" disabled>Sync to canvas</button>
 
   <div class="divider"></div>
 
-  <!-- Live sync toggle status -->
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <span style="font-size:12px;color:#888">Live sync while plugin is open</span>
-    <span class="badge" id="live-badge">Idle</span>
+  <div class="row">
+    <span style="font-size:12px;color:#888">Live sync (while plugin is open)</span>
+    <span class="badge badge-idle" id="live-badge">Idle</span>
   </div>
 
-  <!-- Activity log -->
   <div>
     <label>Activity</label>
-    <div id="log" style="max-height:120px;overflow-y:auto;border-radius:6px;border:1px solid #2a2a2c;padding:4px 8px;"></div>
+    <div id="log"></div>
   </div>
 </div>
 
 <script>
-  const API = 'https://atlas-prototype.com';
-  var token = localStorage.getItem('ideate_sync_token') || '';
+  var API = 'https://atlas-prototype.com';
+
+  // ── Persistent storage (localStorage with fallback to in-memory) ──────────
+  var memStore = {};
+  function storageGet(key) {
+    try { return localStorage.getItem(key); } catch(e) { return memStore[key] || null; }
+  }
+  function storageSet(key, val) {
+    try { localStorage.setItem(key, val); } catch(e) { memStore[key] = val; }
+  }
+  function storageDel(key) {
+    try { localStorage.removeItem(key); } catch(e) { delete memStore[key]; }
+  }
+
+  // ── State ────────────────────────────────────────────────────────────────
+  var token = storageGet('ideate_sync_token') || '';
   var currentFrameId = null;
   var currentFrameName = '';
   var canvases = [];
-  var syncedNodeId = null; // nodeId returned after first sync of the current frame
+  var syncedNodeId = null;
 
-  // ── DOM refs ──────────────────────────────────────────────
-  var setupScreen = document.getElementById('setup-screen');
-  var mainScreen  = document.getElementById('main-screen');
-  var tokenInput  = document.getElementById('token-input');
-  var connectBtn  = document.getElementById('connect-btn');
+  // ── DOM ──────────────────────────────────────────────────────────────────
+  var setupScreen   = document.getElementById('setup-screen');
+  var mainScreen    = document.getElementById('main-screen');
+  var tokenInput    = document.getElementById('token-input');
+  var connectBtn    = document.getElementById('connect-btn');
+  var connectError  = document.getElementById('connect-error');
   var disconnectBtn = document.getElementById('disconnect-btn');
-  var frameName   = document.getElementById('frame-name');
-  var canvasSelect = document.getElementById('canvas-select');
-  var syncBtn     = document.getElementById('sync-btn');
-  var liveBadge   = document.getElementById('live-badge');
-  var logEl       = document.getElementById('log');
+  var frameNameEl   = document.getElementById('frame-name');
+  var canvasSelect  = document.getElementById('canvas-select');
+  var syncBtn       = document.getElementById('sync-btn');
+  var liveBadge     = document.getElementById('live-badge');
+  var logEl         = document.getElementById('log');
 
-  // ── Init ─────────────────────────────────────────────────
+  // ── Init ─────────────────────────────────────────────────────────────────
   if (token) {
     showMain();
   }
 
-  function showMain() {
-    setupScreen.hidden = true;
-    mainScreen.hidden  = false;
-    fetchCanvases();
-  }
-
-  function showSetup() {
-    mainScreen.hidden  = true;
-    setupScreen.hidden = false;
-    token = '';
-  }
-
-  // ── Connect ───────────────────────────────────────────────
+  // ── Connect ───────────────────────────────────────────────────────────────
   connectBtn.addEventListener('click', function () {
     var t = tokenInput.value.trim();
     if (!t) return;
-    token = t;
-    localStorage.setItem('ideate_sync_token', token);
-    showMain();
+
+    connectBtn.disabled = true;
+    connectBtn.textContent = 'Connecting…';
+    connectError.style.display = 'none';
+
+    // Validate token by fetching canvas list
+    fetch(API + '/api/figma/canvases', {
+      headers: { 'Authorization': 'Bearer ' + t }
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('status ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      token = t;
+      storageSet('ideate_sync_token', token);
+      canvases = data.canvases || [];
+      showMain();
+      populateCanvases();
+    })
+    .catch(function () {
+      connectError.style.display = 'block';
+    })
+    .finally(function () {
+      connectBtn.disabled = false;
+      connectBtn.textContent = 'Connect';
+    });
   });
 
   disconnectBtn.addEventListener('click', function () {
-    localStorage.removeItem('ideate_sync_token');
-    showSetup();
+    storageDel('ideate_sync_token');
+    token = '';
+    canvases = [];
+    syncedNodeId = null;
+    currentFrameId = null;
+    tokenInput.value = '';
+    setupScreen.style.display = 'flex';
+    mainScreen.style.display = 'none';
   });
 
-  // ── Fetch canvases ────────────────────────────────────────
+  // ── Show screens ─────────────────────────────────────────────────────────
+  function showMain() {
+    setupScreen.style.display = 'none';
+    mainScreen.style.display  = 'flex';
+    if (canvases.length === 0) fetchCanvases();
+  }
+
+  // ── Canvases ──────────────────────────────────────────────────────────────
   function fetchCanvases() {
+    canvasSelect.innerHTML = '<option value="">Loading…</option>';
     fetch(API + '/api/figma/canvases', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     .then(function (r) {
-      if (r.status === 401) { showSetup(); throw new Error('Unauthorized'); }
+      if (r.status === 401) { storageDel('ideate_sync_token'); showSetup(); throw new Error('unauth'); }
       return r.json();
     })
-    .then(function (data) {
-      canvases = data.canvases || [];
-      canvasSelect.innerHTML = canvases.length
-        ? '<option value="">Pick a canvas…</option>' + canvases.map(function (c) {
-            return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>';
-          }).join('')
-        : '<option value="">No canvases found</option>';
-      updateSyncBtn();
+    .then(function (d) {
+      canvases = d.canvases || [];
+      populateCanvases();
     })
     .catch(function (err) {
-      log('Failed to load canvases: ' + err.message, 'err');
+      if (err.message !== 'unauth') addLog('Failed to load canvases', true);
     });
   }
 
-  // ── Sync button ───────────────────────────────────────────
-  canvasSelect.addEventListener('change', updateSyncBtn);
+  function showSetup() {
+    mainScreen.style.display  = 'none';
+    setupScreen.style.display = 'flex';
+  }
 
+  function populateCanvases() {
+    canvasSelect.innerHTML = canvases.length
+      ? '<option value="">Pick a canvas…</option>' + canvases.map(function (c) {
+          return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>';
+        }).join('')
+      : '<option value="">No canvases found</option>';
+    updateSyncBtn();
+  }
+
+  // ── Sync button ───────────────────────────────────────────────────────────
+  canvasSelect.addEventListener('change', updateSyncBtn);
   function updateSyncBtn() {
     syncBtn.disabled = !(currentFrameId && canvasSelect.value);
   }
@@ -247,44 +272,48 @@
     }}, '*');
   });
 
-  // ── Upload helper ─────────────────────────────────────────
-  function uploadSync(bytes, frameId, name, canvasId, existingNodeId) {
-    var base64 = bytesToBase64(bytes);
-    // Extract Figma file key from URL if possible (not available in plugin, so leave blank for now)
+  // ── Upload ────────────────────────────────────────────────────────────────
+  function uploadSync(bytes, frameId, frameName, canvasId, existingNodeId) {
+    // Convert byte array to base64 in chunks to avoid stack overflow on large frames
+    var arr = new Uint8Array(bytes);
+    var CHUNK = 8192;
+    var str = '';
+    for (var i = 0; i < arr.length; i += CHUNK) {
+      str += String.fromCharCode.apply(null, arr.subarray(i, i + CHUNK));
+    }
+    var base64 = btoa(str);
+
     return fetch(API + '/api/figma/sync', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         canvasId: canvasId,
         figmaFrameId: frameId,
-        figmaFrameName: name,
+        figmaFrameName: frameName,
         figmaFileKey: '',
         imageData: base64,
         nodeId: existingNodeId || null,
       }),
-    })
-    .then(function (r) { return r.json(); });
+    }).then(function (r) { return r.json(); });
   }
 
-  // ── Messages from plugin main thread ─────────────────────
+  // ── Messages from plugin main thread ─────────────────────────────────────
   window.onmessage = function (event) {
-    var msg = event.data.pluginMessage;
+    var msg = event.data && event.data.pluginMessage;
     if (!msg) return;
 
     if (msg.type === 'selection') {
       currentFrameId   = msg.id;
       currentFrameName = msg.name;
-      frameName.textContent = msg.name;
+      frameNameEl.textContent = msg.name;
+      frameNameEl.classList.remove('frame-empty');
       updateSyncBtn();
     }
 
     if (msg.type === 'no-selection') {
-      currentFrameId   = null;
-      currentFrameName = '';
-      frameName.textContent = 'No frame selected — select a frame in Figma';
+      currentFrameId = null;
+      frameNameEl.textContent = 'No frame selected — select a frame in Figma';
+      frameNameEl.classList.add('frame-empty');
       updateSyncBtn();
     }
 
@@ -294,22 +323,19 @@
         .then(function (data) {
           if (data.nodeId) {
             syncedNodeId = data.nodeId;
-            // Tell main thread so it can watch for live-sync
             parent.postMessage({ pluginMessage: {
               type: 'sync-registered',
               frameId: msg.frameId,
               canvasId: msg.canvasId,
               nodeId: data.nodeId,
             }}, '*');
-            log('Synced "' + msg.frameName + '" → ' + getCanvasName(msg.canvasId), 'ok');
-            setBadge('Live', 'yellow');
+            addLog('Synced "' + msg.frameName + '"');
+            setBadge('Live', 'live');
           } else {
-            log('Sync failed: ' + (data.error || 'unknown'), 'err');
+            addLog('Sync failed: ' + (data.error || 'unknown error'), true);
           }
         })
-        .catch(function (err) {
-          log('Upload error: ' + err.message, 'err');
-        })
+        .catch(function (err) { addLog('Upload error: ' + err.message, true); })
         .finally(function () {
           syncBtn.textContent = 'Sync to canvas';
           syncBtn.disabled = !(currentFrameId && canvasSelect.value);
@@ -317,57 +343,43 @@
     }
 
     if (msg.type === 'auto-sync') {
-      setBadge('Syncing…', 'yellow');
+      setBadge('Syncing…', 'sync');
       uploadSync(msg.bytes, msg.frameId, msg.frameName, msg.canvasId, msg.nodeId)
         .then(function (data) {
-          if (data.nodeId) {
-            log('Auto-synced "' + msg.frameName + '"', 'ok');
-            setBadge('Live', 'green');
-          }
+          if (data.nodeId) { addLog('Auto-synced "' + msg.frameName + '"'); setBadge('Live', 'live'); }
         })
-        .catch(function () {
-          setBadge('Error', 'red');
-        });
+        .catch(function () { setBadge('Error', 'err'); });
     }
 
     if (msg.type === 'export-error') {
-      log('Export error: ' + msg.message, 'err');
+      addLog('Export error: ' + msg.message, true);
       syncBtn.textContent = 'Sync to canvas';
-      syncBtn.disabled = false;
+      syncBtn.disabled = !(currentFrameId && canvasSelect.value);
     }
   };
 
-  // ── Helpers ───────────────────────────────────────────────
-  function getCanvasName(id) {
-    var c = canvases.find(function (x) { return x.id === id; });
-    return c ? c.name : id;
-  }
-
-  function log(msg, type) {
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function addLog(msg, isErr) {
     var now = new Date();
-    var time = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
-    var el = document.createElement('div');
-    el.className = 'log-item' + (type ? ' ' + type : '');
-    el.innerHTML = '<span class="time">' + time + '</span><span class="msg">' + escHtml(msg) + '</span>';
-    logEl.insertBefore(el, logEl.firstChild);
+    var t = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    var row = document.createElement('div');
+    row.className = 'log-row';
+    row.innerHTML = '<span class="log-time">' + t + '</span>'
+      + '<span class="' + (isErr ? 'log-err' : 'log-ok') + '">' + esc(msg) + '</span>';
+    logEl.insertBefore(row, logEl.firstChild);
   }
 
-  function setBadge(text, color) {
+  function setBadge(text, cls) {
     liveBadge.textContent = text;
-    liveBadge.className = 'badge' + (color ? ' ' + color : '');
+    liveBadge.className = 'badge badge-' + cls;
   }
 
-  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function bytesToBase64(bytes) {
-    var arr = new Uint8Array(bytes);
-    var str = '';
-    for (var i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
-    return btoa(str);
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
 </body>

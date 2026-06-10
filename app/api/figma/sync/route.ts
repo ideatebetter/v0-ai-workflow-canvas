@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateFigmaSyncToken, tokenFromHeader } from "@/lib/figma-token";
+import { FIGMA_CORS_HEADERS, optionsResponse } from "@/lib/figma-cors";
 import type { AtlasNode } from "@/lib/atlas-types";
 import type { FileNodeData, FileVersion, FileActivity } from "@/lib/atlas-types";
+
+export async function OPTIONS() {
+  return optionsResponse();
+}
 
 // Body sent by the Figma plugin:
 // {
@@ -18,7 +23,7 @@ import type { FileNodeData, FileVersion, FileActivity } from "@/lib/atlas-types"
 export async function POST(request: Request) {
   const token = tokenFromHeader(request);
   const userId = token ? validateFigmaSyncToken(token) : null;
-  if (!userId) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  if (!userId) return NextResponse.json({ error: "Invalid token" }, { status: 401, headers: FIGMA_CORS_HEADERS });
 
   const body = await request.json();
   const { canvasId, figmaFrameId, figmaFrameName, figmaFileKey, imageData, nodeId } = body;
