@@ -235,7 +235,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     if (!sourceNode) return;
     
     const promptNodeId = `ai-prompt-${Date.now()}`;
-    const sourceImageUrl = fileData.uploadedFile?.url || fileData.previewImages?.[0] || "";
+    // For image files, use the uploaded URL directly. For non-image files (PSD, AI, PDF, etc.)
+    // the uploaded URL is a raw binary that the generation model can't ingest — use previewImages instead.
+    const isImageFile = /\.(png|jpg|jpeg|gif|webp|avif|bmp)$/i.test(fileData.fileExtension || "");
+    const sourceImageUrl = isImageFile
+      ? (fileData.uploadedFile?.url || fileData.previewImages?.[0] || "")
+      : (fileData.previewImages?.[0] || "");
     
     // Position the prompt node to the right of source
     const promptNode: AtlasNode = {
@@ -1714,9 +1719,13 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 onAddOperationalNode={handleAddOperationalNode}
   onOpenAIGenerate={(type, sourceNodeId) => {
     if (type === "mockup") {
-      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+      // When triggered from a connector dot, use that specific node's data.
+      // Fallback to first file node for toolbar-triggered generation.
+      const fileNode = sourceNodeId
+        ? nodes.find(n => n.id === sourceNodeId && n.type === "file")
+        : nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
-        createAIPromptNode(sourceNodeId ?? fileNode.id, fileNode.data as FileNodeData);
+        createAIPromptNode(fileNode.id, fileNode.data as FileNodeData);
       } else {
         alert("Please upload an image first to generate mockups from.");
       }

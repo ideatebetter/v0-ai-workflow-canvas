@@ -4,8 +4,9 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
+import { FileDetailModal } from "./file-detail-modal";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
@@ -224,6 +225,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
   const [allFilesCollapsedCollections, setAllFilesCollapsedCollections] = useState<Set<string>>(new Set());
   const [allFilesExpandedCanvases, setAllFilesExpandedCanvases] = useState<Set<string>>(new Set());
+  const [fileDetail, setFileDetail] = useState<{ nodeId: string; canvasId: string } | null>(null);
 const [showSageChat, setShowSageChat] = useState(false);
   const [sageInput, setSageInput] = useState("");
   const [showChatHistory, setShowChatHistory] = useState(false);
@@ -1190,7 +1192,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             <button
                               key={`${node.id}-${idx}`}
                               type="button"
-                              onClick={() => onOpenCanvas(canvas.id)}
+                              onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
                               className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
                               style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
@@ -1268,7 +1270,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                           <button
                             key={`${node.id}-${idx}`}
                             type="button"
-                            onClick={() => onOpenCanvas(canvas.id)}
+                            onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
                             className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
                             style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
@@ -4191,6 +4193,27 @@ All Frameworks
           </div>
         </div>
       )}
+
+      {/* File Detail Modal — opened from All Files list view */}
+      {fileDetail && (() => {
+        const detailCanvas = canvases.find(c => c.id === fileDetail.canvasId);
+        const detailNode = detailCanvas?.nodes.find(n => n.id === fileDetail.nodeId);
+        if (!detailCanvas || !detailNode) return null;
+        return (
+          <FileDetailModal
+            isOpen={true}
+            onClose={() => setFileDetail(null)}
+            fileData={detailNode.data as FileNodeData}
+            onUpdateFile={(updates) => {
+              onCanvasesChange(canvases.map(c =>
+                c.id === fileDetail.canvasId
+                  ? { ...c, nodes: c.nodes.map(n => n.id === fileDetail.nodeId ? { ...n, data: { ...n.data, ...updates } } : n) }
+                  : c
+              ));
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
