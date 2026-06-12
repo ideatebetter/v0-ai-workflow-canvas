@@ -394,7 +394,7 @@ const [showSageChat, setShowSageChat] = useState(false);
     canvases.forEach(canvas => {
       canvas.nodes.forEach(node => {
         const data = node.data as import("@/lib/atlas-types").FileNodeData;
-        if (!data?.tasks) return;
+        if (!Array.isArray(data?.tasks)) return;
         data.tasks.forEach(task => {
           const day = task.createdAt ? task.createdAt.slice(0, 10) : today;
           if (!map[day]) map[day] = [];
