@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 
 export interface StatusPillData {
   label: string;
@@ -75,41 +76,7 @@ export function StatusPillNode({ id, data, selected }: NodeProps) {
 
   return (
     <div className="relative group">
-      {/* Connection handles - visible on hover */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #525252", width: 20, height: 20 }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "target",
-              position: { x: rect.left, y: rect.top + rect.height / 2 }
-            }
-          }));
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #525252", width: 20, height: 20 }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "source",
-              position: { x: rect.right, y: rect.top + rect.height / 2 }
-            }
-          }));
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* Main Pill */}
       <div

@@ -5,21 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
-type Tab = "signin" | "request-access";
+type Tab = "signin" | "signup";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<Tab>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
-  // Request access form fields
-  const [requestName, setRequestName] = useState("");
-  const [requestEmail, setRequestEmail] = useState("");
-  const [requestCompany, setRequestCompany] = useState("");
-  
+
   const router = useRouter();
   const supabase = createClient();
 
@@ -28,10 +24,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -42,38 +35,37 @@ export default function LoginPage() {
     }
   };
 
-  const handleRequestAccess = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    try {
-      const response = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: requestName,
-          email: requestEmail,
-          company: requestCompany,
-        }),
-      });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { display_name: displayName },
+      },
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Failed to submit request");
-      } else {
-        setSuccess("Your request has been submitted! We'll notify you when your access is approved.");
-        setRequestName("");
-        setRequestEmail("");
-        setRequestCompany("");
-      }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setSuccess("Check your email for a confirmation link to activate your account.");
       setLoading(false);
     }
+  };
+
+  const switchTab = (tab: Tab) => {
+    setActiveTab(tab);
+    setError(null);
+    setSuccess(null);
+    setEmail("");
+    setPassword("");
+    setDisplayName("");
   };
 
   return (
@@ -81,11 +73,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <img 
-            src="/atlas-logo.svg" 
-            alt="Atlas" 
-            className="h-12"
-          />
+          <img src="/atlas-logo.svg" alt="Atlas" className="h-12" />
         </div>
 
         {/* Card */}
@@ -94,11 +82,7 @@ export default function LoginPage() {
           <div className="flex border-b border-border">
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("signin");
-                setError(null);
-                setSuccess(null);
-              }}
+              onClick={() => switchTab("signin")}
               className={`flex-1 py-4 px-4 text-sm font-medium transition-colors ${
                 activeTab === "signin"
                   ? "text-foreground bg-card border-b-2 border-[#F0FE00]"
@@ -109,18 +93,14 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("request-access");
-                setError(null);
-                setSuccess(null);
-              }}
+              onClick={() => switchTab("signup")}
               className={`flex-1 py-4 px-4 text-sm font-medium transition-colors ${
-                activeTab === "request-access"
+                activeTab === "signup"
                   ? "text-foreground bg-card border-b-2 border-[#F0FE00]"
                   : "text-muted-foreground hover:text-foreground bg-muted"
               }`}
             >
-              Request Access
+              Sign Up
             </button>
           </div>
 
@@ -188,60 +168,69 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">Get Access</h1>
-                <p className="text-muted-foreground text-center mb-6">Join the waitlist to get access to Atlas</p>
+                <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">Create an account</h1>
+                <p className="text-muted-foreground text-center mb-6">Start organizing your creative assets</p>
 
                 {success ? (
                   <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-center">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="font-medium mb-1">Request Submitted!</p>
+                    <p className="font-medium mb-1">Check your email</p>
                     <p className="text-sm text-green-500/80">{success}</p>
+                    <button
+                      type="button"
+                      onClick={() => switchTab("signin")}
+                      className="mt-4 text-sm text-[#F0FE00] hover:underline"
+                    >
+                      Back to sign in
+                    </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleRequestAccess} className="space-y-4">
+                  <form onSubmit={handleSignUp} className="space-y-4">
                     <div>
-                      <label htmlFor="request-name" className="block text-sm font-medium text-foreground mb-2">
-                        Full Name
+                      <label htmlFor="displayName" className="block text-sm font-medium text-foreground mb-2">
+                        Display Name
                       </label>
                       <input
-                        id="request-name"
+                        id="displayName"
                         type="text"
-                        value={requestName}
-                        onChange={(e) => setRequestName(e.target.value)}
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
                         required
                         className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
-                        placeholder="John Doe"
+                        placeholder="Your name"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="request-email" className="block text-sm font-medium text-foreground mb-2">
+                      <label htmlFor="signup-email" className="block text-sm font-medium text-foreground mb-2">
                         Email
                       </label>
                       <input
-                        id="request-email"
+                        id="signup-email"
                         type="email"
-                        value={requestEmail}
-                        onChange={(e) => setRequestEmail(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                         className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
-                        placeholder="you@company.com"
+                        placeholder="you@example.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="request-company" className="block text-sm font-medium text-foreground mb-2">
-                        Company
+                      <label htmlFor="signup-password" className="block text-sm font-medium text-foreground mb-2">
+                        Password
                       </label>
                       <input
-                        id="request-company"
-                        type="text"
-                        value={requestCompany}
-                        onChange={(e) => setRequestCompany(e.target.value)}
+                        id="signup-password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
                         className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:border-[#F0FE00] transition-colors"
-                        placeholder="Your company name (optional)"
+                        placeholder="At least 6 characters"
                       />
                     </div>
 
@@ -257,7 +246,7 @@ export default function LoginPage() {
                       className="w-full py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ backgroundColor: "#F0FE00", color: "#0a0a0a" }}
                     >
-                      {loading ? "Submitting..." : "Request Access"}
+                      {loading ? "Creating account..." : "Create account"}
                     </button>
                   </form>
                 )}

@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
-import { Handle, Position } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { ProjectHealthNodeData } from "@/lib/atlas-types";
 
 export function ProjectHealthNode({ id, data, selected }: NodeProps) {
@@ -113,19 +113,7 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
         </div>
       </div>
 
-      {/* Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 18, height: 18 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: "2px solid #8b5cf6", width: 18, height: 18 }}
-      />
+      <SmartHandles nodeId={id} />
     </div>
   );
 }

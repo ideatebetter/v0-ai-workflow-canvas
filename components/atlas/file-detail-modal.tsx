@@ -241,6 +241,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
   const [showDueDateInput, setShowDueDateInput] = useState<string | null>(null); // taskId or "new"
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
   const handleCopyLink = () => {
     if (!canvasId || !nodeId) return;
@@ -255,9 +256,10 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Sync editedTitle when fileData changes
+  // Sync editedTitle and reset version selection when fileData changes
   useEffect(() => {
     setEditedTitle(fileData.label);
+    setSelectedVersionId(null);
   }, [fileData.label]);
 
   // Focus input when editing starts
@@ -304,6 +306,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
           fileSize: fileData.uploadedFile.size,
         }]
       : [];
+
+  const selectedVersion = selectedVersionId ? versions.find(v => v.id === selectedVersionId) ?? null : null;
+  const previewUrl = selectedVersion
+    ? (selectedVersion.previewImages?.[0] || selectedVersion.fileUrl)
+    : (fileData.previewImages?.[0] || fileData.uploadedFile?.url);
 
   // Sample activity history if not provided
   const activities: FileActivity[] = fileData.activities || [
@@ -690,21 +697,26 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
               <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "#0d0d0d" }}>
                 <img
-                  src={fileData.previewImages?.[0] || fileData.uploadedFile?.url}
-                  alt={fileData.label}
+                  src={previewUrl}
+                  alt={selectedVersion ? selectedVersion.versionName : fileData.label}
                   className="max-w-full max-h-[50vh] object-contain rounded-lg"
                   style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
                 />
+                {selectedVersion && (
+                  <div className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#a0a0a0", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {selectedVersion.versionName}
+                  </div>
+                )}
               </div>
               <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
                 <div className="flex items-center gap-2">
                   <FileTypeIcon extension={fileData.fileExtension} />
                   <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    {fileData.fileName}
+                    {selectedVersion ? selectedVersion.versionName : fileData.fileName}
                   </span>
                 </div>
                 <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  {fileData.uploadedFile?.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                  {(selectedVersion?.fileSize ?? fileData.uploadedFile?.size) ? `${((selectedVersion?.fileSize ?? fileData.uploadedFile?.size ?? 0) / (1024 * 1024)).toFixed(1)} MB` : ""}
                 </span>
               </div>
             </div>
@@ -1073,11 +1085,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
                 {/* Version Cards */}
                 <div className="grid grid-cols-3 gap-4">
-                  {visibleVersions.map((version) => (
+                  {visibleVersions.map((version) => {
+                    const isSelected = selectedVersionId === version.id;
+                    return (
                     <div
                       key={version.id}
+                      onClick={() => setSelectedVersionId(prev => prev === version.id ? null : version.id)}
                       className="rounded-xl overflow-hidden transition-transform hover:scale-[1.02] cursor-pointer"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                      style={{ backgroundColor: "#1a1a1a", border: isSelected ? "1px solid #6b7280" : "1px solid #2a2a2a", outline: isSelected ? "2px solid #4b5563" : "none", outlineOffset: "1px" }}
                     >
                       {/* Preview Image */}
                       <div className="aspect-[4/3] relative overflow-hidden">
@@ -1102,7 +1117,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
 
                 {/* Carousel Dots */}

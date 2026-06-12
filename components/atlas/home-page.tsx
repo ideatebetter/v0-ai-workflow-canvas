@@ -192,6 +192,10 @@ interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
+  workspaces?: WorkspaceSettings[];
+  activeWorkspaceId?: string;
+  onWorkspaceSwitch?: (workspaceId: string) => void;
+  onWorkspaceCreate?: (name: string) => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
   frameworks?: CanvasFramework[];
@@ -201,9 +205,11 @@ interface HomePageProps {
   isLoadingCanvases?: boolean;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases }: HomePageProps) {
-  // Alias for settings change
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases }: HomePageProps) {
   const onSettingsChange = onWorkspaceSettingsChange;
+  const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
+  const [showCreateWorkspaceDialog, setShowCreateWorkspaceDialog] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -390,6 +396,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
+  const [todosSectionCollapsed, setTodosSectionCollapsed] = useState(false);
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Collect all todos from all canvases (all pages), keyed by the date they were created (YYYY-MM-DD)
@@ -446,6 +453,38 @@ const [showSageChat, setShowSageChat] = useState(false);
         ...c,
         nodes: c.nodes.map(toggleNode),
         pages: c.pages?.map(p => ({ ...p, nodes: p.nodes.map(toggleNode) })),
+      };
+    }));
+  }, [canvases, onCanvasesChange]);
+
+  // All file-type nodes across all canvases, for the global todo file picker
+  const allFileNodes = useMemo(() => {
+    const list: Array<{ canvasId: string; canvasName: string; nodeId: string; fileName: string }> = [];
+    canvases.forEach(canvas => {
+      const nodes = canvas.pages && canvas.pages.length > 0
+        ? canvas.pages.flatMap(p => p.nodes)
+        : canvas.nodes;
+      nodes.forEach(node => {
+        if (node.type !== "file") return;
+        const data = node.data as import("@/lib/atlas-types").FileNodeData;
+        list.push({ canvasId: canvas.id, canvasName: canvas.name, nodeId: node.id, fileName: data.label || data.fileName || "Untitled" });
+      });
+    });
+    return list;
+  }, [canvases]);
+
+  const handleAddGlobalTodo = useCallback((canvasId: string, nodeId: string, task: import("@/lib/atlas-types").TaskItem) => {
+    const addToNode = (n: import("@/lib/atlas-types").AtlasNode) => {
+      if (n.id !== nodeId) return n;
+      const data = n.data as import("@/lib/atlas-types").FileNodeData;
+      return { ...n, data: { ...data, tasks: [...(data.tasks || []), task] } };
+    };
+    onCanvasesChange(canvases.map(c => {
+      if (c.id !== canvasId) return c;
+      return {
+        ...c,
+        nodes: c.nodes.map(addToNode),
+        pages: c.pages?.map(p => ({ ...p, nodes: p.nodes.map(addToNode) })),
       };
     }));
   }, [canvases, onCanvasesChange]);
@@ -650,6 +689,12 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [todoFilterProject, setTodoFilterProject] = useState<string>("all");
   const [todoFilterUser, setTodoFilterUser] = useState<string>("all");
   const [todoFilterDate, setTodoFilterDate] = useState<string>("all");
+  const [showNewGlobalTodo, setShowNewGlobalTodo] = useState(false);
+  const [newGlobalTodoTitle, setNewGlobalTodoTitle] = useState("");
+  const [newGlobalTodoNodeId, setNewGlobalTodoNodeId] = useState<string>("");
+  const [newGlobalTodoCanvasId, setNewGlobalTodoCanvasId] = useState<string>("");
+  const [newGlobalTodoDueDate, setNewGlobalTodoDueDate] = useState<string>("");
+  const [newGlobalTodoAssigneeId, setNewGlobalTodoAssigneeId] = useState<string>("");
   const [collectionMenuCanvasId, setCollectionMenuCanvasId] = useState<string | null>(null);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
@@ -733,10 +778,18 @@ const [showSageChat, setShowSageChat] = useState(false);
       });
 
     const idMap = new Map<string, string>();
+    // First pass: build the ID map so presentation groups can remap their nodeIds
+    framework.nodes.forEach((n, i) => {
+      idMap.set(n.id, `fw-${ts}-${i}`);
+    });
     const baseNodes = substituteParams(framework.nodes).map((n, i) => {
       const newId = `fw-${ts}-${i}`;
-      idMap.set(framework.nodes[i]?.id ?? n.id, newId);
-      return { ...n, id: newId };
+      const data = n.data as Record<string, unknown>;
+      // Remap nodeIds inside presentation group nodes to the new IDs
+      const remappedData = n.type === "presentationGroup" && Array.isArray(data.nodeIds)
+        ? { ...data, nodeIds: (data.nodeIds as string[]).map(id => idMap.get(id) ?? id) }
+        : data;
+      return { ...n, id: newId, data: remappedData };
     });
 
     const newEdges = framework.edges.map((e) => ({
@@ -965,10 +1018,14 @@ const [showSageChat, setShowSageChat] = useState(false);
         style={{ backgroundColor: "#111111", borderColor: "#222222" }}
       >
         {/* Workspace Header */}
-        <div className="p-4 border-b" style={{ borderColor: "#222222" }}>
-          <div className="flex items-center gap-3">
+        <div className="p-4 border-b relative" style={{ borderColor: "#222222" }}>
+          <button
+            type="button"
+            onClick={() => setShowWorkspaceSwitcher(prev => !prev)}
+            className="w-full flex items-center gap-3 rounded-lg hover:bg-white/5 transition-colors -mx-1 px-1 py-1"
+          >
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden flex-shrink-0"
               style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
             >
               {workspaceSettings.branding?.workspaceIcon ? (
@@ -981,27 +1038,82 @@ const [showSageChat, setShowSageChat] = useState(false);
                 workspaceSettings.name.charAt(0)
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div
-                className="text-sm font-medium text-white truncate"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
+            <div className="flex-1 min-w-0 text-left">
+              <div className="text-sm font-medium text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {workspaceSettings.name}
               </div>
-              <div
-                className="text-xs text-gray-500"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
+              <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {workspaceSettings.members.length} Member{workspaceSettings.members.length !== 1 ? "s" : ""}
               </div>
             </div>
-          </div>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-500">
+              <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Workspace Switcher Dropdown */}
+          {showWorkspaceSwitcher && (
+            <div className="fixed inset-0 z-40" onClick={() => setShowWorkspaceSwitcher(false)} />
+          )}
+          {showWorkspaceSwitcher && (
+            <div
+              className="absolute left-2 right-2 top-full mt-1 rounded-xl border z-50 py-1 shadow-xl"
+              style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+            >
+              <div className="px-3 py-1.5">
+                <span className="text-[11px] text-gray-600 uppercase tracking-wide">Workspaces</span>
+              </div>
+              {workspaces.map(ws => (
+                <button
+                  key={ws.id}
+                  type="button"
+                  onClick={() => {
+                    onWorkspaceSwitch?.(ws.id);
+                    setShowWorkspaceSwitcher(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                >
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                    style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+                  >
+                    {ws.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{ws.name}</div>
+                    <div className="text-xs text-gray-500">{ws.members.length} member{ws.members.length !== 1 ? "s" : ""}</div>
+                  </div>
+                  {ws.id === activeWorkspaceId && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-yellow-400">
+                      <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              ))}
+              <div className="border-t my-1" style={{ borderColor: "#2a2a2a" }} />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWorkspaceSwitcher(false);
+                  setShowCreateWorkspaceDialog(true);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+              >
+                <div className="w-7 h-7 rounded-md flex items-center justify-center border border-dashed flex-shrink-0" style={{ borderColor: "#444" }}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 2.5V9.5M2.5 6H9.5" stroke="#888" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="text-sm text-gray-400">Create workspace</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto px-3 py-4">
           {/* Main Nav */}
-          <nav className="space-y-1 mb-6">
+          <nav className="space-y-0.5 mb-6">
             <button
               type="button"
               onClick={() => setActiveView("home")}
@@ -1118,7 +1230,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           {/* Workspace / Private filters */}
           <div className="mb-6">
             <div
-              className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-3 pb-1.5 pt-2 text-[11px] font-medium text-gray-600 tracking-wide uppercase"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               Workspace
@@ -1144,7 +1256,7 @@ const [showSageChat, setShowSageChat] = useState(false);
 
           <div>
             <div
-              className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-3 pb-1.5 pt-2 text-[11px] font-medium text-gray-600 tracking-wide uppercase"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               Private
@@ -1170,7 +1282,7 @@ const [showSageChat, setShowSageChat] = useState(false);
         <UserSection profilePicture={workspaceSettings.branding?.profilePicture} />
         
         {/* Bottom actions */}
-        <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+        <div className="p-4 border-t" style={{ borderColor: "#222222" }}>
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -1378,7 +1490,120 @@ const [showSageChat, setShowSageChat] = useState(false);
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4" style={{ borderBottom: "1px solid #222222" }}>
-                  <h2 className="text-lg font-semibold text-white mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>All To-Dos</h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>All To-Dos</h2>
+                    <button
+                      type="button"
+                      onClick={() => { setShowNewGlobalTodo(v => !v); setNewGlobalTodoTitle(""); setNewGlobalTodoNodeId(""); setNewGlobalTodoCanvasId(""); setNewGlobalTodoDueDate(""); setNewGlobalTodoAssigneeId(""); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      style={{ backgroundColor: showNewGlobalTodo ? "#F0FE00" : "#1a1a1a", color: showNewGlobalTodo ? "#000" : "#aaa", fontFamily: "system-ui, Inter, sans-serif", border: "1px solid " + (showNewGlobalTodo ? "transparent" : "#2a2a2a") }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      New To-Do
+                    </button>
+                  </div>
+
+                  {/* New To-Do Form */}
+                  {showNewGlobalTodo && (
+                    <div className="mb-4 p-4 rounded-xl" style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}>
+                      <div className="flex flex-col gap-3">
+                        {/* Title */}
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="To-do title"
+                          value={newGlobalTodoTitle}
+                          onChange={e => setNewGlobalTodoTitle(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Escape") setShowNewGlobalTodo(false);
+                          }}
+                          className="w-full bg-transparent text-sm text-white placeholder-gray-600 outline-none"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif", borderBottom: "1px solid #2a2a2a", paddingBottom: "8px" }}
+                        />
+                        <div className="flex flex-wrap items-center gap-3">
+                          {/* File picker */}
+                          <div className="flex-1 min-w-[180px]">
+                            <select
+                              value={newGlobalTodoNodeId ? `${newGlobalTodoCanvasId}||${newGlobalTodoNodeId}` : ""}
+                              onChange={e => {
+                                const [cId, nId] = e.target.value.split("||");
+                                setNewGlobalTodoCanvasId(cId || "");
+                                setNewGlobalTodoNodeId(nId || "");
+                              }}
+                              className="w-full px-3 py-2 rounded-lg text-xs border-0 outline-none"
+                              style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoNodeId ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              <option value="">Assign to a file…</option>
+                              {allFileNodes.map(f => (
+                                <option key={`${f.canvasId}||${f.nodeId}`} value={`${f.canvasId}||${f.nodeId}`}>
+                                  {f.fileName} · {f.canvasName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {/* Due date */}
+                          <input
+                            type="date"
+                            value={newGlobalTodoDueDate}
+                            onChange={e => setNewGlobalTodoDueDate(e.target.value)}
+                            className="px-3 py-2 rounded-lg text-xs border-0 outline-none"
+                            style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoDueDate ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif", colorScheme: "dark" }}
+                          />
+                          {/* Assignee */}
+                          {workspaceSettings.members?.length > 0 && (
+                            <select
+                              value={newGlobalTodoAssigneeId}
+                              onChange={e => setNewGlobalTodoAssigneeId(e.target.value)}
+                              className="px-3 py-2 rounded-lg text-xs border-0 outline-none"
+                              style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoAssigneeId ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              <option value="">Assignee</option>
+                              {workspaceSettings.members.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={!newGlobalTodoTitle.trim() || !newGlobalTodoNodeId}
+                            onClick={() => {
+                              const assignee = workspaceSettings.members?.find(m => m.id === newGlobalTodoAssigneeId) || undefined;
+                              const task: import("@/lib/atlas-types").TaskItem = {
+                                id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                                title: newGlobalTodoTitle.trim(),
+                                completed: false,
+                                assignee,
+                                createdAt: new Date().toISOString(),
+                                dueDate: newGlobalTodoDueDate || undefined,
+                              };
+                              handleAddGlobalTodo(newGlobalTodoCanvasId, newGlobalTodoNodeId, task);
+                              setNewGlobalTodoTitle("");
+                              setNewGlobalTodoNodeId("");
+                              setNewGlobalTodoCanvasId("");
+                              setNewGlobalTodoDueDate("");
+                              setNewGlobalTodoAssigneeId("");
+                              setShowNewGlobalTodo(false);
+                            }}
+                            className="px-4 py-1.5 rounded-lg text-xs font-medium transition-opacity"
+                            style={{ backgroundColor: "#F0FE00", color: "#000", fontFamily: "system-ui, Inter, sans-serif", opacity: (!newGlobalTodoTitle.trim() || !newGlobalTodoNodeId) ? 0.4 : 1 }}
+                          >
+                            Add To-Do
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowNewGlobalTodo(false)}
+                            className="px-4 py-1.5 rounded-lg text-xs transition-colors"
+                            style={{ color: "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Filter Bar */}
                   <div className="flex flex-wrap gap-2">
                     {/* Status filter */}
@@ -1769,7 +1994,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredMyFrameworks.map((framework) => (
                     <div
                       key={framework.id}
@@ -1913,7 +2138,7 @@ All Frameworks
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredFrameworks.map((framework) => {
                     const hasUpvoted = framework.upvotedBy.includes(currentUserId);
                     return (
@@ -2100,7 +2325,7 @@ All Frameworks
               </div>
 
               {/* Workspace Details */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5"/>
@@ -2138,7 +2363,7 @@ All Frameworks
               </div>
 
               {/* Branding */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -2200,7 +2425,7 @@ All Frameworks
               </div>
 
               {/* Team Members */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2228,7 +2453,7 @@ All Frameworks
               </div>
 
               {/* Products */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M14 10V6C13.9997 5.76628 13.9405 5.53674 13.8278 5.33491C13.7152 5.13309 13.5528 4.96619 13.3556 4.85L8.66667 2.07222C8.46901 1.95578 8.24258 1.89448 8.01111 1.89448C7.77965 1.89448 7.55322 1.95578 7.35556 2.07222L2.66667 4.85C2.46946 4.96619 2.30708 5.13309 2.19444 5.33491C2.0818 5.53674 2.02251 5.76628 2.02222 6V10C2.02251 10.2337 2.0818 10.4633 2.19444 10.6651C2.30708 10.8669 2.46946 11.0338 2.66667 11.15L7.35556 13.9278C7.55322 14.0442 7.77965 14.1055 8.01111 14.1055C8.24258 14.1055 8.46901 14.0442 8.66667 13.9278L13.3556 11.15C13.5528 11.0338 13.7152 10.8669 13.8278 10.6651C13.9405 10.4633 13.9997 10.2337 14 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2256,7 +2481,7 @@ All Frameworks
               </div>
 
               {/* Preferences */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M2.66667 4H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2316,7 +2541,7 @@ All Frameworks
               </div>
 
               {/* Naming Conventions - Link to Dialog for full editor */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-white font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
@@ -2343,7 +2568,7 @@ All Frameworks
               </div>
 
               {/* Data & Sync Section */}
-              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -2586,11 +2811,11 @@ All Frameworks
               {/* Fault Management Ribbon */}
               <div className="mb-6">
                 <div
-                  className="rounded-xl p-5"
+                  className="rounded-xl p-6"
                   style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-5">
                     <div>
                       <h3
                         className="text-white font-semibold text-base"
@@ -2608,21 +2833,21 @@ All Frameworks
                     {/* Legend and View Toggle */}
                     <div className="flex items-center gap-6">
                       {/* Legend */}
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
+                      <div className="flex items-center gap-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
                           <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
                           <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#FB923C" }} />
                           <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#F87171" }} />
                           <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
                         </div>
                       </div>
@@ -2920,7 +3145,7 @@ All Frameworks
 
                     return (
                       <div
-                        className="rounded-lg p-4"
+                        className="rounded-lg p-5"
                         style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
                       >
                         <div className="flex items-start justify-between">
@@ -2950,14 +3175,14 @@ All Frameworks
                               )}
                             </div>
                             <div
-                              className="text-sm text-gray-400 mb-3"
+                              className="text-sm text-gray-400 mb-4"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               {getStatusSummary()}
                             </div>
 
                             {/* Status */}
-                            <div className="flex items-start gap-2 mb-3">
+                            <div className="flex items-start gap-2 mb-4">
                               {config.icon}
                               <div>
                                 <div
@@ -3002,37 +3227,52 @@ All Frameworks
                           const dayKey = selectedDate.toISOString().slice(0, 10);
                           const dayTodos = todosByDate[dayKey] || [];
                           if (dayTodos.length === 0) return null;
+                          const openCount = dayTodos.filter(d => !d.task.completed).length;
                           return (
-                            <div className="mt-3 pt-3" style={{ borderTop: "1px solid #2a2a2a" }}>
-                              <div className="text-xs font-medium text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                To-Dos ({dayTodos.filter(d => !d.task.completed).length} open)
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                {dayTodos.map(({ task, fileName, canvasId, nodeId }) => (
-                                  <div key={task.id} className="flex items-start gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
-                                      className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border transition-colors"
-                                      style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
-                                    >
-                                      {task.completed && (
-                                        <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
-                                          <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                      )}
-                                    </button>
-                                    <div className="flex-1 min-w-0">
-                                      <span className="text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
-                                        {task.title}
-                                      </span>
-                                      <span className="text-[10px] text-gray-500 ml-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                        {fileName}
-                                      </span>
+                            <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2a2a2a" }}>
+                              <button
+                                type="button"
+                                onClick={() => setTodosSectionCollapsed(v => !v)}
+                                className="flex items-center gap-2 w-full mb-3 group"
+                              >
+                                <svg
+                                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                                  style={{ color: "#6b7280", flexShrink: 0, transition: "transform 0.15s", transform: todosSectionCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+                                >
+                                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <span className="text-xs font-medium text-gray-500 group-hover:text-gray-400 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                  To-Dos ({openCount} open)
+                                </span>
+                              </button>
+                              {!todosSectionCollapsed && (
+                                <div className="flex flex-col gap-2.5">
+                                  {dayTodos.map(({ task, fileName, canvasId, nodeId }) => (
+                                    <div key={task.id} className="flex items-start gap-2.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
+                                        className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border transition-colors"
+                                        style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
+                                      >
+                                        {task.completed && (
+                                          <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
+                                            <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        )}
+                                      </button>
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
+                                          {task.title}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 ml-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                          {fileName}
+                                        </span>
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
@@ -4299,6 +4539,70 @@ All Frameworks
         onSettingsChange={onWorkspaceSettingsChange}
       />
 
+      {/* Create Workspace Dialog */}
+      {showCreateWorkspaceDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div
+            className="rounded-2xl border p-6 w-full max-w-sm mx-4 shadow-2xl"
+            style={{ backgroundColor: "#161616", borderColor: "#2a2a2a" }}
+          >
+            <h2 className="text-base font-semibold text-white mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Create workspace
+            </h2>
+            <p className="text-sm text-gray-500 mb-5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Set up a new workspace to collaborate with a different team.
+            </p>
+            <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Workspace name
+            </label>
+            <input
+              type="text"
+              value={newWorkspaceName}
+              onChange={e => setNewWorkspaceName(e.target.value)}
+              placeholder="e.g. Marketing Team"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === "Enter" && newWorkspaceName.trim()) {
+                  onWorkspaceCreate?.(newWorkspaceName.trim());
+                  setNewWorkspaceName("");
+                  setShowCreateWorkspaceDialog(false);
+                }
+                if (e.key === "Escape") {
+                  setNewWorkspaceName("");
+                  setShowCreateWorkspaceDialog(false);
+                }
+              }}
+              className="w-full rounded-lg px-3 py-2.5 text-sm text-white outline-none mb-5"
+              style={{ backgroundColor: "#1e1e1e", border: "1px solid #333", fontFamily: "system-ui, Inter, sans-serif" }}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => { setNewWorkspaceName(""); setShowCreateWorkspaceDialog(false); }}
+                className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!newWorkspaceName.trim()}
+                onClick={() => {
+                  if (!newWorkspaceName.trim()) return;
+                  onWorkspaceCreate?.(newWorkspaceName.trim());
+                  setNewWorkspaceName("");
+                  setShowCreateWorkspaceDialog(false);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
+                style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 {/* Framework Detail Page */}
       {viewingFramework && (
         <FrameworkDetailPage
@@ -4347,7 +4651,7 @@ All Frameworks
               className="w-52 flex-shrink-0 flex flex-col"
               style={{ borderRight: "1px solid #2a2a2a" }}
             >
-              <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid #2a2a2a" }}>
                 <span className="text-xs font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Chat History
                 </span>
@@ -4406,7 +4710,7 @@ All Frameworks
           <div className="flex-1 flex flex-col" style={{ width: "384px" }}>
           {/* Chat Header */}
           <div
-            className="px-5 py-4 flex items-center gap-3"
+            className="px-6 py-4 flex items-center gap-3"
             style={{ borderBottom: "1px solid #2a2a2a" }}
           >
             <button
@@ -4422,8 +4726,15 @@ All Frameworks
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "#F0FE00" }}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+              <svg width="20" height="20" viewBox="0 0 647.22 647.22" fill="none">
+                <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="265.27" y="533.28" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="265.27" y="355.52" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="265.27" y="177.76" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="533.28" y="268.01" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="456.15" y="79.07" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="268.01" y="0" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                <rect fill="#000" x="79.07" y="77.13" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
               </svg>
             </div>
             <div className="flex-1">
@@ -4437,7 +4748,7 @@ All Frameworks
                 className="text-gray-500 text-xs"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                AI Design Assistant
+                Intelligence layer for design operations
               </p>
             </div>
             <button
@@ -4452,51 +4763,64 @@ All Frameworks
           </div>
 
           {/* Chat Messages */}
-          <div className="h-80 overflow-y-auto p-4 space-y-4">
+          <div className="h-80 overflow-y-auto px-4 py-5 space-y-4">
             {/* Welcome message - always shown */}
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
                 style={{ backgroundColor: "#F0FE00" }}
               >
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
+                  <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="265.27" y="533.28" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="265.27" y="355.52" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="265.27" y="177.76" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="533.28" y="268.01" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="456.15" y="79.07" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="268.01" y="0" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                  <rect fill="#000" x="79.07" y="77.13" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
                 </svg>
               </div>
               <div
-                className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                className="flex-1 px-4 py-3 rounded-xl rounded-tl-sm"
                 style={{ backgroundColor: "#1e1e1e" }}
               >
                 <p
                   className="text-sm text-gray-300 leading-relaxed"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  Hey! I&apos;m Sage, your AI design assistant. I can help you with:
+                  Sage is active. I maintain shared understanding across your goals, decisions, and revisions so your team stays aligned as work evolves.
                 </p>
-                <ul className="mt-2 space-y-1">
+                <p
+                  className="text-sm text-gray-300 mt-2"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  I can help you:
+                </p>
+                <ul className="mt-1 space-y-1">
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Organizing your design files
+                    <span style={{ color: "#F0FE00" }}>•</span> Surface and classify feedback across the project
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Finding assets across canvases
+                    <span style={{ color: "#F0FE00" }}>•</span> Flag when work has drifted from stated intent
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Project status summaries
+                    <span style={{ color: "#F0FE00" }}>•</span> Log and retrieve key decisions as they&apos;re made
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Design system suggestions
+                    <span style={{ color: "#F0FE00" }}>•</span> Execute canvas actions through natural language
                   </li>
                 </ul>
               </div>
@@ -4511,8 +4835,15 @@ All Frameworks
                       className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
                       style={{ backgroundColor: "#F0FE00" }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                      <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
+                        <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="265.27" y="533.28" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="265.27" y="355.52" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="265.27" y="177.76" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="533.28" y="268.01" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="456.15" y="79.07" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="268.01" y="0" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                        <rect fill="#000" x="79.07" y="77.13" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
                       </svg>
                     </div>
                     <div
@@ -4556,8 +4887,15 @@ All Frameworks
                   className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
                   style={{ backgroundColor: "#F0FE00" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                  <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
+                    <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="265.27" y="533.28" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="265.27" y="355.52" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="265.27" y="177.76" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="533.28" y="268.01" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="456.15" y="79.07" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="268.01" y="0" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+                    <rect fill="#000" x="79.07" y="77.13" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
                   </svg>
                 </div>
                 <div
@@ -4577,12 +4915,12 @@ All Frameworks
           {/* Chat Input */}
           <form
             onSubmit={handleSageSubmit}
-            className="p-4"
+            className="px-4 py-4"
             style={{ borderTop: "1px solid #2a2a2a" }}
           >
             <div
               className="flex items-center gap-2 px-4 py-3 rounded-xl"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
             >
               <input
                 type="text"

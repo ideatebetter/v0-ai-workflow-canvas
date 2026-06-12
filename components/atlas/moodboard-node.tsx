@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { MoodboardNodeData } from "@/lib/atlas-types";
 import { useCanvasNodeActions } from "./canvas-node-actions-context";
 
@@ -27,29 +28,7 @@ export function MoodboardNode({ data, selected, id }: NodeProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Connection Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{
-          width: 8,
-          height: 8,
-          backgroundColor: "#ffffff",
-          border: "2px solid #1a1a1a",
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{
-          width: 8,
-          height: 8,
-          backgroundColor: "#ffffff",
-          border: "2px solid #1a1a1a",
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* Header */}
       <div

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { TextNodeData } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
 
@@ -275,31 +276,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
       onMouseLeave={() => setIsHovered(false)}
       onDoubleClick={() => setIsEditing(true)}
     >
-      {/* Connection Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="transition-all !cursor-pointer"
-        style={{
-          background: isInPresentation ? "#F0FE00" : "#1a1a1a",
-          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252",
-          width: 20,
-          height: 20,
-          opacity: isHovered || isInPresentation ? 1 : 0,
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="transition-all !cursor-pointer"
-        style={{
-          background: isInPresentation ? "#F0FE00" : "#1a1a1a",
-          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252",
-          width: 20,
-          height: 20,
-          opacity: isHovered || isInPresentation ? 1 : 0,
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* FigJam-style Formatting Toolbar */}
       {showToolbar && (

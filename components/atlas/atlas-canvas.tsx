@@ -23,6 +23,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import type { AtlasNode, CanvasComment, WorkspaceMember } from "@/lib/atlas-types";
+import { ConnectionContext } from "./connection-context";
 import { FileNode } from "./file-node";
 import { StatusPillNode } from "./status-pill-node";
 import { TextNode } from "./text-node";
@@ -41,6 +42,11 @@ import { PresentationGroupNode } from "./presentation-group-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
 import { SelectionBox } from "./selection-box";
+import { DeletableEdge } from "./deletable-edge";
+
+const edgeTypes = {
+  default: DeletableEdge,
+};
 
 const nodeTypes: NodeTypes = {
   file: FileNode,
@@ -150,6 +156,9 @@ export function AtlasCanvas({
   const isDraggingConnectionRef = useRef(false);
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [draggingFromNodeId, setDraggingFromNodeId] = useState<string | null>(null);
+  // ── Feature 7: Alt+click connect mode ──
+  const [altConnectMode, setAltConnectMode] = useState(false);
+  const [altConnectSource, setAltConnectSource] = useState<string | null>(null);
 const reactFlowInstance = useReactFlow();
   const viewport = useViewport();
   
@@ -193,6 +202,28 @@ const reactFlowInstance = useReactFlow();
       window.removeEventListener("atlas:center-on-node", handleCenterOnNode as EventListener);
     };
   }, [reactFlowInstance]);
+
+  // ── Feature 7: Alt key listener for connect mode ──
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        e.preventDefault();
+        setAltConnectMode(true);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        setAltConnectMode(false);
+        setAltConnectSource(null);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
 
   // Handle connection start - track where we started
   const handleConnectStart = useCallback((event: MouseEvent | TouchEvent, params: { nodeId: string | null; handleType: string | null }) => {
@@ -467,12 +498,27 @@ const reactFlowInstance = useReactFlow();
     return validMoodboardNodes.length >= 2;
   }, [validMoodboardNodes, presentationMode]);
 
-  // Handle node click for moodboard expansion
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: AtlasNode) => {
+  // Handle node click — also handles Alt+click connect mode (Feature 7)
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: AtlasNode) => {
+    if (altConnectMode) {
+      if (!altConnectSource) {
+        setAltConnectSource(node.id);
+      } else if (altConnectSource !== node.id) {
+        const connection = { source: altConnectSource, target: node.id, sourceHandle: null, targetHandle: null };
+        if (presentationMode && onPresentationConnect) {
+          onPresentationConnect(connection);
+        } else {
+          onConnect(connection);
+        }
+        setAltConnectSource(null);
+        setAltConnectMode(false);
+      }
+      return;
+    }
     if (node.type === "moodboard" && onMoodboardClick) {
       onMoodboardClick(node.id);
     }
-  }, [onMoodboardClick]);
+  }, [altConnectMode, altConnectSource, presentationMode, onPresentationConnect, onConnect, onMoodboardClick]);
 
   // Apply search highlighting to nodes
   const filteredNodes = useMemo(() => {
@@ -553,10 +599,11 @@ const reactFlowInstance = useReactFlow();
   }, [selectedCommentId, commentMode, onCommentSelect]);
 
   return (
+    <ConnectionContext.Provider value={{ altConnectMode, altConnectSource }}>
     <div
       ref={reactFlowWrapper}
       className={`flex-1 h-full relative ${isDraggingConnection ? 'connecting-nodes' : ''}`}
-      style={{ cursor: commentMode ? "crosshair" : isSelecting ? "crosshair" : "default" }}
+      style={{ cursor: altConnectMode ? "crosshair" : commentMode ? "crosshair" : isSelecting ? "crosshair" : "default" }}
       data-dragging-from={draggingFromNodeId}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -644,6 +691,8 @@ onClick={(event) => {
           }
         }}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        deleteKeyCode={["Backspace", "Delete"]}
         nodesDraggable
         nodesConnectable
         elementsSelectable
@@ -659,6 +708,7 @@ onClick={(event) => {
         snapGrid={[16, 16]}
         minZoom={0.1}
         maxZoom={4}
+        connectionRadius={80}
         defaultEdgeOptions={{
           type: "default",
           style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
@@ -891,10 +941,10 @@ onAddOperationalNode={handleMenuAddOperationalNode}
 
       {/* Presentation Mode Indicator */}
       {presentationMode && (
-        <div 
+        <div
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full flex items-center gap-2"
-          style={{ 
-            backgroundColor: "#F0FE00", 
+          style={{
+            backgroundColor: "#F0FE00",
             color: "#121212",
             fontFamily: "system-ui, Inter, sans-serif",
           }}
@@ -908,6 +958,29 @@ onAddOperationalNode={handleMenuAddOperationalNode}
           <span className="text-xs opacity-70">Connect nodes to set slide order</span>
         </div>
       )}
+
+      {/* Alt+click connect mode indicator (Feature 7) */}
+      {altConnectMode && (
+        <div
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full flex items-center gap-2 pointer-events-none"
+          style={{
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #F0FE00",
+            color: "#F0FE00",
+            fontFamily: "system-ui, Inter, sans-serif",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 4.5V7M7 7L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <span className="text-sm font-medium">
+            {altConnectSource ? "Click target node to connect" : "Click source node…"}
+          </span>
+          <span className="text-xs opacity-60">Release Alt to cancel</span>
+        </div>
+      )}
     </div>
+    </ConnectionContext.Provider>
   );
 }

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.84",
     "@ai-sdk/gateway": "^3.0.114",
     "@ai-sdk/react": "^3.0.184",
     "@fal-ai/serverless-client": "^0.15.0",
