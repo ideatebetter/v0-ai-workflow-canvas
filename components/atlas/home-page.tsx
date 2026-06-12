@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { FileDetailModal } from "./file-detail-modal";
+import { FrameworkDetailPage } from "./framework-detail-page";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
@@ -702,6 +703,55 @@ const [showSageChat, setShowSageChat] = useState(false);
     onCanvasesChange([...canvases, newCanvas]);
     // Increment download count
     setFrameworks(prev => prev.map(f => 
+      f.id === framework.id ? { ...f, downloads: f.downloads + 1 } : f
+    ));
+    setViewingFramework(null);
+    onOpenCanvas(newCanvas.id);
+  };
+
+  const handleRunFromDetail = (framework: CanvasFramework, paramValues: Record<string, string>) => {
+    // Apply {{param}} substitution to every node's data
+    const substituteParams = (nodes: CanvasFramework["nodes"]) => {
+      return nodes.map((node) => {
+        let dataStr = JSON.stringify(node.data);
+        Object.entries(paramValues).forEach(([paramId, val]) => {
+          const escaped = val.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+          dataStr = dataStr.split(`{{${paramId}}}`).join(escaped);
+        });
+        return { ...node, id: `fw-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, data: JSON.parse(dataStr) };
+      });
+    };
+
+    const ts = Date.now();
+    const idMap = new Map<string, string>();
+    const newNodes = substituteParams(framework.nodes).map((n, i) => {
+      const newId = `fw-${ts}-${i}`;
+      idMap.set(framework.nodes[i]?.id ?? n.id, newId);
+      return { ...n, id: newId };
+    });
+    const newEdges = framework.edges.map((e) => ({
+      ...e,
+      id: `fwe-${ts}-${Math.random().toString(36).slice(2, 7)}`,
+      source: idMap.get(e.source) ?? e.source,
+      target: idMap.get(e.target) ?? e.target,
+    }));
+
+    const newCanvas: Canvas = {
+      id: `canvas-${ts}`,
+      name: framework.name,
+      description: framework.description,
+      previewImage: framework.previewImage,
+      nodes: newNodes,
+      edges: newEdges,
+      comments: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: workspaceSettings.members[0],
+      isFavorite: false,
+      visibility: "workspace",
+    };
+    onCanvasesChange([...canvases, newCanvas]);
+    setFrameworks(prev => prev.map(f =>
       f.id === framework.id ? { ...f, downloads: f.downloads + 1 } : f
     ));
     setViewingFramework(null);
@@ -4118,177 +4168,14 @@ All Frameworks
         onSettingsChange={onWorkspaceSettingsChange}
       />
 
-{/* Framework Preview Modal */}
-        {viewingFramework && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setViewingFramework(null)}
-          />
-          
-          {/* Modal */}
-          <div
-            className="relative w-full max-w-4xl max-h-[90vh] mx-4 rounded-2xl overflow-hidden flex flex-col"
-            style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid #222222" }}>
-              <div className="flex items-center gap-4">
-                {viewingFramework.createdBy.avatar ? (
-                  <img
-                    src={viewingFramework.createdBy.avatar}
-                    alt={viewingFramework.createdBy.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-                    style={{ backgroundColor: "#333333", color: "#ffffff" }}
-                  >
-                    {viewingFramework.createdBy.initials}
-                  </div>
-                )}
-                <div>
-                  <h2
-                    className="text-white font-semibold text-lg"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    {viewingFramework.name}
-                  </h2>
-                  <p
-                    className="text-gray-400 text-sm"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    by {viewingFramework.createdBy.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setViewingFramework(null)}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
-            </div>
-
-{/* Preview Area */}
-              <div className="flex-1 overflow-hidden relative min-h-[300px]">
-                <CanvasPreview nodes={viewingFramework.nodes} />
-
-              {/* Duplicate Banner */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 p-4"
-                style={{ 
-                  background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)",
-                }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: "rgba(240, 254, 0, 0.15)" }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="6" y="6" width="11" height="11" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
-                        <path d="M14 6V5C14 3.89543 13.1046 3 12 3H5C3.89543 3 3 3.89543 3 5V12C3 13.1046 3.89543 14 5 14H6" stroke="#F0FE00" strokeWidth="1.5"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p
-                        className="text-white text-sm font-medium"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Want to edit this framework?
-                      </p>
-                      <p
-                        className="text-gray-400 text-xs"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Duplicate it to your workspace to make changes
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDuplicateFramework(viewingFramework)}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90 flex items-center gap-2 flex-shrink-0"
-                    style={{
-                      backgroundColor: "#F0FE00",
-                      fontFamily: "system-ui, Inter, sans-serif",
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M11 5V4C11 3.17157 10.3284 2.5 9.5 2.5H4C3.17157 2.5 2.5 3.17157 2.5 4V9.5C2.5 10.3284 3.17157 11 4 11H5" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
-                    Duplicate to Workspace
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer with details */}
-            <div className="p-5" style={{ borderTop: "1px solid #222222" }}>
-              <p
-                className="text-gray-300 text-sm mb-4"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                {viewingFramework.description}
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {viewingFramework.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-1 rounded-lg text-xs"
-                      style={{
-                        backgroundColor: "#1a1a1a",
-                        color: "#888888",
-                        border: "1px solid #2a2a2a",
-                        fontFamily: "system-ui, Inter, sans-serif",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex items-center gap-1.5 text-sm text-gray-400"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M8 3L10 7H14L11 10L12 14L8 11.5L4 14L5 10L2 7H6L8 3Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {viewingFramework.upvotes} upvotes
-                  </div>
-                  <div
-                    className="flex items-center gap-1.5 text-sm text-gray-400"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                    {viewingFramework.downloads} downloads
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+{/* Framework Detail Page */}
+      {viewingFramework && (
+        <FrameworkDetailPage
+          framework={viewingFramework}
+          onBack={() => setViewingFramework(null)}
+          onRun={handleRunFromDetail}
+          breadcrumbLabel={viewingFramework.visibility === "community" ? "Community" : "Frameworks"}
+        />
       )}
 
       {/* Sage AI Bot FAB */}
