@@ -17,7 +17,8 @@ import { useSageConversations, useSageConversation, useSageChatPersistence } fro
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "community" | "workspace-canvas" | "settings" | "all-files" | "todos";
+type HomeView = "home" | "canvases" | "community" | "frameworks" | "workspace-canvas" | "settings" | "all-files" | "todos";
+type FrameworksFilter = "all" | "mine" | "team" | "drafts";
 type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
@@ -382,6 +383,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   const frameworks = externalFrameworks ?? localFrameworks;
   const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
+  const [frameworksFilter, setFrameworksFilter] = useState<FrameworksFilter>("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
@@ -732,6 +734,21 @@ const [showSageChat, setShowSageChat] = useState(false);
   const workspaceFrameworks = useMemo(() => {
     return frameworks.filter(f => f.visibility === "workspace");
   }, [frameworks]);
+
+  // Frameworks page: all user-owned frameworks with optional filter
+  const filteredMyFrameworks = useMemo(() => {
+    return frameworks.filter(f => {
+      if (frameworksFilter === "mine") return f.visibility === "private";
+      if (frameworksFilter === "team") return f.visibility === "workspace";
+      if (frameworksFilter === "drafts") return f.isPublished === false;
+      // "all" — everything owned by this user (not community-only discovery)
+      return f.visibility !== "community" || f.createdBy?.id === currentUserId;
+    }).filter(f => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q);
+    });
+  }, [frameworks, frameworksFilter, searchQuery, currentUserId]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -870,6 +887,22 @@ const [showSageChat, setShowSageChat] = useState(false);
             </button>
             <button
               type="button"
+              onClick={() => setActiveView("frameworks")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "frameworks" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+              Frameworks
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveView("community")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 activeView === "community" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -900,48 +933,6 @@ const [showSageChat, setShowSageChat] = useState(false);
               Settings
             </button>
           </nav>
-
-          {/* My Frameworks Section - Shows private and workspace frameworks */}
-          {(privateFrameworks.length > 0 || workspaceFrameworks.length > 0) && (
-            <div className="mb-6">
-              <div
-                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                My Frameworks
-              </div>
-              <div className="space-y-1">
-                {privateFrameworks.map((framework) => (
-                  <div
-                    key={framework.id}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <rect x="2" y="5" width="10" height="8" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M4 5V3.5C4 2.11929 5.11929 1 6.5 1H7.5C8.88071 1 10 2.11929 10 3.5V5" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
-                    <span className="truncate">{framework.name}</span>
-                  </div>
-                ))}
-                {workspaceFrameworks.map((framework) => (
-                  <div
-                    key={framework.id}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="9" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M2 12C2 10.3431 3.34315 9 5 9C6.65685 9 8 10.3431 8 12" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M6 12C6 10.3431 7.34315 9 9 9C10.6569 9 12 10.3431 12 12" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
-                    <span className="truncate">{framework.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Workspace / Private filters */}
           <div className="mb-6">
@@ -1044,6 +1035,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             {activeView === "home" && "Home"}
             {activeView === "canvases" && "All Canvases"}
             {activeView === "all-files" && "All Files"}
+            {activeView === "frameworks" && "Frameworks"}
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
             {activeView === "settings" && "Settings"}
@@ -1544,6 +1536,138 @@ const [showSageChat, setShowSageChat] = useState(false);
                   </div>
                   <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No files yet</div>
                   <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create a canvas and add files to see them here</div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeView === "frameworks" ? (
+          /* My Frameworks View */
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Filter Tabs */}
+            <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #222222" }}>
+              {(["all", "mine", "team", "drafts"] as FrameworksFilter[]).map((f) => {
+                const labels: Record<FrameworksFilter, string> = { all: "All", mine: "Created by me", team: "Team", drafts: "Drafts" };
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFrameworksFilter(f)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                      frameworksFilter === f ? "text-[#0a0a0a]" : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                    style={{
+                      backgroundColor: frameworksFilter === f ? "#F0FE00" : "#1a1a1a",
+                      border: `1px solid ${frameworksFilter === f ? "#F0FE00" : "#333333"}`,
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    {labels[f]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Frameworks Grid */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredMyFrameworks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div
+                    className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                      <rect x="3" y="3" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
+                      <rect x="16" y="3" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
+                      <rect x="3" y="16" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
+                      <rect x="16" y="16" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <p className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No frameworks yet</p>
+                  <p className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Open a canvas and use "Save as Framework" to create one
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredMyFrameworks.map((framework) => (
+                    <div
+                      key={framework.id}
+                      className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+                      style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                    >
+                      {/* Preview */}
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        <CanvasPreview nodes={framework.nodes} />
+                        {/* Visibility Badge */}
+                        <div
+                          className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: "rgba(0,0,0,0.7)",
+                            color: framework.visibility === "private" ? "#888" : framework.visibility === "workspace" ? "#60a5fa" : "#F0FE00",
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          {framework.visibility === "private" ? "Private" : framework.visibility === "workspace" ? "Workspace" : "Community"}
+                        </div>
+                        {framework.isPublished === false && (
+                          <div
+                            className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Draft
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <h3
+                          className="text-white font-semibold text-base mb-1 truncate"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          {framework.name}
+                        </h3>
+                        <p
+                          className="text-gray-400 text-sm line-clamp-2 mb-3"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          {framework.description}
+                        </p>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            <span>{framework.nodes.length} nodes</span>
+                            {framework.parameters && framework.parameters.length > 0 && (
+                              <span>{framework.parameters.length} params</span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {onRemoveFramework && (
+                              <button
+                                type="button"
+                                onClick={() => onRemoveFramework(framework.id)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                title="Delete framework"
+                              >
+                                <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                                  <path d="M2 4H14M5.5 4V2.5C5.5 2.22386 5.72386 2 6 2H10C10.2761 2 10.5 2.22386 10.5 2.5V4M12.5 4V13.5C12.5 13.7761 12.2761 14 12 14H4C3.72386 14 3.5 13.7761 3.5 13.5V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenFramework(framework)}
+                              className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
+                              style={{ backgroundColor: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              Run
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
