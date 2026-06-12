@@ -396,7 +396,8 @@ const [showSageChat, setShowSageChat] = useState(false);
         const data = node.data as import("@/lib/atlas-types").FileNodeData;
         if (!Array.isArray(data?.tasks)) return;
         data.tasks.forEach(task => {
-          const day = task.createdAt ? task.createdAt.slice(0, 10) : today;
+          // Prefer dueDate for ribbon placement; fall back to createdAt, then today
+          const day = task.dueDate ?? (task.createdAt ? task.createdAt.slice(0, 10) : today);
           if (!map[day]) map[day] = [];
           map[day].push({ task, fileName: data.label || data.fileName || "Untitled", canvasName: canvas.name });
         });

@@ -235,6 +235,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [editedTitle, setEditedTitle] = useState(fileData.label);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [newTodoAssignee, setNewTodoAssignee] = useState<WorkspaceMember | null>(null);
+  const [newTodoDueDate, setNewTodoDueDate] = useState("");
+  const [showDueDateInput, setShowDueDateInput] = useState<string | null>(null); // taskId or "new"
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const versionInputRef = useRef<HTMLInputElement>(null);
@@ -377,12 +379,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       completed: false,
       assignee: newTodoAssignee || undefined,
       createdAt: new Date().toISOString(),
+      dueDate: newTodoDueDate || undefined,
     };
-    
+
     const currentTasks = fileData.tasks || [];
     onUpdateFile({ tasks: [...currentTasks, newTask] });
     setNewTodoTitle("");
     setNewTodoAssignee(null);
+    setNewTodoDueDate("");
     setIsAddingTodo(false);
   };
 
@@ -395,6 +399,27 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       onUpdateFile({ tasks: updatedTasks });
     }
     setShowAssigneeDropdown(null);
+  };
+
+  const handleSetDueDate = (taskId: string, date: string) => {
+    if (onUpdateFile) {
+      const currentTasks = fileData.tasks || [];
+      const updatedTasks = currentTasks.map((task) =>
+        task.id === taskId ? { ...task, dueDate: date || undefined } : task
+      );
+      onUpdateFile({ tasks: updatedTasks });
+    }
+    setShowDueDateInput(null);
+  };
+
+  const formatDueDate = (dateStr: string) => {
+    const d = new Date(dateStr + "T00:00:00");
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    if (d.getTime() === today.getTime()) return { label: "Today", color: "#F0FE00" };
+    if (d.getTime() === tomorrow.getTime()) return { label: "Tomorrow", color: "#FB923C" };
+    if (d < today) return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "#F87171" };
+    return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "#888" };
   };
 
   const handleStatusChange = (newStatus: FileNodeData["status"]) => {
@@ -1090,6 +1115,45 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                     {task.title}
                   </span>
                   
+                  {/* Due Date */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowDueDateInput(showDueDateInput === task.id ? null : task.id)}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-white/5"
+                      style={{ color: task.dueDate ? formatDueDate(task.dueDate).color : "#555", fontFamily: "system-ui, Inter, sans-serif" }}
+                      title={task.dueDate ? "Change due date" : "Set due date"}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
+                        <rect x="1" y="2" width="10" height="9" rx="1.5"/>
+                        <path d="M4 1v2M8 1v2M1 5h10" strokeLinecap="round"/>
+                      </svg>
+                      {task.dueDate ? formatDueDate(task.dueDate).label : ""}
+                    </button>
+                    {showDueDateInput === task.id && (
+                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                        <input
+                          type="date"
+                          defaultValue={task.dueDate || ""}
+                          autoFocus
+                          onChange={(e) => handleSetDueDate(task.id, e.target.value)}
+                          className="text-xs text-gray-200 bg-transparent border-none focus:outline-none"
+                          style={{ colorScheme: "dark" }}
+                        />
+                        {task.dueDate && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDueDate(task.id, "")}
+                            className="block w-full text-left text-xs text-gray-500 hover:text-gray-300 mt-1 px-1"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Clear date
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Assignee Button with Dropdown */}
                   <div className="relative">
                     <button
@@ -1177,6 +1241,35 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   />
                   
+                  {/* New Todo Due Date */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowDueDateInput(showDueDateInput === "new" ? null : "new")}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-white/5"
+                      style={{ color: newTodoDueDate ? formatDueDate(newTodoDueDate).color : "#555", fontFamily: "system-ui, Inter, sans-serif" }}
+                      title="Set due date"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
+                        <rect x="1" y="2" width="10" height="9" rx="1.5"/>
+                        <path d="M4 1v2M8 1v2M1 5h10" strokeLinecap="round"/>
+                      </svg>
+                      {newTodoDueDate ? formatDueDate(newTodoDueDate).label : "Due"}
+                    </button>
+                    {showDueDateInput === "new" && (
+                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                        <input
+                          type="date"
+                          value={newTodoDueDate}
+                          autoFocus
+                          onChange={(e) => { setNewTodoDueDate(e.target.value); setShowDueDateInput(null); }}
+                          className="text-xs text-gray-200 bg-transparent border-none focus:outline-none"
+                          style={{ colorScheme: "dark" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   {/* New Todo Assignee */}
                   <div className="relative">
                     <button

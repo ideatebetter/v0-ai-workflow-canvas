@@ -96,7 +96,8 @@ export interface TaskItem {
   title: string;
   completed: boolean;
   assignee?: WorkspaceMember;
-  createdAt?: string; // ISO date — used to surface tasks on the ribbon for the day they were added
+  createdAt?: string;
+  dueDate?: string; // YYYY-MM-DD — drives which ribbon day this task appears on
 }
 
 // Member role type
