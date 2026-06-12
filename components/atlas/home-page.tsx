@@ -387,6 +387,24 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
+  // Collect all todos from all canvases, keyed by the date they were created (YYYY-MM-DD)
+  const todosByDate = useMemo(() => {
+    const map: Record<string, Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string }>> = {};
+    const today = new Date().toISOString().slice(0, 10);
+    canvases.forEach(canvas => {
+      canvas.nodes.forEach(node => {
+        const data = node.data as import("@/lib/atlas-types").FileNodeData;
+        if (!data?.tasks) return;
+        data.tasks.forEach(task => {
+          const day = task.createdAt ? task.createdAt.slice(0, 10) : today;
+          if (!map[day]) map[day] = [];
+          map[day].push({ task, fileName: data.label || data.fileName || "Untitled", canvasName: canvas.name });
+        });
+      });
+    });
+    return map;
+  }, [canvases]);
+
   // Combine all workspace nodes with canvas grouping
   const workspaceNodesData = useMemo(() => {
     const workspaceCanvases = canvases.filter(c => c.visibility === "workspace");
@@ -2448,6 +2466,41 @@ All Frameworks
                             {isToday ? "Active" : isFuture ? config.futurePhaseText : config.phaseText}
                           </div>
                         </div>
+
+                        {/* To-Dos for this day */}
+                        {(() => {
+                          const dayKey = selectedDate.toISOString().slice(0, 10);
+                          const dayTodos = todosByDate[dayKey] || [];
+                          if (dayTodos.length === 0) return null;
+                          return (
+                            <div className="mt-3 pt-3" style={{ borderTop: "1px solid #2a2a2a" }}>
+                              <div className="text-xs font-medium text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                To-Dos ({dayTodos.filter(d => !d.task.completed).length} open)
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                {dayTodos.map(({ task, fileName }) => (
+                                  <div key={task.id} className="flex items-start gap-2">
+                                    <div className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border" style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}>
+                                      {task.completed && (
+                                        <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
+                                          <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs text-white" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
+                                        {task.title}
+                                      </span>
+                                      <span className="text-[10px] text-gray-500 ml-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                        {fileName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}

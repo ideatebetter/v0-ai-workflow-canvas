@@ -376,6 +376,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       title: newTodoTitle.trim(),
       completed: false,
       assignee: newTodoAssignee || undefined,
+      createdAt: new Date().toISOString(),
     };
     
     const currentTasks = fileData.tasks || [];
