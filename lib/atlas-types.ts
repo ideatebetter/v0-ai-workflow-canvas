@@ -658,7 +658,7 @@ export const HEALTH_STATUS_COLORS: Record<SageHealthStatus, string> = {
 };
 
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt" | "presentationGroup";
 
 // Atlas workflow node - using generic data for multiple node types
 export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | Record<string, unknown>, AtlasNodeType>;
@@ -1040,7 +1040,7 @@ export type FrameworkCategory = "workflow" | "branding" | "marketing" | "social"
 export type FrameworkVisibility = "private" | "workspace" | "community";
 
 // Framework parameter types
-export type FrameworkParamType = "text" | "textarea" | "color" | "image" | "select";
+export type FrameworkParamType = "text" | "textarea" | "color" | "image" | "select" | "file";
 
 // A single parameterized field in a framework template
 export interface FrameworkParameter {

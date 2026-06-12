@@ -7,8 +7,10 @@ import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { FileDetailModal } from "./file-detail-modal";
-import { FrameworkDetailPage } from "./framework-detail-page";
+import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
+import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
+import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
@@ -380,7 +382,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
-  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK, ...SAMPLE_FRAMEWORKS]);
   const frameworks = externalFrameworks ?? localFrameworks;
   const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
@@ -709,26 +711,31 @@ const [showSageChat, setShowSageChat] = useState(false);
     onOpenCanvas(newCanvas.id);
   };
 
-  const handleRunFromDetail = (framework: CanvasFramework, paramValues: Record<string, string>) => {
-    // Apply {{param}} substitution to every node's data
-    const substituteParams = (nodes: CanvasFramework["nodes"]) => {
-      return nodes.map((node) => {
+  const handleRunFromDetail = async (framework: CanvasFramework, paramValues: ParamValues) => {
+    const ts = Date.now();
+    const stringValues: Record<string, string> = {};
+    Object.entries(paramValues).forEach(([k, v]) => {
+      if (typeof v === "string") stringValues[k] = v;
+    });
+
+    // Apply {{param}} substitution (string params only)
+    const substituteParams = (nodes: CanvasFramework["nodes"]) =>
+      nodes.map((node) => {
         let dataStr = JSON.stringify(node.data);
-        Object.entries(paramValues).forEach(([paramId, val]) => {
+        Object.entries(stringValues).forEach(([paramId, val]) => {
           const escaped = val.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
           dataStr = dataStr.split(`{{${paramId}}}`).join(escaped);
         });
-        return { ...node, id: `fw-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, data: JSON.parse(dataStr) };
+        return { ...node, data: JSON.parse(dataStr) };
       });
-    };
 
-    const ts = Date.now();
     const idMap = new Map<string, string>();
-    const newNodes = substituteParams(framework.nodes).map((n, i) => {
+    const baseNodes = substituteParams(framework.nodes).map((n, i) => {
       const newId = `fw-${ts}-${i}`;
       idMap.set(framework.nodes[i]?.id ?? n.id, newId);
       return { ...n, id: newId };
     });
+
     const newEdges = framework.edges.map((e) => ({
       ...e,
       id: `fwe-${ts}-${Math.random().toString(36).slice(2, 7)}`,
@@ -736,13 +743,98 @@ const [showSageChat, setShowSageChat] = useState(false);
       target: idMap.get(e.target) ?? e.target,
     }));
 
+    // Extra nodes generated from uploaded files
+    const extraNodes: CanvasFramework["nodes"] = [];
+    const extraEdges: CanvasFramework["edges"] = [];
+
+    // Helper: create text nodes from PDF sections
+    const makePDFNodes = async (
+      file: File,
+      startX: number,
+      startY: number,
+      textType: "brief" | "description",
+    ) => {
+      try {
+        const pages = await parsePDFToText(file);
+        const fullText = pages.map((p) => p.text).join("\n\n");
+        const sections = splitIntoSections(fullText, 8);
+        const now = new Date().toISOString();
+        sections.forEach((section, idx) => {
+          const nodeId = `fw-pdf-${ts}-${idx}`;
+          extraNodes.push({
+            id: nodeId,
+            type: "text",
+            position: { x: startX, y: startY + idx * 260 },
+            selected: false,
+            data: {
+              label: `${file.name.replace(".pdf", "")} — Page ${idx + 1}`,
+              content: section,
+              textType,
+              lastModified: now,
+            },
+          } as CanvasFramework["nodes"][0]);
+          if (idx > 0) {
+            extraEdges.push({
+              id: `fwe-pdf-${ts}-${idx}`,
+              source: `fw-pdf-${ts}-${idx - 1}`,
+              target: nodeId,
+              type: "default",
+            });
+          }
+        });
+      } catch {
+        // PDF parse failed — silently skip
+      }
+    };
+
+    // Handle strategy PDF
+    const strategyPDF = paramValues["strategy_pdf"];
+    if (strategyPDF instanceof File && strategyPDF.name.endsWith(".pdf")) {
+      await makePDFNodes(strategyPDF, -600, 280, "brief");
+    }
+
+    // Handle brief PDF
+    const briefPDF = paramValues["brief_pdf"];
+    if (briefPDF instanceof File && briefPDF.name.endsWith(".pdf")) {
+      await makePDFNodes(briefPDF, -600, 2000, "brief");
+    }
+
+    // Handle logo file — inject as the logo node's preview image
+    const logoFile = paramValues["logo_file"];
+    let logoDataUrl: string | undefined;
+    if (logoFile instanceof File) {
+      logoDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(logoFile);
+      });
+    }
+
+    const allNodes = [
+      ...baseNodes.map((n) => {
+        // Inject logo preview if this is the logo file node
+        if (logoDataUrl && n.data && (n.data as Record<string, unknown>).fileExtension === ".ai") {
+          return {
+            ...n,
+            data: {
+              ...(n.data as Record<string, unknown>),
+              previewImages: [logoDataUrl],
+              fileName: logoFile instanceof File ? logoFile.name : "brand-logo",
+            },
+          };
+        }
+        return n;
+      }),
+      ...extraNodes,
+    ];
+
     const newCanvas: Canvas = {
       id: `canvas-${ts}`,
-      name: framework.name,
+      name: stringValues["brand_name"] ? `${stringValues["brand_name"]} — Logo Sprint` : framework.name,
       description: framework.description,
       previewImage: framework.previewImage,
-      nodes: newNodes,
-      edges: newEdges,
+      nodes: allNodes,
+      edges: [...newEdges, ...extraEdges],
       comments: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { ReactFlow, Background, Controls, ReactFlowProvider, useNodesState, useEdgesState } from "@xyflow/react";
 import type { CanvasFramework, FrameworkParameter, AtlasNode } from "@/lib/atlas-types";
 import { CanvasPreview } from "./canvas-preview";
 import "@xyflow/react/dist/style.css";
 
 type DetailTab = "app" | "workflow";
+export type ParamValues = Record<string, string | File>;
 
 interface Props {
   framework: CanvasFramework;
   onBack: () => void;
-  onRun: (framework: CanvasFramework, paramValues: Record<string, string>) => void;
-  breadcrumbLabel?: string; // e.g. "Frameworks" or "Community"
+  onRun: (framework: CanvasFramework, paramValues: ParamValues) => void;
+  breadcrumbLabel?: string;
 }
 
 function WorkflowCanvas({ nodes, edges }: { nodes: AtlasNode[]; edges: CanvasFramework["edges"] }) {
@@ -42,14 +43,114 @@ function WorkflowCanvas({ nodes, edges }: { nodes: AtlasNode[]; edges: CanvasFra
   );
 }
 
+function FileDropZone({
+  param,
+  value,
+  onChange,
+}: {
+  param: FrameworkParameter;
+  value: File | null;
+  onChange: (f: File | null) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const isPDF = param.id.includes("pdf") || param.label.toLowerCase().includes("pdf");
+  const accept = isPDF ? ".pdf" : "image/*,.ai,.svg,.eps,.pdf";
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    onChange(files[0]);
+  };
+
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      {value ? (
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+          style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+        >
+          <div
+            className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(240,254,0,0.12)" }}
+          >
+            {isPDF ? (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#F0FE00" strokeWidth="1.2" />
+                <path d="M4 5H10M4 7.5H10M4 10H7" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="1" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.2" />
+                <circle cx="4.5" cy="4.5" r="1.2" fill="#F0FE00" />
+                <path d="M1 9L4.5 6L7 8.5L9.5 6.5L13 9" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm text-white truncate flex-1">{value.name}</span>
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="text-gray-500 hover:text-white transition-colors flex-shrink-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            handleFiles(e.dataTransfer.files);
+          }}
+          className="w-full rounded-lg flex flex-col items-center justify-center gap-2 py-5 transition-all"
+          style={{
+            border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
+            backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
+          }}
+        >
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span className="text-xs text-gray-500">
+            Drop file or <span style={{ color: "#F0FE00" }}>browse</span>
+          </span>
+          {isPDF && (
+            <span className="text-[10px] text-gray-600">PDF → auto-creates text nodes</span>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ParamInput({
   param,
   value,
   onChange,
 }: {
   param: FrameworkParameter;
-  value: string;
-  onChange: (v: string) => void;
+  value: string | File | null;
+  onChange: (v: string | File | null) => void;
 }) {
   const base =
     "w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none";
@@ -59,11 +160,21 @@ function ParamInput({
     fontFamily: "system-ui, Inter, sans-serif",
   };
 
+  if (param.type === "file") {
+    return (
+      <FileDropZone
+        param={param}
+        value={value instanceof File ? value : null}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (param.type === "textarea") {
     return (
       <textarea
         rows={3}
-        value={value}
+        value={typeof value === "string" ? value : ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={param.placeholder || `Enter ${param.label.toLowerCase()}…`}
         className={base}
@@ -75,10 +186,10 @@ function ParamInput({
   if (param.type === "select" && param.options?.length) {
     return (
       <select
-        value={value}
+        value={typeof value === "string" ? value : ""}
         onChange={(e) => onChange(e.target.value)}
         className={base}
-        style={{ ...style, appearance: "none" }}
+        style={{ ...style, appearance: "none" as never }}
       >
         <option value="">Select…</option>
         {param.options.map((o) => (
@@ -91,18 +202,19 @@ function ParamInput({
   }
 
   if (param.type === "color") {
+    const strVal = typeof value === "string" ? value : "";
     return (
       <div className="flex items-center gap-2">
         <input
           type="color"
-          value={value || "#F0FE00"}
+          value={strVal || "#F0FE00"}
           onChange={(e) => onChange(e.target.value)}
           className="w-9 h-9 rounded-lg cursor-pointer flex-shrink-0"
           style={{ backgroundColor: "transparent", border: "1px solid #2a2a2a", padding: 2 }}
         />
         <input
           type="text"
-          value={value}
+          value={strVal}
           onChange={(e) => onChange(e.target.value)}
           placeholder="#F0FE00"
           className={`${base} flex-1`}
@@ -115,7 +227,7 @@ function ParamInput({
   return (
     <input
       type={param.type === "image" ? "url" : "text"}
-      value={value}
+      value={typeof value === "string" ? value : ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={param.placeholder || (param.type === "image" ? "https://…" : `Enter ${param.label.toLowerCase()}…`)}
       className={base}
@@ -126,10 +238,10 @@ function ParamInput({
 
 export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel = "Frameworks" }: Props) {
   const [tab, setTab] = useState<DetailTab>("app");
-  const [paramValues, setParamValues] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
+  const [paramValues, setParamValues] = useState<ParamValues>(() => {
+    const init: ParamValues = {};
     framework.parameters?.forEach((p) => {
-      init[p.id] = p.defaultValue ?? "";
+      if (p.type !== "file") init[p.id] = p.defaultValue ?? "";
     });
     return init;
   });
@@ -151,7 +263,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
         className="flex items-center justify-between px-5 h-14 flex-shrink-0"
         style={{ borderBottom: "1px solid #1e1e1e" }}
       >
-        {/* Left: breadcrumb */}
         <button
           type="button"
           onClick={onBack}
@@ -167,7 +278,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           <span className="text-white font-medium">{framework.name}</span>
         </button>
 
-        {/* Center: App / Workflow toggle */}
         <div
           className="flex items-center rounded-lg p-1 gap-0.5"
           style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
@@ -205,7 +315,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           </button>
         </div>
 
-        {/* Right: author avatar */}
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500">{framework.createdBy.name}</span>
           <div
@@ -225,15 +334,10 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
       <div className="flex flex-1 overflow-hidden">
 
         {tab === "app" ? (
-          /* ── APP VIEW ── */
           <div className="flex-1 overflow-y-auto p-10">
             <div className="max-w-3xl mx-auto">
-              {/* Title block */}
               <div className="mb-8">
-                <h1
-                  className="text-white font-bold mb-2"
-                  style={{ fontSize: 32, lineHeight: 1.15 }}
-                >
+                <h1 className="text-white font-bold mb-2" style={{ fontSize: 32, lineHeight: 1.15 }}>
                   {framework.name}
                 </h1>
                 <p className="text-gray-400 text-base mb-4" style={{ maxWidth: 520 }}>
@@ -254,7 +358,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 </div>
               </div>
 
-              {/* Hero Preview */}
               <div
                 className="w-full rounded-2xl overflow-hidden mb-8"
                 style={{ aspectRatio: "16/9", border: "1px solid #1e1e1e" }}
@@ -262,7 +365,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 <CanvasPreview nodes={framework.nodes} />
               </div>
 
-              {/* Stats row */}
               <div className="flex items-center gap-6 mb-8">
                 <div className="flex items-center gap-1.5 text-sm text-gray-500">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -297,7 +399,6 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 )}
               </div>
 
-              {/* Tags */}
               {framework.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-8">
                   {framework.tags.map((tag) => (
@@ -312,42 +413,54 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 </div>
               )}
 
-              {/* About section */}
+              {/* Workflow phases summary */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {[
+                  { icon: "📋", title: "Brand Strategy", desc: "6 strategy pillars — discovery, audience, values, competition, positioning, visual direction" },
+                  { icon: "✏️", title: "Creative Brief", desc: "4 brief cards — project overview, objectives, constraints, deliverables & timeline" },
+                  { icon: "🎨", title: "Moodboard", desc: "Visual inspiration board with 6 curated reference images for brand direction" },
+                  { icon: "🖼️", title: "Logo & Mockups", desc: "Logo file placeholder + 6 environment mockups: cards, signage, apparel, app, stationery, billboard" },
+                ].map((phase) => (
+                  <div
+                    key={phase.title}
+                    className="rounded-xl p-4"
+                    style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e" }}
+                  >
+                    <div className="text-xl mb-2">{phase.icon}</div>
+                    <div className="text-white text-sm font-medium mb-1">{phase.title}</div>
+                    <div className="text-gray-500 text-xs leading-relaxed">{phase.desc}</div>
+                  </div>
+                ))}
+              </div>
+
               <div
                 className="rounded-xl p-5"
                 style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e" }}
               >
-                <h3 className="text-white font-medium text-sm mb-3">About this framework</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{framework.description}</p>
-                {hasParams && (
-                  <div className="mt-4 pt-4" style={{ borderTop: "1px solid #1e1e1e" }}>
-                    <p className="text-gray-500 text-xs mb-3 uppercase tracking-wider">Parameters</p>
-                    <div className="space-y-2">
-                      {params.map((p) => (
-                        <div key={p.id} className="flex items-center gap-3">
-                          <span
-                            className="px-2 py-0.5 rounded text-[10px] font-mono"
-                            style={{ backgroundColor: "#1a1a1a", color: "#F0FE00", border: "1px solid #2a2a2a" }}
-                          >
-                            {`{{${p.id}}}`}
-                          </span>
-                          <span className="text-gray-300 text-sm">{p.label}</span>
-                          {p.required && <span className="text-[10px] text-red-400">required</span>}
-                        </div>
-                      ))}
+                <h3 className="text-white font-medium text-sm mb-3">3 Presentation Flows Included</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: "Strategy Deck", desc: "Walks through all 6 strategy pillars in sequence", color: "#60a5fa" },
+                    { label: "Brief + Moodboard", desc: "Creative brief cards flowing into moodboard review", color: "#a78bfa" },
+                    { label: "Full Sprint Walkthrough", desc: "Complete end-to-end: strategy → brief → moodboard → logo → mockups", color: "#F0FE00" },
+                  ].map((pf) => (
+                    <div key={pf.label} className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: pf.color }} />
+                      <div>
+                        <div className="text-white text-sm font-medium">{pf.label}</div>
+                        <div className="text-gray-500 text-xs">{pf.desc}</div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          /* ── WORKFLOW VIEW ── */
           <div className="flex-1 relative">
             <ReactFlowProvider>
               <WorkflowCanvas nodes={framework.nodes} edges={framework.edges} />
             </ReactFlowProvider>
-            {/* Read-only banner */}
             <div
               className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl flex items-center gap-2.5 pointer-events-none"
               style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "1px solid #2a2a2a" }}
@@ -362,13 +475,14 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           </div>
         )}
 
-        {/* ── RIGHT PANEL: Run Framework ── */}
+        {/* Right panel */}
         <div
           className="w-72 flex-shrink-0 flex flex-col"
           style={{ borderLeft: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}
         >
           <div className="p-5 flex-shrink-0" style={{ borderBottom: "1px solid #1e1e1e" }}>
             <h2 className="text-white font-semibold text-base">Run Framework</h2>
+            <p className="text-gray-500 text-xs mt-1">Fill in details to customise the canvas</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
@@ -381,28 +495,19 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                   </label>
                   <ParamInput
                     param={param}
-                    value={paramValues[param.id] ?? ""}
-                    onChange={(v) => setParamValues((prev) => ({ ...prev, [param.id]: v }))}
+                    value={paramValues[param.id] ?? null}
+                    onChange={(v) => setParamValues((prev) => ({ ...prev, [param.id]: v as string | File }))}
                   />
                 </div>
               ))
             ) : (
               <div className="text-center py-6">
-                <div
-                  className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center"
-                  style={{ backgroundColor: "#1a1a1a" }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M4.5 9H13.5M9 4.5V13.5" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </div>
                 <p className="text-gray-500 text-sm">No parameters</p>
                 <p className="text-gray-600 text-xs mt-1">This framework runs as-is</p>
               </div>
             )}
           </div>
 
-          {/* Run button */}
           <div className="p-5 flex-shrink-0" style={{ borderTop: "1px solid #1e1e1e" }}>
             <button
               type="button"
