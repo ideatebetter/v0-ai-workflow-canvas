@@ -28,6 +28,7 @@ import { SaveFrameworkDialog } from "./save-template-dialog";
 import { FrameworkCreatorDialog } from "./framework-creator-dialog";
 import { FrameworkLibraryPanel } from "./framework-library-panel";
 import { FrameworkRunDialog } from "./framework-run-dialog";
+import { CanvasNodeActionsProvider } from "./canvas-node-actions-context";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
@@ -45,6 +46,7 @@ interface AtlasEditorProps {
   canvases?: Canvas[];
   frameworks?: CanvasFramework[];
   onRemoveFramework?: (frameworkId: string) => void;
+  targetNodeId?: string | null;
   onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
@@ -99,7 +101,7 @@ function getPagesFromCanvas(canvas: Canvas): CanvasPage[] {
   return [{ id: "page-1", name: "Page 1", nodes: canvas.nodes, edges: canvas.edges }];
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, frameworks, onRemoveFramework, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, frameworks, onRemoveFramework, targetNodeId, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
   // --- Multi-page state ---
   const [pages, setPages] = useState<CanvasPage[]>(() => getPagesFromCanvas(canvas));
   const [activePageId, setActivePageId] = useState<string>(() => {
@@ -126,6 +128,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
   const [showFrameworkCreator, setShowFrameworkCreator] = useState(false);
+  const [linkCopiedNodeId, setLinkCopiedNodeId] = useState<string | null>(null);
   const [showFrameworkLibrary, setShowFrameworkLibrary] = useState(false);
   const [runFramework, setRunFramework] = useState<CanvasFramework | null>(null);
   const [showMoveToCanvasDialog, setShowMoveToCanvasDialog] = useState(false);
@@ -247,6 +250,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   }, [nodes, setNodes, setEdges]);
   
   // Listen for mockup generation events from file nodes
+  // Deep link: select and open the target node once nodes are loaded
+  useEffect(() => {
+    if (!targetNodeId) return;
+    const node = nodes.find(n => n.id === targetNodeId);
+    if (!node) return;
+    setNodes(nds => nds.map(n => ({ ...n, selected: n.id === targetNodeId })));
+    if (node.type === "file") setDetailModalNodeId(targetNodeId);
+  // Run once on mount — intentionally omit `nodes` to avoid re-running on every nodes change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetNodeId]);
+
   useEffect(() => {
     const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
       createAIPromptNode(e.detail.nodeId, e.detail.fileData);
@@ -1798,7 +1812,16 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
     setSelectedCommentId(null);
   }, []);
 
+  const handleCopyNodeLink = useCallback((nodeId: string) => {
+    const url = `${window.location.origin}?canvas=${canvas.id}&node=${nodeId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopiedNodeId(nodeId);
+      setTimeout(() => setLinkCopiedNodeId(null), 2000);
+    });
+  }, [canvas.id]);
+
   return (
+    <CanvasNodeActionsProvider value={{ onCopyNodeLink: handleCopyNodeLink }}>
     <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       <AtlasToolbar
         canvasName={canvas.name}
@@ -2266,6 +2289,7 @@ presentationMode={presentationMode}
           isSyncableNode={contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")}
           hasSyncableNodes={contextMenu.nodes.some(n => n.type === "file" || n.type === "text")}
           isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
+          onCopyLink={contextMenu.nodes.length === 1 ? () => handleCopyNodeLink(contextMenu.nodes[0].id) : undefined}
         />
       )}
 
@@ -2363,9 +2387,11 @@ presentationMode={presentationMode}
             isOpen={true}
             onClose={() => setDetailModalNodeId(null)}
             fileData={fileData}
+            canvasId={canvas.id}
+            nodeId={detailModalNodeId}
             onUpdateFile={(updates) => {
-              setNodes(nds => nds.map(n => 
-                n.id === detailModalNodeId 
+              setNodes(nds => nds.map(n =>
+                n.id === detailModalNodeId
                   ? { ...n, data: { ...n.data, ...updates } }
                   : n
               ));
@@ -2573,7 +2599,27 @@ presentationMode={presentationMode}
           </button>
         </div>
       )}
+
+      {/* "Link copied" toast */}
+      {linkCopiedNodeId && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium pointer-events-none"
+          style={{
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #F0FE0040",
+            color: "#F0FE00",
+            fontFamily: "system-ui, Inter, sans-serif",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7L5 10L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Link copied to clipboard
+        </div>
+      )}
     </div>
+    </CanvasNodeActionsProvider>
   );
 }
 

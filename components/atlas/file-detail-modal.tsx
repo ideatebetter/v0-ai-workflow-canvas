@@ -223,9 +223,11 @@ interface FileDetailModalProps {
   onClose: () => void;
   fileData: FileNodeData;
   onUpdateFile?: (updates: Partial<FileNodeData>) => void;
+  canvasId?: string;
+  nodeId?: string;
 }
 
-export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: FileDetailModalProps) {
+export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canvasId, nodeId }: FileDetailModalProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "todos" | "history">("overview");
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [newTodoTitle, setNewTodoTitle] = useState("");
@@ -238,6 +240,16 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [newTodoDueDate, setNewTodoDueDate] = useState("");
   const [showDueDateInput, setShowDueDateInput] = useState<string | null>(null); // taskId or "new"
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    if (!canvasId || !nodeId) return;
+    const url = `${window.location.origin}?canvas=${canvasId}&node=${nodeId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
   const [uploadProgress, setUploadProgress] = useState(0);
   const versionInputRef = useRef<HTMLInputElement>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -581,6 +593,29 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       >
         {/* Header buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {/* Share / Copy link button */}
+          {canvasId && nodeId && (
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 relative"
+              style={{ backgroundColor: linkCopied ? "rgba(240,254,0,0.12)" : "rgba(255,255,255,0.05)" }}
+              title="Copy link to this file"
+            >
+              {linkCopied ? (
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M3 7.5L6 10.5L12 4.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M6 9L9 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8.5 3.5L9.75 2.25C10.5784 1.42157 11.9216 1.42157 12.75 2.25C13.5784 3.07843 13.5784 4.42157 12.75 5.25L11.5 6.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M6.5 11.5L5.25 12.75C4.42157 13.5784 3.07843 13.5784 2.25 12.75C1.42157 11.9216 1.42157 10.5784 2.25 9.75L3.5 8.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )}
+            </button>
+          )}
+
           {/* Download button */}
           <button
             type="button"

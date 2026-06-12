@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { MoodboardNodeData } from "@/lib/atlas-types";
+import { useCanvasNodeActions } from "./canvas-node-actions-context";
 
-export function MoodboardNode({ data, selected }: NodeProps) {
+export function MoodboardNode({ data, selected, id }: NodeProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const { onCopyNodeLink } = useCanvasNodeActions();
   const nodeData = data as MoodboardNodeData;
   const imageCount = nodeData.images?.length || 0;
   
@@ -70,6 +73,28 @@ export function MoodboardNode({ data, selected }: NodeProps) {
         <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           {imageCount} {imageCount === 1 ? "image" : "images"}
         </span>
+        {/* Share / copy link */}
+        <button
+          type="button"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 ml-1"
+          title="Copy link"
+          onClick={e => {
+            e.stopPropagation();
+            onCopyNodeLink(id as string);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+          }}
+        >
+          {linkCopied ? (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L4.5 8.5L10 3.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M5 7L7 5" stroke="#888" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M6.5 3L7.5 2C8.33 1.17 9.67 1.17 10.5 2C11.33 2.83 11.33 4.17 10.5 5L9.5 6" stroke="#888" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M5.5 9L4.5 10C3.67 10.83 2.33 10.83 1.5 10C0.67 9.17 0.67 7.83 1.5 7L2.5 6" stroke="#888" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Image Grid Preview - Adaptive layout based on image count */}

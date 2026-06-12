@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import type { PresentationGroupNodeData } from "@/lib/atlas-types";
+import { useCanvasNodeActions } from "./canvas-node-actions-context";
 
 export function PresentationGroupNode({
   data,
@@ -12,8 +13,10 @@ export function PresentationGroupNode({
   const { thumbnails = [], nodeIds = [], label } = data;
   const count = nodeIds.length;
   const { setNodes } = useReactFlow();
-  
+  const { onCopyNodeLink } = useCanvasNodeActions();
+
   const [isEditing, setIsEditing] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [editValue, setEditValue] = useState(label || `Slide Group (${count})`);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -105,8 +108,8 @@ export function PresentationGroupNode({
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
             className="flex-1 text-xs font-medium bg-transparent border-none outline-none min-w-0"
-            style={{ 
-              color: "#F0FE00", 
+            style={{
+              color: "#F0FE00",
               fontFamily: "system-ui, Inter, sans-serif",
               caretColor: "#F0FE00",
             }}
@@ -121,6 +124,28 @@ export function PresentationGroupNode({
             {displayLabel}
           </span>
         )}
+        {/* Share / copy link */}
+        <button
+          type="button"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 flex-shrink-0"
+          title="Copy link"
+          onClick={e => {
+            e.stopPropagation();
+            onCopyNodeLink(id);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+          }}
+        >
+          {linkCopied ? (
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5L4 8L9.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          ) : (
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M4.5 6.5L6.5 4.5" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
+              <path d="M6 2.5L6.8 1.7C7.47 1.03 8.53 1.03 9.2 1.7C9.87 2.37 9.87 3.43 9.2 4.1L8.4 4.9" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
+              <path d="M5 8.5L4.2 9.3C3.53 9.97 2.47 9.97 1.8 9.3C1.13 8.63 1.13 7.57 1.8 6.9L2.6 6.1" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Thumbnail Grid Preview */}

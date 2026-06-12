@@ -37,6 +37,7 @@ export function AtlasApp() {
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
+  const [deepLinkNodeId, setDeepLinkNodeId] = useState<string | null>(null);
 
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
@@ -165,10 +166,21 @@ export function AtlasApp() {
     }
   }, [user]);
 
-  // Load settings and canvases on mount
+  // Load settings and canvases on mount; also handle deep links (?canvas=&node=)
   useEffect(() => {
     setWorkspaceSettings(loadSettings());
     setIsHydrated(true);
+
+    const params = new URLSearchParams(window.location.search);
+    const targetCanvas = params.get("canvas");
+    const targetNode = params.get("node");
+    if (targetCanvas) {
+      setActiveCanvasId(targetCanvas);
+      setView("canvas");
+      if (targetNode) setDeepLinkNodeId(targetNode);
+      // Clean up URL without triggering a reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   // Load canvases when user changes
@@ -562,6 +574,7 @@ export function AtlasApp() {
         onRemoveFramework={handleRemoveFramework}
         canvases={canvases}
         frameworks={frameworks}
+        targetNodeId={deepLinkNodeId}
         onCopyNodesToCanvas={handleCopyNodesToCanvas}
         onCreateCanvasWithNodes={handleCreateCanvasWithNodes}
         onSyncFiles={handleSyncFiles}
