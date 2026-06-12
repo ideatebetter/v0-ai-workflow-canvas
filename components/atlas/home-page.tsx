@@ -713,6 +713,9 @@ const [showSageChat, setShowSageChat] = useState(false);
 
   const handleRunFromDetail = async (framework: CanvasFramework, paramValues: ParamValues) => {
     const ts = Date.now();
+    // Always close the detail page and open the canvas — even if PDF parsing fails
+    let committedCanvasId: string | null = null;
+    try {
     const stringValues: Record<string, string> = {};
     Object.entries(paramValues).forEach(([k, v]) => {
       if (typeof v === "string") stringValues[k] = v;
@@ -843,12 +846,47 @@ const [showSageChat, setShowSageChat] = useState(false);
       isFavorite: false,
       visibility: "workspace",
     };
-    onCanvasesChange([...canvases, newCanvas]);
-    setFrameworks(prev => prev.map(f =>
-      f.id === framework.id ? { ...f, downloads: f.downloads + 1 } : f
-    ));
-    setViewingFramework(null);
-    onOpenCanvas(newCanvas.id);
+      onCanvasesChange([...canvases, newCanvas]);
+      setFrameworks(prev => prev.map(f =>
+        f.id === framework.id ? { ...f, downloads: f.downloads + 1 } : f
+      ));
+      committedCanvasId = newCanvas.id;
+    } catch (err) {
+      console.error("[framework] run failed, opening with base nodes only", err);
+      // Fall back: create canvas with just the substituted framework nodes (no PDF extras)
+      const fallbackTs = Date.now();
+      const fallbackIdMap = new Map<string, string>();
+      const fallbackNodes = framework.nodes.map((n, i) => {
+        const newId = `fw-${fallbackTs}-${i}`;
+        fallbackIdMap.set(n.id, newId);
+        return { ...n, id: newId };
+      });
+      const fallbackEdges = framework.edges.map((e) => ({
+        ...e,
+        id: `fwe-${fallbackTs}-${Math.random().toString(36).slice(2, 7)}`,
+        source: fallbackIdMap.get(e.source) ?? e.source,
+        target: fallbackIdMap.get(e.target) ?? e.target,
+      }));
+      const fallbackCanvas: Canvas = {
+        id: `canvas-${fallbackTs}`,
+        name: framework.name,
+        description: framework.description,
+        previewImage: framework.previewImage,
+        nodes: fallbackNodes,
+        edges: fallbackEdges,
+        comments: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: workspaceSettings.members[0],
+        isFavorite: false,
+        visibility: "workspace",
+      };
+      onCanvasesChange([...canvases, fallbackCanvas]);
+      committedCanvasId = fallbackCanvas.id;
+    } finally {
+      setViewingFramework(null);
+      if (committedCanvasId) onOpenCanvas(committedCanvasId);
+    }
   };
 
   // Community page only shows frameworks with visibility: "community"

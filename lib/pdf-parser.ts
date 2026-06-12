@@ -1,5 +1,4 @@
-// PDF text extraction using pdfjs-dist
-// Returns an array of page text strings
+// PDF text extraction using pdfjs-dist (no worker — avoids Next.js bundler issues)
 
 export interface ParsedPDFPage {
   pageNumber: number;
@@ -7,16 +6,14 @@ export interface ParsedPDFPage {
 }
 
 export async function parsePDFToText(file: File): Promise<ParsedPDFPage[]> {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs" as never as string) as typeof import("pdfjs-dist");
+  // Dynamically import to avoid SSR issues
+  const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
 
-  // Point the worker at the bundled worker shim
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/legacy/build/pdf.worker.mjs",
-    import.meta.url
-  ).href;
+  // Disable worker entirely — runs on the main thread, avoids worker URL resolution issues in Next.js
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
   const pages: ParsedPDFPage[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
