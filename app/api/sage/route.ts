@@ -1,7 +1,8 @@
 import { streamText, tool, convertToModelMessages, stepCountIs, generateObject } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
-import type { FeedbackType, ProjectType, SageProjectState } from "@/lib/atlas-types";
+import type { FeedbackType, NonActionablePattern, ProjectType, SageProjectState } from "@/lib/atlas-types";
 import { STATUS_WORKFLOWS } from "@/lib/atlas-types";
 import {
   createIntent,
@@ -39,93 +40,219 @@ const sageTools = {
   // ============================================================================
   
   classifyFeedback: tool({
-    description: `Classify stakeholder feedback using the Discern taxonomy. Use this when a user shares feedback they received from clients, stakeholders, or team members. The tool analyzes the feedback and returns:
-- Type classification (aesthetic-preference, functional-requirement, strategic-direction, technical-constraint, clarification-request, approval, revision-request)
-- Actionability score (0-100)
+    description: `Classify stakeholder feedback using Sage's full model: the 8-pattern non-actionable taxonomy + 4-dimension detection (D1 Problem Specificity, D2 Criterion Grounding, D3 Solution Openness, D4 Scope Integrity). Use this whenever a user shares feedback they received from clients, stakeholders, or team members. Returns:
+- Non-actionable pattern type (if detected) and the specific Sage clarifying prompt to issue
+- Which dimensions (D1–D4) the feedback fails
+- Actionability score (0–100)
 - Conflict detection with existing feedback`,
     inputSchema: z.object({
       projectId: z.string().describe("The project/canvas ID"),
       feedback: z.string().describe("The raw feedback text to classify"),
       reviewerRole: z.string().describe("Role of the person who gave feedback (e.g., 'Creative Director', 'Client', 'Developer')"),
       source: z.enum(["stakeholder", "client", "internal", "sage"]).default("stakeholder"),
+      existingPromptCount: z.number().optional().describe("Number of clarifying prompts already issued for this feedback item (for escalation logic)"),
     }),
-    execute: async ({ projectId, feedback, reviewerRole, source }) => {
-      // Use AI to classify the feedback
-      const feedbackTypes: FeedbackType[] = [
-        "aesthetic-preference",
-        "functional-requirement", 
-        "strategic-direction",
-        "technical-constraint",
-        "clarification-request",
-        "approval",
-        "revision-request",
-      ];
-      
-      // Simple keyword-based classification (in production, use AI inference)
-      let type: FeedbackType = "revision-request";
-      let actionabilityScore = 50;
-      
+    execute: async ({ projectId, feedback, reviewerRole, source, existingPromptCount = 0 }) => {
       const lowerFeedback = feedback.toLowerCase();
-      
-      if (lowerFeedback.includes("approve") || lowerFeedback.includes("looks good") || lowerFeedback.includes("sign off")) {
-        type = "approval";
-        actionabilityScore = 90;
-      } else if (lowerFeedback.includes("color") || lowerFeedback.includes("font") || lowerFeedback.includes("style") || lowerFeedback.includes("look") || lowerFeedback.includes("feel")) {
-        type = "aesthetic-preference";
-        actionabilityScore = 70;
-      } else if (lowerFeedback.includes("must") || lowerFeedback.includes("need") || lowerFeedback.includes("require") || lowerFeedback.includes("function")) {
-        type = "functional-requirement";
-        actionabilityScore = 85;
-      } else if (lowerFeedback.includes("strategy") || lowerFeedback.includes("brand") || lowerFeedback.includes("position") || lowerFeedback.includes("message")) {
-        type = "strategic-direction";
-        actionabilityScore = 75;
-      } else if (lowerFeedback.includes("technical") || lowerFeedback.includes("constraint") || lowerFeedback.includes("limitation") || lowerFeedback.includes("can't")) {
-        type = "technical-constraint";
-        actionabilityScore = 80;
-      } else if (lowerFeedback.includes("?") || lowerFeedback.includes("what") || lowerFeedback.includes("how") || lowerFeedback.includes("clarify")) {
-        type = "clarification-request";
-        actionabilityScore = 60;
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 1: 8-Pattern Non-Actionable Detection
+      // ─────────────────────────────────────────────────────────
+      type PatternRule = {
+        pattern: NonActionablePattern;
+        signals: string[];
+        sagePrompt: string;
+        actionabilityPenalty: number;
+      };
+
+      const patternRules: PatternRule[] = [
+        {
+          pattern: "pure-aesthetic-preference",
+          signals: ["i don't like", "i dont like", "doesn't feel right", "doesn't feel right", "something feels off", "make it pop", "it's not doing it for me", "not doing it for me", "not feeling it", "i just don't like", "i prefer", "not my taste"],
+          sagePrompt: "Can you describe what isn't working relative to the design's goal? Knowing the specific element — hierarchy, contrast, colour temperature, spacing — will give the designer something concrete to act on.",
+          actionabilityPenalty: 60,
+        },
+        {
+          pattern: "undefined-qualifier",
+          signals: ["more modern", "more professional", "more clean", "cleaner", "fresher", "bolder", "more dynamic", "more refined", "more polished", "more current", "feel more", "look more", "needs to feel"],
+          sagePrompt: "That direction isn't yet specific enough to act on. What would [modern/clean/bold] look like in the context of this project — relative to the audience, the brief, or a clear comparator?",
+          actionabilityPenalty: 55,
+        },
+        {
+          pattern: "solution-prescription",
+          signals: ["make the logo bigger", "use blue", "change the font", "move it to the", "try a different", "just use", "make it", "put it", "change it to", "switch to", "replace with"],
+          sagePrompt: "This specifies a solution rather than a problem. What is the underlying concern this change is meant to address — is it a legibility issue, a hierarchy concern, or something else?",
+          actionabilityPenalty: 50,
+        },
+        {
+          pattern: "unanchored-reference",
+          signals: ["like apple", "like google", "like airbnb", "like our competitor", "like [", "similar to", "more like", "reminds me of", "inspired by", "look like"],
+          sagePrompt: "What specific quality of that reference should this work move toward — tone, structural hierarchy, colour restraint, or something else? Knowing which quality to translate will keep the direction focused.",
+          actionabilityPenalty: 45,
+        },
+        {
+          pattern: "emotional-reaction",
+          signals: ["i hate this", "i love it", "this is terrible", "wow great", "amazing", "perfect", "brilliant", "awful", "horrible", "i love", "i hate", "love the", "hate the", "this is great", "this is bad"],
+          sagePrompt: "That's helpful to hear as a signal, but it doesn't yet give the designer a place to focus. What specific decision — layout, colour, typography, imagery — is producing that reaction?",
+          actionabilityPenalty: 70,
+        },
+        {
+          pattern: "approval-adjacent-vagueness",
+          signals: ["looks good just", "almost there", "nearly there", "just tweak", "just adjust", "just refine", "just polish", "getting there", "close but", "pretty close", "it's close", "mostly good", "mostly there"],
+          sagePrompt: "This doesn't fully close the review loop. Before moving forward, can you identify one or two specific elements that still need refinement? That prevents ambiguity from resurfacing later in the process.",
+          actionabilityPenalty: 40,
+        },
+        {
+          pattern: "scope-expansion",
+          signals: ["can we also", "while we're at it", "what if we tried", "could you also add", "can you also", "one more thing", "and also", "we should also", "let's also add", "let's also include"],
+          sagePrompt: "This introduces a new requirement rather than feedback on the current work. To keep the review focused, this should be routed to a brief revision before it enters the design review cycle.",
+          actionabilityPenalty: 35,
+        },
+        {
+          pattern: "absolute-personal-claim",
+          signals: ["no one will", "everyone will", "nobody does it", "users will never", "users won't", "people won't", "nobody wants", "everyone hates", "no one understands", "nobody will get"],
+          sagePrompt: "Is there research or prior testing that supports this? Without that grounding, this is a personal assumption rather than a verifiable audience insight — and it may be worth testing before it informs a design decision.",
+          actionabilityPenalty: 50,
+        },
+      ];
+
+      // Check each pattern — first match wins (most severe)
+      let detectedPattern: NonActionablePattern | null = null;
+      let sagePrompt: string | null = null;
+      let actionabilityPenalty = 0;
+
+      for (const rule of patternRules) {
+        if (rule.signals.some(signal => lowerFeedback.includes(signal))) {
+          detectedPattern = rule.pattern;
+          sagePrompt = rule.sagePrompt;
+          actionabilityPenalty = rule.actionabilityPenalty;
+          break;
+        }
       }
-      
-      // Get current state and check for conflicts
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 2: 4-Dimension Evaluation
+      // ─────────────────────────────────────────────────────────
+      const failedDimensions: string[] = [];
+
+      // D1 – Problem Specificity: names a discrete, observable issue
+      const problemSpecificityTerms = ["hierarchy", "contrast", "scale", "spacing", "tone", "legibility", "alignment", "weight", "layout", "colour", "color", "typography", "grid", "padding", "margin", "size", "proportion", "readability"];
+      const hasSpecificProblem = problemSpecificityTerms.some(t => lowerFeedback.includes(t)) && !lowerFeedback.match(/^(i (don't|hate|love)|something feels|make it|just|wow|great|terrible)/i);
+      if (!hasSpecificProblem && !detectedPattern) failedDimensions.push("D1: Problem Specificity");
+
+      // D2 – Criterion Grounding: connected to brief/audience/brand/function
+      const criterionTerms = ["brief", "audience", "brand", "functional", "user", "goal", "requirement", "guideline", "constraint", "principle", "objective", "purpose"];
+      const hasGrounding = criterionTerms.some(t => lowerFeedback.includes(t));
+      if (!hasGrounding) failedDimensions.push("D2: Criterion Grounding");
+
+      // D3 – Solution Openness: states problem without prescribing solution
+      const solutionPrescriptions = ["make it", "change it to", "use ", "switch to", "replace with", "move it", "put it", "try a"];
+      const prescribesSolution = solutionPrescriptions.some(t => lowerFeedback.includes(t));
+      if (prescribesSolution) failedDimensions.push("D3: Solution Openness");
+
+      // D4 – Scope Integrity: within current design scope
+      const scopeExpansion = ["can we also", "while we're at it", "what if we tried", "could you also", "and also add", "one more thing"];
+      const expandsScope = scopeExpansion.some(t => lowerFeedback.includes(t));
+      if (expandsScope) failedDimensions.push("D4: Scope Integrity");
+
+      const isNonActionable = detectedPattern !== null || failedDimensions.length >= 2;
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 3: Actionable feedback type classification
+      // ─────────────────────────────────────────────────────────
+      let type: FeedbackType = "revision-request";
+      let baseActionabilityScore = 70;
+
+      if (lowerFeedback.includes("approve") || lowerFeedback.includes("sign off") || (lowerFeedback.includes("looks good") && !detectedPattern)) {
+        type = "approval";
+        baseActionabilityScore = 90;
+      } else if (lowerFeedback.includes("must") || lowerFeedback.includes("require") || lowerFeedback.includes("function") || lowerFeedback.includes("need to work")) {
+        type = "functional-requirement";
+        baseActionabilityScore = 85;
+      } else if (lowerFeedback.includes("strategy") || lowerFeedback.includes("brand") || lowerFeedback.includes("positioning") || lowerFeedback.includes("message")) {
+        type = "strategic-direction";
+        baseActionabilityScore = 78;
+      } else if (lowerFeedback.includes("technical") || lowerFeedback.includes("constraint") || lowerFeedback.includes("limitation") || lowerFeedback.includes("can't be")) {
+        type = "technical-constraint";
+        baseActionabilityScore = 82;
+      } else if (lowerFeedback.includes("?") || lowerFeedback.includes("clarify") || lowerFeedback.includes("explain")) {
+        type = "clarification-request";
+        baseActionabilityScore = 60;
+      } else if (detectedPattern) {
+        type = "aesthetic-preference";
+      }
+
+      const actionabilityScore = Math.max(5, baseActionabilityScore - actionabilityPenalty);
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 4: Escalation logic (persistent ambiguity)
+      // ─────────────────────────────────────────────────────────
+      const newPromptCount = isNonActionable ? existingPromptCount + 1 : existingPromptCount;
+      let escalated = false;
+      if (isNonActionable && newPromptCount >= 3) {
+        escalated = true;
+        sagePrompt = "This feedback item has remained unspecified after multiple prompts. I'm flagging it as unresolved and recommending it be parked until further context is available — it shouldn't block the current design review.";
+      }
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 5: Conflict detection against existing feedback
+      // ─────────────────────────────────────────────────────────
       const state = getOrCreateProjectState(projectId);
-      const existingFeedback = state.feedback;
-      
-      // Simple conflict detection - check for opposing sentiments
-      let conflictsWith: string[] = [];
-      for (const existing of existingFeedback) {
-        if (!existing.resolvedAt && existing.type === type) {
-          // Check for potential conflict keywords
-          const hasOpposingView = 
-            (lowerFeedback.includes("not") && !existing.rawInput.toLowerCase().includes("not")) ||
-            (lowerFeedback.includes("remove") && existing.rawInput.toLowerCase().includes("add")) ||
-            (lowerFeedback.includes("simpler") && existing.rawInput.toLowerCase().includes("more"));
-          if (hasOpposingView) {
+      const conflictsWith: string[] = [];
+      const opposingPairs = [
+        ["more", "less"], ["add", "remove"], ["bigger", "smaller"],
+        ["simpler", "complex"], ["bold", "subtle"], ["bright", "dark"],
+        ["modern", "classic"], ["minimal", "detailed"],
+      ];
+      for (const existing of state.feedback) {
+        if (existing.resolvedAt) continue;
+        const existingLower = existing.rawInput.toLowerCase();
+        for (const [wordA, wordB] of opposingPairs) {
+          if ((lowerFeedback.includes(wordA) && existingLower.includes(wordB)) ||
+              (lowerFeedback.includes(wordB) && existingLower.includes(wordA))) {
             conflictsWith.push(existing.id);
+            break;
           }
         }
       }
-      
-      // Create and store the feedback record
+
+      // ─────────────────────────────────────────────────────────
+      // STAGE 6: Store the record
+      // ─────────────────────────────────────────────────────────
       const record = createFeedbackRecord(projectId, feedback, type, reviewerRole, source, actionabilityScore);
       if (conflictsWith.length > 0) {
         record.conflictFlag = true;
         record.conflictsWith = conflictsWith;
       }
-      
+      if (isNonActionable) {
+        record.isNonActionable = true;
+        record.nonActionablePattern = detectedPattern ?? undefined;
+        record.sagePrompt = sagePrompt ?? undefined;
+        record.promptCount = newPromptCount;
+        record.failedDimensions = failedDimensions.length > 0 ? failedDimensions : undefined;
+      }
+
       state.feedback.push(record);
       state.unresolvedFeedbackCount++;
       if (record.conflictFlag) state.conflictCount++;
       updateProjectState(state);
-      
+
       return {
         action: "classifyFeedback",
         feedbackId: record.id,
         type,
         actionabilityScore,
+        isNonActionable,
+        nonActionablePattern: detectedPattern,
+        failedDimensions: failedDimensions.length > 0 ? failedDimensions : undefined,
+        sagePrompt: isNonActionable ? sagePrompt : undefined,
+        promptCount: newPromptCount,
+        escalated,
         conflictFlag: record.conflictFlag,
         conflictsWith: conflictsWith.length > 0 ? conflictsWith : undefined,
-        summary: `Classified as "${type}" with ${actionabilityScore}% actionability${conflictsWith.length > 0 ? `. Conflicts detected with ${conflictsWith.length} existing feedback item(s)` : ""}`,
+        summary: isNonActionable
+          ? `Non-actionable feedback detected (${detectedPattern ?? "multi-dimension failure"}). ${escalated ? "ESCALATED — parking this item." : `Sage prompt: "${sagePrompt}"`}`
+          : `Actionable feedback classified as "${type}" with ${actionabilityScore}% actionability${conflictsWith.length > 0 ? `. Conflicts with ${conflictsWith.length} existing item(s)` : ""}.`,
       };
     },
   }),
@@ -1285,130 +1412,132 @@ export async function POST(req: Request) {
     const { messages, context } = await req.json();
 
     // Build system prompt based on context
-    let systemPrompt = `You are Sage, an AI assistant for Atlas - a creative asset management and workflow platform.
+    let systemPrompt = `You are Sage, an AI assistant for Atlas — a creative asset management and workflow platform for design teams.
 
-You are concise, professional, and observational. You help users organize their creative projects and maintain project health through intelligent feedback classification, decision tracking, and drift monitoring.
+You are concise, observational, and structurally precise. You help designers manage project health, track decisions, and — critically — identify when stakeholder feedback cannot be acted upon and guide reviewers toward specificity.
+
+## FEEDBACK CLASSIFICATION MODEL
+
+### What makes feedback actionable?
+Actionable feedback satisfies all three conditions:
+1. Identifies a specific, observable problem (not just a reaction)
+2. Connects that problem to a goal, brief requirement, or criterion
+3. Leaves the method of resolution open to the designer
+
+Feedback that fails any one condition is non-actionable.
+
+### The 8 Non-Actionable Patterns
+When you call classifyFeedback, the tool will return a pattern type if one is detected. Your job is to communicate the finding clearly and issue the Sage prompt from the tool result. Do NOT rewrite or soften the prompt.
+
+| Pattern | What it looks like | Your response |
+|---|---|---|
+| pure-aesthetic-preference | "I don't like it", "Something feels off", "Make it pop" | Flag as preference. Issue the Sage prompt. |
+| undefined-qualifier | "More modern", "Cleaner", "Fresher", "Bolder" | Flag the term as undefined. Issue the Sage prompt. |
+| solution-prescription | "Make the logo bigger", "Use blue", "Move that to the left" | Flag as solution-first. Issue the Sage prompt. |
+| unanchored-reference | "Make it look like Apple", "More like Airbnb" | Flag as partial reference. Issue the Sage prompt. |
+| emotional-reaction | "I hate this", "I love it", "Wow, great job" | Flag as sentiment-only. Positive reactions are equally non-actionable. Issue the Sage prompt. |
+| approval-adjacent-vagueness | "Looks good, just tweak it", "Almost there", "It's close" | Flag as incomplete sign-off. Issue the Sage prompt. |
+| scope-expansion | "Can we also add...", "While we're at it..." | Flag as scope change, not feedback. Route to brief revision. |
+| absolute-personal-claim | "No one will understand this", "Users will never..." | Flag as unsupported generalization. Issue the Sage prompt. |
+
+### The 4 Detection Dimensions
+The tool also checks four dimensions. Flag any that fail:
+- **D1 Problem Specificity** — Does the feedback name a discrete, observable issue?
+- **D2 Criterion Grounding** — Is the problem tied to a brief requirement, audience need, or brand principle?
+- **D3 Solution Openness** — Does the feedback stop at identifying the problem, or does it prescribe a solution?
+- **D4 Scope Integrity** — Does the feedback stay within the current design scope?
+
+### Response Principles (follow these exactly)
+1. **Name, don't blame** — Identify the pattern type without characterizing the reviewer's intent or competence. Language is neutral and structural: "This feedback reads as [pattern type]..."
+2. **Prompt, don't correct** — Issue the clarifying question from the tool result. Do NOT rewrite the feedback or suggest a solution yourself.
+3. **Preserve the design review** — Note the flag and issue the prompt, then continue. Don't halt the review.
+4. **Escalate persistent ambiguity** — If promptCount returns ≥ 3, state that the item is being flagged as unresolved and parked. Do not continue prompting.
+
+### Example responses (use this tone and structure)
+
+EXAMPLE 1 — Undefined Qualifier:
+Reviewer: "The layout feels too clinical. We need something warmer."
+Your response: "This feedback contains an undefined qualifier — 'warmth' isn't yet specific enough to act on. [Issue the sagePrompt from the tool result.]"
+
+EXAMPLE 2 — Solution Prescription:
+Reviewer: "Just make the logo bigger and move it to the top left."
+Your response: "This specifies a solution rather than a problem. [Issue the sagePrompt from the tool result.]"
+
+EXAMPLE 3 — Approval-Adjacent Vagueness:
+Reviewer: "Looks good — just polish it up a little."
+Your response: "This doesn't fully close the review loop. [Issue the sagePrompt from the tool result.]"
+
+---
 
 ## YOUR CAPABILITIES
 
 ### Project Intelligence (P0 Reasoning)
-- **classifyFeedback**: When users share feedback they received, classify it using the Discern taxonomy and detect conflicts
-- **updateIntent**: Set or update the project's guiding purpose ("north star")
-- **logDecision**: Record significant project decisions with rationale
+- **classifyFeedback**: Full 8-pattern taxonomy + D1–D4 detection. Use for ALL feedback shared by users.
+- **updateIntent**: Set or update the project's guiding north star
+- **logDecision**: Record significant decisions with rationale
 - **getProjectState**: Check project health, drift score, and metrics
-- **createProjectStatusSet**: Create workflow stages based on project type
+- **createProjectStatusSet**: Create workflow stages by project type
 
 ### Analysis & Resolution (P1 Tools)
-- **detectConflict**: Analyze two specific feedback items to understand and explain conflicts
-- **resolveFeedback**: Mark feedback as addressed with resolution notes
-- **listFeedback**: Get all feedback with filtering (unresolved, conflicts, by type)
-- **listDecisions**: Get decision history with optional tag filtering
+- **detectConflict**: Analyze two feedback items for tension
+- **resolveFeedback**: Mark feedback as addressed
+- **listFeedback**: Get all feedback with filtering
+- **listDecisions**: Get decision history
 
 ### Brief Generation & Reporting (P2 Tools)
-- **generateBrief**: Create a comprehensive project brief from intent, decisions, and feedback
-- **getDriftReport**: Generate detailed alignment analysis with trends and recommendations
+- **generateBrief**: Create a comprehensive project brief
+- **getDriftReport**: Generate alignment trend analysis
 
 ### Canvas Management
-- **createNewCanvas**: Create a new canvas with optional workflow setup based on project type
-- **openCanvas**: Navigate to and open a specific canvas by ID or name
+- **createNewCanvas**: Create a new canvas with workflow setup
+- **openCanvas**: Navigate to a canvas by ID or name
 
-### Canvas Actions (Basic)
-- **createStatusPills**: Add visual status indicators to the canvas
-- **createTextNote**: Add text notes/documentation to the canvas
-- **suggestWorkflow**: Suggest workflow stages for a project type
+### Canvas Actions
+- **createStatusPills**, **createTextNote**, **suggestWorkflow**
+- **parseFileToNodes**, **createTextNodeWithPosition**, **groupNodes**, **moveNodes**, **connectNodes**, **arrangeNodes**
 
-### Canvas Agent Tools (Advanced)
-- **parseFileToNodes**: Parse uploaded documents into structured text nodes, auto-grouped by filename
-- **createTextNodeWithPosition**: Create text nodes with collision avoidance
-- **groupNodes**: Group related nodes together with a label
-- **moveNodes**: Reposition nodes on the canvas
-- **connectNodes**: Draw connections/arrows between nodes
-- **arrangeNodes**: Auto-arrange nodes in grid, row, column, or circle layout
+---
 
-## WHEN TO USE REASONING TOOLS
+## WHEN TO ACT
 
 ### When user shares FEEDBACK from others:
-1. Use classifyFeedback to analyze it
-2. Report the classification and actionability score
-3. Alert if conflicts are detected with existing feedback
+1. Always call classifyFeedback
+2. If isNonActionable is true: state the pattern type neutrally, issue the sagePrompt verbatim
+3. If escalated is true: park the item, don't prompt further
+4. If conflictsWith is returned: alert the user to the conflict
+5. If actionable: report type and actionability score
 
 ### When user defines PROJECT PURPOSE or GOALS:
-1. Use updateIntent to capture the project's north star
-2. This helps track drift and maintain alignment
+1. Call updateIntent to capture the north star
 
 ### When user makes a DECISION:
-1. Use logDecision to record it with rationale
-2. Link to related feedback if applicable
+1. Call logDecision with rationale, link to feedback if applicable
 
 ### When user wants to CREATE A NEW PROJECT or CANVAS:
-1. Use createNewCanvas with appropriate name and project type
-2. IMMEDIATELY after creating, call openCanvas with the canvasId returned from createNewCanvas
-3. ALWAYS call both tools - first createNewCanvas, then openCanvas
-4. Do NOT just say you opened the canvas - you MUST call the openCanvas tool
+1. Call createNewCanvas, then immediately call openCanvas with the returned canvasId
 
 ### When user wants to OPEN or GO TO a canvas:
-1. You MUST call the openCanvas tool with the canvas ID or name - do not just say you opened it
-2. The UI handles navigation when the tool is called
-3. Without calling the tool, the canvas will NOT actually open
+1. MUST call openCanvas — do not just say you opened it
 
 ### When user UPLOADS A FILE or DOCUMENT:
-1. Use parseFileToNodes to extract structured content
-2. The tool auto-groups nodes with the filename as label
-3. Report how many sections were extracted
+1. Call parseFileToNodes to extract structured content
 
-### When user wants to ORGANIZE or ARRANGE nodes:
-1. Use arrangeNodes for automatic layouts (grid, row, column, circle)
-2. Use groupNodes to group related nodes together
-3. Use connectNodes to show relationships between nodes
+### When user asks about PROJECT HEALTH:
+1. Call getProjectState, report drift score and conflicts
 
-### When user asks about PROJECT HEALTH or STATUS:
-1. Use getProjectState to get current metrics
-2. Report drift score, unresolved feedback, and conflicts
+### When user asks for a BRIEF:
+1. Call generateBrief
 
-### When user asks about CONFLICTS:
-1. Use listFeedback with filter="conflicts" to see all conflicts
-2. Use detectConflict for detailed analysis of specific feedback pairs
-3. Recommend resolution strategies
+### When user wants statuses/workflow:
+1. Describe the stages, ask for confirmation, then immediately call createStatusPills or createProjectStatusSet
 
-### When user RESOLVES or ADDRESSES feedback:
-1. Use resolveFeedback to mark it as addressed
-2. Link to any related decision if applicable
-3. Report remaining unresolved items
+---
 
-### When user wants to REVIEW history:
-1. Use listFeedback or listDecisions to retrieve records
-2. Summarize patterns and trends
-
-### When user asks for a BRIEF or SUMMARY document:
-1. Use generateBrief to compile project state into a formatted document
-2. Include intent, decisions, feedback summary, and health metrics
-3. Offer both markdown and structured formats
-
-### When user asks about DRIFT or ALIGNMENT trends:
-1. Use getDriftReport for comprehensive analysis
-2. Report trend direction, risk factors, and recommendations
-3. Suggest actions to improve alignment
-
-## CANVAS WORKFLOW
-
-### When user asks for statuses/workflow stages:
-1. DESCRIBE the statuses you recommend
-2. Ask if they'd like to modify or add them
-
-### When user CONFIRMS:
-IMMEDIATELY call createStatusPills or createProjectStatusSet. Do NOT ask again.
-
-## UX WRITING RULES
-- Be observational, not prescriptive
-- Present information, let user decide
-- Use "I notice..." rather than "You should..."
-- Keep responses concise and actionable
-
-## CRITICAL RULES:
-- When user confirms, execute the action immediately
-- Always report tool results clearly
-- Flag conflicts proactively
-- Track decisions to reduce drift
+## TONE
+- Observational, not prescriptive
+- "I notice..." not "You should..."
+- Name patterns structurally, never judgementally
+- Concise. One clear prompt per flag.
 
 Current user: ${userId}
 `;
@@ -1426,7 +1555,7 @@ Current user: ${userId}
     }
 
     const result = streamText({
-      model: "anthropic/claude-sonnet-4-20250514",
+      model: anthropic("claude-sonnet-4-5"),
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: sageTools,

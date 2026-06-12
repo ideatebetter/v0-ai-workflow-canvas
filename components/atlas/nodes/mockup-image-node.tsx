@@ -1,7 +1,8 @@
 "use client";
 
 import React, { memo, useState } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "../smart-handles";
 
 export interface MockupImageNodeData {
   label: string;
@@ -37,27 +38,7 @@ function MockupImageNodeComponent({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Connection Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{
-          width: 16,
-          height: 16,
-          background: "#F0FE00",
-          border: "2px solid #121212",
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{
-          width: 16,
-          height: 16,
-          background: "#F0FE00",
-          border: "2px solid #121212",
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* Image */}
       <div

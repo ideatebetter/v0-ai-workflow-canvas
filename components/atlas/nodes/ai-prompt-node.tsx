@@ -1,7 +1,8 @@
 "use client";
 
 import { memo, useState, useCallback } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "../smart-handles";
 import { ChevronDown, Send, X, Loader2, Image } from "lucide-react";
 
 export interface AIPromptNodeData {
@@ -109,18 +110,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Input handle - connects FROM source image */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{
-          width: 20,
-          height: 20,
-          background: "#333",
-          border: "2px solid #555",
-          left: -10,
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* Header Toolbar */}
       <div

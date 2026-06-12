@@ -101,6 +101,13 @@ function getPagesFromCanvas(canvas: Canvas): CanvasPage[] {
   return [{ id: "page-1", name: "Page 1", nodes: canvas.nodes, edges: canvas.edges }];
 }
 
+// Deduplicate nodes by id — last occurrence wins so newer positions are preserved
+function deduplicateNodes<T extends { id: string }>(nodes: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const n of nodes) seen.set(n.id, n);
+  return Array.from(seen.values());
+}
+
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, frameworks, onRemoveFramework, targetNodeId, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
   // --- Multi-page state ---
   const [pages, setPages] = useState<CanvasPage[]>(() => getPagesFromCanvas(canvas));
@@ -118,7 +125,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Get the initial nodes/edges from the active page
   const initialPage = getPagesFromCanvas(canvas).find(p => p.id === (canvas.activePageId ?? getPagesFromCanvas(canvas)[0].id)) ?? getPagesFromCanvas(canvas)[0];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(initialPage.nodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(deduplicateNodes(initialPage.nodes));
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialPage.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
   const isInitialMount = useRef(true);
@@ -404,8 +411,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     if (incomingCount <= lastCanvasNodeCount.current) return;
     lastCanvasNodeCount.current = incomingCount;
     setNodes(current => {
-      const existingIds = new Set(current.map(n => n.id));
-      const added = sourceNodes.filter(n => !existingIds.has(n.id));
+      // Track all IDs (existing + already-queued adds) to prevent any duplicate from sourceNodes itself
+      const allIds = new Set(current.map(n => n.id));
+      const added: typeof current = [];
+      for (const n of sourceNodes) {
+        if (!allIds.has(n.id)) {
+          allIds.add(n.id);
+          added.push(n);
+        }
+      }
       return added.length > 0 ? [...current, ...added] : current;
     });
   }, [canvas.nodes, canvas.pages]);
@@ -443,7 +457,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     if (!targetPage) return;
     setPages(updatedPages);
     pagesRef.current = updatedPages;
-    setNodes(targetPage.nodes);
+    setNodes(deduplicateNodes(targetPage.nodes));
     setEdges(targetPage.edges);
     setActivePageId(targetPageId);
     activePageRef.current = targetPageId;
@@ -483,7 +497,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setPages(remainingPages);
     pagesRef.current = remainingPages;
     if (pageId === activePageRef.current) {
-      setNodes(targetPage.nodes);
+      setNodes(deduplicateNodes(targetPage.nodes));
       setEdges(targetPage.edges);
       lastCanvasNodeCount.current = targetPage.nodes.length;
     }
@@ -1221,6 +1235,47 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setEdges(eds => eds.filter(e => !freshIds.includes(e.source) && !freshIds.includes(e.target)));
   }, [nodes, setNodes, setEdges, presentationGroups]);
 
+  // Handle ungrouping a presentation group
+  const handleUngroupPresentation = useCallback((groupId: string) => {
+    const groupNode = nodes.find(n => n.id === groupId && n.type === "presentationGroup");
+    if (!groupNode) return;
+    const groupData = groupNode.data as import("@/lib/atlas-types").PresentationGroupNodeData;
+    const originalNodes = groupData.originalNodes ?? [];
+
+    // Restore original nodes (fall back to current thumbnails if no originalNodes)
+    const restoredNodes: AtlasNode[] = originalNodes.length > 0
+      ? originalNodes.map(orig => ({
+          id: orig.id,
+          type: orig.type as AtlasNode["type"],
+          position: orig.position,
+          data: orig.data as AtlasNode["data"],
+        }))
+      : (groupData.nodeIds ?? []).map((nid, i) => ({
+          id: nid,
+          type: "file" as const,
+          position: {
+            x: groupNode.position.x + (i % 3) * 240,
+            y: groupNode.position.y + Math.floor(i / 3) * 200,
+          },
+          data: { label: `Node ${i + 1}`, fileName: `node-${i + 1}`, fileExtension: ".png", fileCategory: "image", status: "draft", product: "brand", tasks: [], connectedNodes: 0, previewImages: [], uploadedFile: { url: groupData.thumbnails?.[i] ?? "", pathname: "", size: 0, uploadedAt: "" } } as AtlasNode["data"],
+        }));
+
+    setNodes(nds => [
+      ...nds.filter(n => n.id !== groupId),
+      ...restoredNodes,
+    ]);
+    setPresentationGroups(groups => groups.filter(g => g.id !== groupId));
+  }, [nodes, setNodes, setPresentationGroups]);
+
+  // Listen for ungroup events dispatched from presentation-group-node
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ groupId: string }>) => {
+      handleUngroupPresentation(e.detail.groupId);
+    };
+    window.addEventListener("atlas:ungroup-presentation", handler as EventListener);
+    return () => window.removeEventListener("atlas:ungroup-presentation", handler as EventListener);
+  }, [handleUngroupPresentation]);
+
   // Start presentation
   const handleStartPresentation = useCallback(() => {
     if (presentationEdges.length > 0 || presentationGroups.length > 0) {
@@ -1405,7 +1460,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         };
       });
 
-      setNodes((nds) => [...nds, ...newNodes]);
+      setNodes((nds) => {
+        const existingIds = new Set(nds.map(n => n.id));
+        return [...nds, ...newNodes.filter(n => !existingIds.has(n.id))];
+      });
     },
     [setNodes, nodes]
   );
@@ -1532,13 +1590,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         // Create new nodes for files without conflicts
         if (filesToCreate.length > 0) {
           const freePositions = findFreePositions(nodes, filesToCreate.length, position);
-          
+          const dropTimestamp = Date.now();
+
           const newNodes: AtlasNode[] = filesToCreate.map((file, index) => {
             const label = file.fileName.replace(file.extension, "");
             const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
             const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
-            const dropTimestamp = Date.now();
-            
+
             return {
               id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
               type: "file" as const,
@@ -1560,8 +1618,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             };
           });
 
-          // Deselect other nodes and add new ones
-          setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+          // Deselect other nodes and add new ones (dedup by ID to guard against double-add)
+          setNodes((nds) => {
+            const existingIds = new Set(nds.map(n => n.id));
+            return [...nds.map(n => ({ ...n, selected: false })), ...newNodes.filter(n => !existingIds.has(n.id))];
+          });
 
           // Center view on the first new node
           if (newNodes.length > 0) {

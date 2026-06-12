@@ -11,8 +11,9 @@ import { useAuth } from "@/lib/auth-context";
 type View = "home" | "canvas";
 
 const SETTINGS_STORAGE_KEY = "atlas-workspace-settings";
+const WORKSPACES_STORAGE_KEY = "atlas-workspaces";
+const ACTIVE_WORKSPACE_STORAGE_KEY = "atlas-active-workspace";
 
-// Load settings from localStorage (settings can stay local for now)
 function loadSettings(): WorkspaceSettings {
   if (typeof window === "undefined") return DEFAULT_WORKSPACE_SETTINGS;
   try {
@@ -26,12 +27,28 @@ function loadSettings(): WorkspaceSettings {
   return DEFAULT_WORKSPACE_SETTINGS;
 }
 
+function loadWorkspaces(): WorkspaceSettings[] {
+  if (typeof window === "undefined") return [DEFAULT_WORKSPACE_SETTINGS];
+  try {
+    const stored = localStorage.getItem(WORKSPACES_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error("Failed to load workspaces from localStorage:", e);
+  }
+  return [DEFAULT_WORKSPACE_SETTINGS];
+}
+
 export function AtlasApp() {
   const { user, loading: authLoading } = useAuth();
   const [view, setView] = useState<View>("home");
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const [canvases, setCanvases] = useState<Canvas[]>([]);
-  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
+  const [workspaces, setWorkspaces] = useState<WorkspaceSettings[]>([DEFAULT_WORKSPACE_SETTINGS]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(DEFAULT_WORKSPACE_SETTINGS.id);
+  const workspaceSettings: WorkspaceSettings = workspaces.find(w => w.id === activeWorkspaceId) ?? workspaces[0];
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK, ...SAMPLE_FRAMEWORKS]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
@@ -169,7 +186,16 @@ export function AtlasApp() {
 
   // Load settings and canvases on mount; also handle deep links (?canvas=&node=)
   useEffect(() => {
-    setWorkspaceSettings(loadSettings());
+    const loadedWorkspaces = loadWorkspaces();
+    setWorkspaces(loadedWorkspaces);
+    try {
+      const storedActiveId = localStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY);
+      if (storedActiveId && loadedWorkspaces.find(w => w.id === storedActiveId)) {
+        setActiveWorkspaceId(storedActiveId);
+      } else {
+        setActiveWorkspaceId(loadedWorkspaces[0].id);
+      }
+    } catch (e) { /* ignore */ }
     setIsHydrated(true);
 
     const params = new URLSearchParams(window.location.search);
@@ -179,7 +205,6 @@ export function AtlasApp() {
       setActiveCanvasId(targetCanvas);
       setView("canvas");
       if (targetNode) setDeepLinkNodeId(targetNode);
-      // Clean up URL without triggering a reload
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -191,16 +216,40 @@ export function AtlasApp() {
     }
   }, [user, authLoading, loadCanvasesFromAPI]);
 
-  // Save settings to localStorage whenever they change
+  // Save workspaces to localStorage whenever they change
   useEffect(() => {
     if (isHydrated) {
       try {
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(workspaceSettings));
+        localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(workspaces));
+        localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, activeWorkspaceId);
+        // Keep legacy key in sync with active workspace for backward compat
+        const active = workspaces.find(w => w.id === activeWorkspaceId);
+        if (active) localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(active));
       } catch (e) {
-        console.error("Failed to save settings to localStorage:", e);
+        console.error("Failed to save workspaces to localStorage:", e);
       }
     }
-  }, [workspaceSettings, isHydrated]);
+  }, [workspaces, activeWorkspaceId, isHydrated]);
+
+  const handleWorkspaceSettingsChange = useCallback((settings: WorkspaceSettings) => {
+    setWorkspaces(prev => prev.map(w => w.id === settings.id ? settings : w));
+  }, []);
+
+  const handleWorkspaceSwitch = useCallback((workspaceId: string) => {
+    setActiveWorkspaceId(workspaceId);
+  }, []);
+
+  const handleCreateWorkspace = useCallback((name: string) => {
+    const newWorkspace: WorkspaceSettings = {
+      ...DEFAULT_WORKSPACE_SETTINGS,
+      id: `ws-${Date.now()}`,
+      name,
+      description: "",
+      members: [],
+    };
+    setWorkspaces(prev => [...prev, newWorkspace]);
+    setActiveWorkspaceId(newWorkspace.id);
+  }, []);
 
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
@@ -570,7 +619,7 @@ export function AtlasApp() {
         onCanvasChange={handleCanvasChangeWithSync}
         onBack={handleBack}
         workspaceSettings={workspaceSettings}
-        onWorkspaceSettingsChange={setWorkspaceSettings}
+        onWorkspaceSettingsChange={handleWorkspaceSettingsChange}
         onSaveFramework={handleSaveFramework}
         onRemoveFramework={handleRemoveFramework}
         canvases={canvases}
@@ -590,7 +639,11 @@ export function AtlasApp() {
     <HomePage
       onOpenCanvas={handleOpenCanvas}
       workspaceSettings={workspaceSettings}
-      onWorkspaceSettingsChange={setWorkspaceSettings}
+      onWorkspaceSettingsChange={handleWorkspaceSettingsChange}
+      workspaces={workspaces}
+      activeWorkspaceId={activeWorkspaceId}
+      onWorkspaceSwitch={handleWorkspaceSwitch}
+      onWorkspaceCreate={handleCreateWorkspace}
       canvases={canvases}
       onCanvasesChange={handleCanvasesChange}
       onSaveAllToCloud={handleSaveAllToCloud}

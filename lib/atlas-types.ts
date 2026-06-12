@@ -494,6 +494,17 @@ export interface Decision {
   tags?: string[];
 }
 
+// Non-actionable feedback patterns (from Sage training model)
+export type NonActionablePattern =
+  | "pure-aesthetic-preference"   // Subjective reaction, no criterion given
+  | "undefined-qualifier"         // Vague adjective without reference point
+  | "solution-prescription"       // Prescribes solution, skips problem identification
+  | "unanchored-reference"        // Cites reference without specifying translatable quality
+  | "emotional-reaction"          // Pure sentiment — positive or negative
+  | "approval-adjacent-vagueness" // Implies near-done without specifying what remains
+  | "scope-expansion"             // Introduces new requirements mid-review
+  | "absolute-personal-claim";    // States personal assumption as universal audience truth
+
 // Feedback Record - Classified stakeholder input
 export interface FeedbackRecord {
   id: string;
@@ -509,6 +520,12 @@ export interface FeedbackRecord {
   createdAt: string;
   resolvedAt?: string;        // When/if the feedback was addressed
   resolution?: string;        // How it was resolved
+  // Non-actionable feedback tracking (Sage feedback model)
+  isNonActionable?: boolean;           // Whether this feedback fails actionability test
+  nonActionablePattern?: NonActionablePattern; // Which of the 8 patterns was detected
+  sagePrompt?: string;                 // Clarifying question Sage issued
+  promptCount?: number;                // How many clarifying prompts have been issued
+  failedDimensions?: string[];         // Which D1-D4 dimensions this feedback fails
 }
 
 // Drift Score - Measures alignment with original intent

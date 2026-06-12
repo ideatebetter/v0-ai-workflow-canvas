@@ -232,10 +232,15 @@ export function SageExpandedModal({
     switch (nodeType) {
       case "sageChatbot":
         return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
-            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
-            <circle cx="12" cy="10" r="3" />
-            <path d="M7 20.662V19c0-2.21 2.239-4 5-4s5 1.79 5 4v1.662" />
+          <svg width="20" height="20" viewBox="0 0 647.22 647.22" fill="none">
+            <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="265.27" y="533.28" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="265.27" y="355.52" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="265.27" y="177.76" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="533.28" y="268.01" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="456.15" y="79.07" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="268.01" y="0" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
+            <rect fill="#000" x="79.07" y="77.13" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
           </svg>
         );
       case "sageOverview":
@@ -299,7 +304,7 @@ export function SageExpandedModal({
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#F0FE0015" }}
+              style={{ backgroundColor: "#F0FE00" }}
             >
               {getIcon()}
             </div>
@@ -308,7 +313,7 @@ export function SageExpandedModal({
                 {getTitle()}
               </h2>
               <p className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Your creative AI assistant
+                Intelligence layer for design operations
               </p>
             </div>
           </div>
@@ -354,18 +359,27 @@ export function SageExpandedModal({
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                style={{ backgroundColor: "#F0FE0015" }}
+                style={{ backgroundColor: "#F0FE00" }}
               >
                 {getIcon()}
               </div>
               <h3 className="text-lg font-medium text-white mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                How can I help?
+                Sage is active.
               </h3>
-              <p className="text-sm text-gray-500 max-w-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Ask me to create status workflows, suggest project structures, add notes, or help organize your creative project.
+              <p className="text-sm text-gray-400 max-w-sm text-left" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                I maintain shared understanding across your goals, decisions, and revisions so your team stays aligned as work evolves.
               </p>
+              <p className="text-sm text-gray-400 max-w-sm text-left mt-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                I can help you:
+              </p>
+              <ul className="text-sm text-gray-400 max-w-sm text-left mt-1 space-y-1 list-disc list-inside" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <li>Surface and classify feedback across the project</li>
+                <li>Flag when work has drifted from stated intent</li>
+                <li>Log and retrieve key decisions as they're made</li>
+                <li>Execute canvas actions through natural language</li>
+              </ul>
               <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                {["Create statuses for my project", "Suggest a workflow", "Add a project note"].map((suggestion) => (
+                {["Classify some feedback", "Check project health", "Suggest a workflow", "Log a decision"].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputValue(suggestion)}

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { FileNodeData } from "@/lib/atlas-types";
 import { PRODUCT_COLORS } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
@@ -238,29 +239,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
         outlineOffset: 2,
       }}
     >
-      {/* Connection Handles - positioned at edge of node, visible on hover */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ 
-          background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
-          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
-          width: 20,
-          height: 20,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "target",
-              position: { x: rect.left, y: rect.top + rect.height / 2 }
-            }
-          }));
-        }}
-      />
+      <SmartHandles nodeId={id} />
 
       {/* Header - File icon and name */}
       <div 
@@ -464,28 +443,6 @@ export function FileNode({ id, data, selected }: NodeProps) {
         </div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ 
-          background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
-          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
-          width: 20,
-          height: 20,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "source",
-              position: { x: rect.right, y: rect.top + rect.height / 2 }
-            }
-          }));
-        }}
-      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
@@ -381,10 +382,10 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
             <p className="text-[13px] text-center leading-relaxed text-muted-foreground" style={{ letterSpacing: "-0.01em" }}>
-              Your operational intelligence layer.
+              Intelligence layer for design operations.
             </p>
             <p className="text-[11px] text-center mt-1.5 text-muted-foreground/60" style={{ letterSpacing: "0.01em" }}>
-              Surfaces patterns. Preserves intent. Executes tasks.
+              Classifies feedback. Flags drift. Logs decisions.
             </p>
           </div>
         )}
@@ -571,19 +572,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
         </div>
       </div>
 
-      {/* Handles - Minimal */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 18, height: 18, borderRadius: 9 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all duration-300 !cursor-pointer"
-        style={{ background: "rgba(28, 28, 30, 0.9)", border: "2px solid rgba(240, 254, 0, 0.6)", width: 18, height: 18, borderRadius: 9 }}
-      />
+      <SmartHandles nodeId={id} />
     </div>
   );
 }

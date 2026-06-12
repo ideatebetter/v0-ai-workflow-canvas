@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { StakeholderNodeData } from "@/lib/atlas-types";
 
 const COMPREHENSION_CONFIG = {
@@ -102,19 +103,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
         </div>
       </div>
 
-      {/* Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #F0FE00", width: 20, height: 20 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #F0FE00", width: 20, height: 20 }}
-      />
+      <SmartHandles nodeId={id} />
     </div>
   );
 }

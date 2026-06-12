@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
-import { Handle, Position } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { PipelineNodeData } from "@/lib/atlas-types";
 
 export function PipelineNode({ id, data, selected }: NodeProps) {
@@ -99,19 +99,7 @@ export function PipelineNode({ id, data, selected }: NodeProps) {
         </div>
       )}
 
-      {/* Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #f59e0b", width: 20, height: 20 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #f59e0b", width: 20, height: 20 }}
-      />
+      <SmartHandles nodeId={id} />
     </div>
   );
 }

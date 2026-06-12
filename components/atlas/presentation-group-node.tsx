@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { PresentationGroupNodeData } from "@/lib/atlas-types";
 import { useCanvasNodeActions } from "./canvas-node-actions-context";
 
@@ -73,19 +74,7 @@ export function PresentationGroupNode({
         border: "2px dashed #F0FE00",
       }}
     >
-      {/* Connection Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{
-          background: "#F0FE00",
-          width: 10,
-          height: 10,
-          border: "2px solid #000",
-          left: -5,
-        }}
-      />
+      <SmartHandles nodeId={id as string} />
 
       {/* Header */}
       <div
@@ -124,6 +113,23 @@ export function PresentationGroupNode({
             {displayLabel}
           </span>
         )}
+        {/* Ungroup */}
+        <button
+          type="button"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 flex-shrink-0"
+          title="Ungroup slides"
+          onClick={e => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent("atlas:ungroup-presentation", { detail: { groupId: id as string } }));
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <rect x="1" y="1" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="6" y="1" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="1" y="6" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="6" y="6" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
+          </svg>
+        </button>
         {/* Share / copy link */}
         <button
           type="button"
@@ -178,18 +184,6 @@ export function PresentationGroupNode({
         </div>
       )}
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{
-          background: "#F0FE00",
-          width: 10,
-          height: 10,
-          border: "2px solid #000",
-          right: -5,
-        }}
-      />
     </div>
   );
 }

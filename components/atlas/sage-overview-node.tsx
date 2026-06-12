@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
+import { SmartHandles } from "./smart-handles";
 import type { 
   SageOverviewNodeData, 
   SageHealthStatus,
@@ -439,19 +440,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
       {viewLayer === "expanded" && renderExpandedLayer()}
       {viewLayer === "deep" && renderDeepLayer()}
 
-      {/* Handles */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: `2px solid ${healthColor}`, width: 18, height: 18 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#141414", border: `2px solid ${healthColor}`, width: 18, height: 18 }}
-      />
+      <SmartHandles nodeId={id} />
     </div>
   );
 }
