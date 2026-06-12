@@ -880,11 +880,11 @@ const [showSageChat, setShowSageChat] = useState(false);
   // Frameworks page: all user-owned frameworks with optional filter
   const filteredMyFrameworks = useMemo(() => {
     return frameworks.filter(f => {
-      if (frameworksFilter === "mine") return f.visibility === "private";
+      if (frameworksFilter === "mine") return f.visibility === "private" || f.createdBy?.id === currentUserId;
       if (frameworksFilter === "team") return f.visibility === "workspace";
       if (frameworksFilter === "drafts") return f.isPublished === false;
-      // "all" — everything owned by this user (not community-only discovery)
-      return f.visibility !== "community" || f.createdBy?.id === currentUserId;
+      // "all" — show everything available (own frameworks + team + community templates)
+      return true;
     }).filter(f => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();

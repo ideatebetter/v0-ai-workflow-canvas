@@ -124,7 +124,7 @@ export const LOGO_SPRINT_FRAMEWORK: CanvasFramework = {
   description:
     "A structured end-to-end logo design sprint covering brand strategy, creative brief, moodboard curation, and mockup delivery — with presentation flows for every review stage.",
   category: "branding",
-  visibility: "community",
+  visibility: "workspace",
   createdAt: NOW,
   createdBy: CREATOR,
   upvotes: 0,
