@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -25,6 +25,10 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
+import { FrameworkCreatorDialog } from "./framework-creator-dialog";
+import { FrameworkLibraryPanel } from "./framework-library-panel";
+import { FrameworkRunDialog } from "./framework-run-dialog";
+import { CanvasNodeActionsProvider } from "./canvas-node-actions-context";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
@@ -40,6 +44,9 @@ interface AtlasEditorProps {
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases?: Canvas[];
+  frameworks?: CanvasFramework[];
+  onRemoveFramework?: (frameworkId: string) => void;
+  targetNodeId?: string | null;
   onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
@@ -88,16 +95,42 @@ function findFreePositions(
   }));
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
+// Returns the normalized pages array for a canvas, creating a default page if needed
+function getPagesFromCanvas(canvas: Canvas): CanvasPage[] {
+  if (canvas.pages && canvas.pages.length > 0) return canvas.pages;
+  return [{ id: "page-1", name: "Page 1", nodes: canvas.nodes, edges: canvas.edges }];
+}
+
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, frameworks, onRemoveFramework, targetNodeId, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
+  // --- Multi-page state ---
+  const [pages, setPages] = useState<CanvasPage[]>(() => getPagesFromCanvas(canvas));
+  const [activePageId, setActivePageId] = useState<string>(() => {
+    if (canvas.activePageId) return canvas.activePageId;
+    const ps = getPagesFromCanvas(canvas);
+    return ps[0].id;
+  });
+  const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
+  const activePageRef = useRef(activePageId);
+  activePageRef.current = activePageId;
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+
+  // Get the initial nodes/edges from the active page
+  const initialPage = getPagesFromCanvas(canvas).find(p => p.id === (canvas.activePageId ?? getPagesFromCanvas(canvas)[0].id)) ?? getPagesFromCanvas(canvas)[0];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(initialPage.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialPage.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
   const isInitialMount = useRef(true);
-  const lastCanvasNodeCount = useRef(canvas.nodes.length);
+  const lastCanvasNodeCount = useRef(initialPage.nodes.length);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
+  const [showFrameworkCreator, setShowFrameworkCreator] = useState(false);
+  const [linkCopiedNodeId, setLinkCopiedNodeId] = useState<string | null>(null);
+  const [showFrameworkLibrary, setShowFrameworkLibrary] = useState(false);
+  const [runFramework, setRunFramework] = useState<CanvasFramework | null>(null);
   const [showMoveToCanvasDialog, setShowMoveToCanvasDialog] = useState(false);
   const [moveToCanvasMode, setMoveToCanvasMode] = useState<"move" | "copy">("move");
   const [contextMenu, setContextMenu] = useState<{
@@ -217,6 +250,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   }, [nodes, setNodes, setEdges]);
   
   // Listen for mockup generation events from file nodes
+  // Deep link: select and open the target node once nodes are loaded
+  useEffect(() => {
+    if (!targetNodeId) return;
+    const node = nodes.find(n => n.id === targetNodeId);
+    if (!node) return;
+    setNodes(nds => nds.map(n => ({ ...n, selected: n.id === targetNodeId })));
+    if (node.type === "file") setDetailModalNodeId(targetNodeId);
+  // Run once on mount — intentionally omit `nodes` to avoid re-running on every nodes change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetNodeId]);
+
   useEffect(() => {
     const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
       createAIPromptNode(e.detail.nodeId, e.detail.fileData);
@@ -334,27 +378,37 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
 
   // Sync canvas changes back to parent
+  // Helper: build updated pages array with current nodes/edges written into the active page
+  const buildUpdatedPages = useCallback((currentNodes: AtlasNode[], currentEdges: typeof edges, currentPages: CanvasPage[], currentActivePageId: string): CanvasPage[] => {
+    return currentPages.map(p => p.id === currentActivePageId ? { ...p, nodes: currentNodes, edges: currentEdges } : p);
+  }, []);
+
   const syncCanvas = useCallback((updatedComments?: CanvasComment[]) => {
+    const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
     onCanvasChange({
       ...canvas,
       nodes,
       edges,
+      pages: updatedPages,
+      activePageId: activePageRef.current,
       comments: updatedComments || comments,
       updatedAt: new Date().toISOString(),
     });
-  }, [canvas, nodes, edges, comments, onCanvasChange]);
+  }, [canvas, nodes, edges, comments, onCanvasChange, buildUpdatedPages]);
 
   // Merge nodes added externally (e.g. Figma sync) into local state without overwriting local edits
   useEffect(() => {
-    const incomingCount = canvas.nodes.length;
+    const activePage = (canvas.pages ?? []).find(p => p.id === activePageRef.current);
+    const sourceNodes = activePage?.nodes ?? canvas.nodes;
+    const incomingCount = sourceNodes.length;
     if (incomingCount <= lastCanvasNodeCount.current) return;
     lastCanvasNodeCount.current = incomingCount;
     setNodes(current => {
       const existingIds = new Set(current.map(n => n.id));
-      const added = canvas.nodes.filter(n => !existingIds.has(n.id));
+      const added = sourceNodes.filter(n => !existingIds.has(n.id));
       return added.length > 0 ? [...current, ...added] : current;
     });
-  }, [canvas.nodes]);
+  }, [canvas.nodes, canvas.pages]);
 
   // Auto-save nodes and edges when they change (debounced); skip the very first render
   // so opening a canvas doesn't immediately overwrite externally-added nodes in the DB.
@@ -365,10 +419,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
     const timeoutId = setTimeout(() => {
       if (nodes.length > 0 || edges.length > 0) {
+        const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
         onCanvasChange({
           ...canvas,
           nodes,
           edges,
+          pages: updatedPages,
+          activePageId: activePageRef.current,
           comments,
           updatedAt: new Date().toISOString(),
         });
@@ -377,6 +434,75 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
     return () => clearTimeout(timeoutId);
   }, [nodes, edges]); // Only trigger on nodes/edges changes, not canvas/comments to avoid loops
+
+  // Page switching: save current page, load the target page
+  const switchPage = useCallback((targetPageId: string) => {
+    if (targetPageId === activePageRef.current) return;
+    const updatedPages = pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p);
+    const targetPage = updatedPages.find(p => p.id === targetPageId);
+    if (!targetPage) return;
+    setPages(updatedPages);
+    pagesRef.current = updatedPages;
+    setNodes(targetPage.nodes);
+    setEdges(targetPage.edges);
+    setActivePageId(targetPageId);
+    activePageRef.current = targetPageId;
+    lastCanvasNodeCount.current = targetPage.nodes.length;
+    onCanvasChange({ ...canvas, pages: updatedPages, activePageId: targetPageId, nodes: targetPage.nodes, edges: targetPage.edges, updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Add a new page
+  const handleAddPage = useCallback(() => {
+    const newPage: CanvasPage = {
+      id: `page-${Date.now()}`,
+      name: `Page ${pagesRef.current.length + 1}`,
+      nodes: [],
+      edges: [],
+    };
+    const updatedPages = [...pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p), newPage];
+    setPages(updatedPages);
+    pagesRef.current = updatedPages;
+    setNodes([]);
+    setEdges([]);
+    setActivePageId(newPage.id);
+    activePageRef.current = newPage.id;
+    lastCanvasNodeCount.current = 0;
+    onCanvasChange({ ...canvas, pages: updatedPages, activePageId: newPage.id, nodes: [], edges: [], updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Delete a page
+  const handleDeletePage = useCallback((pageId: string) => {
+    if (pagesRef.current.length <= 1) return;
+    const savedPages = pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p);
+    const remainingPages = savedPages.filter(p => p.id !== pageId);
+    const deletedIdx = savedPages.findIndex(p => p.id === pageId);
+    const newActiveId = pageId === activePageRef.current
+      ? remainingPages[Math.max(0, deletedIdx - 1)].id
+      : activePageRef.current;
+    const targetPage = remainingPages.find(p => p.id === newActiveId)!;
+    setPages(remainingPages);
+    pagesRef.current = remainingPages;
+    if (pageId === activePageRef.current) {
+      setNodes(targetPage.nodes);
+      setEdges(targetPage.edges);
+      lastCanvasNodeCount.current = targetPage.nodes.length;
+    }
+    setActivePageId(newActiveId);
+    activePageRef.current = newActiveId;
+    onCanvasChange({ ...canvas, pages: remainingPages, activePageId: newActiveId, nodes: targetPage.nodes, edges: targetPage.edges, updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Rename a page
+  const handleRenamePage = useCallback((pageId: string, newName: string) => {
+    const trimmed = newName.trim() || "Untitled Page";
+    setPages(prev => {
+      const updated = prev.map(p => p.id === pageId ? { ...p, name: trimmed } : p);
+      pagesRef.current = updated;
+      onCanvasChange({ ...canvas, pages: updated, updatedAt: new Date().toISOString() });
+      return updated;
+    });
+    setRenamingPageId(null);
+  }, [canvas, onCanvasChange]);
 
   // Listen for Sage action events
   useEffect(() => {
@@ -1686,13 +1812,23 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
     setSelectedCommentId(null);
   }, []);
 
+  const handleCopyNodeLink = useCallback((nodeId: string) => {
+    const url = `${window.location.origin}?canvas=${canvas.id}&node=${nodeId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopiedNodeId(nodeId);
+      setTimeout(() => setLinkCopiedNodeId(null), 2000);
+    });
+  }, [canvas.id]);
+
   return (
+    <CanvasNodeActionsProvider value={{ onCopyNodeLink: handleCopyNodeLink }}>
     <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       <AtlasToolbar
         canvasName={canvas.name}
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
-        onSaveAsFramework={() => setShowSaveFrameworkDialog(true)}
+        onSaveAsFramework={() => setShowFrameworkCreator(true)}
+        onBrowseFrameworks={() => setShowFrameworkLibrary(true)}
         onCopyToCanvas={() => {
           setMoveToCanvasMode("copy");
           setShowMoveToCanvasDialog(true);
@@ -1701,6 +1837,11 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         hasOtherCanvases={canvases && canvases.length > 1}
         recentCanvases={recentCanvases}
         onSwitchCanvas={onSwitchCanvas}
+        pages={pages}
+        activePageId={activePageId}
+        onSwitchPage={switchPage}
+        onAddPage={handleAddPage}
+        onRenamePage={handleRenamePage}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -1962,28 +2103,94 @@ presentationMode={presentationMode}
         onSettingsChange={onWorkspaceSettingsChange}
         onMakeFramework={() => {
           setShowSettingsDialog(false);
-          setShowSaveFrameworkDialog(true);
+          setShowFrameworkCreator(true);
         }}
       />
 
-      {/* Save as Framework Dialog */}
+      {/* Save as Framework Dialog (legacy — kept for backwards compat) */}
       <SaveFrameworkDialog
         open={showSaveFrameworkDialog}
         onClose={() => setShowSaveFrameworkDialog(false)}
         canvas={canvas}
         currentUser={{
           ...workspaceSettings.members[0],
-          // Use branding profile picture if available
           avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
         }}
         onSaveFramework={(framework) => {
-          if (onSaveFramework) {
-            onSaveFramework(framework);
-          } else {
-            // Default behavior: log framework save (could be extended to persist locally)
-            console.log("[v0] Framework saved:", framework.name);
-          }
+          if (onSaveFramework) onSaveFramework(framework);
           setShowSaveFrameworkDialog(false);
+        }}
+      />
+
+      {/* Framework Creator Dialog (new — 2-step with parameters) */}
+      <FrameworkCreatorDialog
+        open={showFrameworkCreator}
+        onClose={() => setShowFrameworkCreator(false)}
+        canvas={canvas}
+        currentUser={{
+          ...workspaceSettings.members[0],
+          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
+        }}
+        onSaveFramework={(framework) => {
+          if (onSaveFramework) onSaveFramework(framework);
+          setShowFrameworkCreator(false);
+        }}
+      />
+
+      {/* Framework Library Panel */}
+      <FrameworkLibraryPanel
+        isOpen={showFrameworkLibrary}
+        onClose={() => setShowFrameworkLibrary(false)}
+        frameworks={frameworks ?? []}
+        currentUserId={workspaceSettings.members[0].id}
+        onRun={(fw) => {
+          setShowFrameworkLibrary(false);
+          setRunFramework(fw);
+        }}
+        onDelete={onRemoveFramework}
+      />
+
+      {/* Framework Run Dialog */}
+      <FrameworkRunDialog
+        framework={runFramework}
+        isOpen={runFramework !== null}
+        onClose={() => setRunFramework(null)}
+        onRun={(fw, paramValues) => {
+          const ts = Date.now();
+          const idMap = new Map<string, string>();
+          fw.nodes.forEach((n, i) => idMap.set(n.id, `fw-${ts}-${i}`));
+
+          // Clone nodes and replace {{param}} placeholders
+          const newNodes = fw.nodes.map(node => {
+            let dataStr = JSON.stringify(node.data);
+            for (const [pid, val] of Object.entries(paramValues)) {
+              dataStr = dataStr.split(`{{${pid}}}`).join(val.replace(/\\/g, "\\\\").replace(/"/g, '\\"'));
+            }
+            return { ...node, id: idMap.get(node.id)!, data: JSON.parse(dataStr), selected: true };
+          });
+
+          // Position below existing nodes
+          const existingNodes = nodes;
+          const maxY = existingNodes.reduce((m, n) => Math.max(m, n.position.y + (n.height ?? 200)), 0);
+          const minFwX = fw.nodes.reduce((m, n) => Math.min(m, n.position.x), Infinity);
+          const offsetY = existingNodes.length > 0 ? maxY + 120 : 100;
+          const offsetX = 100 - (isFinite(minFwX) ? minFwX : 0);
+
+          const positionedNodes = newNodes.map(n => ({
+            ...n,
+            position: { x: n.position.x + offsetX, y: n.position.y + offsetY },
+          }));
+
+          const newEdges = fw.edges.map((e, i) => ({
+            ...e,
+            id: `fw-edge-${ts}-${i}`,
+            source: idMap.get(e.source) ?? e.source,
+            target: idMap.get(e.target) ?? e.target,
+          }));
+
+          setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...positionedNodes]);
+          setEdges(eds => [...eds, ...newEdges]);
+          setRunFramework(null);
         }}
       />
 
@@ -2082,6 +2289,7 @@ presentationMode={presentationMode}
           isSyncableNode={contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")}
           hasSyncableNodes={contextMenu.nodes.some(n => n.type === "file" || n.type === "text")}
           isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
+          onCopyLink={contextMenu.nodes.length === 1 ? () => handleCopyNodeLink(contextMenu.nodes[0].id) : undefined}
         />
       )}
 
@@ -2179,9 +2387,11 @@ presentationMode={presentationMode}
             isOpen={true}
             onClose={() => setDetailModalNodeId(null)}
             fileData={fileData}
+            canvasId={canvas.id}
+            nodeId={detailModalNodeId}
             onUpdateFile={(updates) => {
-              setNodes(nds => nds.map(n => 
-                n.id === detailModalNodeId 
+              setNodes(nds => nds.map(n =>
+                n.id === detailModalNodeId
                   ? { ...n, data: { ...n.data, ...updates } }
                   : n
               ));
@@ -2312,7 +2522,104 @@ presentationMode={presentationMode}
   workspaceName={workspaceSettings.name}
   />
       )}
+
+      {/* Page Tab Bar */}
+      {!isPresenting && (
+        <div
+          className="flex items-center gap-0 px-2 select-none flex-shrink-0 overflow-x-auto"
+          style={{ backgroundColor: "#111111", borderTop: "1px solid #1e1e1e", height: 36, fontFamily: "system-ui, Inter, sans-serif" }}
+        >
+          {pages.map((page, idx) => {
+            const isActive = page.id === activePageId;
+            const isRenaming = renamingPageId === page.id;
+            return (
+              <div
+                key={page.id}
+                className="flex items-center group flex-shrink-0"
+                style={{ position: "relative" }}
+              >
+                {isRenaming ? (
+                  <input
+                    autoFocus
+                    defaultValue={page.name}
+                    onBlur={e => handleRenamePage(page.id, e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") handleRenamePage(page.id, (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") setRenamingPageId(null);
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="px-2 py-0.5 text-xs rounded outline-none"
+                    style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #3a82f6", width: 90, fontFamily: "system-ui, Inter, sans-serif" }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => switchPage(page.id)}
+                    onDoubleClick={() => setRenamingPageId(page.id)}
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs transition-colors"
+                    style={{
+                      color: isActive ? "#fff" : "#666",
+                      borderBottom: isActive ? "2px solid #3a82f6" : "2px solid transparent",
+                      backgroundColor: isActive ? "#1a1a1a" : "transparent",
+                      height: 35,
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    {idx + 1 <= 9 && (
+                      <span style={{ color: isActive ? "#3a82f6" : "#444", fontSize: 9, fontWeight: 600 }}>{idx + 1}</span>
+                    )}
+                    <span>{page.name}</span>
+                    {pages.length > 1 && (
+                      <span
+                        onClick={e => { e.stopPropagation(); handleDeletePage(page.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:text-red-400"
+                        style={{ fontSize: 10, color: "#555", cursor: "pointer", lineHeight: 1 }}
+                        role="button"
+                        aria-label="Delete page"
+                      >
+                        ×
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {/* Add page button */}
+          <button
+            type="button"
+            onClick={handleAddPage}
+            className="flex items-center justify-center px-2 transition-colors hover:text-white"
+            style={{ color: "#555", height: 35, flexShrink: 0 }}
+            title="Add page"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* "Link copied" toast */}
+      {linkCopiedNodeId && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium pointer-events-none"
+          style={{
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #F0FE0040",
+            color: "#F0FE00",
+            fontFamily: "system-ui, Inter, sans-serif",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7L5 10L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Link copied to clipboard
+        </div>
+      )}
     </div>
+    </CanvasNodeActionsProvider>
   );
 }
 

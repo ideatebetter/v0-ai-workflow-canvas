@@ -17,6 +17,7 @@ interface NodeContextMenuProps {
   hasSyncableNodes?: boolean;
   isSynced?: boolean;
   onOrganize?: () => void;
+  onCopyLink?: () => void;
 }
 
 export function NodeContextMenu({
@@ -34,6 +35,7 @@ export function NodeContextMenu({
   hasSyncableNodes,
   isSynced,
   onOrganize,
+  onCopyLink,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -94,6 +96,29 @@ export function NodeContextMenu({
           {nodeLabel} Selected
         </span>
       </div>
+
+      {/* Copy link — shown for single node selection */}
+      {selectedCount === 1 && onCopyLink && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              onCopyLink();
+              onClose();
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+              <path d="M6.5 9.5L9.5 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 4L10.5 2.5C11.3284 1.67157 12.6716 1.67157 13.5 2.5V2.5C14.3284 3.32843 14.3284 4.67157 13.5 5.5L12 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M7 12L5.5 13.5C4.67157 14.3284 3.32843 14.3284 2.5 13.5V13.5C1.67157 12.6716 1.67157 11.3284 2.5 10.5L4 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Copy Link
+          </button>
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+        </>
+      )}
 
       {/* Duplicate in place */}
       <button

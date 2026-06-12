@@ -974,6 +974,14 @@ export interface PresentationGroupNodeData {
 }
 
 // Canvas interface
+// A single page within a canvas (Figma-style multi-page)
+export interface CanvasPage {
+  id: string;
+  name: string;
+  nodes: AtlasNode[];
+  edges: Edge[];
+}
+
 export interface Canvas {
   id: string;
   name: string;
@@ -991,6 +999,8 @@ export interface Canvas {
   presentationName?: string; // Optional name for presentation mode
   presentationGroups?: PresentationGroup[]; // Grouped nodes for presentation
   presentationFlows?: SavedPresentationFlow[]; // Saved named presentation flows
+  pages?: CanvasPage[]; // Multi-page support (Figma-style)
+  activePageId?: string; // ID of the currently active page
 }
 
 // Sample comments for initial canvas
@@ -1029,6 +1039,20 @@ export type FrameworkCategory = "workflow" | "branding" | "marketing" | "social"
 // Framework visibility type
 export type FrameworkVisibility = "private" | "workspace" | "community";
 
+// Framework parameter types
+export type FrameworkParamType = "text" | "textarea" | "color" | "image" | "select";
+
+// A single parameterized field in a framework template
+export interface FrameworkParameter {
+  id: string;             // slug used as {{id}} placeholder in node data
+  label: string;          // human-readable label shown in the run form
+  type: FrameworkParamType;
+  options?: string[];     // for "select" type
+  required: boolean;
+  placeholder?: string;
+  defaultValue?: string;
+}
+
 // Framework interface
 export interface CanvasFramework {
   id: string;
@@ -1045,6 +1069,10 @@ export interface CanvasFramework {
   upvotedBy: string[]; // Array of user IDs who upvoted
   downloads: number;
   tags: string[];
+  // Enhanced framework fields
+  parameters?: FrameworkParameter[];
+  isPublished?: boolean;  // false = draft, true = published to library
+  teamId?: string;
 }
 
 // Framework categories with labels

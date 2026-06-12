@@ -13,51 +13,51 @@ interface SyncFileDialogProps {
   onUnsync?: () => void;
 }
 
+// Flatten all nodes from a canvas across all pages
+function getAllNodesFromCanvas(canvas: Canvas): Array<{ node: AtlasNode; pageName: string | null }> {
+  if (canvas.pages && canvas.pages.length > 0) {
+    return canvas.pages.flatMap(p =>
+      p.nodes.map(node => ({ node, pageName: canvas.pages!.length > 1 ? p.name : null }))
+    );
+  }
+  return canvas.nodes.map(node => ({ node, pageName: null }));
+}
+
 // Get file or text nodes from a canvas that are eligible for syncing
 function getEligibleNodes(
   canvases: Canvas[],
   currentCanvasId: string,
   selectedNode: AtlasNode
-): Array<{ node: AtlasNode; canvas: Canvas; reason: string }> {
+): Array<{ node: AtlasNode; canvas: Canvas; reason: string; pageName: string | null }> {
   const isFileNode = selectedNode.type === "file";
   const isTextNode = selectedNode.type === "text";
-  
-  if (!isFileNode && !isTextNode) return [];
-  
-  const selectedData = selectedNode.data as FileNodeData | TextNodeData;
-  const eligible: Array<{ node: AtlasNode; canvas: Canvas; reason: string }> = [];
 
-  // Get sync-related properties
+  if (!isFileNode && !isTextNode) return [];
+
+  const selectedData = selectedNode.data as FileNodeData | TextNodeData;
+  const eligible: Array<{ node: AtlasNode; canvas: Canvas; reason: string; pageName: string | null }> = [];
+
   const selectedSyncGroupId = (selectedData as any).syncGroupId;
   const selectedOriginalId = (selectedData as any).originalNodeId;
-  
-  // For file nodes, get file name for matching
   const selectedFileName = isFileNode ? (selectedData as FileNodeData).fileName?.toLowerCase() || "" : "";
-  
-  // For text nodes, get label/content for matching
   const selectedLabel = selectedData.label?.toLowerCase() || "";
   const selectedContent = isTextNode ? (selectedData as TextNodeData).content?.toLowerCase() || "" : "";
 
   for (const canvas of canvases) {
-    for (const node of canvas.nodes) {
-      // Skip the selected node itself
+    for (const { node, pageName } of getAllNodesFromCanvas(canvas)) {
       if (node.id === selectedNode.id) continue;
-      
-      // Only consider same type nodes
       if (node.type !== selectedNode.type) continue;
-      
+
       const nodeData = node.data as FileNodeData | TextNodeData;
       const nodeSyncGroupId = (nodeData as any).syncGroupId;
       const nodeOriginalId = (nodeData as any).originalNodeId;
-      
-      // Skip if already in the same sync group
+
       if (selectedSyncGroupId && nodeSyncGroupId === selectedSyncGroupId) continue;
-      
+
       let reason = "";
-      
+
       if (isFileNode) {
         const nodeFileName = (nodeData as FileNodeData).fileName?.toLowerCase() || "";
-        
         if (nodeFileName === selectedFileName && selectedFileName !== "") {
           reason = "Same file name";
         } else if (selectedOriginalId && nodeOriginalId === selectedOriginalId) {
@@ -70,8 +70,6 @@ function getEligibleNodes(
       } else if (isTextNode) {
         const nodeLabel = nodeData.label?.toLowerCase() || "";
         const nodeContent = (nodeData as TextNodeData).content?.toLowerCase() || "";
-        
-        // Match by label
         if (nodeLabel === selectedLabel && selectedLabel !== "") {
           reason = "Same title";
         } else if (selectedOriginalId && nodeOriginalId === selectedOriginalId) {
@@ -82,13 +80,13 @@ function getEligibleNodes(
           reason = "Similar content";
         }
       }
-      
+
       if (reason) {
-        eligible.push({ node, canvas, reason });
+        eligible.push({ node, canvas, reason, pageName });
       }
     }
   }
-  
+
   return eligible;
 }
 
@@ -118,11 +116,11 @@ export function SyncFileDialog({
 
   // Group eligible nodes by canvas
   const nodesByCanvas = useMemo(() => {
-    const grouped: Record<string, Array<{ node: AtlasNode; reason: string }>> = {};
+    const grouped: Record<string, Array<{ node: AtlasNode; reason: string; pageName: string | null }>> = {};
     for (const item of eligibleNodes) {
       const canvasId = item.canvas.id;
       if (!grouped[canvasId]) grouped[canvasId] = [];
-      grouped[canvasId].push({ node: item.node, reason: item.reason });
+      grouped[canvasId].push({ node: item.node, reason: item.reason, pageName: item.pageName });
     }
     return grouped;
   }, [eligibleNodes]);
@@ -291,10 +289,10 @@ export function SyncFileDialog({
               {Object.entries(nodesByCanvas).map(([canvasId, nodes]) => {
                 const canvas = canvases.find(c => c.id === canvasId);
                 if (!canvas) return null;
-                
+
                 return (
                   <div key={canvasId} className="mb-4">
-                    <div 
+                    <div
                       className="text-xs text-gray-400 mb-2 flex items-center gap-2"
                       style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                     >
@@ -307,7 +305,7 @@ export function SyncFileDialog({
                       )}
                     </div>
                     <div className="space-y-2">
-                          {nodes.map(({ node, reason }, nodeIdx) => {
+                          {nodes.map(({ node, reason, pageName }, nodeIdx) => {
                           const nodeData = node.data as FileNodeData | TextNodeData;
                         const isNodeSelected = selectedTargetId === node.id;
                         const isTargetFile = node.type === "file";
@@ -352,7 +350,7 @@ export function SyncFileDialog({
                                 {nodeData.label || (isTargetFile ? (nodeData as FileNodeData).fileName : "Untitled")}
                               </p>
                               <p className="text-xs text-gray-500 truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-                                {reason}
+                                {pageName ? `${pageName} · ` : ""}{reason}
                               </p>
                             </div>
                             {isNodeSelected && (

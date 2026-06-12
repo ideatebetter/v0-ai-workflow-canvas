@@ -37,6 +37,7 @@ export function AtlasApp() {
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
+  const [deepLinkNodeId, setDeepLinkNodeId] = useState<string | null>(null);
 
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
@@ -165,10 +166,21 @@ export function AtlasApp() {
     }
   }, [user]);
 
-  // Load settings and canvases on mount
+  // Load settings and canvases on mount; also handle deep links (?canvas=&node=)
   useEffect(() => {
     setWorkspaceSettings(loadSettings());
     setIsHydrated(true);
+
+    const params = new URLSearchParams(window.location.search);
+    const targetCanvas = params.get("canvas");
+    const targetNode = params.get("node");
+    if (targetCanvas) {
+      setActiveCanvasId(targetCanvas);
+      setView("canvas");
+      if (targetNode) setDeepLinkNodeId(targetNode);
+      // Clean up URL without triggering a reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   // Load canvases when user changes
@@ -361,64 +373,62 @@ export function AtlasApp() {
     }
   }, [user]);
 
+  // Helper: apply a node transform to all nodes in a canvas (including pages)
+  function mapAllNodes(
+    canvas: import("@/lib/atlas-types").Canvas,
+    fn: (node: import("@/lib/atlas-types").AtlasNode) => import("@/lib/atlas-types").AtlasNode
+  ): import("@/lib/atlas-types").Canvas {
+    return {
+      ...canvas,
+      nodes: canvas.nodes.map(fn),
+      pages: canvas.pages?.map(p => ({ ...p, nodes: p.nodes.map(fn) })),
+    };
+  }
+
   // Handle syncing two files together
   const handleSyncFiles = useCallback((sourceNodeId: string, targetNodeId: string, targetCanvasId: string) => {
-    // Generate a new sync group ID or use existing one
     const syncGroupId = `sync-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     setCanvases((prev) => {
-      // First, find if either node already has a syncGroupId
+      // Find if either node already has a syncGroupId (search across all pages)
       let existingSyncGroupId: string | null = null;
-      
-      for (const canvas of prev) {
-        for (const node of canvas.nodes) {
+      outer: for (const canvas of prev) {
+        const allNodes = canvas.pages && canvas.pages.length > 0
+          ? canvas.pages.flatMap(p => p.nodes)
+          : canvas.nodes;
+        for (const node of allNodes) {
           if (node.id === sourceNodeId || node.id === targetNodeId) {
             const nodeData = node.data as import("@/lib/atlas-types").FileNodeData;
-            if (nodeData.syncGroupId) {
-              existingSyncGroupId = nodeData.syncGroupId;
-              break;
-            }
+            if (nodeData.syncGroupId) { existingSyncGroupId = nodeData.syncGroupId; break outer; }
           }
         }
-        if (existingSyncGroupId) break;
       }
-      
+
       const finalSyncGroupId = existingSyncGroupId || syncGroupId;
-      
-      return prev.map((canvas) => ({
-        ...canvas,
-        nodes: canvas.nodes.map((node) => {
+
+      return prev.map(canvas =>
+        mapAllNodes(canvas, node => {
           if (node.id === sourceNodeId || node.id === targetNodeId) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                syncGroupId: finalSyncGroupId,
-              },
-            };
+            return { ...node, data: { ...node.data, syncGroupId: finalSyncGroupId } };
           }
           return node;
-        }),
-      }));
+        })
+      );
     });
   }, []);
 
   // Handle unsyncing a file
   const handleUnsyncFile = useCallback((nodeId: string) => {
-    setCanvases((prev) => 
-      prev.map((canvas) => ({
-        ...canvas,
-        nodes: canvas.nodes.map((node) => {
+    setCanvases((prev) =>
+      prev.map(canvas =>
+        mapAllNodes(canvas, node => {
           if (node.id === nodeId) {
-            const { syncGroupId, ...restData } = node.data as import("@/lib/atlas-types").FileNodeData & { syncGroupId?: string };
-            return {
-              ...node,
-              data: restData,
-            };
+            const { syncGroupId: _removed, ...restData } = node.data as import("@/lib/atlas-types").FileNodeData & { syncGroupId?: string };
+            return { ...node, data: restData };
           }
           return node;
-        }),
-      }))
+        })
+      )
     );
   }, []);
 
@@ -437,13 +447,20 @@ export function AtlasApp() {
       // Find nodes that have changed and have a syncGroupId
       const changedSyncedNodes: Array<{ syncGroupId: string; data: import("@/lib/atlas-types").FileNodeData }> = [];
       
-      for (const updatedNode of updatedCanvas.nodes) {
+      // Collect all nodes from the updated canvas (active page nodes + all pages)
+      const allUpdatedNodes = updatedCanvas.pages && updatedCanvas.pages.length > 0
+        ? updatedCanvas.pages.flatMap(p => p.nodes)
+        : updatedCanvas.nodes;
+      const allPrevNodes = previousCanvas.pages && previousCanvas.pages.length > 0
+        ? previousCanvas.pages.flatMap(p => p.nodes)
+        : previousCanvas.nodes;
+
+      for (const updatedNode of allUpdatedNodes) {
         const nodeData = updatedNode.data as import("@/lib/atlas-types").FileNodeData;
         if (nodeData.syncGroupId) {
-          const prevNode = previousCanvas.nodes.find(n => n.id === updatedNode.id);
+          const prevNode = allPrevNodes.find(n => n.id === updatedNode.id);
           if (prevNode) {
             const prevData = prevNode.data as import("@/lib/atlas-types").FileNodeData;
-            // Check if relevant sync fields changed (uploadedFile, versions, activities, previewImages)
             if (
               JSON.stringify(nodeData.uploadedFile) !== JSON.stringify(prevData.uploadedFile) ||
               JSON.stringify(nodeData.versions) !== JSON.stringify(prevData.versions) ||
@@ -462,21 +479,13 @@ export function AtlasApp() {
         return prev.map((c) => (c.id === updatedCanvas.id ? updatedCanvas : c));
       }
       
-      // Propagate changes to all canvases
-      const newCanvases = prev.map((canvas) => {
-        if (canvas.id === updatedCanvas.id) {
-          return updatedCanvas;
-        }
-        
-        // Check if this canvas has any nodes in the changed sync groups
-        let hasChanges = false;
-        const updatedNodes = canvas.nodes.map((node) => {
-          const nodeData = node.data as import("@/lib/atlas-types").FileNodeData;
-          const matchingChange = changedSyncedNodes.find(c => c.syncGroupId === nodeData.syncGroupId);
-          
-          if (matchingChange) {
-            hasChanges = true;
-            return {
+      // Helper: apply sync data to a single node if it matches a changed sync group
+      const applySyncToNode = (node: import("@/lib/atlas-types").AtlasNode): { node: import("@/lib/atlas-types").AtlasNode; changed: boolean } => {
+        const nodeData = node.data as import("@/lib/atlas-types").FileNodeData;
+        const matchingChange = changedSyncedNodes.find(c => c.syncGroupId === nodeData.syncGroupId);
+        if (matchingChange) {
+          return {
+            node: {
               ...node,
               data: {
                 ...node.data,
@@ -486,21 +495,47 @@ export function AtlasApp() {
                 previewImages: matchingChange.data.previewImages,
                 lastModified: matchingChange.data.lastModified,
               },
-            };
-          }
-          return node;
+            },
+            changed: true,
+          };
+        }
+        return { node, changed: false };
+      };
+
+      // Propagate changes to all canvases (including pages)
+      const newCanvases = prev.map((canvas) => {
+        if (canvas.id === updatedCanvas.id) {
+          return updatedCanvas;
+        }
+
+        let hasChanges = false;
+
+        const updatedNodes = canvas.nodes.map(node => {
+          const result = applySyncToNode(node);
+          if (result.changed) hasChanges = true;
+          return result.node;
         });
-        
+
+        const updatedPages = canvas.pages?.map(p => {
+          const newPageNodes = p.nodes.map(node => {
+            const result = applySyncToNode(node);
+            if (result.changed) hasChanges = true;
+            return result.node;
+          });
+          return { ...p, nodes: newPageNodes };
+        });
+
         if (hasChanges) {
           const updatedSyncedCanvas = {
             ...canvas,
             nodes: updatedNodes,
+            pages: updatedPages,
             updatedAt: new Date().toISOString(),
           };
           canvasesToSave.push(updatedSyncedCanvas);
           return updatedSyncedCanvas;
         }
-        
+
         return canvas;
       });
       
@@ -536,7 +571,10 @@ export function AtlasApp() {
         workspaceSettings={workspaceSettings}
         onWorkspaceSettingsChange={setWorkspaceSettings}
         onSaveFramework={handleSaveFramework}
+        onRemoveFramework={handleRemoveFramework}
         canvases={canvases}
+        frameworks={frameworks}
+        targetNodeId={deepLinkNodeId}
         onCopyNodesToCanvas={handleCopyNodesToCanvas}
         onCreateCanvasWithNodes={handleCreateCanvasWithNodes}
         onSyncFiles={handleSyncFiles}
