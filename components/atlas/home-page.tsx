@@ -747,12 +747,13 @@ const [showSageChat, setShowSageChat] = useState(false);
     const extraNodes: CanvasFramework["nodes"] = [];
     const extraEdges: CanvasFramework["edges"] = [];
 
-    // Helper: create text nodes from PDF sections
+    // Helper: create text nodes from PDF sections — prefix avoids key collisions between multiple PDFs
     const makePDFNodes = async (
       file: File,
       startX: number,
       startY: number,
       textType: "brief" | "description",
+      prefix: string,
     ) => {
       try {
         const pages = await parsePDFToText(file);
@@ -760,14 +761,14 @@ const [showSageChat, setShowSageChat] = useState(false);
         const sections = splitIntoSections(fullText, 8);
         const now = new Date().toISOString();
         sections.forEach((section, idx) => {
-          const nodeId = `fw-pdf-${ts}-${idx}`;
+          const nodeId = `fw-${prefix}-${ts}-${idx}`;
           extraNodes.push({
             id: nodeId,
             type: "text",
             position: { x: startX, y: startY + idx * 260 },
             selected: false,
             data: {
-              label: `${file.name.replace(".pdf", "")} — Page ${idx + 1}`,
+              label: `${file.name.replace(".pdf", "")} — Section ${idx + 1}`,
               content: section,
               textType,
               lastModified: now,
@@ -775,8 +776,8 @@ const [showSageChat, setShowSageChat] = useState(false);
           } as CanvasFramework["nodes"][0]);
           if (idx > 0) {
             extraEdges.push({
-              id: `fwe-pdf-${ts}-${idx}`,
-              source: `fw-pdf-${ts}-${idx - 1}`,
+              id: `fwe-${prefix}-${ts}-${idx}`,
+              source: `fw-${prefix}-${ts}-${idx - 1}`,
               target: nodeId,
               type: "default",
             });
@@ -790,13 +791,13 @@ const [showSageChat, setShowSageChat] = useState(false);
     // Handle strategy PDF
     const strategyPDF = paramValues["strategy_pdf"];
     if (strategyPDF instanceof File && strategyPDF.name.endsWith(".pdf")) {
-      await makePDFNodes(strategyPDF, -600, 280, "brief");
+      await makePDFNodes(strategyPDF, -600, 280, "brief", "strategy");
     }
 
     // Handle brief PDF
     const briefPDF = paramValues["brief_pdf"];
     if (briefPDF instanceof File && briefPDF.name.endsWith(".pdf")) {
-      await makePDFNodes(briefPDF, -600, 2000, "brief");
+      await makePDFNodes(briefPDF, -600, 2000, "brief", "brief");
     }
 
     // Handle logo file — inject as the logo node's preview image
