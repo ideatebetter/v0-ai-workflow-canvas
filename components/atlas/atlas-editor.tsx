@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -88,12 +88,34 @@ function findFreePositions(
   }));
 }
 
+// Returns the normalized pages array for a canvas, creating a default page if needed
+function getPagesFromCanvas(canvas: Canvas): CanvasPage[] {
+  if (canvas.pages && canvas.pages.length > 0) return canvas.pages;
+  return [{ id: "page-1", name: "Page 1", nodes: canvas.nodes, edges: canvas.edges }];
+}
+
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
+  // --- Multi-page state ---
+  const [pages, setPages] = useState<CanvasPage[]>(() => getPagesFromCanvas(canvas));
+  const [activePageId, setActivePageId] = useState<string>(() => {
+    if (canvas.activePageId) return canvas.activePageId;
+    const ps = getPagesFromCanvas(canvas);
+    return ps[0].id;
+  });
+  const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
+  const activePageRef = useRef(activePageId);
+  activePageRef.current = activePageId;
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+
+  // Get the initial nodes/edges from the active page
+  const initialPage = getPagesFromCanvas(canvas).find(p => p.id === (canvas.activePageId ?? getPagesFromCanvas(canvas)[0].id)) ?? getPagesFromCanvas(canvas)[0];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(initialPage.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialPage.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
   const isInitialMount = useRef(true);
-  const lastCanvasNodeCount = useRef(canvas.nodes.length);
+  const lastCanvasNodeCount = useRef(initialPage.nodes.length);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -334,27 +356,37 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
 
   // Sync canvas changes back to parent
+  // Helper: build updated pages array with current nodes/edges written into the active page
+  const buildUpdatedPages = useCallback((currentNodes: AtlasNode[], currentEdges: typeof edges, currentPages: CanvasPage[], currentActivePageId: string): CanvasPage[] => {
+    return currentPages.map(p => p.id === currentActivePageId ? { ...p, nodes: currentNodes, edges: currentEdges } : p);
+  }, []);
+
   const syncCanvas = useCallback((updatedComments?: CanvasComment[]) => {
+    const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
     onCanvasChange({
       ...canvas,
       nodes,
       edges,
+      pages: updatedPages,
+      activePageId: activePageRef.current,
       comments: updatedComments || comments,
       updatedAt: new Date().toISOString(),
     });
-  }, [canvas, nodes, edges, comments, onCanvasChange]);
+  }, [canvas, nodes, edges, comments, onCanvasChange, buildUpdatedPages]);
 
   // Merge nodes added externally (e.g. Figma sync) into local state without overwriting local edits
   useEffect(() => {
-    const incomingCount = canvas.nodes.length;
+    const activePage = (canvas.pages ?? []).find(p => p.id === activePageRef.current);
+    const sourceNodes = activePage?.nodes ?? canvas.nodes;
+    const incomingCount = sourceNodes.length;
     if (incomingCount <= lastCanvasNodeCount.current) return;
     lastCanvasNodeCount.current = incomingCount;
     setNodes(current => {
       const existingIds = new Set(current.map(n => n.id));
-      const added = canvas.nodes.filter(n => !existingIds.has(n.id));
+      const added = sourceNodes.filter(n => !existingIds.has(n.id));
       return added.length > 0 ? [...current, ...added] : current;
     });
-  }, [canvas.nodes]);
+  }, [canvas.nodes, canvas.pages]);
 
   // Auto-save nodes and edges when they change (debounced); skip the very first render
   // so opening a canvas doesn't immediately overwrite externally-added nodes in the DB.
@@ -365,10 +397,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
     const timeoutId = setTimeout(() => {
       if (nodes.length > 0 || edges.length > 0) {
+        const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
         onCanvasChange({
           ...canvas,
           nodes,
           edges,
+          pages: updatedPages,
+          activePageId: activePageRef.current,
           comments,
           updatedAt: new Date().toISOString(),
         });
@@ -377,6 +412,75 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
     return () => clearTimeout(timeoutId);
   }, [nodes, edges]); // Only trigger on nodes/edges changes, not canvas/comments to avoid loops
+
+  // Page switching: save current page, load the target page
+  const switchPage = useCallback((targetPageId: string) => {
+    if (targetPageId === activePageRef.current) return;
+    const updatedPages = pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p);
+    const targetPage = updatedPages.find(p => p.id === targetPageId);
+    if (!targetPage) return;
+    setPages(updatedPages);
+    pagesRef.current = updatedPages;
+    setNodes(targetPage.nodes);
+    setEdges(targetPage.edges);
+    setActivePageId(targetPageId);
+    activePageRef.current = targetPageId;
+    lastCanvasNodeCount.current = targetPage.nodes.length;
+    onCanvasChange({ ...canvas, pages: updatedPages, activePageId: targetPageId, nodes: targetPage.nodes, edges: targetPage.edges, updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Add a new page
+  const handleAddPage = useCallback(() => {
+    const newPage: CanvasPage = {
+      id: `page-${Date.now()}`,
+      name: `Page ${pagesRef.current.length + 1}`,
+      nodes: [],
+      edges: [],
+    };
+    const updatedPages = [...pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p), newPage];
+    setPages(updatedPages);
+    pagesRef.current = updatedPages;
+    setNodes([]);
+    setEdges([]);
+    setActivePageId(newPage.id);
+    activePageRef.current = newPage.id;
+    lastCanvasNodeCount.current = 0;
+    onCanvasChange({ ...canvas, pages: updatedPages, activePageId: newPage.id, nodes: [], edges: [], updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Delete a page
+  const handleDeletePage = useCallback((pageId: string) => {
+    if (pagesRef.current.length <= 1) return;
+    const savedPages = pagesRef.current.map(p => p.id === activePageRef.current ? { ...p, nodes, edges } : p);
+    const remainingPages = savedPages.filter(p => p.id !== pageId);
+    const deletedIdx = savedPages.findIndex(p => p.id === pageId);
+    const newActiveId = pageId === activePageRef.current
+      ? remainingPages[Math.max(0, deletedIdx - 1)].id
+      : activePageRef.current;
+    const targetPage = remainingPages.find(p => p.id === newActiveId)!;
+    setPages(remainingPages);
+    pagesRef.current = remainingPages;
+    if (pageId === activePageRef.current) {
+      setNodes(targetPage.nodes);
+      setEdges(targetPage.edges);
+      lastCanvasNodeCount.current = targetPage.nodes.length;
+    }
+    setActivePageId(newActiveId);
+    activePageRef.current = newActiveId;
+    onCanvasChange({ ...canvas, pages: remainingPages, activePageId: newActiveId, nodes: targetPage.nodes, edges: targetPage.edges, updatedAt: new Date().toISOString() });
+  }, [nodes, edges, canvas, onCanvasChange, setNodes, setEdges]);
+
+  // Rename a page
+  const handleRenamePage = useCallback((pageId: string, newName: string) => {
+    const trimmed = newName.trim() || "Untitled Page";
+    setPages(prev => {
+      const updated = prev.map(p => p.id === pageId ? { ...p, name: trimmed } : p);
+      pagesRef.current = updated;
+      onCanvasChange({ ...canvas, pages: updated, updatedAt: new Date().toISOString() });
+      return updated;
+    });
+    setRenamingPageId(null);
+  }, [canvas, onCanvasChange]);
 
   // Listen for Sage action events
   useEffect(() => {
@@ -1701,6 +1805,11 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         hasOtherCanvases={canvases && canvases.length > 1}
         recentCanvases={recentCanvases}
         onSwitchCanvas={onSwitchCanvas}
+        pages={pages}
+        activePageId={activePageId}
+        onSwitchPage={switchPage}
+        onAddPage={handleAddPage}
+        onRenamePage={handleRenamePage}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -2311,6 +2420,83 @@ presentationMode={presentationMode}
   }}
   workspaceName={workspaceSettings.name}
   />
+      )}
+
+      {/* Page Tab Bar */}
+      {!isPresenting && (
+        <div
+          className="flex items-center gap-0 px-2 select-none flex-shrink-0 overflow-x-auto"
+          style={{ backgroundColor: "#111111", borderTop: "1px solid #1e1e1e", height: 36, fontFamily: "system-ui, Inter, sans-serif" }}
+        >
+          {pages.map((page, idx) => {
+            const isActive = page.id === activePageId;
+            const isRenaming = renamingPageId === page.id;
+            return (
+              <div
+                key={page.id}
+                className="flex items-center group flex-shrink-0"
+                style={{ position: "relative" }}
+              >
+                {isRenaming ? (
+                  <input
+                    autoFocus
+                    defaultValue={page.name}
+                    onBlur={e => handleRenamePage(page.id, e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") handleRenamePage(page.id, (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") setRenamingPageId(null);
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="px-2 py-0.5 text-xs rounded outline-none"
+                    style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #3a82f6", width: 90, fontFamily: "system-ui, Inter, sans-serif" }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => switchPage(page.id)}
+                    onDoubleClick={() => setRenamingPageId(page.id)}
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs transition-colors"
+                    style={{
+                      color: isActive ? "#fff" : "#666",
+                      borderBottom: isActive ? "2px solid #3a82f6" : "2px solid transparent",
+                      backgroundColor: isActive ? "#1a1a1a" : "transparent",
+                      height: 35,
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    {idx + 1 <= 9 && (
+                      <span style={{ color: isActive ? "#3a82f6" : "#444", fontSize: 9, fontWeight: 600 }}>{idx + 1}</span>
+                    )}
+                    <span>{page.name}</span>
+                    {pages.length > 1 && (
+                      <span
+                        onClick={e => { e.stopPropagation(); handleDeletePage(page.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:text-red-400"
+                        style={{ fontSize: 10, color: "#555", cursor: "pointer", lineHeight: 1 }}
+                        role="button"
+                        aria-label="Delete page"
+                      >
+                        ×
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {/* Add page button */}
+          <button
+            type="button"
+            onClick={handleAddPage}
+            className="flex items-center justify-center px-2 transition-colors hover:text-white"
+            style={{ color: "#555", height: 35, flexShrink: 0 }}
+            title="Add page"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
       )}
     </div>
   );

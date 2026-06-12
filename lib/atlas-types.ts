@@ -974,6 +974,14 @@ export interface PresentationGroupNodeData {
 }
 
 // Canvas interface
+// A single page within a canvas (Figma-style multi-page)
+export interface CanvasPage {
+  id: string;
+  name: string;
+  nodes: AtlasNode[];
+  edges: Edge[];
+}
+
 export interface Canvas {
   id: string;
   name: string;
@@ -991,6 +999,8 @@ export interface Canvas {
   presentationName?: string; // Optional name for presentation mode
   presentationGroups?: PresentationGroup[]; // Grouped nodes for presentation
   presentationFlows?: SavedPresentationFlow[]; // Saved named presentation flows
+  pages?: CanvasPage[]; // Multi-page support (Figma-style)
+  activePageId?: string; // ID of the currently active page
 }
 
 // Sample comments for initial canvas

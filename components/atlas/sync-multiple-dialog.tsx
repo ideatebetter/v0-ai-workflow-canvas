@@ -51,11 +51,15 @@ function findBestMatch(
   let bestMatch: { node: AtlasNode; canvas: Canvas; reason: string } | null = null;
   let bestPriority = 0;
 
+  // Helper to get all nodes from a canvas including pages
+  const getAllNodes = (c: Canvas): AtlasNode[] =>
+    c.pages && c.pages.length > 0 ? c.pages.flatMap(p => p.nodes) : c.nodes;
+
   for (const canvas of canvases) {
     // Skip current canvas for now (prefer cross-canvas sync)
     if (canvas.id === currentCanvasId) continue;
-    
-    for (const targetNode of canvas.nodes) {
+
+    for (const targetNode of getAllNodes(canvas)) {
       if (targetNode.id === node.id) continue;
       if (targetNode.type !== node.type) continue;
       
@@ -108,11 +112,11 @@ function findBestMatch(
     }
   }
   
-  // Also check current canvas if no cross-canvas match found
+  // Also check current canvas (all pages) if no cross-canvas match found
   if (!bestMatch) {
     const currentCanvas = canvases.find(c => c.id === currentCanvasId);
     if (currentCanvas) {
-      for (const targetNode of currentCanvas.nodes) {
+      for (const targetNode of getAllNodes(currentCanvas)) {
         if (targetNode.id === node.id) continue;
         if (targetNode.type !== node.type) continue;
         

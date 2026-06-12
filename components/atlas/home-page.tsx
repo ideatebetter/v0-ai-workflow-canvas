@@ -17,7 +17,7 @@ import { useSageConversations, useSageConversation, useSageChatPersistence } fro
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "community" | "workspace-canvas" | "settings" | "all-files";
+type HomeView = "home" | "canvases" | "community" | "workspace-canvas" | "settings" | "all-files" | "todos";
 type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
@@ -387,24 +387,63 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
-  // Collect all todos from all canvases, keyed by the date they were created (YYYY-MM-DD)
+  // Collect all todos from all canvases (all pages), keyed by the date they were created (YYYY-MM-DD)
   const todosByDate = useMemo(() => {
-    const map: Record<string, Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string }>> = {};
+    const map: Record<string, Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string; canvasId: string; nodeId: string }>> = {};
     const today = new Date().toISOString().slice(0, 10);
     canvases.forEach(canvas => {
-      canvas.nodes.forEach(node => {
+      // Collect nodes from all pages (or from canvas.nodes for single-page canvases)
+      const allNodes = canvas.pages && canvas.pages.length > 0
+        ? canvas.pages.flatMap(p => p.nodes)
+        : canvas.nodes;
+      allNodes.forEach(node => {
         const data = node.data as import("@/lib/atlas-types").FileNodeData;
         if (!Array.isArray(data?.tasks)) return;
         data.tasks.forEach(task => {
-          // Prefer dueDate for ribbon placement; fall back to createdAt, then today
           const day = task.dueDate ?? (task.createdAt ? task.createdAt.slice(0, 10) : today);
           if (!map[day]) map[day] = [];
-          map[day].push({ task, fileName: data.label || data.fileName || "Untitled", canvasName: canvas.name });
+          map[day].push({ task, fileName: data.label || data.fileName || "Untitled", canvasName: canvas.name, canvasId: canvas.id, nodeId: node.id });
         });
       });
     });
     return map;
   }, [canvases]);
+
+  // All todos flat list (for All To-Dos page)
+  const allTodosFlat = useMemo(() => {
+    const list: Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string; canvasId: string; nodeId: string; projectName: string; projectId: string | undefined }> = [];
+    canvases.forEach(canvas => {
+      const project = projects.find(p => p.id === canvas.projectId);
+      const allNodes = canvas.pages && canvas.pages.length > 0
+        ? canvas.pages.flatMap(p => p.nodes)
+        : canvas.nodes;
+      allNodes.forEach(node => {
+        const data = node.data as import("@/lib/atlas-types").FileNodeData;
+        if (!Array.isArray(data?.tasks)) return;
+        data.tasks.forEach(task => {
+          list.push({ task, fileName: data.label || data.fileName || "Untitled", canvasName: canvas.name, canvasId: canvas.id, nodeId: node.id, projectName: project?.name || "No Collection", projectId: canvas.projectId });
+        });
+      });
+    });
+    return list;
+  }, [canvases, projects]);
+
+  // Toggle task completion across canvases (handles multi-page nodes too)
+  const handleToggleTask = useCallback((canvasId: string, nodeId: string, taskId: string) => {
+    const toggleNode = (n: import("@/lib/atlas-types").AtlasNode) => {
+      if (n.id !== nodeId) return n;
+      const data = n.data as import("@/lib/atlas-types").FileNodeData;
+      return { ...n, data: { ...data, tasks: (data.tasks || []).map(t => t.id === taskId ? { ...t, completed: !t.completed } : t) } };
+    };
+    onCanvasesChange(canvases.map(c => {
+      if (c.id !== canvasId) return c;
+      return {
+        ...c,
+        nodes: c.nodes.map(toggleNode),
+        pages: c.pages?.map(p => ({ ...p, nodes: p.nodes.map(toggleNode) })),
+      };
+    }));
+  }, [canvases, onCanvasesChange]);
 
   // Combine all workspace nodes with canvas grouping
   const workspaceNodesData = useMemo(() => {
@@ -601,6 +640,11 @@ const [showSageChat, setShowSageChat] = useState(false);
   };
 
   const [canvasToDelete, setCanvasToDelete] = useState<string | null>(null);
+  const [todoFilterStatus, setTodoFilterStatus] = useState<"all" | "completed" | "incomplete">("all");
+  const [todoFilterCanvas, setTodoFilterCanvas] = useState<string>("all");
+  const [todoFilterProject, setTodoFilterProject] = useState<string>("all");
+  const [todoFilterUser, setTodoFilterUser] = useState<string>("all");
+  const [todoFilterDate, setTodoFilterDate] = useState<string>("all");
   const [collectionMenuCanvasId, setCollectionMenuCanvasId] = useState<string | null>(null);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
@@ -803,6 +847,26 @@ const [showSageChat, setShowSageChat] = useState(false);
                 <path d="M6 10H12M9 7V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               All Files
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("todos")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "todos" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5.5 7L7 8.5L10.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5.5 11H12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              All To-Dos
+              {allTodosFlat.filter(d => !d.task.completed).length > 0 && (
+                <span className="ml-auto text-xs rounded-full px-1.5 py-0.5" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {allTodosFlat.filter(d => !d.task.completed).length}
+                </span>
+              )}
             </button>
             <button
               type="button"
@@ -1118,7 +1182,167 @@ const [showSageChat, setShowSageChat] = useState(false);
           </div>
         </div>
 
-        {activeView === "all-files" ? (
+        {activeView === "todos" ? (
+          /* All To-Dos page */
+          (() => {
+            const today = new Date().toISOString().slice(0, 10);
+            const members = workspaceSettings.members || [];
+            let displayed = allTodosFlat;
+            if (todoFilterStatus === "completed") displayed = displayed.filter(d => d.task.completed);
+            if (todoFilterStatus === "incomplete") displayed = displayed.filter(d => !d.task.completed);
+            if (todoFilterCanvas !== "all") displayed = displayed.filter(d => d.canvasId === todoFilterCanvas);
+            if (todoFilterProject !== "all") displayed = displayed.filter(d => (d.projectId ?? "none") === todoFilterProject);
+            if (todoFilterUser !== "all") displayed = displayed.filter(d => d.task.assignee?.id === todoFilterUser);
+            if (todoFilterDate === "today") displayed = displayed.filter(d => (d.task.dueDate ?? today) === today);
+            else if (todoFilterDate === "overdue") displayed = displayed.filter(d => d.task.dueDate && d.task.dueDate < today && !d.task.completed);
+            else if (todoFilterDate === "upcoming") displayed = displayed.filter(d => d.task.dueDate && d.task.dueDate > today);
+            else if (todoFilterDate === "no-date") displayed = displayed.filter(d => !d.task.dueDate);
+
+            const uniqueCanvases = Array.from(new Map(canvases.map(c => [c.id, c])).values());
+            const uniqueProjects = projects;
+
+            return (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4" style={{ borderBottom: "1px solid #222222" }}>
+                  <h2 className="text-lg font-semibold text-white mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>All To-Dos</h2>
+                  {/* Filter Bar */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Status filter */}
+                    <div className="flex gap-1 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                      {(["all", "incomplete", "completed"] as const).map(s => (
+                        <button key={s} type="button" onClick={() => setTodoFilterStatus(s)}
+                          className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                          style={{ backgroundColor: todoFilterStatus === s ? "#2a2a2a" : "transparent", color: todoFilterStatus === s ? "#fff" : "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          {s === "all" ? "All" : s === "incomplete" ? "Open" : "Done"}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Collection filter */}
+                    {uniqueProjects.length > 0 && (
+                      <select value={todoFilterProject} onChange={e => setTodoFilterProject(e.target.value)}
+                        className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
+                        style={{ backgroundColor: "#1a1a1a", color: todoFilterProject === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        <option value="all">All Collections</option>
+                        {uniqueProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="none">No Collection</option>
+                      </select>
+                    )}
+                    {/* Canvas filter */}
+                    <select value={todoFilterCanvas} onChange={e => setTodoFilterCanvas(e.target.value)}
+                      className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
+                      style={{ backgroundColor: "#1a1a1a", color: todoFilterCanvas === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <option value="all">All Canvases</option>
+                      {uniqueCanvases.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    {/* User filter */}
+                    {members.length > 0 && (
+                      <select value={todoFilterUser} onChange={e => setTodoFilterUser(e.target.value)}
+                        className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
+                        style={{ backgroundColor: "#1a1a1a", color: todoFilterUser === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        <option value="all">All Users</option>
+                        {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    )}
+                    {/* Date filter */}
+                    <select value={todoFilterDate} onChange={e => setTodoFilterDate(e.target.value)}
+                      className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
+                      style={{ backgroundColor: "#1a1a1a", color: todoFilterDate === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <option value="all">Any Date</option>
+                      <option value="today">Today</option>
+                      <option value="overdue">Overdue</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="no-date">No Due Date</option>
+                    </select>
+                    {/* Clear filters */}
+                    {(todoFilterStatus !== "all" || todoFilterCanvas !== "all" || todoFilterProject !== "all" || todoFilterUser !== "all" || todoFilterDate !== "all") && (
+                      <button type="button" onClick={() => { setTodoFilterStatus("all"); setTodoFilterCanvas("all"); setTodoFilterProject("all"); setTodoFilterUser("all"); setTodoFilterDate("all"); }}
+                        className="px-3 py-1 rounded-lg text-xs transition-colors"
+                        style={{ color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Todo List */}
+                <div className="flex-1 overflow-y-auto">
+                  {displayed.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="#444" strokeWidth="2"/><path d="M9 14l3 3 7-7" stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No to-dos found</div>
+                      <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Add to-dos on files in your canvases</div>
+                    </div>
+                  ) : (
+                    <div className="divide-y" style={{ borderColor: "#1a1a1a" }}>
+                      {displayed.map(({ task, fileName, canvasName, canvasId, nodeId, projectName }) => {
+                        const dueDateColor = task.dueDate
+                          ? task.dueDate < today && !task.completed ? "#F87171"
+                          : task.dueDate === today ? "#F0FE00"
+                          : task.dueDate === new Date(Date.now() + 86400000).toISOString().slice(0, 10) ? "#FB923C"
+                          : "#888"
+                          : "#888";
+                        const dueDateLabel = task.dueDate
+                          ? task.dueDate === today ? "Today"
+                          : task.dueDate === new Date(Date.now() + 86400000).toISOString().slice(0, 10) ? "Tomorrow"
+                          : task.dueDate < today ? `${Math.round((new Date(today).getTime() - new Date(task.dueDate).getTime()) / 86400000)}d overdue`
+                          : new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                          : null;
+                        return (
+                          <div key={`${canvasId}-${nodeId}-${task.id}`} className="flex items-center gap-3 px-6 py-3 hover:bg-white/[0.02] transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
+                              className="flex-shrink-0 w-4 h-4 rounded-sm border transition-colors"
+                              style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
+                            >
+                              {task.completed && (
+                                <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
+                                  <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif", color: task.completed ? "#555" : "#fff", textDecoration: task.completed ? "line-through" : "none" }}>
+                                  {task.title}
+                                </span>
+                                {dueDateLabel && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: dueDateColor, backgroundColor: dueDateColor + "15", fontFamily: "system-ui, Inter, sans-serif" }}>
+                                    {dueDateLabel}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-[10px] text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{projectName}</span>
+                                <span className="text-[10px] text-gray-700">·</span>
+                                <span className="text-[10px] text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{canvasName}</span>
+                                <span className="text-[10px] text-gray-700">·</span>
+                                <span className="text-[10px] text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{fileName}</span>
+                              </div>
+                            </div>
+                            {task.assignee && (
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                                {task.assignee.initials}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()
+        ) : activeView === "all-files" ? (
           /* All Files - Google Drive-style list view */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Column Headers */}
@@ -2479,17 +2703,22 @@ All Frameworks
                                 To-Dos ({dayTodos.filter(d => !d.task.completed).length} open)
                               </div>
                               <div className="flex flex-col gap-1.5">
-                                {dayTodos.map(({ task, fileName }) => (
+                                {dayTodos.map(({ task, fileName, canvasId, nodeId }) => (
                                   <div key={task.id} className="flex items-start gap-2">
-                                    <div className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border" style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
+                                      className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border transition-colors"
+                                      style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
+                                    >
                                       {task.completed && (
                                         <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
                                           <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
                                       )}
-                                    </div>
+                                    </button>
                                     <div className="flex-1 min-w-0">
-                                      <span className="text-xs text-white" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
+                                      <span className="text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
                                         {task.title}
                                       </span>
                                       <span className="text-[10px] text-gray-500 ml-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
