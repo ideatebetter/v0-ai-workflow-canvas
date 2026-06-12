@@ -559,7 +559,9 @@ export function AtlasApp() {
         workspaceSettings={workspaceSettings}
         onWorkspaceSettingsChange={setWorkspaceSettings}
         onSaveFramework={handleSaveFramework}
+        onRemoveFramework={handleRemoveFramework}
         canvases={canvases}
+        frameworks={frameworks}
         onCopyNodesToCanvas={handleCopyNodesToCanvas}
         onCreateCanvasWithNodes={handleCreateCanvasWithNodes}
         onSyncFiles={handleSyncFiles}

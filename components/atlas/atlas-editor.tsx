@@ -25,6 +25,9 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
+import { FrameworkCreatorDialog } from "./framework-creator-dialog";
+import { FrameworkLibraryPanel } from "./framework-library-panel";
+import { FrameworkRunDialog } from "./framework-run-dialog";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
@@ -40,6 +43,8 @@ interface AtlasEditorProps {
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases?: Canvas[];
+  frameworks?: CanvasFramework[];
+  onRemoveFramework?: (frameworkId: string) => void;
   onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
@@ -94,7 +99,7 @@ function getPagesFromCanvas(canvas: Canvas): CanvasPage[] {
   return [{ id: "page-1", name: "Page 1", nodes: canvas.nodes, edges: canvas.edges }];
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework, canvases, frameworks, onRemoveFramework, onCopyNodesToCanvas, onCreateCanvasWithNodes, onDeleteNodesFromCanvas, onSyncFiles, onUnsyncFile, recentCanvases, onSwitchCanvas }: AtlasEditorProps) {
   // --- Multi-page state ---
   const [pages, setPages] = useState<CanvasPage[]>(() => getPagesFromCanvas(canvas));
   const [activePageId, setActivePageId] = useState<string>(() => {
@@ -120,6 +125,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
+  const [showFrameworkCreator, setShowFrameworkCreator] = useState(false);
+  const [showFrameworkLibrary, setShowFrameworkLibrary] = useState(false);
+  const [runFramework, setRunFramework] = useState<CanvasFramework | null>(null);
   const [showMoveToCanvasDialog, setShowMoveToCanvasDialog] = useState(false);
   const [moveToCanvasMode, setMoveToCanvasMode] = useState<"move" | "copy">("move");
   const [contextMenu, setContextMenu] = useState<{
@@ -1796,7 +1804,8 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         canvasName={canvas.name}
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
-        onSaveAsFramework={() => setShowSaveFrameworkDialog(true)}
+        onSaveAsFramework={() => setShowFrameworkCreator(true)}
+        onBrowseFrameworks={() => setShowFrameworkLibrary(true)}
         onCopyToCanvas={() => {
           setMoveToCanvasMode("copy");
           setShowMoveToCanvasDialog(true);
@@ -2071,28 +2080,94 @@ presentationMode={presentationMode}
         onSettingsChange={onWorkspaceSettingsChange}
         onMakeFramework={() => {
           setShowSettingsDialog(false);
-          setShowSaveFrameworkDialog(true);
+          setShowFrameworkCreator(true);
         }}
       />
 
-      {/* Save as Framework Dialog */}
+      {/* Save as Framework Dialog (legacy — kept for backwards compat) */}
       <SaveFrameworkDialog
         open={showSaveFrameworkDialog}
         onClose={() => setShowSaveFrameworkDialog(false)}
         canvas={canvas}
         currentUser={{
           ...workspaceSettings.members[0],
-          // Use branding profile picture if available
           avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
         }}
         onSaveFramework={(framework) => {
-          if (onSaveFramework) {
-            onSaveFramework(framework);
-          } else {
-            // Default behavior: log framework save (could be extended to persist locally)
-            console.log("[v0] Framework saved:", framework.name);
-          }
+          if (onSaveFramework) onSaveFramework(framework);
           setShowSaveFrameworkDialog(false);
+        }}
+      />
+
+      {/* Framework Creator Dialog (new — 2-step with parameters) */}
+      <FrameworkCreatorDialog
+        open={showFrameworkCreator}
+        onClose={() => setShowFrameworkCreator(false)}
+        canvas={canvas}
+        currentUser={{
+          ...workspaceSettings.members[0],
+          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
+        }}
+        onSaveFramework={(framework) => {
+          if (onSaveFramework) onSaveFramework(framework);
+          setShowFrameworkCreator(false);
+        }}
+      />
+
+      {/* Framework Library Panel */}
+      <FrameworkLibraryPanel
+        isOpen={showFrameworkLibrary}
+        onClose={() => setShowFrameworkLibrary(false)}
+        frameworks={frameworks ?? []}
+        currentUserId={workspaceSettings.members[0].id}
+        onRun={(fw) => {
+          setShowFrameworkLibrary(false);
+          setRunFramework(fw);
+        }}
+        onDelete={onRemoveFramework}
+      />
+
+      {/* Framework Run Dialog */}
+      <FrameworkRunDialog
+        framework={runFramework}
+        isOpen={runFramework !== null}
+        onClose={() => setRunFramework(null)}
+        onRun={(fw, paramValues) => {
+          const ts = Date.now();
+          const idMap = new Map<string, string>();
+          fw.nodes.forEach((n, i) => idMap.set(n.id, `fw-${ts}-${i}`));
+
+          // Clone nodes and replace {{param}} placeholders
+          const newNodes = fw.nodes.map(node => {
+            let dataStr = JSON.stringify(node.data);
+            for (const [pid, val] of Object.entries(paramValues)) {
+              dataStr = dataStr.split(`{{${pid}}}`).join(val.replace(/\\/g, "\\\\").replace(/"/g, '\\"'));
+            }
+            return { ...node, id: idMap.get(node.id)!, data: JSON.parse(dataStr), selected: true };
+          });
+
+          // Position below existing nodes
+          const existingNodes = nodes;
+          const maxY = existingNodes.reduce((m, n) => Math.max(m, n.position.y + (n.height ?? 200)), 0);
+          const minFwX = fw.nodes.reduce((m, n) => Math.min(m, n.position.x), Infinity);
+          const offsetY = existingNodes.length > 0 ? maxY + 120 : 100;
+          const offsetX = 100 - (isFinite(minFwX) ? minFwX : 0);
+
+          const positionedNodes = newNodes.map(n => ({
+            ...n,
+            position: { x: n.position.x + offsetX, y: n.position.y + offsetY },
+          }));
+
+          const newEdges = fw.edges.map((e, i) => ({
+            ...e,
+            id: `fw-edge-${ts}-${i}`,
+            source: idMap.get(e.source) ?? e.source,
+            target: idMap.get(e.target) ?? e.target,
+          }));
+
+          setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...positionedNodes]);
+          setEdges(eds => [...eds, ...newEdges]);
+          setRunFramework(null);
         }}
       />
 

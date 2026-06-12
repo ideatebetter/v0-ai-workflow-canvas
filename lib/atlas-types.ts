@@ -1039,6 +1039,20 @@ export type FrameworkCategory = "workflow" | "branding" | "marketing" | "social"
 // Framework visibility type
 export type FrameworkVisibility = "private" | "workspace" | "community";
 
+// Framework parameter types
+export type FrameworkParamType = "text" | "textarea" | "color" | "image" | "select";
+
+// A single parameterized field in a framework template
+export interface FrameworkParameter {
+  id: string;             // slug used as {{id}} placeholder in node data
+  label: string;          // human-readable label shown in the run form
+  type: FrameworkParamType;
+  options?: string[];     // for "select" type
+  required: boolean;
+  placeholder?: string;
+  defaultValue?: string;
+}
+
 // Framework interface
 export interface CanvasFramework {
   id: string;
@@ -1055,6 +1069,10 @@ export interface CanvasFramework {
   upvotedBy: string[]; // Array of user IDs who upvoted
   downloads: number;
   tags: string[];
+  // Enhanced framework fields
+  parameters?: FrameworkParameter[];
+  isPublished?: boolean;  // false = draft, true = published to library
+  teamId?: string;
 }
 
 // Framework categories with labels

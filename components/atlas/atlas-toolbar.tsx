@@ -18,6 +18,7 @@ interface AtlasToolbarProps {
   onSwitchPage?: (pageId: string) => void;
   onAddPage?: () => void;
   onRenamePage?: (pageId: string, newName: string) => void;
+  onBrowseFrameworks?: () => void;
 }
 
 export function AtlasToolbar({
@@ -35,6 +36,7 @@ export function AtlasToolbar({
   onSwitchPage,
   onAddPage,
   onRenamePage,
+  onBrowseFrameworks,
 }: AtlasToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvasName || "");
@@ -276,6 +278,20 @@ export function AtlasToolbar({
 
             {showMenu && (
               <div className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[180px] bg-card border border-border">
+                <button
+                  type="button"
+                  onClick={() => { onBrowseFrameworks?.(); setShowMenu(false); }}
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
+                  </svg>
+                  Browse Frameworks
+                </button>
                 <button
                   type="button"
                   onClick={() => { onSaveAsFramework?.(); setShowMenu(false); }}
