@@ -1552,6 +1552,33 @@ Current user: ${userId}
       if (context.selectedNode) {
         systemPrompt += `\nSelected node: ${JSON.stringify(context.selectedNode)}`;
       }
+
+      // Connected operational node context — injected when Sage is branched off another node
+      const connectedNodes = context.connectedNodes as Array<{ type: string; data: Record<string, unknown> }> | undefined;
+      if (connectedNodes && connectedNodes.length > 0) {
+        const nodeTypeLabels: Record<string, string> = {
+          fileNode: "File",
+          projectHealth: "Project Health",
+          capacity: "Capacity",
+          pipeline: "Pipeline / Workload",
+          financial: "Financial",
+          teamHealth: "Team Health",
+          stakeholder: "Stakeholder",
+          moodboard: "Moodboard",
+          text: "Text Note",
+          aiPrompt: "AI Prompt",
+          mockupImage: "Mockup Image",
+        };
+
+        systemPrompt += `\n\n## CONNECTED NODE DATA\nThis Sage instance is directly connected to the following node(s) on the canvas. The user is likely asking questions about this specific data — prioritise it in your answers. Reference actual values and metrics from the data below rather than speaking generically.\n`;
+
+        for (const node of connectedNodes) {
+          const label = nodeTypeLabels[node.type] ?? node.type;
+          systemPrompt += `\n### ${label} Node\n\`\`\`json\n${JSON.stringify(node.data, null, 2)}\n\`\`\`\n`;
+        }
+
+        systemPrompt += `\nWhen the user asks a question, answer it using the specific numbers, statuses, names, and fields from the node data above. If a value is missing from the data, say so clearly rather than guessing.`;
+      }
     }
 
     const result = streamText({

@@ -1,11 +1,29 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { type NodeProps } from "@xyflow/react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { type NodeProps, useEdges, useNodes } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
+
+// Human-readable labels for operational node types
+const NODE_TYPE_LABELS: Record<string, string> = {
+  fileNode: "File",
+  projectHealth: "Project Health",
+  capacity: "Capacity",
+  pipeline: "Pipeline",
+  financial: "Financial",
+  teamHealth: "Team Health",
+  stakeholder: "Stakeholder",
+  moodboard: "Moodboard",
+  text: "Note",
+  aiPrompt: "AI Prompt",
+  mockupImage: "Mockup Image",
+};
+
+// Node types that are Sage itself — skip these when finding connected operational nodes
+const SAGE_NODE_TYPES = new Set(["sageChatbot", "sageOverview"]);
 
 // Attachment type for uploaded files
 interface ChatAttachment {
@@ -72,10 +90,52 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       },
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
-  
+
+  // Detect operational nodes connected to this Sage node via any edge
+  const allEdges = useEdges();
+  const allNodes = useNodes();
+
+  const connectedOperationalNodes = useMemo(() => {
+    const results: Array<{ id: string; type: string; data: Record<string, unknown> }> = [];
+    for (const edge of allEdges) {
+      let otherNodeId: string | null = null;
+      if (edge.target === id) otherNodeId = edge.source;
+      else if (edge.source === id) otherNodeId = edge.target;
+      if (!otherNodeId) continue;
+
+      const node = allNodes.find(n => n.id === otherNodeId);
+      if (node && !SAGE_NODE_TYPES.has(node.type ?? "")) {
+        results.push({ id: node.id, type: node.type ?? "unknown", data: node.data as Record<string, unknown> });
+      }
+    }
+    return results;
+  }, [allEdges, allNodes, id]);
+
+  // Keep context in a ref so the transport's fetch closure always reads the latest value
+  const contextRef = useRef<Record<string, unknown>>({});
+  useEffect(() => {
+    contextRef.current = {
+      connectedNodes: connectedOperationalNodes.map(n => ({ type: n.type, data: n.data })),
+    };
+  }, [connectedOperationalNodes]);
+
+  // Transport with custom fetch that injects connected-node context into every request
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/sage",
+        fetch: async (url, options) => {
+          const body = JSON.parse((options as RequestInit).body as string || "{}");
+          body.context = { ...body.context, ...contextRef.current };
+          return fetch(url, { ...(options as RequestInit), body: JSON.stringify(body) });
+        },
+      }),
+    [] // created once — fetch closure always reads from contextRef
+  );
+
   const { messages, sendMessage, status } = useChat({
     id: `sage-${id}`,
-    transport: new DefaultChatTransport({ api: "/api/sage" }),
+    transport,
     onToolCall: async ({ toolCall }) => {
       const args = toolCall.args as Record<string, unknown>;
       
@@ -318,28 +378,53 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       {/* Header - Apple style minimal */}
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center justify-between">
-          <img 
-            src="/sage-wordmark.svg" 
-            alt="Sage" 
+          <img
+            src="/sage-wordmark.svg"
+            alt="Sage"
             className="h-5 opacity-90"
           />
-          <div className="flex items-center gap-1.5">
-            <div 
-              className="w-2 h-2 rounded-full transition-colors duration-300"
-              style={{ 
-                backgroundColor: isLoading ? "#F0FE00" : "#30D158",
-                boxShadow: isLoading ? "0 0 8px rgba(240, 254, 0, 0.5)" : "0 0 8px rgba(48, 209, 88, 0.4)"
-              }}
-            />
-            <span 
-              className="text-[11px] font-medium tracking-tight transition-colors duration-300"
-              style={{ 
-                color: isLoading ? "rgba(240, 254, 0, 0.8)" : "rgba(255,255,255,0.4)",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"
-              }}
-            >
-              {isLoading ? "Thinking" : "Ready"}
-            </span>
+          <div className="flex items-center gap-2">
+            {/* Connected node badge */}
+            {connectedOperationalNodes.length > 0 && (
+              <div
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: "rgba(240,254,0,0.08)",
+                  border: "1px solid rgba(240,254,0,0.2)",
+                }}
+                title={`Has context from: ${connectedOperationalNodes.map(n => NODE_TYPE_LABELS[n.type] ?? n.type).join(", ")}`}
+              >
+                <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                  <path d="M4 6H8M2 3.5C2 2.67 2.67 2 3.5 2H4.5C5.33 2 6 2.67 6 3.5V4H7V3.5C7 2.67 7.67 2 8.5 2H9.5C10.33 2 11 2.67 11 3.5V4.5C11 5.33 10.33 6 9.5 6H8.5C7.67 6 7 5.33 7 4.5V4M6 4V4.5C6 5.33 5.33 6 4.5 6H3.5C2.67 6 2 5.33 2 4.5V3.5" stroke="rgba(240,254,0,0.7)" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{ color: "rgba(240,254,0,0.7)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+                >
+                  {connectedOperationalNodes.length === 1
+                    ? (NODE_TYPE_LABELS[connectedOperationalNodes[0].type] ?? connectedOperationalNodes[0].type)
+                    : `${connectedOperationalNodes.length} nodes`}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-2 h-2 rounded-full transition-colors duration-300"
+                style={{
+                  backgroundColor: isLoading ? "#F0FE00" : "#30D158",
+                  boxShadow: isLoading ? "0 0 8px rgba(240, 254, 0, 0.5)" : "0 0 8px rgba(48, 209, 88, 0.4)"
+                }}
+              />
+              <span
+                className="text-[11px] font-medium tracking-tight transition-colors duration-300"
+                style={{
+                  color: isLoading ? "rgba(240, 254, 0, 0.8)" : "rgba(255,255,255,0.4)",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif"
+                }}
+              >
+                {isLoading ? "Thinking" : "Ready"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -377,16 +462,29 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             );
           })
         ) : (
-          <div 
+          <div
             className="flex flex-col items-center justify-center py-8 px-6"
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
-            <p className="text-[13px] text-center leading-relaxed text-muted-foreground" style={{ letterSpacing: "-0.01em" }}>
-              Intelligence layer for design operations.
-            </p>
-            <p className="text-[11px] text-center mt-1.5 text-muted-foreground/60" style={{ letterSpacing: "0.01em" }}>
-              Classifies feedback. Flags drift. Logs decisions.
-            </p>
+            {connectedOperationalNodes.length > 0 ? (
+              <>
+                <p className="text-[13px] text-center leading-relaxed text-muted-foreground" style={{ letterSpacing: "-0.01em" }}>
+                  Connected to {connectedOperationalNodes.map(n => NODE_TYPE_LABELS[n.type] ?? n.type).join(", ")}.
+                </p>
+                <p className="text-[11px] text-center mt-1.5 text-muted-foreground/60" style={{ letterSpacing: "0.01em" }}>
+                  Ask anything about that node's data.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] text-center leading-relaxed text-muted-foreground" style={{ letterSpacing: "-0.01em" }}>
+                  Intelligence layer for design operations.
+                </p>
+                <p className="text-[11px] text-center mt-1.5 text-muted-foreground/60" style={{ letterSpacing: "0.01em" }}>
+                  Classifies feedback. Flags drift. Logs decisions.
+                </p>
+              </>
+            )}
           </div>
         )}
         
