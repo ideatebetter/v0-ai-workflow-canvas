@@ -78,6 +78,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const textData = data as unknown as TextNodeData;
   const presentationNodeIds = usePresentationNodes();
   const isInPresentation = presentationNodeIds.has(id);
+  const presentationIndex = presentationNodeIds.get(id) ?? null;
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -296,6 +297,68 @@ export function TextNode({ id, data, selected }: NodeProps) {
       onDoubleClick={() => setIsEditing(true)}
     >
       <SmartHandles nodeId={id} />
+
+      {/* Presentation sequence badge */}
+      {presentationIndex !== null && (
+        <div style={{ position: "absolute", top: -10, right: -10, zIndex: 20 }}>
+          {/* Number — click to focus canvas on this node */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent("atlas:focus-presentation-node", { detail: { nodeId: id } }));
+            }}
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              backgroundColor: "#F0FE00",
+              color: "#121212",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 11,
+              fontWeight: 700,
+              fontFamily: "system-ui, Inter, sans-serif",
+              cursor: "pointer",
+              boxShadow: "0 0 0 2px #0a0a0a",
+            }}
+            title={`Slide ${presentationIndex} — click to focus`}
+          >
+            {presentationIndex}
+          </div>
+          {/* X — revealed on node hover, click to remove from sequence */}
+          {isHovered && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent("atlas:remove-from-presentation", { detail: { nodeId: id } }));
+              }}
+              style={{
+                position: "absolute",
+                top: -5,
+                left: -5,
+                width: 14,
+                height: 14,
+                borderRadius: "50%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #F0FE00",
+                color: "#F0FE00",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                padding: 0,
+              }}
+              title="Remove from presentation"
+            >
+              <svg width="7" height="7" viewBox="0 0 7 7" fill="none">
+                <path d="M5.5 1.5L1.5 5.5M1.5 1.5L5.5 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Formatting Toolbar */}
       {showToolbar && (

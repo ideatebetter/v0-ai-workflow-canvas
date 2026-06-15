@@ -1183,6 +1183,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     []
   );
 
+  // Remove a node from the presentation sequence (removes all presentation edges touching it)
+  const handleRemoveFromPresentation = useCallback((nodeId: string) => {
+    setPresentationEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
+  }, []);
+
   // Create presentation group from selected nodes (like moodboard - combines into one node)
   const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
     if (nodeIds.length < 2) return;
@@ -2162,6 +2167,7 @@ presentationMode={presentationMode}
   presentationEdges={presentationEdges}
   onPresentationConnect={handlePresentationConnect}
   onCreatePresentationGroup={handleCreatePresentationGroup}
+  onRemoveFromPresentation={handleRemoveFromPresentation}
   onNodeContextMenu={(event, selectedNodes) => {
     setContextMenu({
       position: { x: event.clientX, y: event.clientY },
