@@ -51,7 +51,31 @@ export async function renderPDFFirstPageToDataURL(file: File, scale = 1.5): Prom
     if (!ctx) return null;
 
     await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-    return canvas.toDataURL("image/png");
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } catch {
+    return null;
+  }
+}
+
+// Render first page of a PDF from a URL (for existing uploaded PDFs)
+export async function renderPDFFromURL(url: string, scale = 1.5): Promise<string | null> {
+  try {
+    const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+    const pdf = await pdfjsLib.getDocument({ url, useWorkerFetch: false }).promise;
+    const page = await pdf.getPage(1);
+
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    return canvas.toDataURL("image/jpeg", 0.85);
   } catch {
     return null;
   }

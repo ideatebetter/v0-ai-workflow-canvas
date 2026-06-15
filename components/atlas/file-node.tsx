@@ -1,11 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { type NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
 import type { FileNodeData } from "@/lib/atlas-types";
 import { PRODUCT_COLORS } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
+
+// Module-level cache so each PDF URL renders only once per session
+const pdfPreviewCache = new Map<string, string | null>();
+const pdfPreviewInFlight = new Map<string, Promise<string | null>>();
+
+function usePDFPreview(pdfUrl: string | undefined): string | null {
+  const cached = pdfUrl ? pdfPreviewCache.get(pdfUrl) : undefined;
+  const [preview, setPreview] = useState<string | null>(cached ?? null);
+
+  useEffect(() => {
+    if (!pdfUrl) return;
+    if (pdfPreviewCache.has(pdfUrl)) {
+      setPreview(pdfPreviewCache.get(pdfUrl) ?? null);
+      return;
+    }
+
+    // Deduplicate concurrent renders for the same URL
+    let promise = pdfPreviewInFlight.get(pdfUrl);
+    if (!promise) {
+      promise = (async () => {
+        const { renderPDFFromURL } = await import("@/lib/pdf-parser");
+        return renderPDFFromURL(pdfUrl, 1.2);
+      })().then((result) => {
+        pdfPreviewCache.set(pdfUrl, result);
+        pdfPreviewInFlight.delete(pdfUrl);
+        return result;
+      }).catch(() => {
+        pdfPreviewCache.set(pdfUrl, null);
+        pdfPreviewInFlight.delete(pdfUrl);
+        return null;
+      });
+      pdfPreviewInFlight.set(pdfUrl, promise);
+    }
+
+    let cancelled = false;
+    promise.then((result) => {
+      if (!cancelled) setPreview(result);
+    });
+    return () => { cancelled = true; };
+  }, [pdfUrl]);
+
+  return preview;
+}
 
 // Small inline SVG icons for file types
 const FileIcons: Record<string, React.ReactNode> = {
@@ -227,12 +270,17 @@ export function FileNode({ id, data, selected }: NodeProps) {
   // File extensions that browsers cannot render as images (excludes videos and audio which we handle separately)
   const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf"];
   const isNonRenderable = NON_RENDERABLE_EXTENSIONS.includes(fileData.fileExtension);
-  
+
+  // Render PDF first page on the fly (works for existing and new PDFs)
+  const isPDF = fileData.fileExtension === ".pdf";
+  const pdfPreview = usePDFPreview(isPDF ? fileData.uploadedFile?.url : undefined);
+
   // Get audio URL for audio files
   const audioUrl = isAudio ? fileData.uploadedFile?.url : null;
-  
+
   // Get preview image - prioritize actual uploaded file for true aspect ratio, then fall back to preview thumbnails
   const previewImage = (isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
+    || pdfPreview
     || fileData.previewImages?.[0]
     || DEFAULT_PREVIEWS[fileData.fileExtension]
     || DEFAULT_PREVIEWS.default;
