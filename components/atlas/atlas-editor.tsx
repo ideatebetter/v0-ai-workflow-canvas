@@ -31,6 +31,8 @@ import { FrameworkRunDialog } from "./framework-run-dialog";
 import { CanvasNodeActionsProvider } from "./canvas-node-actions-context";
 import { AddNodeMenu } from "./add-node-menu";
 import { SageExpandedModal } from "./sage-expanded-modal";
+import { MockupDetailModal } from "./mockup-detail-modal";
+import type { MockupImageNodeData } from "./nodes/mockup-image-node";
 import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
 import { NodeContextMenu } from "./node-context-menu";
 import { SyncFileDialog } from "./sync-file-dialog";
@@ -1048,16 +1050,26 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Handle creating a moodboard from selected nodes
   const handleCreateMoodboard = useCallback(
     (nodeIds: string[]) => {
-      // Get the selected file nodes
-      const selectedNodes = nodes.filter(n => nodeIds.includes(n.id) && n.type === "file");
+      // Accept both file nodes and mockup image nodes
+      const selectedNodes = nodes.filter(n => nodeIds.includes(n.id) && (n.type === "file" || n.type === "mockupImage"));
       if (selectedNodes.length < 2) return;
 
       // Calculate center position of selected nodes
       const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
       const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
 
-      // Extract images from selected nodes
+      // Extract images from selected nodes (file or mockupImage)
       const images = selectedNodes.map(node => {
+        if (node.type === "mockupImage") {
+          const d = node.data as { imageUrl: string; label?: string };
+          return {
+            id: node.id,
+            url: d.imageUrl,
+            fileName: d.label || "Mockup",
+            thumbnail: undefined,
+            fileType: "image" as const,
+          };
+        }
         const fileData = node.data as FileNodeData;
         const isVideo = fileData.fileType === "video" || fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
         return {
@@ -2663,6 +2675,18 @@ presentationMode={presentationMode}
             onClose={() => setDetailModalNodeId(null)}
             nodeId={node.id}
             nodeType={node.type as "sageChatbot" | "sageOverview" | "stakeholder"}
+          />
+        );
+      })()}
+
+      {/* Mockup Detail Modal */}
+      {detailModalNodeId && (() => {
+        const node = nodes.find(n => n.id === detailModalNodeId && n.type === "mockupImage");
+        if (!node) return null;
+        return (
+          <MockupDetailModal
+            data={node.data as unknown as MockupImageNodeData}
+            onClose={() => setDetailModalNodeId(null)}
           />
         );
       })()}

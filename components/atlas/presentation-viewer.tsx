@@ -417,6 +417,16 @@ export function PresentationViewer({
   };
 
   const renderBentoMedia = (node: Node, index: number, total: number) => {
+    // Mockup image nodes
+    if (node.type === "mockupImage") {
+      const mockupData = node.data as { imageUrl: string; label?: string };
+      return (
+        <div key={`${node.id}-${index}`} className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`} style={{ backgroundColor: "#1a1a1a" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={mockupData.imageUrl} alt={mockupData.label || "Mockup"} className="w-full h-full object-cover" />
+        </div>
+      );
+    }
     const fileData = node.data as FileNodeData;
     const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
     const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
@@ -451,6 +461,25 @@ export function PresentationViewer({
 
     const currentNode = currentNodes[0];
     if (!currentNode) return null;
+
+    if (currentNode.type === "mockupImage") {
+      const mockupData = currentNode.data as { imageUrl: string; label?: string; prompt?: string; generatedAt?: string };
+      return (
+        <div className="flex flex-col items-center justify-center h-full w-full">
+          <div className="relative w-full max-w-5xl" style={{ maxHeight: "70vh" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={mockupData.imageUrl}
+              alt={mockupData.label || "Mockup"}
+              style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", display: "block", margin: "0 auto", borderRadius: 12 }}
+            />
+          </div>
+          <span className="mt-4 text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
+            {mockupData.label || "AI Mockup"}
+          </span>
+        </div>
+      );
+    }
 
     if (currentNode.type === "file") {
       const fileData = currentNode.data as FileNodeData;

@@ -502,9 +502,13 @@ const reactFlowInstance = useReactFlow();
     return nodes.filter(node => node.selected);
   }, [nodes]);
 
-// Filter selected nodes to only valid moodboard nodes (file nodes with images/videos)
+// Filter selected nodes to only valid moodboard nodes (file nodes with images/videos, or mockup image nodes)
   const validMoodboardNodes = useMemo(() => {
     return selectedNodes.filter(node => {
+      if (node.type === "mockupImage") {
+        const d = node.data as { imageUrl?: string };
+        return !!d.imageUrl;
+      }
       if (node.type !== "file") return false;
       const fileData = node.data as { fileType?: string; uploadedFile?: { url?: string } };
       return fileData.fileType === "image" || fileData.fileType === "video" || fileData.uploadedFile?.url;
@@ -669,8 +673,8 @@ const reactFlowInstance = useReactFlow();
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__handle")) return;
           
-          // Handle file and sage nodes
-          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder"];
+          // Handle file, sage, and mockup nodes
+          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder", "mockupImage"];
           if (expandableTypes.includes(node.type || "") && onNodeDoubleClick) {
             onNodeDoubleClick(node.id);
           }
