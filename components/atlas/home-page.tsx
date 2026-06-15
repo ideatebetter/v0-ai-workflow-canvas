@@ -9,9 +9,9 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { FileDetailModal } from "./file-detail-modal";
 import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
 import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
+import { ReactFlow, Background, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
 import { useChat } from "@ai-sdk/react";
@@ -55,7 +55,6 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
         proOptions={{ hideAttribution: true }}
       >
         <Background className="[&>pattern>circle]:fill-muted-foreground/30" gap={20} />
-        <Controls showInteractive={false} />
         
         {/* Canvas Group Labels */}
         {groups.map((group) => (
@@ -188,6 +187,8 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
   );
 }
 
+const DEMO_EMAIL = "rahmi@ideatebetter.com";
+
 interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
   workspaceSettings: WorkspaceSettings;
@@ -196,6 +197,7 @@ interface HomePageProps {
   activeWorkspaceId?: string;
   onWorkspaceSwitch?: (workspaceId: string) => void;
   onWorkspaceCreate?: (name: string) => void;
+  onDeleteWorkspace?: () => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
   frameworks?: CanvasFramework[];
@@ -203,9 +205,11 @@ interface HomePageProps {
   onRemoveFramework?: (frameworkId: string) => void;
   onSaveAllToCloud?: () => void;
   isLoadingCanvases?: boolean;
+  userEmail?: string;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, onDeleteWorkspace, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases, userEmail }: HomePageProps) {
+  const isDemoAccount = userEmail === DEMO_EMAIL;
   const onSettingsChange = onWorkspaceSettingsChange;
   const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
   const [showCreateWorkspaceDialog, setShowCreateWorkspaceDialog] = useState(false);
@@ -353,6 +357,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             description: (result.description as string) || "",
             nodes: (result.initialNodes as Canvas["nodes"]) || [],
             edges: [],
+            workspaceId: activeWorkspaceId,
             visibility: "workspace",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -388,7 +393,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
-  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK, ...SAMPLE_FRAMEWORKS]);
+  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const frameworks = externalFrameworks ?? localFrameworks;
   const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
@@ -397,13 +402,23 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
   const [todosSectionCollapsed, setTodosSectionCollapsed] = useState(false);
+  const [ribbonMinimized, setRibbonMinimized] = useState(false);
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
-  // Collect all todos from all canvases (all pages), keyed by the date they were created (YYYY-MM-DD)
+  // Canvases with no workspaceId are legacy — treat them as belonging to the first workspace
+  const primaryWorkspaceId = workspaces[0]?.id ?? activeWorkspaceId;
+
+  // All canvases scoped to the active workspace (used for every display operation below)
+  const workspaceCanvases = useMemo(() =>
+    canvases.filter(c => (c.workspaceId ?? primaryWorkspaceId) === activeWorkspaceId),
+    [canvases, primaryWorkspaceId, activeWorkspaceId]
+  );
+
+  // Collect all todos from workspace canvases (all pages), keyed by the date they were created (YYYY-MM-DD)
   const todosByDate = useMemo(() => {
     const map: Record<string, Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string; canvasId: string; nodeId: string }>> = {};
     const today = new Date().toISOString().slice(0, 10);
-    canvases.forEach(canvas => {
+    workspaceCanvases.forEach(canvas => {
       // Collect nodes from all pages (or from canvas.nodes for single-page canvases)
       const allNodes = canvas.pages && canvas.pages.length > 0
         ? canvas.pages.flatMap(p => p.nodes)
@@ -419,12 +434,12 @@ const [showSageChat, setShowSageChat] = useState(false);
       });
     });
     return map;
-  }, [canvases]);
+  }, [workspaceCanvases]);
 
   // All todos flat list (for All To-Dos page)
   const allTodosFlat = useMemo(() => {
     const list: Array<{ task: import("@/lib/atlas-types").TaskItem; fileName: string; canvasName: string; canvasId: string; nodeId: string; projectName: string; projectId: string | undefined }> = [];
-    canvases.forEach(canvas => {
+    workspaceCanvases.forEach(canvas => {
       const project = projects.find(p => p.id === canvas.projectId);
       const allNodes = canvas.pages && canvas.pages.length > 0
         ? canvas.pages.flatMap(p => p.nodes)
@@ -438,7 +453,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       });
     });
     return list;
-  }, [canvases, projects]);
+  }, [workspaceCanvases, projects]);
 
   // Toggle task completion across canvases (handles multi-page nodes too)
   const handleToggleTask = useCallback((canvasId: string, nodeId: string, taskId: string) => {
@@ -457,10 +472,10 @@ const [showSageChat, setShowSageChat] = useState(false);
     }));
   }, [canvases, onCanvasesChange]);
 
-  // All file-type nodes across all canvases, for the global todo file picker
+  // All file-type nodes across workspace canvases, for the global todo file picker
   const allFileNodes = useMemo(() => {
     const list: Array<{ canvasId: string; canvasName: string; nodeId: string; fileName: string }> = [];
-    canvases.forEach(canvas => {
+    workspaceCanvases.forEach(canvas => {
       const nodes = canvas.pages && canvas.pages.length > 0
         ? canvas.pages.flatMap(p => p.nodes)
         : canvas.nodes;
@@ -471,7 +486,31 @@ const [showSageChat, setShowSageChat] = useState(false);
       });
     });
     return list;
-  }, [canvases]);
+  }, [workspaceCanvases]);
+
+  // 28-day ribbon: green every day, turns yellow on days that have tasks due
+  const ribbonDays = useMemo(() => {
+    const todayIndex = 17;
+    const today = new Date();
+    return Array.from({ length: 28 }, (_, i) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - todayIndex + i);
+      const dateStr = date.toISOString().slice(0, 10);
+      const tasksOnDay = todosByDate[dateStr] ?? [];
+      const isFuture = i > todayIndex;
+      if (tasksOnDay.length === 0) {
+        return { status: "smooth", title: "All Clear", description: "No deadlines", tags: [] as string[], isFuture };
+      }
+      const names = tasksOnDay.slice(0, 3).map(t => (t.task as any).text || t.fileName);
+      return {
+        status: "minor",
+        title: `${tasksOnDay.length} task${tasksOnDay.length > 1 ? "s" : ""} due`,
+        description: names.join(", "),
+        tags: names.slice(0, 2),
+        isFuture,
+      };
+    });
+  }, [todosByDate]);
 
   const handleAddGlobalTodo = useCallback((canvasId: string, nodeId: string, task: import("@/lib/atlas-types").TaskItem) => {
     const addToNode = (n: import("@/lib/atlas-types").AtlasNode) => {
@@ -491,7 +530,7 @@ const [showSageChat, setShowSageChat] = useState(false);
 
   // Combine all workspace nodes with canvas grouping
   const workspaceNodesData = useMemo(() => {
-    const workspaceCanvases = canvases.filter(c => c.visibility === "workspace");
+    const visibleCanvases = workspaceCanvases.filter(c => c.visibility === "workspace");
     const allNodes: AtlasNode[] = [];
     const canvasGroups: { canvasId: string; canvasName: string; startX: number; nodeCount: number }[] = [];
     
@@ -499,7 +538,7 @@ const [showSageChat, setShowSageChat] = useState(false);
     const groupSpacing = 400;
     const nodeSpacing = 280;
     
-    workspaceCanvases.forEach((canvas) => {
+    visibleCanvases.forEach((canvas) => {
       if (canvas.nodes.length === 0) return;
       
       const startX = currentX;
@@ -532,10 +571,15 @@ const [showSageChat, setShowSageChat] = useState(false);
     });
     
     return { nodes: allNodes, groups: canvasGroups };
-  }, [canvases]);
+  }, [workspaceCanvases, activeWorkspaceId]);
 
   const filteredCanvases = useMemo(() => {
-    let filtered = canvases;
+    // Only show canvases belonging to the active workspace
+    // (legacy canvases with no workspaceId belong to the first/primary workspace)
+    let filtered = canvases.filter(c => {
+      const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+      return cWorkspace === activeWorkspaceId;
+    });
 
     // Apply sidebar filter
     if (sidebarFilter === "workspace") {
@@ -568,6 +612,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       id: `canvas-${Date.now()}`,
       name: newCanvasName.trim(),
       projectId: newCanvasProjectId,
+      workspaceId: activeWorkspaceId,
       nodes: [],
       edges: [],
       createdAt: new Date().toISOString(),
@@ -631,7 +676,10 @@ const [showSageChat, setShowSageChat] = useState(false);
 
   const getProjectCanvases = (projectId: string) => {
     return canvases
-      .filter(c => c.projectId === projectId)
+      .filter(c => {
+        const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+        return c.projectId === projectId && cWorkspace === activeWorkspaceId;
+      })
       .sort((a, b) => {
         if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -640,7 +688,10 @@ const [showSageChat, setShowSageChat] = useState(false);
 
   const getUngroupedCanvases = () => {
     return canvases
-      .filter(c => !c.projectId)
+      .filter(c => {
+        const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+        return !c.projectId && cWorkspace === activeWorkspaceId;
+      })
       .sort((a, b) => {
         if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -738,6 +789,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       name: `${framework.name} (Copy)`,
       description: framework.description,
       previewImage: framework.previewImage,
+      workspaceId: activeWorkspaceId,
       nodes: framework.nodes,
       edges: framework.edges,
       comments: [],
@@ -885,11 +937,32 @@ const [showSageChat, setShowSageChat] = useState(false);
       ...extraNodes,
     ];
 
+    // Remap presentation flows: replace framework node IDs with the new canvas node IDs
+    const remappedFlows = (framework.presentationFlows ?? []).map(flow => ({
+      ...flow,
+      id: `${flow.id}-${ts}`,
+      edges: flow.edges.map(e => ({
+        ...e,
+        id: `${e.id}-${ts}`,
+        source: idMap.get(e.source) ?? e.source,
+        target: idMap.get(e.target) ?? e.target,
+      })),
+      groups: flow.groups.map(g => ({
+        ...g,
+        nodeIds: g.nodeIds.map(id => idMap.get(id) ?? id),
+        originalNodes: g.originalNodes.map(orig => ({
+          ...orig,
+          id: idMap.get(orig.id) ?? orig.id,
+        })),
+      })),
+    }));
+
     const newCanvas: Canvas = {
       id: `canvas-${ts}`,
       name: stringValues["brand_name"] ? `${stringValues["brand_name"]} — Logo Sprint` : framework.name,
       description: framework.description,
       previewImage: framework.previewImage,
+      workspaceId: activeWorkspaceId,
       nodes: allNodes,
       edges: [...newEdges, ...extraEdges],
       comments: [],
@@ -898,6 +971,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       createdBy: workspaceSettings.members[0],
       isFavorite: false,
       visibility: "workspace",
+      presentationFlows: remappedFlows.length > 0 ? remappedFlows : undefined,
     };
       onCanvasesChange([...canvases, newCanvas]);
       setFrameworks(prev => prev.map(f =>
@@ -925,6 +999,7 @@ const [showSageChat, setShowSageChat] = useState(false);
         name: framework.name,
         description: framework.description,
         previewImage: framework.previewImage,
+        workspaceId: activeWorkspaceId,
         nodes: fallbackNodes,
         edges: fallbackEdges,
         comments: [],
@@ -1281,37 +1356,6 @@ const [showSageChat, setShowSageChat] = useState(false);
         {/* User Section */}
         <UserSection profilePicture={workspaceSettings.branding?.profilePicture} />
         
-        {/* Bottom actions */}
-        <div className="p-4 border-t" style={{ borderColor: "#222222" }}>
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 9.75H9.75V15H8.25V9.75H3V8.25H8.25V3H9.75V8.25H15V9.75Z" fill="currentColor"/>
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="3" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="7.25" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M9 6V9.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="9" cy="12" r="0.75" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Main Content */}
@@ -2452,34 +2496,6 @@ All Frameworks
                 </div>
               </div>
 
-              {/* Products */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                    <path d="M14 10V6C13.9997 5.76628 13.9405 5.53674 13.8278 5.33491C13.7152 5.13309 13.5528 4.96619 13.3556 4.85L8.66667 2.07222C8.46901 1.95578 8.24258 1.89448 8.01111 1.89448C7.77965 1.89448 7.55322 1.95578 7.35556 2.07222L2.66667 4.85C2.46946 4.96619 2.30708 5.13309 2.19444 5.33491C2.0818 5.53674 2.02251 5.76628 2.02222 6V10C2.02251 10.2337 2.0818 10.4633 2.19444 10.6651C2.30708 10.8669 2.46946 11.0338 2.66667 11.15L7.35556 13.9278C7.55322 14.0442 7.77965 14.1055 8.01111 14.1055C8.24258 14.1055 8.46901 14.0442 8.66667 13.9278L13.3556 11.15C13.5528 11.0338 13.7152 10.8669 13.8278 10.6651C13.9405 10.4633 13.9997 10.2337 14 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Products
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {workspaceSettings.products.map((product) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => {
-                        const updatedProducts = workspaceSettings.products.map(p => p.id === product.id ? { ...p, enabled: !p.enabled } : p);
-                        onSettingsChange({ ...workspaceSettings, products: updatedProducts });
-                      }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${product.enabled ? "ring-1 ring-white/20" : "opacity-50"}`}
-                      style={{ backgroundColor: "#1a1a1a" }}
-                    >
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: product.color }} />
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{product.name}</span>
-                      <div className={`w-2 h-2 rounded-full ${product.enabled ? "bg-green-500" : "bg-gray-600"}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Preferences */}
               <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -2567,8 +2583,8 @@ All Frameworks
                 </div>
               </div>
 
-              {/* Data & Sync Section */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              {/* Data & Sync Section — removed */}
+              {false && <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <h3 className="text-white font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -2801,7 +2817,7 @@ All Frameworks
                     Syncing ensures your canvases are saved to the cloud and accessible across all devices and domains.
                   </p>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
         ) : activeView === "home" ? (
@@ -2815,23 +2831,32 @@ All Frameworks
                   style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <h3
-                        className="text-white font-semibold text-base"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  <div className={`flex items-center justify-between ${ribbonMinimized ? "" : "mb-5"}`}>
+                    <button
+                      type="button"
+                      className="flex items-start gap-2 text-left group"
+                      onClick={() => setRibbonMinimized(v => !v)}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        className={`mt-[3px] flex-shrink-0 text-gray-500 group-hover:text-gray-300 transition-transform transition-colors ${ribbonMinimized ? "-rotate-90" : ""}`}
                       >
-                        Fault Management Ribbon
-                      </h3>
-                      <p
-                        className="text-gray-500 text-sm mt-0.5"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        7 active client engagements
-                      </p>
-                    </div>
+                        <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <div>
+                        <h3
+                          className="text-white font-semibold text-base group-hover:text-gray-200 transition-colors"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          Fault Management Ribbon
+                        </h3>
+                      </div>
+                    </button>
                     {/* Legend and View Toggle */}
-                    <div className="flex items-center gap-6">
+                    {!ribbonMinimized && <div className="flex items-center gap-6">
                       {/* Legend */}
                       <div className="flex items-center gap-5">
                         <div className="flex items-center gap-2">
@@ -2892,10 +2917,10 @@ All Frameworks
                           </svg>
                         </button>
                       </div>
-                    </div>
+                    </div>}
                   </div>
 
-                  {ribbonViewMode === "ribbon" ? (
+                  {!ribbonMinimized && (ribbonViewMode === "ribbon" ? (
                   <>
                   {/* Timeline Ribbon */}
                   <div className="relative mb-3">
@@ -2908,50 +2933,10 @@ All Frameworks
                         Today
                       </div>
                     </div>
-                    
+
                     {/* Ribbon data for each day */}
                   {(() => {
-                    const todayIndex = 17; // Today is day 18 (index 17)
-                    
-                    // Sample data for 28 days - design agency scenarios
-                    // Past days (index 0-16) show what happened
-                    // Today (index 17) shows current status
-                    // Future days (index 18-27) show predictions based on scheduled work
-                    const ribbonDays = [
-                      // Week 1 (14-20 days ago) - Past
-                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
-                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
-                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
-                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
-                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
-                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
-                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
-                      // Week 2 (7-13 days ago) - Past
-                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
-                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
-                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
-                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
-                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
-                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
-                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
-                      // Week 3 - Current week
-                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
-                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
-                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
-                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
-                      // Future days - Predictive based on scheduled work and current project status
-                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
-                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
-                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
-                      // Week 4 - Future (projected risks)
-                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
-                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
-                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
-                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
-                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
-                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
-                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
-                    ];
+                    const todayIndex = 17;
 
                     const statusColors: Record<string, string> = {
                       smooth: "#4ADE80",
@@ -3010,43 +2995,6 @@ All Frameworks
                   {/* Selected Day Detail Card */}
                   {(() => {
                     const todayIndex = 17;
-                    
-                    const ribbonDays = [
-                      // Week 1 (14-20 days ago) - Past
-                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
-                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
-                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
-                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
-                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
-                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
-                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
-                      // Week 2 (7-13 days ago) - Past
-                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
-                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
-                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
-                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
-                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
-                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
-                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
-                      // Week 3 - Current week
-                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
-                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
-                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
-                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
-                      // Future days - Predictive
-                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
-                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
-                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
-                      // Week 4 - Future
-                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
-                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
-                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
-                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
-                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
-                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
-                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
-                    ];
-
                     const selectedDay = ribbonDays[selectedRibbonDay];
                     const daysFromToday = selectedRibbonDay - todayIndex;
                     
@@ -3285,39 +3233,7 @@ All Frameworks
                   (() => {
                     const today = new Date();
                     const todayIndex = 17;
-                    
-                    // Same ribbon data for calendar view
-                    const ribbonDays = [
-                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
-                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
-                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
-                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
-                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
-                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
-                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
-                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
-                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
-                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
-                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
-                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
-                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
-                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
-                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
-                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
-                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
-                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false },
-                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
-                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due", tags: ["At Risk", "Tight Timeline"], isFuture: true },
-                      { status: "smooth", title: "Buffer Day", description: "No major deliverables", tags: ["Flexible", "Catch-up"], isFuture: true },
-                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins", tags: ["Pending Approval", "Planning"], isFuture: true },
-                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project", tags: ["Overbooked", "Need Coverage"], isFuture: true },
-                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected", tags: ["External", "Monitoring"], isFuture: true },
-                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting", tags: ["Financial Risk", "Pending"], isFuture: true },
-                      { status: "minor", title: "Team Training", description: "New design system workshop", tags: ["Reduced Capacity", "Investment"], isFuture: true },
-                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins", tags: ["Optimistic", "Dependent"], isFuture: true },
-                      { status: "smooth", title: "Client Sync", description: "Weekly check-in", tags: ["Routine", "Communication"], isFuture: true },
-                    ];
-                    
+
                     const statusColors: Record<string, string> = {
                       smooth: "#4ADE80",
                       minor: "#FCD34D",
@@ -3494,7 +3410,7 @@ All Frameworks
                       </div>
                     );
                   })()
-                  )}
+                  ))}
                 </div>
               </div>
 
@@ -4537,6 +4453,8 @@ All Frameworks
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
+        onDeleteWorkspace={onDeleteWorkspace}
+        canDeleteWorkspace={(workspaces?.length ?? 1) > 1}
       />
 
       {/* Create Workspace Dialog */}

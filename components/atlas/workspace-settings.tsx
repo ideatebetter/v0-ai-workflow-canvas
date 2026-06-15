@@ -49,6 +49,8 @@ interface WorkspaceSettingsProps {
   settings: WorkspaceSettings;
   onSettingsChange: (settings: WorkspaceSettings) => void;
   onMakeFramework?: () => void;
+  onDeleteWorkspace?: () => void;
+  canDeleteWorkspace?: boolean; // false when it's the only workspace
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
@@ -64,12 +66,16 @@ export function WorkspaceSettingsDialog({
   settings,
   onSettingsChange,
   onMakeFramework,
+  onDeleteWorkspace,
+  canDeleteWorkspace = true,
 }: WorkspaceSettingsProps) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MemberRole>("viewer");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const { user } = useAuth();
 
   // Admin: Create user state
@@ -82,6 +88,12 @@ export function WorkspaceSettingsDialog({
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
+
+  // Check if current user is owner or admin of this workspace
+  const currentMember = settings.members.find(
+    m => m.id === user?.id || m.email === user?.email
+  );
+  const isAdminOrOwner = currentMember?.role === "owner" || currentMember?.role === "admin" || isAdmin;
 
   // Figma sync token
   const [figmaToken, setFigmaToken] = useState<string | null>(null);
@@ -328,6 +340,7 @@ export function WorkspaceSettingsDialog({
           width: "90vw",
           maxHeight: "85vh",
         }}
+        onCloseAutoFocus={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
       >
         <div className="flex flex-col h-[600px]">
           {/* Header */}
@@ -616,44 +629,6 @@ export function WorkspaceSettingsDialog({
                       </button>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div style={{ borderTop: "1px solid #222222" }} />
-
-            {/* Products Section */}
-            <div>
-              <h3
-                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                  <path d="M15.75 11.25V6.75C15.7497 6.48706 15.6803 6.22882 15.5487 6.00177C15.4172 5.77472 15.2282 5.58697 15 5.4575L9.75 2.4575C9.52146 2.32775 9.26291 2.25879 9 2.25879C8.73709 2.25879 8.47854 2.32775 8.25 2.4575L3 5.4575C2.77181 5.58697 2.58285 5.77472 2.45127 6.00177C2.31969 6.22882 2.25033 6.48706 2.25 6.75V11.25C2.25033 11.5129 2.31969 11.7712 2.45127 11.9982C2.58285 12.2253 2.77181 12.413 3 12.5425L8.25 15.5425C8.47854 15.6722 8.73709 15.7412 9 15.7412C9.26291 15.7412 9.52146 15.6722 9.75 15.5425L15 12.5425C15.2282 12.413 15.4172 12.2253 15.5487 11.9982C15.6803 11.7712 15.7497 11.5129 15.75 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Products
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {settings.products.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => handleProductToggle(product.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                      product.enabled ? "ring-1 ring-white/20" : "opacity-50"
-                    }`}
-                    style={{ backgroundColor: "#1a1a1a" }}
-                  >
-                    <div
-                      className="w-4 h-4 rounded"
-                      style={{ backgroundColor: product.color }}
-                    />
-                    <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {product.name}
-                    </span>
-                    <div className={`w-2 h-2 rounded-full ${product.enabled ? "bg-green-500" : "bg-gray-600"}`} />
-                  </button>
                 ))}
               </div>
             </div>
@@ -1018,6 +993,125 @@ export function WorkspaceSettingsDialog({
                       <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
+                </div>
+              </>
+            )}
+
+            {/* Danger Zone — admins/owners only */}
+            {isAdminOrOwner && onDeleteWorkspace && (
+              <>
+                <div style={{ borderTop: "1px solid #2a1515" }} />
+                <div>
+                  <h3
+                    className="font-semibold text-base mb-4 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif", color: "#ef4444" }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2L14 13H2L8 2Z" stroke="#ef4444" strokeWidth="1.3" strokeLinejoin="round"/>
+                      <path d="M8 6V9" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
+                      <circle cx="8" cy="11" r="0.6" fill="#ef4444"/>
+                    </svg>
+                    Danger Zone
+                  </h3>
+
+                  {!showDeleteConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!canDeleteWorkspace) return;
+                        setShowDeleteConfirm(true);
+                        setDeleteConfirmText("");
+                      }}
+                      disabled={!canDeleteWorkspace}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left w-full"
+                      style={{
+                        backgroundColor: "#1a0d0d",
+                        border: "1px solid #3a1a1a",
+                        opacity: canDeleteWorkspace ? 1 : 0.4,
+                        cursor: canDeleteWorkspace ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#ef444415" }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                          <path d="M5 6H15L14 17H6L5 6Z" stroke="#ef4444" strokeWidth="1.4" strokeLinejoin="round"/>
+                          <path d="M3 6H17" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
+                          <path d="M8 3H12" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
+                          <path d="M8 10V14M12 10V14" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                          Delete Workspace
+                        </div>
+                        <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          {canDeleteWorkspace
+                            ? "Permanently delete this workspace and all its canvases"
+                            : "Cannot delete — this is your only workspace"}
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <div
+                      className="rounded-xl p-4 space-y-3"
+                      style={{ backgroundColor: "#1a0d0d", border: "1px solid #3a1a1a" }}
+                    >
+                      <p className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                        This will permanently delete <span className="font-bold">{settings.name}</span> and all its canvases. This cannot be undone.
+                      </p>
+                      <p className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Type <span className="font-mono font-semibold text-white">delete {settings.name}</span> to confirm
+                      </p>
+                      <input
+                        type="text"
+                        value={deleteConfirmText}
+                        onChange={e => setDeleteConfirmText(e.target.value)}
+                        placeholder={`delete ${settings.name}`}
+                        autoFocus
+                        className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                        style={{
+                          backgroundColor: "#0d0d0d",
+                          border: `1px solid ${deleteConfirmText === `delete ${settings.name}` ? "#ef4444" : "#2a2a2a"}`,
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      />
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{
+                            backgroundColor: "#1e1e1e",
+                            border: "1px solid #333",
+                            color: "#aaa",
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deleteConfirmText !== `delete ${settings.name}`}
+                          onClick={() => {
+                            onDeleteWorkspace();
+                            onClose();
+                          }}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={{
+                            backgroundColor: deleteConfirmText === `delete ${settings.name}` ? "#ef4444" : "#2a1a1a",
+                            color: deleteConfirmText === `delete ${settings.name}` ? "#fff" : "#555",
+                            border: "none",
+                            cursor: deleteConfirmText === `delete ${settings.name}` ? "pointer" : "not-allowed",
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          Delete Workspace
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}

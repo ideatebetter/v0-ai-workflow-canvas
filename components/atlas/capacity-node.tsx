@@ -3,6 +3,7 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
+import { ComingSoonBadge } from "./coming-soon-badge";
 import type { CapacityNodeData } from "@/lib/atlas-types";
 
 export function CapacityNode({ id, data, selected }: NodeProps) {
@@ -24,6 +25,7 @@ export function CapacityNode({ id, data, selected }: NodeProps) {
         width: 280,
       }}
     >
+      <ComingSoonBadge />
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center gap-2 border-b"

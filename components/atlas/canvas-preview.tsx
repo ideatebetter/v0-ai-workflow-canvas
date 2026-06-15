@@ -16,13 +16,23 @@ const NODE_TYPE_COLORS: Record<string, string> = {
   "sage-chatbot": "#10B981", // Green
   "presentation-group": "#8B5CF6", // Purple
   "canvas-group": "#F59E0B", // Orange
+  "briefInput": "#3B82F6", // Blue (strategy) — overridden below for brief cards
   default: "#6B7280", // Gray
 };
+
+// cardKeys that belong to the Creative Brief section (amber)
+const BRIEF_CARD_KEYS = new Set([
+  "project-overview",
+  "design-direction",
+  "logo-requirements",
+  "deliverables",
+  "timeline-budget",
+]);
 
 // Get color based on node type or file status
 function getNodeColor(node: AtlasNode): string {
   const nodeType = node.type || "default";
-  
+
   // Check for file node with status
   if (nodeType === "file-node" || nodeType === "atlas-file-node") {
     const status = (node.data as Record<string, unknown>)?.status as string;
@@ -31,7 +41,13 @@ function getNodeColor(node: AtlasNode): string {
     if (status === "in-progress") return "#3B82F6"; // Blue
     if (status === "rejected") return "#EF4444"; // Red
   }
-  
+
+  // briefInput nodes: amber for brief cards, blue for strategy cards
+  if (nodeType === "briefInput") {
+    const cardKey = (node.data as Record<string, unknown>)?.cardKey as string;
+    return BRIEF_CARD_KEYS.has(cardKey) ? "#F59E0B" : "#3B82F6";
+  }
+
   return NODE_TYPE_COLORS[nodeType] || NODE_TYPE_COLORS.default;
 }
 

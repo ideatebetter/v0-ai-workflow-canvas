@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Canvas, WorkspaceSettings, CanvasFramework } from "@/lib/atlas-types";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, SAMPLE_FRAMEWORKS } from "@/lib/atlas-types";
+import type { Canvas, WorkspaceSettings, CanvasFramework, WorkspaceMember } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
@@ -27,13 +27,17 @@ function loadSettings(): WorkspaceSettings {
   return DEFAULT_WORKSPACE_SETTINGS;
 }
 
+const FAKE_MEMBER_IDS = new Set(["m1", "m2", "m3", "m4", "m5"]);
+
 function loadWorkspaces(): WorkspaceSettings[] {
   if (typeof window === "undefined") return [DEFAULT_WORKSPACE_SETTINGS];
   try {
     const stored = localStorage.getItem(WORKSPACES_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as WorkspaceSettings[];
+      }
     }
   } catch (e) {
     console.error("Failed to load workspaces from localStorage:", e);
@@ -49,7 +53,7 @@ export function AtlasApp() {
   const [workspaces, setWorkspaces] = useState<WorkspaceSettings[]>([DEFAULT_WORKSPACE_SETTINGS]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(DEFAULT_WORKSPACE_SETTINGS.id);
   const workspaceSettings: WorkspaceSettings = workspaces.find(w => w.id === activeWorkspaceId) ?? workspaces[0];
-  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK, ...SAMPLE_FRAMEWORKS]);
+  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
@@ -59,6 +63,8 @@ export function AtlasApp() {
 
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
+    const DEMO_EMAIL = "rahmi@ideatebetter.com";
+
     if (!user) {
       console.log("[v0] No user, using INITIAL_CANVASES");
       setCanvases(INITIAL_CANVASES);
@@ -75,11 +81,11 @@ export function AtlasApp() {
         const data = await response.json();
         console.log("[v0] Loaded canvases from API:", data.canvases?.length || 0);
         if (data.canvases && data.canvases.length > 0) {
-          // Transform API response to match Canvas type
           const loadedCanvases: Canvas[] = data.canvases.map((c: any) => ({
             id: c.id,
             name: c.name,
             description: c.description,
+            workspaceId: c.settings?.workspaceId || undefined,
             nodes: c.nodes || [],
             edges: c.edges || [],
             comments: c.settings?.comments || c.comments || [],
@@ -91,20 +97,63 @@ export function AtlasApp() {
           console.log("[v0] Setting canvases:", loadedCanvases.map(c => c.name));
           setCanvases(loadedCanvases);
         } else {
-          // No canvases in database, use initial canvases
-          console.log("[v0] No canvases in DB, using INITIAL_CANVASES");
-          setCanvases(INITIAL_CANVASES);
+          // No canvases in DB — demo account keeps placeholder data, real users start fresh
+          const isDemo = user.email === DEMO_EMAIL;
+          console.log("[v0] No canvases in DB,", isDemo ? "using INITIAL_CANVASES (demo)" : "starting fresh");
+          setCanvases(isDemo ? INITIAL_CANVASES : []);
         }
       } else {
         console.error("[v0] Failed to load canvases from API:", response.statusText);
-        setCanvases(INITIAL_CANVASES);
+        setCanvases(user.email === DEMO_EMAIL ? INITIAL_CANVASES : []);
       }
     } catch (error) {
       console.error("[v0] Error loading canvases:", error);
-      setCanvases(INITIAL_CANVASES);
+      setCanvases(user.email === DEMO_EMAIL ? INITIAL_CANVASES : []);
     } finally {
       setIsLoadingCanvases(false);
     }
+  }, [user]);
+
+  // Seed the logged-in user into workspace members
+  useEffect(() => {
+    if (!user) return;
+    const DEMO_EMAIL = "rahmi@ideatebetter.com";
+    const isDemo = user.email === DEMO_EMAIL;
+
+    const displayName: string =
+      (user.user_metadata?.display_name as string) ||
+      user.email?.split("@")[0] ||
+      "You";
+    const initials = displayName
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+    const realMember: WorkspaceMember = {
+      id: user.id,
+      name: displayName,
+      email: user.email ?? "",
+      initials,
+      role: "owner",
+    };
+
+    setWorkspaces(prev =>
+      prev.map(w => {
+        const alreadyReal = w.members.some(m => m.id === user.id);
+        const isFirstWorkspace = prev.indexOf(w) === 0;
+        if (isDemo && isFirstWorkspace) {
+          // Demo account first workspace: real user + fake members
+          if (alreadyReal && w.members.some(m => FAKE_MEMBER_IDS.has(m.id))) return w;
+          const fakeMembers = WORKSPACE_MEMBERS.filter(m => FAKE_MEMBER_IDS.has(m.id));
+          return { ...w, members: [realMember, ...fakeMembers] };
+        } else {
+          // All other workspaces (including demo's secondary workspaces): only real user
+          if (alreadyReal) return { ...w, members: w.members.filter(m => !FAKE_MEMBER_IDS.has(m.id)) };
+          return { ...w, members: [realMember] };
+        }
+      })
+    );
   }, [user]);
 
   // Save canvas to API (debounced)
@@ -142,6 +191,7 @@ export function AtlasApp() {
               comments: canvas.comments,
               pages: canvas.pages,
               activePageId: canvas.activePageId,
+              workspaceId: canvas.workspaceId,
             },
           }),
         });
@@ -158,7 +208,7 @@ export function AtlasApp() {
             description: canvas.description,
             nodes: canvas.nodes,
             edges: canvas.edges,
-            settings: { comments: canvas.comments },
+            settings: { comments: canvas.comments, workspaceId: canvas.workspaceId },
           }),
         });
         
@@ -256,6 +306,17 @@ export function AtlasApp() {
     setWorkspaces(prev => [...prev, newWorkspace]);
     setActiveWorkspaceId(newWorkspace.id);
   }, []);
+
+  const handleDeleteWorkspace = useCallback(() => {
+    setWorkspaces(prev => {
+      if (prev.length <= 1) return prev; // never delete the last workspace
+      const remaining = prev.filter(w => w.id !== activeWorkspaceId);
+      setActiveWorkspaceId(remaining[0].id);
+      // Remove all canvases belonging to the deleted workspace
+      setCanvases(c => c.filter(canvas => canvas.workspaceId !== activeWorkspaceId));
+      return remaining;
+    });
+  }, [activeWorkspaceId]);
 
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
@@ -361,26 +422,67 @@ export function AtlasApp() {
   }, []);
 
   // Handle copying/moving nodes to a different canvas
-  const handleCopyNodesToCanvas = useCallback((targetCanvasId: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
-    setCanvases((prev) => 
+  const handleCopyNodesToCanvas = useCallback((targetCanvasId: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy", targetPageId?: string) => {
+    setCanvases((prev) =>
       prev.map((canvas) => {
-        if (canvas.id === targetCanvasId) {
-          // Generate new IDs for the copied nodes to avoid conflicts
-          const newNodes = nodes.map((node) => ({
+        if (canvas.id !== targetCanvasId) return canvas;
+
+        // Determine which destination page we're inserting into so we can check for name conflicts.
+        let destinationNodes: import("@/lib/atlas-types").AtlasNode[] = [];
+        if (canvas.pages && canvas.pages.length > 0) {
+          const pageIndex = targetPageId
+            ? canvas.pages.findIndex(p => p.id === targetPageId)
+            : 0;
+          const idx = pageIndex >= 0 ? pageIndex : 0;
+          destinationNodes = canvas.pages[idx]?.nodes || [];
+        } else {
+          destinationNodes = canvas.nodes || [];
+        }
+
+        const existingLabels = new Set(
+          destinationNodes
+            .map(n => ((n.data as any).label || "").toLowerCase())
+            .filter(Boolean)
+        );
+
+        // Normalize the group so its top-left lands at (120, 120), preserving relative positions.
+        const minX = Math.min(...nodes.map((n) => n.position.x));
+        const minY = Math.min(...nodes.map((n) => n.position.y));
+        const ANCHOR = 120;
+
+        const newNodes = nodes.map((node) => {
+          const nodeData = node.data as any;
+          const nodeLabel: string = nodeData.label || "";
+          const hasDuplicate = nodeLabel && existingLabels.has(nodeLabel.toLowerCase());
+
+          return {
             ...node,
             id: `${node.id}-${mode}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             position: {
-              x: node.position.x + 50,
-              y: node.position.y + 50,
+              x: node.position.x - minX + ANCHOR,
+              y: node.position.y - minY + ANCHOR,
             },
             selected: false,
-          }));
-          return {
-            ...canvas,
-            nodes: [...canvas.nodes, ...newNodes],
+            data: hasDuplicate
+              ? { ...node.data, label: `${nodeLabel} (copy)` }
+              : node.data,
           };
+        });
+
+        // If the canvas has pages, insert into the specified page (or first page as fallback)
+        if (canvas.pages && canvas.pages.length > 0) {
+          const pageIndex = targetPageId
+            ? canvas.pages.findIndex(p => p.id === targetPageId)
+            : 0;
+          const idx = pageIndex >= 0 ? pageIndex : 0;
+          const updatedPages = canvas.pages.map((page, i) =>
+            i === idx ? { ...page, nodes: [...page.nodes, ...newNodes] } : page
+          );
+          return { ...canvas, pages: updatedPages };
         }
-        return canvas;
+
+        // No pages structure — add to canvas root
+        return { ...canvas, nodes: [...canvas.nodes, ...newNodes] };
       })
     );
   }, []);
@@ -388,12 +490,16 @@ export function AtlasApp() {
   // Handle creating a new canvas and transferring nodes to it
   const handleCreateCanvasWithNodes = useCallback(async (canvasName: string, nodes: import("@/lib/atlas-types").AtlasNode[], mode: "move" | "copy") => {
     const newCanvasId = `canvas-${Date.now()}`;
+    // Normalize the group to start at (120, 120), preserving relative positions
+    const minX = Math.min(...nodes.map((n) => n.position.x));
+    const minY = Math.min(...nodes.map((n) => n.position.y));
+    const ANCHOR = 120;
     const newNodes = nodes.map((node) => ({
       ...node,
       id: `${node.id}-${mode}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       position: {
-        x: node.position.x,
-        y: node.position.y,
+        x: node.position.x - minX + ANCHOR,
+        y: node.position.y - minY + ANCHOR,
       },
       selected: false,
     }));
@@ -401,6 +507,7 @@ export function AtlasApp() {
     const newCanvas: import("@/lib/atlas-types").Canvas = {
       id: newCanvasId,
       name: canvasName,
+      workspaceId: activeWorkspaceId,
       nodes: newNodes,
       edges: [],
       comments: [],
@@ -658,6 +765,7 @@ export function AtlasApp() {
       activeWorkspaceId={activeWorkspaceId}
       onWorkspaceSwitch={handleWorkspaceSwitch}
       onWorkspaceCreate={handleCreateWorkspace}
+      onDeleteWorkspace={handleDeleteWorkspace}
       canvases={canvases}
       onCanvasesChange={handleCanvasesChange}
       onSaveAllToCloud={handleSaveAllToCloud}
@@ -665,6 +773,7 @@ export function AtlasApp() {
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
       onRemoveFramework={handleRemoveFramework}
+      userEmail={user?.email ?? undefined}
     />
   );
 }

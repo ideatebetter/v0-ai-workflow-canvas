@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
-import { ReactFlow, Background, Controls, ReactFlowProvider, useNodesState, useEdgesState } from "@xyflow/react";
+import { ReactFlow, Background, ReactFlowProvider, useNodesState, useEdgesState } from "@xyflow/react";
 import type { CanvasFramework, FrameworkParameter, AtlasNode } from "@/lib/atlas-types";
 import { CanvasPreview } from "./canvas-preview";
 import "@xyflow/react/dist/style.css";
 
 type DetailTab = "app" | "workflow";
-export type ParamValues = Record<string, string | File>;
+export type ParamValues = Record<string, string | File | File[]>;
 
 interface Props {
   framework: CanvasFramework;
@@ -38,7 +38,6 @@ function WorkflowCanvas({ nodes, edges }: { nodes: AtlasNode[]; edges: CanvasFra
       style={{ backgroundColor: "#0a0a0a" }}
     >
       <Background color="#1a1a1a" gap={24} />
-      <Controls showInteractive={false} />
     </ReactFlow>
   );
 }
@@ -56,7 +55,13 @@ function FileDropZone({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isPDF = param.id.includes("pdf") || param.label.toLowerCase().includes("pdf");
-  const accept = isPDF ? ".pdf" : "image/*,.ai,.svg,.eps,.pdf";
+  const isMoodboard = param.id === "moodboard_content";
+  const isCollateral = param.id === "collateral";
+  const accept = isPDF
+    ? ".pdf"
+    : isMoodboard || isCollateral
+    ? "image/*,.pdf"
+    : "image/*,.ai,.svg,.eps,.pdf";
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -137,7 +142,137 @@ function FileDropZone({
           {isPDF && (
             <span className="text-[10px] text-gray-600">PDF → auto-creates text nodes</span>
           )}
+          {isMoodboard && (
+            <span className="text-[10px] text-gray-600">Images, PDFs, mood references</span>
+          )}
+          {isCollateral && (
+            <span className="text-[10px] text-gray-600">PNG, JPG, PDF — logo applied in context</span>
+          )}
         </button>
+      )}
+    </div>
+  );
+}
+
+function MultiFileDropZone({
+  param,
+  files,
+  onChange,
+}: {
+  param: FrameworkParameter;
+  files: File[];
+  onChange: (files: File[]) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isMoodboard = param.id === "moodboard_content";
+
+  const addFiles = (incoming: FileList | null) => {
+    if (!incoming || incoming.length === 0) return;
+    const next = [...files];
+    Array.from(incoming).forEach(f => {
+      if (!next.some(existing => existing.name === f.name && existing.size === f.size)) {
+        next.push(f);
+      }
+    });
+    onChange(next);
+  };
+
+  const removeFile = (index: number) => {
+    onChange(files.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,.pdf"
+        multiple
+        className="hidden"
+        onChange={(e) => addFiles(e.target.files)}
+      />
+
+      {/* Drop zone */}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          addFiles(e.dataTransfer.files);
+        }}
+        className="w-full rounded-lg flex flex-col items-center justify-center gap-2 py-4 transition-all"
+        style={{
+          border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
+          backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
+        }}
+      >
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+        <span className="text-xs text-gray-500">
+          Drop files or <span style={{ color: "#F0FE00" }}>browse</span>
+        </span>
+        <span className="text-[10px] text-gray-600">
+          {isMoodboard ? "Images, PDFs — multiple files" : "PNG, JPG, PDF — logo applied in context"}
+        </span>
+        <span className="text-[10px]" style={{ color: "rgba(240,254,0,0.45)" }}>
+          Hold ⌘ to select multiple
+        </span>
+      </button>
+
+      {/* File list */}
+      {files.length > 0 && (
+        <div className="space-y-1.5">
+          {files.map((file, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+            >
+              <div
+                className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "rgba(240,254,0,0.10)" }}
+              >
+                {file.type.startsWith("image/") ? (
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <rect x="1" y="1" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.2" />
+                    <circle cx="4.5" cy="4.5" r="1.2" fill="#F0FE00" />
+                    <path d="M1 9L4.5 6L7 8.5L9.5 6.5L13 9" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                    <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#F0FE00" strokeWidth="1.2" />
+                    <path d="M4 5H10M4 7.5H10M4 10H7" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                )}
+              </div>
+              <span className="text-xs text-gray-300 truncate flex-1">{file.name}</span>
+              <span className="text-[10px] text-gray-600 flex-shrink-0">
+                {(file.size / 1024).toFixed(0)} KB
+              </span>
+              <button
+                type="button"
+                onClick={() => removeFile(i)}
+                className="text-gray-600 hover:text-white transition-colors flex-shrink-0 ml-1"
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <p className="text-[10px] text-gray-600 text-right">{files.length} file{files.length !== 1 ? "s" : ""} selected</p>
+        </div>
       )}
     </div>
   );
@@ -149,8 +284,8 @@ function ParamInput({
   onChange,
 }: {
   param: FrameworkParameter;
-  value: string | File | null;
-  onChange: (v: string | File | null) => void;
+  value: string | File | File[] | null;
+  onChange: (v: string | File | File[] | null) => void;
 }) {
   const base =
     "w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none";
@@ -159,6 +294,16 @@ function ParamInput({
     border: "1px solid #2a2a2a",
     fontFamily: "system-ui, Inter, sans-serif",
   };
+
+  if (param.type === "file" && param.multiple) {
+    return (
+      <MultiFileDropZone
+        param={param}
+        files={Array.isArray(value) ? value : []}
+        onChange={onChange}
+      />
+    );
+  }
 
   if (param.type === "file") {
     return (
@@ -241,7 +386,8 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
   const [paramValues, setParamValues] = useState<ParamValues>(() => {
     const init: ParamValues = {};
     framework.parameters?.forEach((p) => {
-      if (p.type !== "file") init[p.id] = p.defaultValue ?? "";
+      if (p.type === "file" && p.multiple) init[p.id] = [];
+      else if (p.type !== "file") init[p.id] = p.defaultValue ?? "";
     });
     return init;
   });
@@ -489,14 +635,29 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
             {hasParams ? (
               params.map((param) => (
                 <div key={param.id}>
-                  <label className="block text-xs font-medium text-gray-300 mb-2">
-                    {param.label}
-                    {param.required && <span className="text-red-400 ml-1">*</span>}
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-gray-300 mb-2">
+                    <span>{param.label}</span>
+                    {param.required && <span className="text-red-400">*</span>}
+                    {param.tooltip && (
+                      <span className="relative group inline-flex items-center ml-0.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500 cursor-help">
+                          <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
+                          <path d="M6 5V8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                          <circle cx="6" cy="3.5" r="0.6" fill="currentColor" />
+                        </svg>
+                        <span
+                          className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 w-52 rounded-lg px-3 py-2 text-[11px] leading-relaxed text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                          style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a", boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
+                        >
+                          {param.tooltip}
+                        </span>
+                      </span>
+                    )}
                   </label>
                   <ParamInput
                     param={param}
                     value={paramValues[param.id] ?? null}
-                    onChange={(v) => setParamValues((prev) => ({ ...prev, [param.id]: v as string | File }))}
+                    onChange={(v) => setParamValues((prev) => ({ ...prev, [param.id]: v as string | File | File[] }))}
                   />
                 </div>
               ))

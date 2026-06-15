@@ -2,13 +2,12 @@
 
 import React, { useCallback, useRef, useMemo, useState, useEffect, createContext, useContext } from "react";
 
-// Context to share which nodes are part of the presentation (have yellow borders)
-export const PresentationNodesContext = createContext<Set<string>>(new Set());
+// Context to share which nodes are part of the presentation, mapped to their 1-based sequence order
+export const PresentationNodesContext = createContext<Map<string, number>>(new Map());
 export const usePresentationNodes = () => useContext(PresentationNodesContext);
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -19,6 +18,7 @@ import {
   type NodeTypes,
   BackgroundVariant,
   type OnNodesChange,
+  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -38,6 +38,7 @@ import { TeamHealthNode } from "./team-health-node";
 import { MoodboardNode } from "./moodboard-node";
 import { MockupImageNode } from "./nodes/mockup-image-node";
 import { AIPromptNode } from "./nodes/ai-prompt-node";
+import { BriefInputNode } from "./nodes/brief-input-node";
 import { PresentationGroupNode } from "./presentation-group-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
@@ -63,6 +64,7 @@ const nodeTypes: NodeTypes = {
   moodboard: MoodboardNode,
   mockupImage: MockupImageNode,
   aiPrompt: AIPromptNode,
+  briefInput: BriefInputNode,
   presentationGroup: PresentationGroupNode,
 };
 
@@ -102,6 +104,7 @@ interface AtlasCanvasProps {
   onPresentationConnect?: (connection: Connection) => void;
   onCreatePresentationGroup?: (nodeIds: string[]) => void;
   onNodeContextMenu?: (event: React.MouseEvent, nodes: AtlasNode[]) => void;
+  onRemoveFromPresentation?: (nodeId: string) => void;
 }
 
 export function AtlasCanvas({
@@ -140,6 +143,7 @@ export function AtlasCanvas({
   onPresentationConnect,
   onCreatePresentationGroup,
   onNodeContextMenu,
+  onRemoveFromPresentation,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -159,6 +163,8 @@ export function AtlasCanvas({
   // ── Feature 7: Alt+click connect mode ──
   const [altConnectMode, setAltConnectMode] = useState(false);
   const [altConnectSource, setAltConnectSource] = useState<string | null>(null);
+  // Connector lines visibility toggle for presentation mode
+  const [showConnectors, setShowConnectors] = useState(true);
 const reactFlowInstance = useReactFlow();
   const viewport = useViewport();
   
@@ -191,7 +197,6 @@ const reactFlowInstance = useReactFlow();
   useEffect(() => {
     const handleCenterOnNode = (e: CustomEvent<{ nodeId: string; position: { x: number; y: number } }>) => {
       const { position } = e.detail;
-      // Center the view on the new node position with a slight delay to ensure node is rendered
       setTimeout(() => {
         reactFlowInstance.setCenter(position.x + 110, position.y + 100, { zoom: 1, duration: 300 });
       }, 50);
@@ -202,6 +207,26 @@ const reactFlowInstance = useReactFlow();
       window.removeEventListener("atlas:center-on-node", handleCenterOnNode as EventListener);
     };
   }, [reactFlowInstance]);
+
+  // Focus mode: zoom canvas to the clicked sequence badge node
+  useEffect(() => {
+    const handleFocusNode = (e: CustomEvent<{ nodeId: string }>) => {
+      const node = reactFlowInstance.getNode(e.detail.nodeId);
+      if (!node) return;
+      reactFlowInstance.fitView({ nodes: [{ id: e.detail.nodeId }], duration: 400, padding: 0.4, maxZoom: 1.5 });
+    };
+    window.addEventListener("atlas:focus-presentation-node", handleFocusNode as EventListener);
+    return () => window.removeEventListener("atlas:focus-presentation-node", handleFocusNode as EventListener);
+  }, [reactFlowInstance]);
+
+  // Remove node from presentation sequence
+  useEffect(() => {
+    const handleRemove = (e: CustomEvent<{ nodeId: string }>) => {
+      if (onRemoveFromPresentation) onRemoveFromPresentation(e.detail.nodeId);
+    };
+    window.addEventListener("atlas:remove-from-presentation", handleRemove as EventListener);
+    return () => window.removeEventListener("atlas:remove-from-presentation", handleRemove as EventListener);
+  }, [onRemoveFromPresentation]);
 
   // ── Feature 7: Alt key listener for connect mode ──
   useEffect(() => {
@@ -478,9 +503,13 @@ const reactFlowInstance = useReactFlow();
     return nodes.filter(node => node.selected);
   }, [nodes]);
 
-// Filter selected nodes to only valid moodboard nodes (file nodes with images/videos)
+// Filter selected nodes to only valid moodboard nodes (file nodes with images/videos, or mockup image nodes)
   const validMoodboardNodes = useMemo(() => {
     return selectedNodes.filter(node => {
+      if (node.type === "mockupImage") {
+        const d = node.data as { imageUrl?: string };
+        return !!d.imageUrl;
+      }
       if (node.type !== "file") return false;
       const fileData = node.data as { fileType?: string; uploadedFile?: { url?: string } };
       return fileData.fileType === "image" || fileData.fileType === "video" || fileData.uploadedFile?.url;
@@ -541,30 +570,41 @@ const reactFlowInstance = useReactFlow();
     });
   }, [nodes, searchQuery]);
 
-  // Compute which nodes are part of the presentation (connected by presentation edges)
-  // Only show presentation highlighting when presentationMode is active
+  // Compute ordered sequence map: nodeId → 1-based position in the presentation chain
   const presentationNodeIds = useMemo(() => {
-    // Don't highlight nodes unless presentation mode is active
-    if (!presentationMode) return new Set<string>();
-    
-    const nodeIds = new Set<string>();
-    presentationEdges.forEach(edge => {
-      nodeIds.add(edge.source);
-      nodeIds.add(edge.target);
-    });
-    return nodeIds;
+    if (!presentationMode || presentationEdges.length === 0) return new Map<string, number>();
+
+    const nextMap = new Map(presentationEdges.map(e => [e.source, e.target]));
+    const allTargets = new Set(presentationEdges.map(e => e.target));
+    let root = "";
+    for (const source of nextMap.keys()) {
+      if (!allTargets.has(source)) { root = source; break; }
+    }
+    if (!root) root = presentationEdges[0].source;
+
+    const sequence = new Map<string, number>();
+    let current = root;
+    let order = 1;
+    const visited = new Set<string>();
+    while (current && !visited.has(current)) {
+      sequence.set(current, order++);
+      visited.add(current);
+      const next = nextMap.get(current);
+      if (!next) break;
+      current = next;
+    }
+    return sequence;
   }, [presentationEdges, presentationMode]);
 
   // Combine regular edges with presentation edges (only show presentation edges when in presentation mode)
   const allEdges = useMemo(() => {
-    // Don't show presentation edges unless presentation mode is active
     if (!presentationMode) return edges;
-    
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
-    // Filter out presentation edges from regular edges to avoid duplicates
     const regularEdges = edges.filter(e => !presentationEdgeIds.has(e.id));
+    // When connectors are hidden, omit presentation edges entirely
+    if (!showConnectors) return regularEdges;
     return [...regularEdges, ...presentationEdges];
-  }, [edges, presentationEdges, presentationMode]);
+  }, [edges, presentationEdges, presentationMode, showConnectors]);
 
   // Style edges based on type
   const styledEdges = useMemo(() => {
@@ -573,7 +613,13 @@ const reactFlowInstance = useReactFlow();
       const isPresentation = presentationEdgeIds.has(edge.id) || edge.id.startsWith("presentation-");
       const isMockup = edge.id.startsWith("mockup-edge-");
       if (isPresentation) {
-        return { ...edge, type: "default", style: { strokeWidth: 3, stroke: "#F0FE00", strokeDasharray: "8 4" }, animated: false };
+        return {
+          ...edge,
+          type: "default",
+          style: { strokeWidth: 1.5, stroke: "#F0FE00" },
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed, color: "#F0FE00", width: 14, height: 14 },
+        };
       }
       if (isMockup) {
         return { ...edge, type: "default", style: { strokeWidth: 1.5, stroke: "#888", strokeDasharray: "6 4" }, animated: false };
@@ -628,8 +674,8 @@ const reactFlowInstance = useReactFlow();
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__handle")) return;
           
-          // Handle file and sage nodes
-          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder"];
+          // Handle file, sage, and mockup nodes
+          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder", "mockupImage"];
           if (expandableTypes.includes(node.type || "") && onNodeDoubleClick) {
             onNodeDoubleClick(node.id);
           }
@@ -665,10 +711,15 @@ onClick={(event) => {
       }}
         onPaneContextMenu={(event) => {
           event.preventDefault();
+          // If nodes are selected, show the node options menu for those nodes
+          const selectedNodes = nodes.filter(n => n.selected);
+          if (selectedNodes.length > 0 && onNodeContextMenu) {
+            onNodeContextMenu(event, selectedNodes);
+            return;
+          }
           if (!onRightClick) return;
           const bounds = reactFlowWrapper.current?.getBoundingClientRect();
           if (!bounds) return;
-          // Convert screen position to flow position for node placement
           const flowPosition = reactFlowInstance.screenToFlowPosition({
             x: event.clientX,
             y: event.clientY,
@@ -731,7 +782,6 @@ onClick={(event) => {
           size={1}
           color="#333333"
         />
-        <Controls showInteractive={false} />
         <MiniMap
           nodeColor="#444444"
           maskColor="rgba(10,10,10,0.7)"
@@ -941,21 +991,41 @@ onAddOperationalNode={handleMenuAddOperationalNode}
 
       {/* Presentation Mode Indicator */}
       {presentationMode && (
-        <div
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full flex items-center gap-2"
-          style={{
-            backgroundColor: "#F0FE00",
-            color: "#121212",
-            fontFamily: "system-ui, Inter, sans-serif",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-            <rect x="2" y="3" width="16" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M7 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M10 14V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <span className="text-sm font-medium">Building Presentation</span>
-          <span className="text-xs opacity-70">Connect nodes to set slide order</span>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2">
+          <div
+            className="px-4 py-2 rounded-full flex items-center gap-2"
+            style={{
+              backgroundColor: "#F0FE00",
+              color: "#121212",
+              fontFamily: "system-ui, Inter, sans-serif",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="3" width="16" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M7 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M10 14V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span className="text-sm font-medium">Building Presentation</span>
+            <span className="text-xs opacity-70">Connect nodes to set slide order</span>
+          </div>
+          {/* Connector lines toggle */}
+          <button
+            type="button"
+            onClick={() => setShowConnectors(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all"
+            style={{
+              backgroundColor: showConnectors ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.08)",
+              color: showConnectors ? "#F0FE00" : "rgba(255,255,255,0.5)",
+              border: `1px solid ${showConnectors ? "#F0FE00" : "rgba(255,255,255,0.15)"}`,
+              fontFamily: "system-ui, Inter, sans-serif",
+            }}
+            title={showConnectors ? "Hide connector arrows" : "Show connector arrows"}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7H12M12 7L9 4M12 7L9 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {showConnectors ? "Arrows on" : "Arrows off"}
+          </button>
         </div>
       )}
 
