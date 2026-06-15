@@ -82,7 +82,9 @@ export function AtlasApp() {
             description: c.description,
             nodes: c.nodes || [],
             edges: c.edges || [],
-            comments: c.comments || [],
+            comments: c.settings?.comments || c.comments || [],
+            pages: c.settings?.pages || [],
+            activePageId: c.settings?.activePageId || undefined,
             createdAt: c.created_at,
             updatedAt: c.updated_at,
           }));
@@ -136,7 +138,11 @@ export function AtlasApp() {
             description: canvas.description,
             nodes: canvas.nodes,
             edges: canvas.edges,
-            settings: { comments: canvas.comments },
+            settings: {
+              comments: canvas.comments,
+              pages: canvas.pages,
+              activePageId: canvas.activePageId,
+            },
           }),
         });
         console.log("[v0] Update response:", updateResponse.status);
@@ -267,7 +273,15 @@ export function AtlasApp() {
           const c = data.canvas;
           setCanvases(prev => prev.map(canvas =>
             canvas.id === canvasId
-              ? { ...canvas, nodes: c.nodes || [], edges: c.edges || [], updatedAt: c.updated_at }
+              ? {
+                  ...canvas,
+                  nodes: c.nodes || [],
+                  edges: c.edges || [],
+                  comments: c.settings?.comments || canvas.comments,
+                  pages: c.settings?.pages || canvas.pages,
+                  activePageId: c.settings?.activePageId || canvas.activePageId,
+                  updatedAt: c.updated_at,
+                }
               : canvas
           ));
         })
