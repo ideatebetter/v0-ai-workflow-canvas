@@ -1,4 +1,4 @@
-// PDF text extraction using pdfjs-dist (no worker — avoids Next.js bundler issues)
+// PDF text extraction and rendering using pdfjs-dist (no worker — avoids Next.js bundler issues)
 
 export interface ParsedPDFPage {
   pageNumber: number;
@@ -30,6 +30,31 @@ export async function parsePDFToText(file: File): Promise<ParsedPDFPage[]> {
   }
 
   return pages;
+}
+
+// Render first page of a PDF File to a data URL for use as a preview image
+export async function renderPDFFirstPageToDataURL(file: File, scale = 1.5): Promise<string | null> {
+  try {
+    const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
+    const page = await pdf.getPage(1);
+
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    return canvas.toDataURL("image/png");
+  } catch {
+    return null;
+  }
 }
 
 // Split a block of text into logical sections by double-newlines or headings
