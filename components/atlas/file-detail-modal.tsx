@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import type { FileNodeData, FileVersion, FileActivity, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
+import type { FileNodeData, FileVersion, FileActivity, ImageComment, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
 import { STATUS_COLORS, STATUS_LABELS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { upload } from "@vercel/blob/client";
@@ -255,6 +255,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
   const versionInputRef = useRef<HTMLInputElement>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isAnnotating, setIsAnnotating] = useState(false);
+  const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Sync editedTitle and reset version selection when fileData changes
   useEffect(() => {
@@ -288,6 +293,48 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
       setEditedTitle(fileData.label);
       setIsEditingTitle(false);
     }
+  };
+
+  const handleImageAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAnnotating) return;
+    e.stopPropagation();
+    const img = imageRef.current;
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
+      setPendingPin({ x, y });
+      setNewCommentText("");
+    }
+  };
+
+  const handleAddImageComment = () => {
+    if (!pendingPin || !newCommentText.trim() || !onUpdateFile) return;
+    const existingComments = fileData.imageComments || [];
+    const newComment: ImageComment = {
+      id: `imgc-${Date.now()}`,
+      x: pendingPin.x,
+      y: pendingPin.y,
+      text: newCommentText.trim(),
+      author: WORKSPACE_MEMBERS[0],
+      createdAt: new Date().toISOString(),
+    };
+    const newActivity: FileActivity = {
+      id: `a-${Date.now()}`,
+      type: "comment",
+      description: newCommentText.trim(),
+      user: WORKSPACE_MEMBERS[0],
+      timestamp: new Date().toISOString(),
+      metadata: { commentId: newComment.id, pinNumber: existingComments.length + 1 },
+    };
+    onUpdateFile({
+      imageComments: [...existingComments, newComment],
+      activities: [...(fileData.activities || []), newActivity],
+    });
+    setPendingPin(null);
+    setNewCommentText("");
+    setIsAnnotating(false);
   };
 
   if (!isOpen) return null;
@@ -695,13 +742,238 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
           {/* Image Preview - show for image files or any node with a previewImage (e.g. Figma sync) */}
           {([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) || (fileData.previewImages && fileData.previewImages.length > 0)) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
             <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-              <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "#0d0d0d" }}>
-                <img
-                  src={previewUrl}
-                  alt={selectedVersion ? selectedVersion.versionName : fileData.label}
-                  className="max-w-full max-h-[50vh] object-contain rounded-lg"
-                  style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
-                />
+              <div
+                className="relative flex items-center justify-center p-4"
+                style={{ backgroundColor: "#0d0d0d", cursor: isAnnotating ? "crosshair" : "default" }}
+                onClick={handleImageAreaClick}
+              >
+                {/* Annotate mode toggle */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAnnotating((v) => !v);
+                    setPendingPin(null);
+                  }}
+                  className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors z-10"
+                  style={{
+                    backgroundColor: isAnnotating ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                    color: isAnnotating ? "#000" : "#aaa",
+                    border: isAnnotating ? "none" : "1px solid #3a3a3a",
+                    fontFamily: "system-ui, Inter, sans-serif",
+                  }}
+                  title={isAnnotating ? "Exit comment mode" : "Add a comment"}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {isAnnotating ? "Click to pin" : "Comment"}
+                </button>
+
+                {/* Image wrapped in relative container for pin positioning */}
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <img
+                    ref={imageRef}
+                    src={previewUrl}
+                    alt={selectedVersion ? selectedVersion.versionName : fileData.label}
+                    className="max-w-full max-h-[50vh] object-contain rounded-lg"
+                    style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.3)", display: "block" }}
+                    draggable={false}
+                  />
+
+                  {/* Existing comment pins */}
+                  {(fileData.imageComments || []).map((comment, index) => (
+                    <div
+                      key={comment.id}
+                      style={{
+                        position: "absolute",
+                        left: `${comment.x}%`,
+                        top: `${comment.y}%`,
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 10,
+                      }}
+                      onMouseEnter={() => setHoveredCommentId(comment.id)}
+                      onMouseLeave={() => setHoveredCommentId(null)}
+                    >
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          backgroundColor: "#F0FE00",
+                          color: "#000",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid rgba(0,0,0,0.5)",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                          cursor: "default",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      {/* Tooltip on hover */}
+                      {hoveredCommentId === comment.id && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: comment.x > 60 ? "auto" : "calc(100% + 8px)",
+                            right: comment.x > 60 ? "calc(100% + 8px)" : "auto",
+                            top: comment.y > 70 ? "auto" : 0,
+                            bottom: comment.y > 70 ? 0 : "auto",
+                            width: 200,
+                            backgroundColor: "#1a1a1a",
+                            border: "1px solid #3a3a3a",
+                            borderRadius: 8,
+                            padding: "8px 10px",
+                            zIndex: 30,
+                            pointerEvents: "none",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                            <div
+                              style={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: "50%",
+                                backgroundColor: comment.author.avatarColor || "#666",
+                                color: "#fff",
+                                fontSize: 9,
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              {comment.author.name.split(" ").map((n) => n[0]).join("")}
+                            </div>
+                            <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {comment.author.name.split(" ")[0]}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: "#e0e0e0", margin: 0, fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {comment.text}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Pending pin with comment input */}
+                  {pendingPin && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${pendingPin.x}%`,
+                        top: `${pendingPin.y}%`,
+                        transform: "translate(-50%, -50%)",
+                        zIndex: 20,
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          backgroundColor: "#F0FE00",
+                          color: "#000",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid rgba(0,0,0,0.5)",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                          animation: "pinDrop 0.15s ease-out",
+                        }}
+                      >
+                        {(fileData.imageComments || []).length + 1}
+                      </div>
+                      {/* Comment input popup */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: pendingPin.x > 60 ? "auto" : "calc(100% + 8px)",
+                          right: pendingPin.x > 60 ? "calc(100% + 8px)" : "auto",
+                          top: pendingPin.y > 70 ? "auto" : 0,
+                          bottom: pendingPin.y > 70 ? 0 : "auto",
+                          width: 220,
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #3a3a3a",
+                          borderRadius: 8,
+                          padding: 10,
+                          zIndex: 30,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                        }}
+                      >
+                        <input
+                          autoFocus
+                          type="text"
+                          value={newCommentText}
+                          onChange={(e) => setNewCommentText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleAddImageComment();
+                            if (e.key === "Escape") { setPendingPin(null); setIsAnnotating(false); }
+                          }}
+                          placeholder="Add a comment…"
+                          style={{
+                            width: "100%",
+                            background: "transparent",
+                            border: "none",
+                            outline: "none",
+                            color: "#e0e0e0",
+                            fontSize: 13,
+                            fontFamily: "system-ui, Inter, sans-serif",
+                            marginBottom: 8,
+                          }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => { setPendingPin(null); }}
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: 6,
+                              border: "1px solid #3a3a3a",
+                              backgroundColor: "transparent",
+                              color: "#888",
+                              fontSize: 12,
+                              cursor: "pointer",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAddImageComment}
+                            disabled={!newCommentText.trim()}
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: 6,
+                              border: "none",
+                              backgroundColor: newCommentText.trim() ? "#F0FE00" : "#2a2a2a",
+                              color: newCommentText.trim() ? "#000" : "#666",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: newCommentText.trim() ? "pointer" : "default",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                          >
+                            Post
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {selectedVersion && (
                   <div className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#a0a0a0", fontFamily: "system-ui, Inter, sans-serif" }}>
                     {selectedVersion.versionName}
@@ -715,9 +987,19 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     {selectedVersion ? selectedVersion.versionName : fileData.fileName}
                   </span>
                 </div>
-                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  {(selectedVersion?.fileSize ?? fileData.uploadedFile?.size) ? `${((selectedVersion?.fileSize ?? fileData.uploadedFile?.size ?? 0) / (1024 * 1024)).toFixed(1)} MB` : ""}
-                </span>
+                <div className="flex items-center gap-3">
+                  {(fileData.imageComments || []).length > 0 && (
+                    <span className="text-xs text-gray-500 flex items-center gap-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {(fileData.imageComments || []).length} comment{(fileData.imageComments || []).length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {(selectedVersion?.fileSize ?? fileData.uploadedFile?.size) ? `${((selectedVersion?.fileSize ?? fileData.uploadedFile?.size ?? 0) / (1024 * 1024)).toFixed(1)} MB` : ""}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -1455,9 +1737,36 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                         {formatDate(activity.timestamp)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-400 ml-7" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {activity.description}
-                    </p>
+                    {activity.type === "comment" && activity.metadata?.pinNumber ? (
+                      <div className="ml-7 flex items-start gap-2">
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            backgroundColor: "#F0FE00",
+                            color: "#000",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                            marginTop: 2,
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          {String(activity.metadata.pinNumber)}
+                        </span>
+                        <p className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          {activity.description}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 ml-7" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {activity.description}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

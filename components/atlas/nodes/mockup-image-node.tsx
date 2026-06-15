@@ -16,6 +16,7 @@ export interface MockupImageNodeData {
 function MockupImageNodeComponent({
   data,
   selected,
+  id,
 }: NodeProps<MockupImageNodeData>) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);

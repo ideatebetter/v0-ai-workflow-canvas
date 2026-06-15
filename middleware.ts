@@ -10,6 +10,10 @@ const FIGMA_CORS_HEADERS = {
 export async function middleware(request: NextRequest) {
   // Short-circuit Figma plugin routes before any Supabase auth processing.
   // Plugin UI runs from a null origin so standard auth middleware would redirect it.
+  if (request.nextUrl.pathname.startsWith('/demo')) {
+    return NextResponse.next({ request })
+  }
+
   if (request.nextUrl.pathname.startsWith('/api/figma/')) {
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, { status: 204, headers: FIGMA_CORS_HEADERS })

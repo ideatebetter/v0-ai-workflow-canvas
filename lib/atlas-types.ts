@@ -239,6 +239,16 @@ export interface FileVersion {
   fileSize?: number; // Size in bytes
 }
 
+// Annotation comment pinned to an image preview
+export interface ImageComment {
+  id: string;
+  x: number; // percentage (0–100) within the rendered image
+  y: number; // percentage (0–100) within the rendered image
+  text: string;
+  author: WorkspaceMember;
+  createdAt: string;
+}
+
 // File activity/history entry
 export interface FileActivity {
   id: string;
@@ -262,6 +272,7 @@ export interface FileNodeData {
   uploadedFile?: UploadedFile; // Uploaded file data from Vercel Blob
   versions?: FileVersion[]; // Version history
   activities?: FileActivity[]; // Activity/update history
+  imageComments?: ImageComment[]; // Annotation pins on the image preview
   dueDate?: string; // Due date for the file
   assignees?: WorkspaceMember[]; // Team members assigned to this file
   blockers?: number; // Number of blockers
