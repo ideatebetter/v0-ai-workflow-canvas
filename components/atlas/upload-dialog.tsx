@@ -170,7 +170,15 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
 
         // For public blobs, use the direct URL
         const isImage = result.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-        
+        const isPDF = result.extension === ".pdf";
+
+        let previewUrl: string | undefined = isImage ? result.url : undefined;
+        if (isPDF) {
+          const { renderPDFFirstPageToDataURL } = await import("@/lib/pdf-parser");
+          const dataUrl = await renderPDFFirstPageToDataURL(fileInfo.file);
+          if (dataUrl) previewUrl = dataUrl;
+        }
+
         uploadedResults.push({
           fileName: result.fileName,
           extension: result.extension as FileExtension,
@@ -180,7 +188,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
             size: result.size,
             uploadedAt: result.uploadedAt,
           },
-          previewUrl: isImage ? result.url : undefined,
+          previewUrl,
         });
       } catch (error) {
         setFiles(prev => prev.map((f, idx) => 

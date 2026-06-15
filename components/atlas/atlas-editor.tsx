@@ -35,6 +35,7 @@ import { MoveToCanvasDialog } from "./copy-to-canvas-dialog";
 import { NodeContextMenu } from "./node-context-menu";
 import { SyncFileDialog } from "./sync-file-dialog";
 import { SyncMultipleDialog } from "./sync-multiple-dialog";
+import { ParseFileDialog } from "./parse-file-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -193,6 +194,14 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     };
     position: { x: number; y: number };
   } | null>(null);
+  const [parseFileDialog, setParseFileDialog] = useState<{
+    fileName: string;
+    fileType: "pdf" | "text";
+    rawFile: File;
+    position: { x: number; y: number };
+    nodeId: string;
+  } | null>(null);
+
   // Store full group data so we can restore groups when re-entering presentation mode
   const [presentationGroups, setPresentationGroups] = useState<Array<{
     id: string;
@@ -1443,8 +1452,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       const newNodes: AtlasNode[] = files.map((file, index) => {
         const label = file.fileName.replace(file.extension, "");
         const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-        // Only use previewUrl for images - videos and other files should use default previews
-        const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
+        const isPDFUpload = file.extension === ".pdf";
+        const previewImages = (isImage || isPDFUpload) && file.previewUrl ? [file.previewUrl] : undefined;
         
         return {
           id: `file-${baseTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
@@ -1482,6 +1491,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         extension: FileExtension;
         uploadedFile: UploadedFile;
         previewUrl?: string;
+        rawFile?: File;
+        isVideo?: boolean;
       }> = [];
 
       // Filter supported files first
@@ -1495,6 +1506,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       }
 
       if (supportedFiles.length === 0) return;
+
+      const failedFiles: Array<{ name: string; error: string }> = [];
 
       // Initialize upload progress for all files
       const initialProgress = supportedFiles.map((file, index) => ({
@@ -1542,6 +1555,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
             const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
             const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+            const isPDF = extension === ".pdf";
+
+            let previewUrl: string | undefined = isImage ? uploadResult.url : undefined;
+
+            if (isPDF) {
+              const { renderPDFFirstPageToDataURL } = await import("@/lib/pdf-parser");
+              const dataUrl = await renderPDFFirstPageToDataURL(file);
+              if (dataUrl) previewUrl = dataUrl;
+            }
 
             uploadedResults.push({
               fileName: file.name,
@@ -1552,8 +1574,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
                 size: file.size,
                 uploadedAt: new Date().toISOString(),
               },
-              previewUrl: isImage ? uploadResult.url : undefined,
+              previewUrl,
               isVideo: !!isVideo,
+              rawFile: file,
             });
             continue; // Move to next file
           } catch (clientError) {
@@ -1601,7 +1624,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           const newNodes: AtlasNode[] = filesToCreate.map((file, index) => {
             const label = file.fileName.replace(file.extension, "");
             const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-            const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
+            const isPDF = file.extension === ".pdf";
+            const previewImages = (isImage || isPDF) && file.previewUrl ? [file.previewUrl] : undefined;
 
             return {
               id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
@@ -1637,11 +1661,88 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               detail: { nodeId: firstNode.id, position: firstNode.position }
             }));
           }
+
+          // Offer to parse PDF or text files into text nodes
+          const parseable = filesToCreate.find(f =>
+            f.extension === ".pdf" ||
+            [".txt", ".md", ".csv"].includes(f.extension)
+          );
+          if (parseable && parseable.rawFile) {
+            const nodeIndex = filesToCreate.indexOf(parseable);
+            const nodeId = newNodes[nodeIndex]?.id;
+            setParseFileDialog({
+              fileName: parseable.fileName,
+              fileType: parseable.extension === ".pdf" ? "pdf" : "text",
+              rawFile: parseable.rawFile,
+              position: freePositions[nodeIndex] || position,
+              nodeId: nodeId || "",
+            });
+          }
         }
       }
     },
     [setNodes, nodes]
   );
+
+  const handleParseAsSingle = useCallback(async () => {
+    if (!parseFileDialog) return;
+    const { rawFile, position, fileType } = parseFileDialog;
+    let content = "";
+    if (fileType === "pdf") {
+      const { parsePDFToText } = await import("@/lib/pdf-parser");
+      const pages = await parsePDFToText(rawFile);
+      content = pages.map(p => p.text).join("\n\n");
+    } else {
+      content = await rawFile.text();
+    }
+    const nodeId = `text-parse-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    setNodes(nds => [
+      ...nds,
+      {
+        id: nodeId,
+        type: "text" as const,
+        position: { x: position.x + 300, y: position.y },
+        data: {
+          label: rawFile.name.replace(/\.[^.]+$/, ""),
+          content: content.slice(0, 20000),
+          lastModified: "Updated just now",
+        },
+      },
+    ]);
+    setParseFileDialog(null);
+  }, [parseFileDialog, setNodes]);
+
+  const handleParseAsMultiple = useCallback(async () => {
+    if (!parseFileDialog) return;
+    const { rawFile, position, fileType } = parseFileDialog;
+    const sections: string[] = [];
+    if (fileType === "pdf") {
+      const { parsePDFToText, splitIntoSections } = await import("@/lib/pdf-parser");
+      const pages = await parsePDFToText(rawFile);
+      const fullText = pages.map(p => p.text).join("\n\n");
+      const splits = splitIntoSections(fullText, 8);
+      sections.push(...splits);
+    } else {
+      const text = await rawFile.text();
+      const chunks = text.split(/\n{2,}/).map(s => s.trim()).filter(s => s.length > 20).slice(0, 12);
+      sections.push(...chunks);
+    }
+    const ts = Date.now();
+    setNodes(nds => [
+      ...nds,
+      ...sections.map((sec, i) => ({
+        id: `text-parse-${ts}-${i}`,
+        type: "text" as const,
+        position: { x: position.x + 300 + (i % 3) * 280, y: position.y + Math.floor(i / 3) * 200 },
+        data: {
+          label: sec.split("\n")[0].slice(0, 40) || `Section ${i + 1}`,
+          content: sec.slice(0, 5000),
+          lastModified: "Updated just now",
+        },
+      })),
+    ]);
+    setParseFileDialog(null);
+  }, [parseFileDialog, setNodes]);
 
   const handleAddLink = useCallback((url: string, position?: { x: number; y: number }) => {
     const pos = position || doubleClickPosition || { x: 400, y: 300 };
@@ -2628,6 +2729,17 @@ presentationMode={presentationMode}
             </div>
           </div>
         </div>
+      )}
+
+      {/* Parse File Dialog */}
+      {parseFileDialog && (
+        <ParseFileDialog
+          fileName={parseFileDialog.fileName}
+          fileType={parseFileDialog.fileType}
+          onParseAsSingle={handleParseAsSingle}
+          onParseAsMultiple={handleParseAsMultiple}
+          onSkip={() => setParseFileDialog(null)}
+        />
       )}
 
       {/* Moodboard Expanded View */}

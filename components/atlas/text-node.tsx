@@ -2,17 +2,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useReactFlow, type NodeProps } from "@xyflow/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { SmartHandles } from "./smart-handles";
 import type { TextNodeData } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
-
-// Text size options - H1, H2, H3, body
-const TEXT_SIZES = [
-  { value: "h1", label: "H1", fontSize: 32, lineHeight: 1.2, fontWeight: 700 },
-  { value: "h2", label: "H2", fontSize: 24, lineHeight: 1.3, fontWeight: 600 },
-  { value: "h3", label: "H3", fontSize: 18, lineHeight: 1.4, fontWeight: 600 },
-  { value: "body", label: "Body", fontSize: 14, lineHeight: 1.5, fontWeight: 400 },
-];
 
 // Color options
 const TEXT_COLORS = [
@@ -29,147 +23,109 @@ const TEXT_COLORS = [
 
 // Font options
 const FONT_OPTIONS = [
-  { value: "sans", label: "Aa", fontFamily: "system-ui, Inter, sans-serif" },
-  { value: "serif", label: "Aa", fontFamily: "Georgia, serif" },
-  { value: "mono", label: "Aa", fontFamily: "ui-monospace, monospace" },
-];
-
-// Alignment options
-const ALIGN_OPTIONS = [
-  { value: "left", icon: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M2 3H14M2 6.5H10M2 10H14M2 13.5H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )},
-  { value: "center", icon: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M2 3H14M4 6.5H12M2 10H14M5 13.5H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )},
-  { value: "right", icon: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M2 3H14M6 6.5H14M2 10H14M8 13.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )},
+  { value: "sans", label: "Sans", fontFamily: "system-ui, Inter, sans-serif" },
+  { value: "serif", label: "Serif", fontFamily: "Georgia, serif" },
+  { value: "mono", label: "Mono", fontFamily: "ui-monospace, monospace" },
 ];
 
 interface TextFormatting {
   color: string;
   font: string;
-  size: string;
   bold: boolean;
-  strikethrough: boolean;
   align: string;
 }
 
-// Rich text segment with inline formatting
-interface TextSegment {
-  text: string;
-  size: string; // h1, h2, h3, body
+// Convert old [[h1]]..[[/h1]] markup to Markdown (backwards compatibility)
+function legacyToMarkdown(content: string): string {
+  if (!content.includes("[[")) return content;
+  return content
+    .replace(/\[\[h1\]\]([\s\S]*?)\[\[\/h1\]\]/g, "# $1")
+    .replace(/\[\[h2\]\]([\s\S]*?)\[\[\/h2\]\]/g, "## $1")
+    .replace(/\[\[h3\]\]([\s\S]*?)\[\[\/h3\]\]/g, "### $1")
+    .replace(/\[\[body\]\]([\s\S]*?)\[\[\/body\]\]/g, "$1");
 }
 
-// Parse content into segments (format: [[h1]]text[[/h1]] or plain text)
-// defaultSize is used for text that has no explicit formatting
-function parseContent(content: string, defaultSize: string = "body"): TextSegment[] {
-  if (!content) return [{ text: "", size: defaultSize }];
-  
-  const segments: TextSegment[] = [];
-  const regex = /\[\[(h1|h2|h3|body)\]\]([\s\S]*?)\[\[\/\1\]\]/g;
-  let lastIndex = 0;
-  let match;
+// Insert Markdown prefix at the start of the line containing the cursor
+function insertLinePrefix(textarea: HTMLTextAreaElement, prefix: string, content: string): string {
+  const pos = textarea.selectionStart;
+  const lineStart = content.lastIndexOf("\n", pos - 1) + 1;
+  const lineEnd = content.indexOf("\n", pos);
+  const end = lineEnd === -1 ? content.length : lineEnd;
+  const line = content.slice(lineStart, end);
 
-  while ((match = regex.exec(content)) !== null) {
-    // Add plain text before this match
-    if (match.index > lastIndex) {
-      const plainText = content.slice(lastIndex, match.index);
-      if (plainText) segments.push({ text: plainText, size: defaultSize });
-    }
-    // Add formatted segment
-    segments.push({ text: match[2], size: match[1] });
-    lastIndex = match.index + match[0].length;
+  // If line already starts with the same prefix, remove it (toggle)
+  if (line.startsWith(prefix)) {
+    return content.slice(0, lineStart) + line.slice(prefix.length) + content.slice(end);
   }
+  // Otherwise strip any existing heading prefix and add new one
+  const stripped = line.replace(/^#{1,3} /, "").replace(/^[-*] /, "").replace(/^\d+\. /, "");
+  return content.slice(0, lineStart) + prefix + stripped + content.slice(end);
+}
 
-  // Add remaining plain text
-  if (lastIndex < content.length) {
-    segments.push({ text: content.slice(lastIndex), size: defaultSize });
+// Wrap selection with inline marker (bold, strikethrough)
+function wrapSelection(textarea: HTMLTextAreaElement, marker: string, content: string): string {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  if (start === end) return content;
+  const selected = content.slice(start, end);
+  if (selected.startsWith(marker) && selected.endsWith(marker)) {
+    return content.slice(0, start) + selected.slice(marker.length, -marker.length) + content.slice(end);
   }
-
-  return segments.length > 0 ? segments : [{ text: content, size: defaultSize }];
-}
-
-// Serialize segments back to content string
-function serializeSegments(segments: TextSegment[]): string {
-  return segments.map(seg => {
-    if (seg.size === "body") return seg.text;
-    return `[[${seg.size}]]${seg.text}[[/${seg.size}]]`;
-  }).join("");
-}
-
-// Get plain text from content (for truncation)
-function getPlainText(content: string): string {
-  return content.replace(/\[\[(h1|h2|h3|body)\]\]/g, "").replace(/\[\[\/(h1|h2|h3|body)\]\]/g, "");
+  return content.slice(0, start) + marker + selected + marker + content.slice(end);
 }
 
 export function TextNode({ id, data, selected }: NodeProps) {
-  const textData = data as TextNodeData;
+  const textData = data as unknown as TextNodeData;
   const presentationNodeIds = usePresentationNodes();
   const isInPresentation = presentationNodeIds.has(id);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(textData.content || textData.label);
+
+  const rawContent = textData.content || textData.label || "";
+  const initialContent = legacyToMarkdown(rawContent);
+
+  const [editContent, setEditContent] = useState(initialContent);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showFontPicker, setShowFontPicker] = useState(false);
-  const [showSizePicker, setShowSizePicker] = useState(false);
-  const [showAlignPicker, setShowAlignPicker] = useState(false);
-  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
   const { setNodes } = useReactFlow();
 
-  // Get formatting from data or use defaults
   const [formatting, setFormatting] = useState<TextFormatting>({
     color: (textData as any).formatting?.color || "#ffffff",
     font: (textData as any).formatting?.font || "sans",
-    size: (textData as any).formatting?.size || "body",
     bold: (textData as any).formatting?.bold || false,
-    strikethrough: (textData as any).formatting?.strikethrough || false,
     align: (textData as any).formatting?.align || "left",
   });
 
-  const currentSize = TEXT_SIZES.find(s => s.value === formatting.size) || TEXT_SIZES[3];
   const currentFont = FONT_OPTIONS.find(f => f.value === formatting.font) || FONT_OPTIONS[0];
 
-  // Parse content for rich text display - use formatting.size as default
-  const segments = parseContent(editContent, formatting.size);
-  const plainText = getPlainText(editContent);
-  const isLongText = plainText.length > 100;
-  const truncatedText = isLongText ? plainText.slice(0, 100) + "..." : plainText;
-  const shouldShowFull = isHovered || isEditing || selected;
+  // Sync when node data changes externally
+  useEffect(() => {
+    setEditContent(legacyToMarkdown(textData.content || textData.label || ""));
+  }, [textData.content, textData.label]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
-      textareaRef.current.select();
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
     }
   }, [isEditing]);
 
   // Auto-resize textarea
   useEffect(() => {
-    if (textareaRef.current) {
+    if (textareaRef.current && isEditing) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [editContent, isEditing, formatting]);
+  }, [editContent, isEditing]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
         setShowColorPicker(false);
         setShowFontPicker(false);
-        setShowSizePicker(false);
-        setShowAlignPicker(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -184,13 +140,11 @@ export function TextNode({ id, data, selected }: NodeProps) {
             ...node,
             data: {
               ...node.data,
-              label: editContent.trim() || "Text",
+              label: editContent.slice(0, 60).replace(/^#+\s*/, "") || "Text",
               content: editContent,
               formatting,
               lastModified: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
+                month: "short", day: "numeric", year: "numeric",
               }),
             },
           };
@@ -204,70 +158,135 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const updateFormatting = useCallback((updates: Partial<TextFormatting>) => {
     const newFormatting = { ...formatting, ...updates };
     setFormatting(newFormatting);
-    // Save formatting immediately
     setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              formatting: newFormatting,
-            },
-          };
-        }
-        return node;
-      })
+      nds.map((node) =>
+        node.id === id ? { ...node, data: { ...node.data, formatting: newFormatting } } : node
+      )
     );
   }, [id, formatting, setNodes]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
-      setEditContent(textData.content || textData.label);
+      setEditContent(legacyToMarkdown(textData.content || textData.label || ""));
       setIsEditing(false);
+      return;
+    }
+    // Auto-continue list on Enter
+    if (e.key === "Enter" && !e.shiftKey) {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const pos = textarea.selectionStart;
+      const lineStart = editContent.lastIndexOf("\n", pos - 1) + 1;
+      const line = editContent.slice(lineStart, pos);
+      const bulletMatch = line.match(/^([-*]) /);
+      const orderedMatch = line.match(/^(\d+)\. /);
+      if (bulletMatch) {
+        e.preventDefault();
+        const insert = "\n" + bulletMatch[1] + " ";
+        setEditContent(prev => prev.slice(0, pos) + insert + prev.slice(pos));
+        setTimeout(() => {
+          if (textareaRef.current) {
+            const newPos = pos + insert.length;
+            textareaRef.current.setSelectionRange(newPos, newPos);
+          }
+        }, 0);
+      } else if (orderedMatch) {
+        e.preventDefault();
+        const nextNum = parseInt(orderedMatch[1]) + 1;
+        const insert = "\n" + nextNum + ". ";
+        setEditContent(prev => prev.slice(0, pos) + insert + prev.slice(pos));
+        setTimeout(() => {
+          if (textareaRef.current) {
+            const newPos = pos + insert.length;
+            textareaRef.current.setSelectionRange(newPos, newPos);
+          }
+        }, 0);
+      }
     }
   };
 
-  // Apply size formatting to selected text in textarea
-  const applyInlineSize = useCallback((size: string) => {
-    if (!textareaRef.current) {
-      // No selection, apply to whole content as default size
-      updateFormatting({ size });
-      return;
-    }
-    
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    
-    if (start === end) {
-      // No selection, apply to whole content as default size
-      updateFormatting({ size });
-      return;
-    }
-
-    const selectedText = editContent.slice(start, end);
-    if (!selectedText) return;
-
-    // Wrap selected text with size markers
-    const wrappedText = `[[${size}]]${selectedText}[[/${size}]]`;
-    const newContent = editContent.slice(0, start) + wrappedText + editContent.slice(end);
-    
+  const applyPrefix = (prefix: string) => {
+    if (!textareaRef.current) return;
+    const newContent = insertLinePrefix(textareaRef.current, prefix, editContent);
     setEditContent(newContent);
-    
-    // Restore cursor position after the wrapped text
-    setTimeout(() => {
-      if (textareaRef.current) {
-        const newCursorPos = start + wrappedText.length;
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-        textareaRef.current.focus();
-      }
-    }, 0);
-    
-    setShowSizePicker(false);
-  }, [editContent, updateFormatting]);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const applyInline = (marker: string) => {
+    if (!textareaRef.current) return;
+    const newContent = wrapSelection(textareaRef.current, marker, editContent);
+    setEditContent(newContent);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
 
   const showToolbar = selected || isEditing;
+  const shouldShowFull = isHovered || isEditing || selected;
+
+  const containerStyle: React.CSSProperties = {
+    minWidth: 120,
+    maxWidth: shouldShowFull ? 480 : 240,
+    fontFamily: currentFont.fontFamily,
+    textAlign: formatting.align as any,
+    outline: selected ? "2px solid white" : (isInPresentation ? "2px dashed #F0FE00" : "none"),
+    outlineOffset: 4,
+    borderRadius: 4,
+    transition: "max-width 0.2s ease",
+  };
+
+  // Markdown component overrides styled with the node's formatting
+  const mdComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
+    h1: ({ children }) => (
+      <h1 style={{ fontSize: 32, fontWeight: 700, lineHeight: 1.2, color: formatting.color, margin: "0 0 0.4em", fontFamily: currentFont.fontFamily }}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children }) => (
+      <h2 style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.3, color: formatting.color, margin: "0 0 0.4em", fontFamily: currentFont.fontFamily }}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.4, color: formatting.color, margin: "0 0 0.3em", fontFamily: currentFont.fontFamily }}>
+        {children}
+      </h3>
+    ),
+    p: ({ children }) => (
+      <p style={{ fontSize: 14, lineHeight: 1.6, color: formatting.color, margin: "0 0 0.5em", fontFamily: currentFont.fontFamily, fontWeight: formatting.bold ? 700 : 400 }}>
+        {children}
+      </p>
+    ),
+    ul: ({ children }) => (
+      <ul style={{ color: formatting.color, paddingLeft: 20, margin: "0 0 0.5em", fontFamily: currentFont.fontFamily, fontSize: 14, lineHeight: 1.6 }}>
+        {children}
+      </ul>
+    ),
+    ol: ({ children }) => (
+      <ol style={{ color: formatting.color, paddingLeft: 20, margin: "0 0 0.5em", fontFamily: currentFont.fontFamily, fontSize: 14, lineHeight: 1.6 }}>
+        {children}
+      </ol>
+    ),
+    li: ({ children }) => (
+      <li style={{ color: formatting.color, marginBottom: 2, fontFamily: currentFont.fontFamily, fontSize: 14 }}>
+        {children}
+      </li>
+    ),
+    strong: ({ children }) => (
+      <strong style={{ color: formatting.color, fontWeight: 700 }}>{children}</strong>
+    ),
+    del: ({ children }) => (
+      <del style={{ color: formatting.color }}>{children}</del>
+    ),
+    code: ({ children }) => (
+      <code style={{ color: formatting.color, background: "rgba(255,255,255,0.1)", padding: "1px 4px", borderRadius: 3, fontSize: 13, fontFamily: "ui-monospace, monospace" }}>
+        {children}
+      </code>
+    ),
+    blockquote: ({ children }) => (
+      <blockquote style={{ borderLeft: "3px solid rgba(255,255,255,0.3)", paddingLeft: 12, marginLeft: 0, color: formatting.color, opacity: 0.8 }}>
+        {children}
+      </blockquote>
+    ),
+  };
 
   return (
     <div
@@ -278,51 +297,33 @@ export function TextNode({ id, data, selected }: NodeProps) {
     >
       <SmartHandles nodeId={id} />
 
-      {/* FigJam-style Formatting Toolbar */}
+      {/* Formatting Toolbar */}
       {showToolbar && (
         <div
           ref={toolbarRef}
-          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-lg z-50 bg-card border border-border"
+          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 flex items-center gap-0.5 px-2 py-1.5 rounded-xl shadow-lg z-50 bg-card border border-border"
+          onMouseDown={e => e.preventDefault()}
         >
           {/* Color Picker */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                setShowColorPicker(!showColorPicker);
-                setShowFontPicker(false);
-                setShowSizePicker(false);
-                setShowAlignPicker(false);
-              }}
+              onClick={() => { setShowColorPicker(!showColorPicker); setShowFontPicker(false); }}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
-              <div
-                className="w-5 h-5 rounded-full border-2"
-                style={{ backgroundColor: formatting.color, borderColor: formatting.color === "#ffffff" ? "#666" : formatting.color }}
-              />
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
-                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <div className="w-4 h-4 rounded-full border-2" style={{ backgroundColor: formatting.color, borderColor: formatting.color === "#ffffff" ? "#666" : formatting.color }} />
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className="text-gray-400"><path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
             {showColorPicker && (
-              <div
-                className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-lg z-50 bg-card border border-border"
-              >
+              <div className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-lg z-50 bg-card border border-border">
                 <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(3, 28px)" }}>
                   {TEXT_COLORS.map((color) => (
                     <button
                       key={color.value}
                       type="button"
-                      onClick={() => {
-                        updateFormatting({ color: color.value });
-                        setShowColorPicker(false);
-                      }}
-                      className="w-7 h-7 rounded-full hover:scale-110 transition-transform flex-shrink-0"
-                      style={{
-                        backgroundColor: color.value,
-                        border: formatting.color === color.value ? "2px solid white" : "2px solid transparent",
-                        boxShadow: color.value === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.1)" : "none",
-                      }}
+                      onClick={() => { updateFormatting({ color: color.value }); setShowColorPicker(false); }}
+                      className="w-7 h-7 rounded-full hover:scale-110 transition-transform"
+                      style={{ backgroundColor: color.value, border: formatting.color === color.value ? "2px solid white" : "2px solid transparent", boxShadow: color.value === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.1)" : "none" }}
                       title={color.label}
                     />
                   ))}
@@ -331,103 +332,57 @@ export function TextNode({ id, data, selected }: NodeProps) {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-6 bg-border mx-1" />
-
           {/* Font Picker */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                setShowFontPicker(!showFontPicker);
-                setShowColorPicker(false);
-                setShowSizePicker(false);
-                setShowAlignPicker(false);
-              }}
+              onClick={() => { setShowFontPicker(!showFontPicker); setShowColorPicker(false); }}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white"
               style={{ fontFamily: currentFont.fontFamily }}
             >
-              <span className="text-sm font-medium">Aa</span>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
-                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <span className="text-xs font-medium">Aa</span>
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className="text-gray-400"><path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
             {showFontPicker && (
-              <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[120px] z-50 bg-card border border-border"
-              >
+              <div className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[110px] z-50 bg-card border border-border">
                 {FONT_OPTIONS.map((font) => (
                   <button
                     key={font.value}
                     type="button"
-                    onClick={() => {
-                      updateFormatting({ font: font.value });
-                      setShowFontPicker(false);
-                    }}
+                    onClick={() => { updateFormatting({ font: font.value }); setShowFontPicker(false); }}
                     className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors ${formatting.font === font.value ? "text-foreground" : "text-muted-foreground"}`}
                     style={{ fontFamily: font.fontFamily }}
                   >
-                    {font.value === "sans" ? "Sans-serif" : font.value === "serif" ? "Serif" : "Monospace"}
+                    {font.label}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Size Picker - H1, H2, H3, Body */}
-          <div className="relative">
+          <div className="w-px h-6 bg-border mx-0.5" />
+
+          {/* Heading buttons */}
+          {(["H1", "H2", "H3"] as const).map((h) => (
             <button
+              key={h}
               type="button"
-              onClick={() => {
-                setShowSizePicker(!showSizePicker);
-                setShowColorPicker(false);
-                setShowFontPicker(false);
-                setShowAlignPicker(false);
-              }}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white min-w-[70px]"
+              onClick={() => applyPrefix(h === "H1" ? "# " : h === "H2" ? "## " : "### ")}
+              className="px-2 py-1.5 rounded-lg text-xs font-bold hover:bg-white/10 transition-colors text-muted-foreground hover:text-white"
+              title={`${h} heading`}
             >
-              <span className="text-sm font-medium">{currentSize.label}</span>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400 ml-auto">
-                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              {h}
             </button>
-            {showSizePicker && (
-              <div
-                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[100px] z-50 bg-card border border-border"
-              >
-                <div className="px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider">
-                  {isEditing ? "Select text first" : "Default size"}
-                </div>
-                {TEXT_SIZES.map((size) => (
-                  <button
-                    key={size.value}
-                    type="button"
-                    onClick={() => {
-                      if (isEditing) {
-                        applyInlineSize(size.value);
-                      } else {
-                        updateFormatting({ size: size.value });
-                      }
-                      setShowSizePicker(false);
-                    }}
-                    className={`w-full px-3 py-2 text-left hover:bg-muted transition-colors flex items-center justify-between ${formatting.size === size.value ? "text-foreground" : "text-muted-foreground"}`}
-                  >
-                    <span style={{ fontSize: Math.min(size.fontSize, 18), fontWeight: size.fontWeight }}>{size.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{size.fontSize}px</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
 
-          {/* Divider */}
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-px h-6 bg-border mx-0.5" />
 
           {/* Bold */}
           <button
             type="button"
-            onClick={() => updateFormatting({ bold: !formatting.bold })}
-            className={`p-2 rounded-lg transition-colors ${formatting.bold ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            onClick={() => formatting.bold ? updateFormatting({ bold: false }) : applyInline("**")}
+            className={`p-1.5 rounded-lg transition-colors ${formatting.bold ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            title="Bold"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3.5 2.5H8C9.38071 2.5 10.5 3.61929 10.5 5C10.5 6.38071 9.38071 7.5 8 7.5H3.5V2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -438,8 +393,9 @@ export function TextNode({ id, data, selected }: NodeProps) {
           {/* Strikethrough */}
           <button
             type="button"
-            onClick={() => updateFormatting({ strikethrough: !formatting.strikethrough })}
-            className={`p-2 rounded-lg transition-colors ${formatting.strikethrough ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            onClick={() => applyInline("~~")}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Strikethrough"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -448,61 +404,62 @@ export function TextNode({ id, data, selected }: NodeProps) {
             </svg>
           </button>
 
-          {/* Divider */}
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-px h-6 bg-border mx-0.5" />
 
-          {/* Alignment */}
-          <div className="relative">
+          {/* Bullet list */}
+          <button
+            type="button"
+            onClick={() => applyPrefix("- ")}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Bullet list"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="2.5" cy="4" r="1.5" fill="currentColor"/>
+              <circle cx="2.5" cy="10" r="1.5" fill="currentColor"/>
+              <path d="M5.5 4H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M5.5 10H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+
+          {/* Numbered list */}
+          <button
+            type="button"
+            onClick={() => applyPrefix("1. ")}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Numbered list"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1.5 2H2.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.5 6H3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M1.5 9.5C1.5 9.5 2 8.5 2.5 9C3 9.5 1.5 10.5 1.5 11H3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5.5 4H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M5.5 10H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-border mx-0.5" />
+
+          {/* Align */}
+          {[
+            { v: "left", icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 2.5H13M1 6H9M1 9.5H13M1 13H7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg> },
+            { v: "center", icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 2.5H13M3 6H11M1 9.5H13M4 13H10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg> },
+            { v: "right", icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 2.5H13M5 6H13M1 9.5H13M7 13H13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg> },
+          ].map(({ v, icon }) => (
             <button
+              key={v}
               type="button"
-              onClick={() => {
-                setShowAlignPicker(!showAlignPicker);
-                setShowColorPicker(false);
-                setShowFontPicker(false);
-                setShowSizePicker(false);
-              }}
-              className="flex items-center gap-1 p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              onClick={() => updateFormatting({ align: v })}
+              className={`p-1.5 rounded-lg transition-colors ${formatting.align === v ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              title={`Align ${v}`}
             >
-              {ALIGN_OPTIONS.find(a => a.value === formatting.align)?.icon}
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
-                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              {icon}
             </button>
-            {showAlignPicker && (
-              <div
-                className="absolute top-full right-0 mt-2 flex gap-1 p-1.5 rounded-lg shadow-lg z-50"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
-              >
-                {ALIGN_OPTIONS.map((align) => (
-                  <button
-                    key={align.value}
-                    type="button"
-                    onClick={() => {
-                      updateFormatting({ align: align.value });
-                      setShowAlignPicker(false);
-                    }}
-                    className={`p-2 rounded-lg transition-colors ${formatting.align === align.value ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
-                  >
-                    {align.icon}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       )}
 
       {/* Text Content */}
-      <div
-        className="cursor-text transition-all duration-300"
-        style={{
-          minWidth: 100,
-          maxWidth: shouldShowFull ? 400 : 220,
-          outline: selected ? "2px solid white" : (isInPresentation ? "2px dashed #F0FE00" : "none"),
-          outlineOffset: 4,
-          borderRadius: 4,
-        }}
-      >
+      <div className="cursor-text" style={containerStyle}>
         {isEditing ? (
           <textarea
             ref={textareaRef}
@@ -514,73 +471,31 @@ export function TextNode({ id, data, selected }: NodeProps) {
             style={{
               color: formatting.color,
               fontFamily: currentFont.fontFamily,
-              fontSize: currentSize.fontSize,
-              lineHeight: currentSize.lineHeight,
-              fontWeight: formatting.bold ? 700 : currentSize.fontWeight,
-              textDecoration: formatting.strikethrough ? "line-through" : "none",
+              fontSize: 14,
+              lineHeight: 1.6,
+              fontWeight: formatting.bold ? 700 : 400,
               textAlign: formatting.align as any,
-              minHeight: 60,
+              minHeight: 80,
+              minWidth: 240,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
-            placeholder="Type something..."
+            placeholder={"Type markdown here...\n\n# H1 heading\n## H2 heading\n- bullet point\n1. numbered item"}
           />
         ) : (
-          <div
-            className="transition-all duration-300"
-            style={{
-              textAlign: formatting.align as any,
-              minHeight: 30,
-            }}
-          >
+          <div className="prose prose-invert max-w-none" style={{ minHeight: 30 }}>
             {shouldShowFull ? (
-              // Show rich text with segments
-              segments.map((seg, idx) => {
-                const segmentSize = TEXT_SIZES.find(s => s.value === seg.size) || TEXT_SIZES[3];
-                return (
-                  <span
-                    key={idx}
-                    className="whitespace-pre-wrap break-words"
-                    style={{
-                      color: formatting.color,
-                      fontFamily: currentFont.fontFamily,
-                      fontSize: segmentSize.fontSize,
-                      lineHeight: segmentSize.lineHeight,
-                      fontWeight: formatting.bold ? 700 : segmentSize.fontWeight,
-                      textDecoration: formatting.strikethrough ? "line-through" : "none",
-                      display: seg.size === "h1" || seg.size === "h2" || seg.size === "h3" ? "block" : "inline",
-                      marginBottom: seg.size === "h1" || seg.size === "h2" || seg.size === "h3" ? "0.5em" : 0,
-                    }}
-                  >
-                    {seg.text || (idx === 0 ? "Double-click to edit" : "")}
-                  </span>
-                );
-              })
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                {editContent || "*Double-click to edit*"}
+              </ReactMarkdown>
             ) : (
-              // Show truncated preview with correct size
-              <div
-                className="whitespace-pre-wrap break-words"
-                style={{
-                  color: formatting.color,
-                  fontFamily: currentFont.fontFamily,
-                  fontSize: currentSize.fontSize,
-                  lineHeight: currentSize.lineHeight,
-                  fontWeight: formatting.bold ? 700 : currentSize.fontWeight,
-                  textDecoration: formatting.strikethrough ? "line-through" : "none",
-                  opacity: 0.9,
-                }}
-              >
-                {truncatedText || "Double-click to edit"}
-              </div>
-            )}
-            {/* Show "more" indicator when collapsed and has more text */}
-            {!shouldShowFull && isLongText && (
-              <div 
-                className="text-[10px] mt-1 opacity-50"
-                style={{ color: formatting.color }}
-              >
-                Hover to expand
-              </div>
+              // Compact preview - first line only
+              <p style={{ color: formatting.color, fontFamily: currentFont.fontFamily, fontSize: 14, lineHeight: 1.5, margin: 0, opacity: 0.9 }}>
+                {editContent.split("\n").find(l => l.trim())?.replace(/^#+\s*/, "").replace(/^\*+\s*/, "").replace(/^-\s+/, "").slice(0, 80) || "Double-click to edit"}
+                {editContent.split("\n").filter(l => l.trim()).length > 1 && (
+                  <span className="opacity-50 text-xs ml-1">…</span>
+                )}
+              </p>
             )}
           </div>
         )}
