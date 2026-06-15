@@ -10,6 +10,7 @@ interface AddNodeMenuProps {
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
   onOpenAIGenerate: (type: "mockup" | "collateral", sourceNodeId?: string) => void;
+  onAddLink?: (url: string) => void;
   onClose: () => void;
   position?: { x: number; y: number };
   sourceNodeId?: string;
@@ -23,15 +24,19 @@ export function AddNodeMenu({
   onAddOperationalNode,
   onUploadFile,
   onOpenAIGenerate,
+  onAddLink,
   onClose,
   position,
   sourceHandlePosition,
 }: AddNodeMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
   const [menuPosition, setMenuPosition] = useState(position || { x: 200, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkInputValue, setLinkInputValue] = useState("");
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.menu-content')) return;
@@ -314,6 +319,96 @@ Generate
             </div>
             Upload File
           </button>
+
+          {/* Divider */}
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222222" }} />
+
+          {/* Add Link */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowLinkInput((v) => !v);
+              setLinkInputValue("");
+              setTimeout(() => linkInputRef.current?.focus(), 50);
+            }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: showLinkInput ? "rgba(255,255,255,0.06)" : "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              ...fontStyle,
+            }}
+          >
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#52525b20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                <path d="M2 7h10M9 4l3 3-3 3" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            Add Link
+          </button>
+
+          {showLinkInput && (
+            <div style={{ padding: "4px 12px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+              <input
+                ref={linkInputRef}
+                type="url"
+                value={linkInputValue}
+                onChange={(e) => setLinkInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && linkInputValue.trim()) {
+                    onAddLink?.(linkInputValue.trim());
+                    onClose();
+                  } else if (e.key === "Escape") {
+                    setShowLinkInput(false);
+                  }
+                }}
+                placeholder="Paste a URL…"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "5px 8px",
+                  fontSize: 12,
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #333",
+                  borderRadius: 6,
+                  color: "#d1d5db",
+                  outline: "none",
+                  ...fontStyle,
+                }}
+              />
+              <button
+                type="button"
+                disabled={!linkInputValue.trim()}
+                onClick={() => {
+                  if (linkInputValue.trim()) {
+                    onAddLink?.(linkInputValue.trim());
+                    onClose();
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "6px 0",
+                  fontSize: 12,
+                  backgroundColor: linkInputValue.trim() ? "#F0FE00" : "#222",
+                  color: linkInputValue.trim() ? "#000" : "#555",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: linkInputValue.trim() ? "pointer" : "default",
+                  fontWeight: 600,
+                  ...fontStyle,
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

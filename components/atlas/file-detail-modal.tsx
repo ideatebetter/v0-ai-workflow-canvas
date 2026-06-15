@@ -51,6 +51,25 @@ const FILE_TYPE_COLORS: Record<string, string> = {
   ".pdf": "#FF0000",
 };
 
+function getYouTubeEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    let videoId: string | null = null;
+    if (u.hostname.includes("youtube.com")) {
+      videoId = u.searchParams.get("v");
+    } else if (u.hostname === "youtu.be") {
+      videoId = u.pathname.slice(1).split("?")[0];
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+  } catch {
+    return null;
+  }
+}
+
+function getGoogleDocsEmbedUrl(url: string): string {
+  return url.replace(/\/edit.*$/, "/preview").replace(/\/pub.*$/, "/preview");
+}
+
 // Adobe File Preview Component with PSD.js support
 function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
   const [psdPreview, setPsdPreview] = useState<string | null>(null);
@@ -1136,6 +1155,123 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   {fileData.uploadedFile.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Link Preview - YouTube, Google Docs, Figma, Generic */}
+          {fileData.linkUrl && fileData.linkType && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              {fileData.linkType === "youtube" && (() => {
+                const embedUrl = getYouTubeEmbedUrl(fileData.linkUrl!);
+                return embedUrl ? (
+                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                    <iframe
+                      src={embedUrl}
+                      title="YouTube video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Could not embed YouTube video.{" "}
+                    <a href={fileData.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#F0FE00" }}>Open in new tab</a>
+                  </div>
+                );
+              })()}
+
+              {fileData.linkType === "googledoc" && (
+                <>
+                  <iframe
+                    src={getGoogleDocsEmbedUrl(fileData.linkUrl!)}
+                    title="Google Doc preview"
+                    style={{ width: "100%", height: 480, border: "none", display: "block" }}
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  />
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid #2a2a2a" }}>
+                    <div className="flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#4285F4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14 2V8H20" stroke="#4285F4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 13H16M8 17H13" stroke="#4285F4" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{fileData.label}</span>
+                    </div>
+                    <a
+                      href={fileData.linkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10"
+                      style={{ color: "#4285F4", border: "1px solid #4285F440", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Open in Google Docs
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </a>
+                  </div>
+                </>
+              )}
+
+              {fileData.linkType === "figma" && (
+                <div className="p-6 flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 24C10.2091 24 12 22.2091 12 20V16H8C5.79086 16 4 17.7909 4 20C4 22.2091 5.79086 24 8 24Z" fill="#0ACF83"/>
+                      <path d="M4 12C4 9.79086 5.79086 8 8 8H12V16H8C5.79086 16 4 14.2091 4 12Z" fill="#A259FF"/>
+                      <path d="M4 4C4 1.79086 5.79086 0 8 0H12V8H8C5.79086 8 4 6.20914 4 4Z" fill="#F24E1E"/>
+                      <path d="M12 0H16C18.2091 0 20 1.79086 20 4C20 6.20914 18.2091 8 16 8H12V0Z" fill="#FF7262"/>
+                      <path d="M20 12C20 14.2091 18.2091 16 16 16C13.7909 16 12 14.2091 12 12C12 9.79086 13.7909 8 16 8C18.2091 8 20 9.79086 20 12Z" fill="#1ABCFE"/>
+                    </svg>
+                    <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Figma Design</span>
+                  </div>
+                  <a
+                    href={fileData.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg transition-colors hover:bg-white/10"
+                    style={{ color: "#A259FF", border: "1px solid #A259FF40", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Open in Figma
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </a>
+                </div>
+              )}
+
+              {fileData.linkType === "generic" && (
+                <div className="p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="#888" strokeWidth="1.2"/>
+                      <path d="M5 8H11M8 5V11" stroke="#888" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    <a
+                      href={fileData.linkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm truncate max-w-xs hover:underline"
+                      style={{ color: "#a1a1aa", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      {fileData.linkUrl}
+                    </a>
+                  </div>
+                  <a
+                    href={fileData.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="self-start flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10"
+                    style={{ color: "#d1d5db", border: "1px solid #333", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Open Link
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </a>
+                </div>
+              )}
             </div>
           )}
 

@@ -174,6 +174,20 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 // Default placeholder images by file type
+function getYouTubeEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    let videoId: string | null = null;
+    if (u.hostname.includes("youtube.com")) videoId = u.searchParams.get("v");
+    else if (u.hostname === "youtu.be") videoId = u.pathname.slice(1).split("?")[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=0&modestbranding=1` : null;
+  } catch { return null; }
+}
+
+function getGoogleDocsEmbedUrl(url: string): string {
+  return url.replace(/\/edit.*$/, "/preview").replace(/\/pub.*$/, "/preview");
+}
+
 const DEFAULT_PREVIEWS: Record<string, string> = {
   ".fig": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop",
   ".psd": "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=400&h=300&fit=crop",
@@ -254,10 +268,14 @@ export function FileNode({ id, data, selected }: NodeProps) {
         >
           {fileData.label}
         </span>
-        <span 
+        <span
           className="text-xs text-muted-foreground flex-shrink-0"
         >
-          {fileData.fileExtension.replace(".", "").toUpperCase()}
+          {fileData.linkType === "youtube" ? "YT"
+            : fileData.linkType === "googledoc" ? "GDOC"
+            : fileData.linkType === "figma" ? "FIGMA"
+            : fileData.linkType === "generic" ? "LINK"
+            : fileData.fileExtension.replace(".", "").toUpperCase()}
         </span>
         {/* Sync indicator */}
         {fileData.syncGroupId && (
@@ -328,6 +346,50 @@ export function FileNode({ id, data, selected }: NodeProps) {
               autoPlay
               playsInline
             />
+          ) : fileData.linkType === "youtube" ? (() => {
+            const embedUrl = getYouTubeEmbedUrl(fileData.linkUrl || "");
+            return embedUrl ? (
+              <div style={{ position: "relative", width: "100%", paddingBottom: "56.25%", borderRadius: 12, overflow: "hidden" }}>
+                <iframe
+                  src={embedUrl}
+                  title="YouTube preview"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", pointerEvents: "none", borderRadius: 12 }}
+                  tabIndex={-1}
+                />
+              </div>
+            ) : (
+              <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0d0d0d", borderRadius: 12 }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#FF0000"/><path d="M13 11L22 16L13 21V11Z" fill="white"/></svg>
+              </div>
+            );
+          })() : fileData.linkType === "googledoc" ? (
+            <div style={{ position: "relative", width: "100%", height: 160, borderRadius: 12, overflow: "hidden", backgroundColor: "#1a1a1a" }}>
+              <iframe
+                src={getGoogleDocsEmbedUrl(fileData.linkUrl || "")}
+                title="Google Doc preview"
+                style={{ width: "200%", height: "200%", border: "none", pointerEvents: "none", transformOrigin: "top left", transform: "scale(0.5)", borderRadius: 12 }}
+                tabIndex={-1}
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+          ) : fileData.linkType === "figma" ? (
+            <div style={{ height: 120, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#1a1a1a", borderRadius: 12 }}>
+              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
+                <path d="M8 36C10.7614 36 13 33.7614 13 31V26H8C5.23858 26 3 28.2386 3 31C3 33.7614 5.23858 36 8 36Z" fill="#0ACF83"/>
+                <path d="M3 20C3 17.2386 5.23858 15 8 15H13V25H8C5.23858 25 3 22.7614 3 20Z" fill="#A259FF"/>
+                <path d="M3 9C3 6.23858 5.23858 4 8 4H13V14H8C5.23858 14 3 11.7614 3 9Z" fill="#F24E1E"/>
+                <path d="M13 4H18C20.7614 4 23 6.23858 23 9C23 11.7614 20.7614 14 18 14H13V4Z" fill="#FF7262"/>
+                <path d="M23 20C23 22.7614 20.7614 25 18 25C15.2386 25 13 22.7614 13 20C13 17.2386 15.2386 15 18 15C20.7614 15 23 17.2386 23 20Z" fill="#1ABCFE"/>
+              </svg>
+              <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>Figma Design</span>
+            </div>
+          ) : fileData.linkType === "generic" ? (
+            <div style={{ height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#1a1a1a", borderRadius: 12, padding: "0 16px" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif", textAlign: "center", wordBreak: "break-all", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {(() => { try { return new URL(fileData.linkUrl || "").hostname; } catch { return fileData.linkUrl; } })()}
+              </span>
+            </div>
           ) : (
             <img
               src={previewImage}
