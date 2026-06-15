@@ -38,6 +38,8 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
   const [showRatioDropdown, setShowRatioDropdown] = useState(false);
   const [showVariationsDropdown, setShowVariationsDropdown] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanced, setEnhanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const placeholderSuggestion = SUGGESTIONS[Math.floor(Math.random() * SUGGESTIONS.length)];
@@ -92,6 +94,32 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
       setIsGenerating(false);
     }
   }, [prompt, aspectRatio, variations, nodeData, isGenerating]);
+
+  const handleEnhancePrompt = useCallback(async () => {
+    if (!prompt.trim() || isEnhancing || isGenerating) return;
+    setIsEnhancing(true);
+    setError(null);
+    setEnhanced(false);
+    try {
+      const response = await fetch("/api/ai/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Enhancement failed");
+      }
+      const { enhancedPrompt } = await response.json();
+      setPrompt(enhancedPrompt);
+      setEnhanced(true);
+      setTimeout(() => setEnhanced(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Enhancement failed");
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [prompt, isEnhancing, isGenerating]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -286,6 +314,29 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
             {nodeData.sourceFileName}
           </span>
         </div>
+
+        {/* Sage enhance button */}
+        <button
+          type="button"
+          onClick={handleEnhancePrompt}
+          disabled={!prompt.trim() || isEnhancing || isGenerating}
+          title="Enhance with Sage"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+          style={{
+            backgroundColor: enhanced ? "#F0FE00" : "#2a2a2a",
+            color: enhanced ? "#121212" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE00" : "#555",
+            border: `1px solid ${enhanced ? "#F0FE00" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE0044" : "#333"}`,
+            cursor: prompt.trim() && !isEnhancing && !isGenerating ? "pointer" : "not-allowed",
+          }}
+        >
+          {isEnhancing ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/sage-logo.svg" alt="Sage" style={{ width: 14, height: 14 }} />
+          )}
+          <span>{enhanced ? "Enhanced!" : "Sage"}</span>
+        </button>
 
         {/* Generate button */}
         <button

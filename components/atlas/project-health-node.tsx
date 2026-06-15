@@ -3,6 +3,7 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
+import { ComingSoonBadge } from "./coming-soon-badge";
 import type { ProjectHealthNodeData } from "@/lib/atlas-types";
 
 export function ProjectHealthNode({ id, data, selected }: NodeProps) {
@@ -21,11 +22,12 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
         background: "linear-gradient(180deg, #1c1c1c 0%, #141414 100%)",
         border: selected ? "1.5px solid #8b5cf6" : "1px solid rgba(139, 92, 246, 0.15)",
         width: 280,
-        boxShadow: selected 
-          ? "0 0 30px rgba(139, 92, 246, 0.2), 0 8px 32px rgba(0,0,0,0.4)" 
+        boxShadow: selected
+          ? "0 0 30px rgba(139, 92, 246, 0.2), 0 8px 32px rgba(0,0,0,0.4)"
           : "0 8px 32px rgba(0,0,0,0.3)",
       }}
     >
+      <ComingSoonBadge />
       {/* Header */}
       <div
         className="px-4 py-3 flex items-center justify-between"

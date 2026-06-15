@@ -50,7 +50,7 @@ interface AtlasEditorProps {
   frameworks?: CanvasFramework[];
   onRemoveFramework?: (frameworkId: string) => void;
   targetNodeId?: string | null;
-  onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
+  onCopyNodesToCanvas?: (targetCanvasId: string, nodes: AtlasNode[], mode: "move" | "copy", targetPageId?: string) => void;
   onCreateCanvasWithNodes?: (canvasName: string, nodes: AtlasNode[], mode: "move" | "copy") => void;
   onDeleteNodesFromCanvas?: (nodeIds: string[]) => void;
   onSyncFiles?: (sourceNodeId: string, targetNodeId: string, targetCanvasId: string) => void;
@@ -131,6 +131,36 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(deduplicateNodes(initialPage.nodes));
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialPage.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
+
+  // Undo/redo history — stored as refs to avoid re-renders
+  type HistoryEntry = { nodes: AtlasNode[]; edges: typeof edges };
+  const historyPast = useRef<HistoryEntry[]>([]);
+  const historyFuture = useRef<HistoryEntry[]>([]);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
+
+  const pushHistory = useCallback(() => {
+    historyPast.current = [...historyPast.current.slice(-49), { nodes: nodesRef.current, edges: edgesRef.current }];
+    historyFuture.current = [];
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    const prev = historyPast.current.pop();
+    if (!prev) return;
+    historyFuture.current = [{ nodes: nodesRef.current, edges: edgesRef.current }, ...historyFuture.current.slice(0, 49)];
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+  }, [setNodes, setEdges]);
+
+  const handleRedo = useCallback(() => {
+    const next = historyFuture.current.shift();
+    if (!next) return;
+    historyPast.current = [...historyPast.current.slice(-49), { nodes: nodesRef.current, edges: edgesRef.current }];
+    setNodes(next.nodes);
+    setEdges(next.edges);
+  }, [setNodes, setEdges]);
   const isInitialMount = useRef(true);
   const lastCanvasNodeCount = useRef(initialPage.nodes.length);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
@@ -150,6 +180,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [syncTargetNode, setSyncTargetNode] = useState<AtlasNode | null>(null);
   const [showSyncMultipleDialog, setShowSyncMultipleDialog] = useState(false);
+  const [pastedSyncSuggestion, setPastedSyncSuggestion] = useState<{ nodes: AtlasNode[]; count: number } | null>(null);
   const [namingMismatchAlert, setNamingMismatchAlert] = useState<{
     nodeId: string;
     fetchedTitle: string;
@@ -609,6 +640,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   const onConnect = useCallback(
     (params: Connection) => {
+      pushHistory();
       setEdges((eds) =>
         addEdge(
           {
@@ -621,7 +653,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         )
       );
     },
-    [setEdges]
+    [setEdges, pushHistory]
   );
 
   // Copy selected nodes to clipboard
@@ -632,42 +664,79 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
   }, [nodes]);
 
-  // Paste copied nodes with offset
+  // Check whether freshly-pasted nodes have matches on other canvases/pages
+  const checkForSyncSuggestions = useCallback((pastedNodeIds: Set<string>, pastedNodes: AtlasNode[]) => {
+    if (!canvases || canvases.length === 0) return;
+    const candidates: AtlasNode[] = [];
+
+    for (const node of pastedNodes) {
+      const label = (node.data.label || "").toLowerCase();
+      const fileName = ((node.data as any).fileName || "").toLowerCase();
+      if (!label && !fileName) continue;
+
+      let hasMatch = false;
+      outer: for (const c of canvases) {
+        const allNodes = c.pages && c.pages.length > 0
+          ? c.pages.flatMap((p: any) => p.nodes)
+          : c.nodes;
+        for (const candidate of allNodes) {
+          if (pastedNodeIds.has(candidate.id)) continue;
+          if (candidate.type !== node.type) continue;
+          const cLabel = (candidate.data.label || "").toLowerCase();
+          const cFile = ((candidate.data as any).fileName || "").toLowerCase();
+          if ((label && cLabel && label === cLabel) || (fileName && cFile && fileName === cFile)) {
+            hasMatch = true;
+            break outer;
+          }
+        }
+      }
+      if (hasMatch) candidates.push(node);
+    }
+
+    if (candidates.length > 0) {
+      setPastedSyncSuggestion({ nodes: candidates, count: candidates.length });
+    }
+  }, [canvases]);
+
+  // Paste copied nodes with offset, preserving relative positions
   const handlePasteNodes = useCallback(() => {
     if (copiedNodes.length === 0) return;
 
-    const PASTE_OFFSET = 50;
-    
-    // Find positions that don't overlap with existing nodes
-    const pastePositions = findFreePositions(
-      nodes,
-      copiedNodes.length,
-      {
-        x: copiedNodes[0].position.x + PASTE_OFFSET,
-        y: copiedNodes[0].position.y + PASTE_OFFSET,
-      }
+    const PASTE_OFFSET = 30;
+
+    // Build a set of labels already on the current page/canvas so we only
+    // append "(copy)" when the destination already contains a node with that name.
+    const existingLabels = new Set(
+      nodes.map(n => (n.data.label || "").toLowerCase()).filter(Boolean)
     );
 
-    const newNodes: AtlasNode[] = copiedNodes.map((node, index) => ({
-      ...node,
-      id: `${node.type}-${Date.now()}-${index}`,
-      position: pastePositions[index] || {
-        x: node.position.x + PASTE_OFFSET * (index + 1),
-        y: node.position.y + PASTE_OFFSET * (index + 1),
-      },
-      selected: true,
-      data: {
-        ...node.data,
-        label: node.data.label ? `${node.data.label} (copy)` : node.data.label,
-      },
-    }));
+    const newNodes: AtlasNode[] = copiedNodes.map((node, index) => {
+      const label: string = node.data.label || "";
+      const hasDuplicate = label && existingLabels.has(label.toLowerCase());
+      return {
+        ...node,
+        id: `${node.type}-${Date.now()}-${index}`,
+        position: {
+          x: node.position.x + PASTE_OFFSET,
+          y: node.position.y + PASTE_OFFSET,
+        },
+        selected: true,
+        data: {
+          ...node.data,
+          label: hasDuplicate ? `${label} (copy)` : label,
+        },
+      };
+    });
 
-    // Deselect existing nodes and add new ones selected
     setNodes(nds => [
       ...nds.map(n => ({ ...n, selected: false })),
       ...newNodes,
     ]);
-  }, [copiedNodes, nodes, setNodes]);
+
+    // Suggest syncing if pasted nodes have matches on other canvases/pages
+    const newNodeIds = new Set(newNodes.map(n => n.id));
+    checkForSyncSuggestions(newNodeIds, newNodes);
+  }, [copiedNodes, nodes, setNodes, checkForSyncSuggestions]);
 
   // Keyboard shortcuts for copy/paste
   useEffect(() => {
@@ -684,14 +753,36 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifierKey = isMac ? e.metaKey : e.ctrlKey;
 
-      if (modifierKey && e.key === 'c') {
+      if (modifierKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if (modifierKey && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+        e.preventDefault();
+        handleRedo();
+      } else if (modifierKey && e.key === 'a') {
+        e.preventDefault();
+        setNodes(nds => nds.map(n => ({ ...n, selected: true })));
+      } else if (modifierKey && e.key === 'd') {
+        e.preventDefault();
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length > 0) {
+          pushHistory();
+          const newNodes = selectedNodes.map((node, idx) => ({
+            ...node,
+            id: `${node.id}-dup-${Date.now()}-${idx}`,
+            position: { x: node.position.x + 30, y: node.position.y + 30 },
+            selected: true,
+          }));
+          setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+        }
+      } else if (modifierKey && e.key === 'c') {
         e.preventDefault();
         handleCopyNodes();
       } else if (modifierKey && e.key === 'v') {
         e.preventDefault();
+        pushHistory();
         handlePasteNodes();
       } else if (modifierKey && e.shiftKey && e.key === 'c') {
-        // Cmd/Ctrl + Shift + C to copy to another canvas
         e.preventDefault();
         const selectedNodes = nodes.filter(node => node.selected);
         if (selectedNodes.length > 0) {
@@ -699,7 +790,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           setShowMoveToCanvasDialog(true);
         }
       } else if (modifierKey && e.shiftKey && e.key === 'm') {
-        // Cmd/Ctrl + Shift + M to move to another canvas
         e.preventDefault();
         const selectedNodes = nodes.filter(node => node.selected);
         if (selectedNodes.length > 0) {
@@ -711,7 +801,14 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleCopyNodes, handlePasteNodes, nodes, canvases]);
+  }, [handleCopyNodes, handlePasteNodes, handleUndo, handleRedo, pushHistory, nodes, setNodes, canvases]);
+
+  // Auto-dismiss paste sync suggestion after 8 seconds
+  useEffect(() => {
+    if (!pastedSyncSuggestion) return;
+    const id = setTimeout(() => setPastedSyncSuggestion(null), 8000);
+    return () => clearTimeout(id);
+  }, [pastedSyncSuggestion]);
 
   const handleNodesUpdate = useCallback(
     (newNodes: AtlasNode[]) => {
@@ -1996,6 +2093,10 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
+      // Push history before deletions triggered by keyboard (Delete/Backspace)
+      if (changes.some(c => c.type === "remove")) {
+        pushHistory();
+      }
       onNodesChange(changes);
 
       for (const change of changes) {
@@ -2011,7 +2112,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         }
       }
     },
-    [onNodesChange, nodes, selectedNode]
+    [onNodesChange, nodes, selectedNode, pushHistory]
   );
 
   // Comment handlers
@@ -2473,7 +2574,7 @@ presentationMode={presentationMode}
             setShowMoveToCanvasDialog(true);
           }}
           onDuplicate={() => {
-            // Duplicate nodes in place
+            pushHistory();
             const newNodes = contextMenu.nodes.map(node => ({
               ...node,
               id: `${node.id}-dup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -2489,6 +2590,7 @@ presentationMode={presentationMode}
             ]);
           }}
           onDelete={() => {
+            pushHistory();
             const nodeIdsToDelete = contextMenu.nodes.map(n => n.id);
             setNodes(nds => nds.filter(n => !nodeIdsToDelete.includes(n.id)));
             setEdges(eds => eds.filter(e => !nodeIdsToDelete.includes(e.source) && !nodeIdsToDelete.includes(e.target)));
@@ -2538,20 +2640,19 @@ presentationMode={presentationMode}
             setContextMenu(null);
           }}
           onSyncNode={() => {
-            if (contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")) {
+            if (contextMenu.nodes.length === 1) {
               setSyncTargetNode(contextMenu.nodes[0]);
               setShowSyncDialog(true);
             }
           }}
           onSyncMultiple={() => {
-            const syncableNodes = contextMenu.nodes.filter(n => n.type === "file" || n.type === "text");
-            if (syncableNodes.length > 0) {
-              setSyncMultipleNodes(syncableNodes);
+            if (contextMenu.nodes.length > 0) {
+              setSyncMultipleNodes(contextMenu.nodes);
               setShowSyncMultipleDialog(true);
             }
           }}
-          isSyncableNode={contextMenu.nodes.length === 1 && (contextMenu.nodes[0].type === "file" || contextMenu.nodes[0].type === "text")}
-          hasSyncableNodes={contextMenu.nodes.some(n => n.type === "file" || n.type === "text")}
+          isSyncableNode={contextMenu.nodes.length === 1}
+          hasSyncableNodes={contextMenu.nodes.length > 1}
           isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
           onCopyLink={contextMenu.nodes.length === 1 ? () => handleCopyNodeLink(contextMenu.nodes[0].id) : undefined}
         />
@@ -2566,10 +2667,9 @@ presentationMode={presentationMode}
           currentCanvasId={canvas.id}
           selectedNodes={contextMenu?.nodes || nodes.filter(node => node.selected)}
           defaultMode={moveToCanvasMode}
-          onTransferToCanvas={(targetCanvasId, nodesToTransfer, mode) => {
-            onCopyNodesToCanvas(targetCanvasId, nodesToTransfer, mode);
+          onTransferToCanvas={(targetCanvasId, nodesToTransfer, mode, targetPageId) => {
+            onCopyNodesToCanvas(targetCanvasId, nodesToTransfer, mode, targetPageId);
             if (mode === "move") {
-              // Remove nodes from current canvas
               const nodeIds = nodesToTransfer.map(n => n.id);
               setNodes(nds => nds.filter(n => !nodeIds.includes(n.id)));
               setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
@@ -2639,6 +2739,51 @@ presentationMode={presentationMode}
             setContextMenu(null);
           }}
         />
+      )}
+
+      {/* Paste sync suggestion toast */}
+      {pastedSyncSuggestion && canvases && (
+        <div
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl pointer-events-auto"
+          style={{
+            background: "rgba(22, 22, 24, 0.97)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          <span className="text-sm text-white">
+            Found matching nodes for {pastedSyncSuggestion.count} pasted item{pastedSyncSuggestion.count !== 1 ? "s" : ""}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSyncMultipleNodes(pastedSyncSuggestion.nodes);
+              setShowSyncMultipleDialog(true);
+              setPastedSyncSuggestion(null);
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
+            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+          >
+            Sync Now
+          </button>
+          <button
+            type="button"
+            onClick={() => setPastedSyncSuggestion(null)}
+            className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12M4 4L12 12" stroke="#666" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* File Detail Modal */}

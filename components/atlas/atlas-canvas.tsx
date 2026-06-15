@@ -8,7 +8,6 @@ export const usePresentationNodes = () => useContext(PresentationNodesContext);
 import {
   ReactFlow,
   Background,
-  Controls,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -39,6 +38,7 @@ import { TeamHealthNode } from "./team-health-node";
 import { MoodboardNode } from "./moodboard-node";
 import { MockupImageNode } from "./nodes/mockup-image-node";
 import { AIPromptNode } from "./nodes/ai-prompt-node";
+import { BriefInputNode } from "./nodes/brief-input-node";
 import { PresentationGroupNode } from "./presentation-group-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
@@ -64,6 +64,7 @@ const nodeTypes: NodeTypes = {
   moodboard: MoodboardNode,
   mockupImage: MockupImageNode,
   aiPrompt: AIPromptNode,
+  briefInput: BriefInputNode,
   presentationGroup: PresentationGroupNode,
 };
 
@@ -710,10 +711,15 @@ onClick={(event) => {
       }}
         onPaneContextMenu={(event) => {
           event.preventDefault();
+          // If nodes are selected, show the node options menu for those nodes
+          const selectedNodes = nodes.filter(n => n.selected);
+          if (selectedNodes.length > 0 && onNodeContextMenu) {
+            onNodeContextMenu(event, selectedNodes);
+            return;
+          }
           if (!onRightClick) return;
           const bounds = reactFlowWrapper.current?.getBoundingClientRect();
           if (!bounds) return;
-          // Convert screen position to flow position for node placement
           const flowPosition = reactFlowInstance.screenToFlowPosition({
             x: event.clientX,
             y: event.clientY,
@@ -776,7 +782,6 @@ onClick={(event) => {
           size={1}
           color="#333333"
         />
-        <Controls showInteractive={false} />
         <MiniMap
           nodeColor="#444444"
           maskColor="rgba(10,10,10,0.7)"

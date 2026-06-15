@@ -3,6 +3,7 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
+import { ComingSoonBadge } from "./coming-soon-badge";
 import type { FinancialNodeData } from "@/lib/atlas-types";
 
 export function FinancialNode({ id, data, selected }: NodeProps) {
@@ -20,6 +21,7 @@ export function FinancialNode({ id, data, selected }: NodeProps) {
         width: 260,
       }}
     >
+      <ComingSoonBadge />
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center justify-between border-b"

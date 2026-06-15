@@ -199,12 +199,12 @@ export const WORKSPACE_MEMBERS: WorkspaceMember[] = [
   { id: "m5", name: "Michael Brown", email: "michael@ideate.com", initials: "MB", role: "viewer" },
 ];
 
-// Default workspace settings
+// Default workspace settings — members are populated from real auth data at runtime
 export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
   id: "ws-1",
-  name: "Ideate Design Team",
-  description: "Brand and marketing design workspace",
-  members: WORKSPACE_MEMBERS,
+  name: "My Workspace",
+  description: "",
+  members: [],
   products: [
     { id: "atlas", name: "Atlas", color: "#534AB7", enabled: true },
     { id: "synthesis", name: "Synthesis", color: "#1D9E75", enabled: true },
@@ -1018,6 +1018,7 @@ export interface Canvas {
   name: string;
   description?: string;
   previewImage?: string;
+  workspaceId?: string; // Which workspace this canvas belongs to
   projectId?: string; // Optional project grouping
   nodes: AtlasNode[];
   edges: Edge[];
@@ -1082,6 +1083,8 @@ export interface FrameworkParameter {
   required: boolean;
   placeholder?: string;
   defaultValue?: string;
+  tooltip?: string;       // shown in an info popover next to the label
+  multiple?: boolean;     // for "file" type: allow multiple file uploads
 }
 
 // Framework interface
@@ -1104,6 +1107,7 @@ export interface CanvasFramework {
   parameters?: FrameworkParameter[];
   isPublished?: boolean;  // false = draft, true = published to library
   teamId?: string;
+  presentationFlows?: SavedPresentationFlow[]; // Pre-configured presentation flows
 }
 
 // Framework categories with labels
@@ -1117,123 +1121,6 @@ export const FRAMEWORK_CATEGORIES: Record<FrameworkCategory, { label: string; ic
 };
 
 // Sample community frameworks
-export const SAMPLE_FRAMEWORKS: CanvasFramework[] = [
-  {
-    id: "framework-1",
-    name: "Brand Identity Kit",
-    description: "Complete brand identity workflow with logo variations, color palettes, and typography guidelines.",
-    category: "branding",
-    visibility: "community",
-    previewImage: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop",
-    nodes: [],
-    edges: [],
-    createdAt: "2026-04-15T10:00:00Z",
-    createdBy: {
-      id: "user-community-1",
-      name: "Sarah Chen",
-      email: "sarah@example.com",
-      initials: "SC",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-      role: "Designer",
-    },
-    upvotes: 234,
-    upvotedBy: [],
-    downloads: 1205,
-    tags: ["branding", "identity", "logo", "colors"],
-  },
-  {
-    id: "framework-2",
-    name: "Social Campaign Planner",
-    description: "Plan and organize your social media campaigns with this visual workflow framework.",
-    category: "social",
-    visibility: "community",
-    previewImage: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
-    nodes: [],
-    edges: [],
-    createdAt: "2026-04-20T14:30:00Z",
-    createdBy: {
-      id: "user-community-2",
-      name: "Marcus Johnson",
-      email: "marcus@example.com",
-      initials: "MJ",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-      role: "Marketing Lead",
-    },
-    upvotes: 189,
-    upvotedBy: [],
-    downloads: 892,
-    tags: ["social", "campaign", "planning", "content"],
-  },
-  {
-    id: "framework-3",
-    name: "Product Launch Workflow",
-    description: "End-to-end product launch planning with milestones, assets, and team coordination.",
-    category: "workflow",
-    visibility: "community",
-    previewImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
-    nodes: [],
-    edges: [],
-    createdAt: "2026-05-01T09:00:00Z",
-    createdBy: {
-      id: "user-community-3",
-      name: "Emily Park",
-      email: "emily@example.com",
-      initials: "EP",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-      role: "Product Manager",
-    },
-    upvotes: 312,
-    upvotedBy: [],
-    downloads: 1567,
-    tags: ["launch", "product", "workflow", "planning"],
-  },
-  {
-    id: "framework-4",
-    name: "Marketing Brief Framework",
-    description: "Structured creative brief framework for marketing campaigns with stakeholder sections.",
-    category: "marketing",
-    visibility: "community",
-    previewImage: "https://images.unsplash.com/photo-1553028826-f4804a6dba3b?w=600&h=400&fit=crop",
-    nodes: [],
-    edges: [],
-    createdAt: "2026-05-05T11:00:00Z",
-    createdBy: {
-      id: "user-community-4",
-      name: "David Kim",
-      email: "david@example.com",
-      initials: "DK",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-      role: "Creative Director",
-    },
-    upvotes: 156,
-    upvotedBy: [],
-    downloads: 734,
-    tags: ["brief", "marketing", "creative", "campaign"],
-  },
-  {
-    id: "framework-5",
-    name: "Pitch Deck Builder",
-    description: "Visual canvas for building compelling pitch decks with story flow and slide planning.",
-    category: "presentation",
-    visibility: "community",
-    previewImage: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop",
-    nodes: [],
-    edges: [],
-    createdAt: "2026-05-08T16:00:00Z",
-    createdBy: {
-      id: "user-community-5",
-      name: "Lisa Wang",
-      email: "lisa@example.com",
-      initials: "LW",
-      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop",
-      role: "Founder",
-    },
-    upvotes: 278,
-    upvotedBy: [],
-    downloads: 1123,
-    tags: ["pitch", "deck", "presentation", "startup"],
-  },
-];
 
 // Initial canvases
 export const INITIAL_CANVASES: Canvas[] = [

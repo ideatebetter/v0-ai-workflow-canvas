@@ -114,8 +114,9 @@ const IDS = {
   m6: "ls-mockup-6",
   pgStrategy: "ls-pg-strategy",
   pgBrief: "ls-pg-brief",
-  pgBriefMood: "ls-pg-brief-mood",
-  pgMaster: "ls-pg-master",
+  pgMockups: "ls-pg-mockups",
+  pgCreativeConcept: "ls-pg-creative-concept",
+  pgFinal: "ls-pg-final",
 };
 
 export const LOGO_SPRINT_FRAMEWORK: CanvasFramework = {
@@ -172,6 +173,21 @@ export const LOGO_SPRINT_FRAMEWORK: CanvasFramework = {
       type: "file",
       required: false,
     },
+    {
+      id: "moodboard_content",
+      label: "Moodboard Content",
+      type: "file",
+      required: false,
+      multiple: true,
+    },
+    {
+      id: "collateral",
+      label: "Collateral",
+      type: "file",
+      required: false,
+      multiple: true,
+      tooltip: "Drop in examples of the logo being applied in graphics and we'll build them out into high-fidelity mockups.",
+    },
   ],
 
   // ─── Nodes ───────────────────────────────────────────────────────────────
@@ -213,307 +229,75 @@ The final Figma logo file plus six environment mockups showing the mark in the r
     // ── Strategy nodes ────────────────────────────────────────────────────
     {
       id: IDS.s1,
-      type: "text",
+      type: "briefInput",
       position: { x: 60, y: 360 },
       selected: false,
-      data: {
-        label: "Brand Discovery",
-        content: `# Brand Discovery
-
-**What is {{brand_name}}?**
-{{brand_name}} operates in the {{industry}} space, solving [core problem] for [target customer]. Founded in [year], the brand has grown from [origin story] to [current state].
-
-**Mission**
-To [mission statement — what the company does and for whom].
-
-**Vision**
-To become [aspirational future state] within [timeframe].
-
-**Why does {{brand_name}} exist?**
-[The deeper "why" — the belief that drives the business beyond profit.]
-
----
-
-*Replace this filler with discovery workshop outputs or strategy doc content.*`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Brand Discovery", cardKey: "brand-discovery", mode: "idle", fields: {} },
     },
     {
       id: IDS.s2,
-      type: "text",
-      position: { x: 60, y: 640 },
+      type: "briefInput",
+      position: { x: 60, y: 570 },
       selected: false,
-      data: {
-        label: "Target Audience",
-        content: `# Target Audience
-
-**Primary Persona — [Name]**
-Age: [range] · Location: [region] · Role: [job title / life stage]
-
-Motivations: [what drives this person]
-Frustrations: [what they struggle with]
-How they find us: [channel / context]
-
-**Secondary Persona — [Name]**
-[Brief description of secondary audience segment]
-
-**Audience Insight**
-"[Verbatim quote or synthesised insight from research that captures the audience truth]"
-
----
-
-*Upload a strategy PDF above to auto-populate this card with your actual audience research.*`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Target Audience", cardKey: "target-audience", mode: "idle", fields: {} },
     },
     {
       id: IDS.s3,
-      type: "text",
-      position: { x: 60, y: 920 },
+      type: "briefInput",
+      position: { x: 60, y: 780 },
       selected: false,
-      data: {
-        label: "Brand Values & Personality",
-        content: `# Brand Values & Personality
-
-**Core Values**
-1. [Value 1] — [one-line definition]
-2. [Value 2] — [one-line definition]
-3. [Value 3] — [one-line definition]
-4. [Value 4] — [one-line definition]
-
-**Brand Personality Spectrum**
-
-{{brand_adjectives}}
-
-**Voice & Tone**
-[Describe how the brand speaks — formal/informal, warm/authoritative, technical/accessible]
-
-**What {{brand_name}} is NOT**
-[List 3 things the brand explicitly rejects — these are as important as what it is]`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Brand Values & Personality", cardKey: "brand-values", mode: "idle", fields: {} },
     },
     {
       id: IDS.s4,
-      type: "text",
-      position: { x: 60, y: 1200 },
+      type: "briefInput",
+      position: { x: 60, y: 990 },
       selected: false,
-      data: {
-        label: "Competitive Landscape",
-        content: `# Competitive Landscape
-
-**Direct Competitors**
-
-| Brand | Strength | Weakness | Visual Territory |
-|-------|----------|----------|-----------------|
-| [Comp 1] | [key strength] | [key gap] | [color/style] |
-| [Comp 2] | [key strength] | [key gap] | [color/style] |
-| [Comp 3] | [key strength] | [key gap] | [color/style] |
-
-**Market White Space**
-The {{industry}} category is dominated by [dominant aesthetic tendency]. {{brand_name}} has an opportunity to [differentiated positioning].
-
-**Benchmark Brands (outside category)**
-Brands we admire for specific reasons:
-- [Brand] — [what we admire about their identity]
-- [Brand] — [what we admire about their identity]`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Competitive Landscape", cardKey: "competitive-landscape", mode: "idle", fields: {} },
     },
     {
       id: IDS.s5,
-      type: "text",
-      position: { x: 60, y: 1480 },
+      type: "briefInput",
+      position: { x: 60, y: 1200 },
       selected: false,
-      data: {
-        label: "Positioning Statement",
-        content: `# Positioning Statement
-
-**The One-Liner**
-> For [target audience], {{brand_name}} is the [category] that [key benefit] because [reason to believe].
-
-**Expanded Positioning**
-{{brand_name}} is uniquely positioned at the intersection of [dimension 1] and [dimension 2]. While competitors emphasise [competitor tendency], we lead with [our differentiator].
-
-**Proof Points**
-1. [Concrete evidence that supports our positioning]
-2. [Concrete evidence that supports our positioning]
-3. [Concrete evidence that supports our positioning]
-
-**The Brand Promise**
-"[Single sentence that captures the promise {{brand_name}} makes to every customer]"`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Positioning Statement", cardKey: "positioning-statement", mode: "idle", fields: {} },
     },
     {
       id: IDS.s6,
-      type: "text",
-      position: { x: 60, y: 1760 },
+      type: "briefInput",
+      position: { x: 60, y: 1410 },
       selected: false,
-      data: {
-        label: "Visual Direction",
-        content: `# Visual Direction
-
-**Design Principles**
-1. [Principle] — [brief rationale]
-2. [Principle] — [brief rationale]
-3. [Principle] — [brief rationale]
-
-**Color Direction**
-Primary palette feel: [warm/cool, saturated/muted, light/dark]
-Avoid: [colors used by competitors or that clash with values]
-
-**Typography Direction**
-Heading character: [geometric/humanist/slab/script] — [rationale]
-Body character: [readability priority]
-
-**Logo Form Language**
-Wordmark / Lettermark / Emblem / Abstract mark / Combination
-Key formal qualities: [e.g. sharp corners, optical balance, weight]
-
-**Reference Directions**
-See moodboard → for curated visual references`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Visual Direction", cardKey: "visual-direction", mode: "idle", fields: {} },
     },
 
     // ── Creative Brief nodes ──────────────────────────────────────────────
     {
       id: IDS.b1,
-      type: "text",
-      position: { x: 620, y: 360 },
+      type: "briefInput",
+      position: { x: 460, y: 360 },
       selected: false,
-      data: {
-        label: "Project Overview",
-        content: `# Creative Brief — Project Overview
-
-**Project**
-Logo design for {{brand_name}}, a {{industry}} company.
-
-**Background**
-{{brand_name}} is [brief company background]. The current identity [does not exist / needs modernisation / was created for a different era]. This sprint will produce a logo system that [core purpose of the new identity].
-
-**Scope of Work**
-- Primary logo (horizontal + stacked)
-- Logo mark / icon variant
-- Colour palette (primary + secondary)
-- Typography pairing recommendation
-- Brand guidelines (1-pager)
-
-**Key Stakeholders**
-- Creative Director: [name]
-- Brand Lead: [name]
-- Final Approver: [name]`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Project Overview", cardKey: "project-overview", mode: "idle", fields: {} },
     },
     {
       id: IDS.b2,
-      type: "text",
-      position: { x: 620, y: 640 },
+      type: "briefInput",
+      position: { x: 460, y: 570 },
       selected: false,
-      data: {
-        label: "Design Objectives",
-        content: `# Design Objectives
-
-**Primary Goal**
-Create a logo system that [specific outcome — e.g. "positions {{brand_name}} as the premium choice in {{industry}}"].
-
-**Success Criteria**
-The final logo must:
-☐ Be instantly recognisable at 16px (favicon) and 3m wide (billboard)
-☐ Work in single colour (black AND white)
-☐ Feel [adjective] without resorting to [cliché]
-☐ Differentiate {{brand_name}} from [top 2–3 competitors]
-☐ Resonate with [primary persona]
-
-**Design Tension to Navigate**
-[The core creative challenge — e.g. "Feeling approachable but authoritative" or "Modern but with heritage depth"]
-
-**Non-Negotiables**
-[Anything that cannot change — e.g. must retain a specific symbol, colour, or name treatment]`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Design Objectives", cardKey: "design-objectives", mode: "idle", fields: {} },
     },
     {
       id: IDS.b3,
-      type: "text",
-      position: { x: 620, y: 920 },
+      type: "briefInput",
+      position: { x: 460, y: 780 },
       selected: false,
-      data: {
-        label: "Creative Constraints",
-        content: `# Creative Constraints
-
-**Technical Constraints**
-- Must render clearly at sizes from 16px to 3000px
-- Must work on: white, black, brand primary, photography backgrounds
-- File formats required: SVG, PNG (transparent), PDF, EPS
-- Max colours in logo: [2 / 3]
-
-**Brand Constraints**
-- [Any existing brand elements to retain or avoid]
-- [Trademark considerations — letters, shapes to avoid]
-- [Cultural/regional sensitivities]
-
-**Timeline Constraints**
-- Concept presentation: [date]
-- Refinement round 1: [date]
-- Refinement round 2: [date]
-- Final delivery: [date]
-
-**Budget**
-[Number of concepts, rounds of revisions included]`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Creative Constraints", cardKey: "creative-constraints", mode: "idle", fields: {} },
     },
     {
       id: IDS.b4,
-      type: "text",
-      position: { x: 620, y: 1200 },
+      type: "briefInput",
+      position: { x: 460, y: 990 },
       selected: false,
-      data: {
-        label: "Deliverables & Timeline",
-        content: `# Deliverables & Timeline
-
-**Deliverables Checklist**
-
-**Round 1 — Concepts**
-☐ 3 distinct logo directions
-☐ Each shown on white, black, and colour background
-☐ Brief rationale for each direction (1 slide per concept)
-
-**Round 2 — Refinement**
-☐ 2 refined directions based on feedback
-☐ Colour palette options for each
-☐ Typography pairing for each
-
-**Final Delivery**
-☐ Master logo files (AI, EPS, SVG, PDF)
-☐ Export kit (all sizes and colour variants as PNG)
-☐ Brand guidelines PDF (usage, spacing, don'ts)
-☐ Figma file (editable components)
-
----
-
-**Sprint Timeline**
-| Week | Milestone |
-|------|-----------|
-| Week 1 | Brief sign-off, moodboard review |
-| Week 2 | Concept presentation |
-| Week 3 | Refinement |
-| Week 4 | Final delivery |`,
-        textType: "brief",
-        lastModified: NOW,
-      },
+      data: { label: "Deliverables & Timeline", cardKey: "deliverables-timeline", mode: "idle", fields: {} },
     },
 
     // ── Moodboard ─────────────────────────────────────────────────────────
@@ -623,52 +407,75 @@ The final logo must:
       },
     },
 
-    // ── Presentation Groups ───────────────────────────────────────────────
-    // 1. Strategy deck
+    // ── Presentation slide-group helpers (used inside Final Presentation flow) ─
+    // Groups all brief cards into a single combined slide
+    {
+      id: IDS.pgBrief,
+      type: "presentationGroup",
+      position: { x: 460, y: 1260 },
+      selected: false,
+      data: {
+        label: "Creative Brief — All Cards",
+        nodeIds: [IDS.b1, IDS.b2, IDS.b3, IDS.b4],
+        thumbnails: [],
+        originalNodes: [],
+      },
+    },
+    // Groups all mockup images into a single combined slide
+    {
+      id: IDS.pgMockups,
+      type: "presentationGroup",
+      position: { x: 1740, y: 1240 },
+      selected: false,
+      data: {
+        label: "Mockups — All Environments",
+        nodeIds: [IDS.m1, IDS.m2, IDS.m3, IDS.m4, IDS.m5, IDS.m6],
+        thumbnails: MOCKUP_IMAGES.slice(0, 4).map((i) => i.url),
+        originalNodes: [],
+      },
+    },
+
+    // ── Presentation flow cards (visible on canvas) ───────────────────────
+    // 1. Strategy Presentation card
     {
       id: IDS.pgStrategy,
       type: "presentationGroup",
-      position: { x: 60, y: 2080 },
+      position: { x: 60, y: 1800 },
       selected: false,
       data: {
-        label: "Strategy Deck",
+        label: "Strategy Presentation",
         nodeIds: [IDS.s1, IDS.s2, IDS.s3, IDS.s4, IDS.s5, IDS.s6],
         thumbnails: [],
         originalNodes: [],
       },
     },
-    // 2. Creative Brief → Moodboard
+    // 2. Creative Concept card (brief cards → moodboard)
     {
-      id: IDS.pgBriefMood,
+      id: IDS.pgCreativeConcept,
       type: "presentationGroup",
-      position: { x: 620, y: 1620 },
+      position: { x: 620, y: 1800 },
       selected: false,
       data: {
-        label: "Brief + Moodboard",
+        label: "Creative Concept",
         nodeIds: [IDS.b1, IDS.b2, IDS.b3, IDS.b4, IDS.mood],
         thumbnails: MOOD_IMAGES.slice(0, 4).map((i) => i.thumbnail),
         originalNodes: [],
       },
     },
-    // 3. Full sprint walkthrough
+    // 3. Final Presentation card (brief group → logo → mockups group)
     {
-      id: IDS.pgMaster,
+      id: IDS.pgFinal,
       type: "presentationGroup",
-      position: { x: 1180, y: 2080 },
+      position: { x: 1180, y: 1800 },
       selected: false,
       data: {
-        label: "Full Sprint Walkthrough",
-        nodeIds: [
-          IDS.s1, IDS.s2, IDS.s3, IDS.s4, IDS.s5, IDS.s6,
-          IDS.b1, IDS.b2, IDS.b3, IDS.b4,
-          IDS.mood,
-          IDS.logoFile,
-          IDS.m1, IDS.m2, IDS.m3, IDS.m4, IDS.m5, IDS.m6,
-        ],
+        label: "Final Presentation",
+        nodeIds: [IDS.pgBrief, IDS.logoFile, IDS.pgMockups],
         thumbnails: [
-          ...MOOD_IMAGES.slice(0, 2).map((i) => i.thumbnail),
           MOCKUP_IMAGES[0].url,
           MOCKUP_IMAGES[1].url,
+          MOCKUP_IMAGES[2].url,
+          MOCKUP_IMAGES[3].url,
         ],
         originalNodes: [],
       },
@@ -709,4 +516,45 @@ The final logo must:
     { id: "e-logo-m5", source: IDS.logoFile, target: IDS.m5, type: "default" },
     { id: "e-logo-m6", source: IDS.logoFile, target: IDS.m6, type: "default" },
   ] as CanvasFramework["edges"],
+
+  // ─── Presentation Flows ───────────────────────────────────────────────────
+  presentationFlows: [
+    // 1. Strategy Presentation — each strategy card as its own slide
+    {
+      id: "flow-ls-strategy",
+      name: "Strategy Presentation",
+      edges: [
+        { id: "pfe-s1-s2", source: IDS.s1, target: IDS.s2, type: "default" },
+        { id: "pfe-s2-s3", source: IDS.s2, target: IDS.s3, type: "default" },
+        { id: "pfe-s3-s4", source: IDS.s3, target: IDS.s4, type: "default" },
+        { id: "pfe-s4-s5", source: IDS.s4, target: IDS.s5, type: "default" },
+        { id: "pfe-s5-s6", source: IDS.s5, target: IDS.s6, type: "default" },
+      ],
+      groups: [],
+    },
+    // 2. Creative Concept — each brief card individually, then moodboard
+    {
+      id: "flow-ls-creative",
+      name: "Creative Concept",
+      edges: [
+        { id: "pfe-b1-b2", source: IDS.b1, target: IDS.b2, type: "default" },
+        { id: "pfe-b2-b3", source: IDS.b2, target: IDS.b3, type: "default" },
+        { id: "pfe-b3-b4", source: IDS.b3, target: IDS.b4, type: "default" },
+        { id: "pfe-b4-mood", source: IDS.b4, target: IDS.mood, type: "default" },
+      ],
+      groups: [],
+    },
+    // 3. Final Presentation — brief on one slide, logo, then all mockups on one slide
+    //    pgBrief and pgMockups are presentationGroup nodes; the viewer expands them
+    //    into combined slides showing all their nodeIds simultaneously.
+    {
+      id: "flow-ls-final",
+      name: "Final Presentation",
+      edges: [
+        { id: "pfe-pgbrief-logo", source: IDS.pgBrief, target: IDS.logoFile, type: "default" },
+        { id: "pfe-logo-pgmockups", source: IDS.logoFile, target: IDS.pgMockups, type: "default" },
+      ],
+      groups: [],
+    },
+  ],
 };
