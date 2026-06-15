@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage, NamingConventions } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -147,6 +147,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [syncTargetNode, setSyncTargetNode] = useState<AtlasNode | null>(null);
   const [showSyncMultipleDialog, setShowSyncMultipleDialog] = useState(false);
+  const [namingMismatchAlert, setNamingMismatchAlert] = useState<{
+    nodeId: string;
+    fetchedTitle: string;
+    renaming: boolean;
+    renameValue: string;
+  } | null>(null);
   const [syncMultipleNodes, setSyncMultipleNodes] = useState<AtlasNode[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
@@ -1637,6 +1643,77 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [setNodes, nodes]
   );
 
+  const handleAddLink = useCallback((url: string, position?: { x: number; y: number }) => {
+    const pos = position || doubleClickPosition || { x: 400, y: 300 };
+
+    let linkType: "youtube" | "figma" | "googledoc" | "generic" = "generic";
+    let placeholderLabel = "Link";
+
+    if (/youtube\.com|youtu\.be/.test(url)) {
+      linkType = "youtube";
+      placeholderLabel = "YouTube Video";
+    } else if (/figma\.com/.test(url)) {
+      linkType = "figma";
+      placeholderLabel = "Figma Design";
+    } else if (/docs\.google\.com\/document/.test(url)) {
+      linkType = "googledoc";
+      placeholderLabel = "Google Doc";
+    } else {
+      try {
+        placeholderLabel = new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        placeholderLabel = "Link";
+      }
+    }
+
+    const nodeId = `file-link-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const newNode: AtlasNode = {
+      id: nodeId,
+      type: "file" as const,
+      position: pos,
+      selected: true,
+      data: {
+        label: placeholderLabel,
+        fileName: placeholderLabel,
+        product: "atlas" as const,
+        status: "draft" as const,
+        fileExtension: ".md" as FileExtension,
+        lastModified: "Just now",
+        linkUrl: url,
+        linkType,
+        tasks: [],
+      },
+    };
+
+    setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), newNode]);
+    setSelectedNode(newNode);
+
+    // Fetch real title in background and update the node label
+    const conventions: NamingConventions | undefined = workspaceSettings.namingConventions;
+    fetch(`/api/link-title?url=${encodeURIComponent(url)}`)
+      .then((r) => r.json())
+      .then(({ title }: { title: string | null }) => {
+        if (!title) return;
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, label: title, fileName: title } }
+              : n
+          )
+        );
+        setSelectedNode((prev) =>
+          prev?.id === nodeId
+            ? { ...prev, data: { ...prev.data, label: title, fileName: title } }
+            : prev
+        );
+        // Notify about naming convention mismatch for externally hosted links
+        if (conventions?.enabled) {
+          setNamingMismatchAlert({ nodeId, fetchedTitle: title, renaming: false, renameValue: title });
+        }
+      })
+      .catch(() => {});
+  }, [doubleClickPosition, setNodes, workspaceSettings.namingConventions]);
+
   // Handle version conflict resolution - add as new version
   const handleAddAsVersion = useCallback(() => {
     if (!versionConflict) return;
@@ -1779,6 +1856,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleFileDrop, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddLink = useCallback((url: string) => {
+    handleAddLink(url, doubleClickPosition || undefined);
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddLink, closeDoubleClickMenu]);
 
 const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
   if (type === "mockup") {
@@ -2017,6 +2099,7 @@ presentationMode={presentationMode}
       }]);
     }
   }}
+  onAddLink={(url) => handleAddLink(url, { x: 400, y: 300 })}
   onSettingsClick={() => setShowSettingsDialog(true)}
   onSearchChange={setSearchQuery}
   searchQuery={searchQuery}
@@ -2138,6 +2221,7 @@ presentationMode={presentationMode}
           onAddOperationalNode={handleDoubleClickAddOperationalNode}
           onUploadFile={handleDoubleClickUploadFile}
           onOpenAIGenerate={handleDoubleClickOpenAIGenerate}
+          onAddLink={handleDoubleClickAddLink}
           onClose={closeDoubleClickMenu}
           position={doubleClickMenuScreenPosition}
         />
@@ -2658,6 +2742,113 @@ presentationMode={presentationMode}
               <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Naming convention mismatch alert */}
+      {namingMismatchAlert && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 28,
+            right: 28,
+            zIndex: 300,
+            width: 320,
+            backgroundColor: "#141414",
+            border: "1px solid #2a2a2a",
+            borderRadius: 14,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
+            fontFamily: "system-ui, Inter, sans-serif",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header strip */}
+          <div style={{ padding: "12px 14px 0", display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#FF990020", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L14 13H2L8 2Z" stroke="#FF9900" strokeWidth="1.4" strokeLinejoin="round"/>
+                <path d="M8 7V9.5M8 11.5V12" stroke="#FF9900" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0 }}>Naming convention mismatch</p>
+              <p style={{ fontSize: 12, color: "#888", margin: "3px 0 0", lineHeight: 1.4 }}>
+                <span style={{ color: "#ddd" }}>"{namingMismatchAlert.fetchedTitle}"</span> doesn&apos;t follow the workspace convention
+                {workspaceSettings.namingConventions?.defaultRule?.example && (
+                  <span style={{ color: "#666" }}> ({workspaceSettings.namingConventions.defaultRule.example})</span>
+                )}.
+              </p>
+            </div>
+          </div>
+
+          {/* Rename input (shown when renaming) */}
+          {namingMismatchAlert.renaming && (
+            <div style={{ padding: "10px 14px 0" }}>
+              <input
+                autoFocus
+                type="text"
+                value={namingMismatchAlert.renameValue}
+                onChange={(e) => setNamingMismatchAlert((a) => a ? { ...a, renameValue: e.target.value } : null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && namingMismatchAlert.renameValue.trim()) {
+                    const label = namingMismatchAlert.renameValue.trim();
+                    setNodes((nds) => nds.map((n) => n.id === namingMismatchAlert.nodeId ? { ...n, data: { ...n.data, label, fileName: label } } : n));
+                    setSelectedNode((prev) => prev?.id === namingMismatchAlert.nodeId ? { ...prev, data: { ...prev.data, label, fileName: label } } : prev);
+                    setNamingMismatchAlert(null);
+                  } else if (e.key === "Escape") {
+                    setNamingMismatchAlert(null);
+                  }
+                }}
+                placeholder="Enter new name…"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "7px 10px",
+                  fontSize: 13,
+                  backgroundColor: "#1e1e1e",
+                  border: "1px solid #3a3a3a",
+                  borderRadius: 8,
+                  color: "#fff",
+                  outline: "none",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ padding: "10px 14px 14px", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={() => setNamingMismatchAlert(null)}
+              style={{ padding: "6px 14px", fontSize: 12, fontWeight: 500, backgroundColor: "transparent", border: "1px solid #333", borderRadius: 8, color: "#888", cursor: "pointer" }}
+            >
+              Ignore
+            </button>
+            {namingMismatchAlert.renaming ? (
+              <button
+                type="button"
+                disabled={!namingMismatchAlert.renameValue.trim()}
+                onClick={() => {
+                  const label = namingMismatchAlert.renameValue.trim();
+                  if (!label) return;
+                  setNodes((nds) => nds.map((n) => n.id === namingMismatchAlert.nodeId ? { ...n, data: { ...n.data, label, fileName: label } } : n));
+                  setSelectedNode((prev) => prev?.id === namingMismatchAlert.nodeId ? { ...prev, data: { ...prev.data, label, fileName: label } } : prev);
+                  setNamingMismatchAlert(null);
+                }}
+                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: namingMismatchAlert.renameValue.trim() ? "#F0FE00" : "#333", border: "none", borderRadius: 8, color: namingMismatchAlert.renameValue.trim() ? "#000" : "#555", cursor: namingMismatchAlert.renameValue.trim() ? "pointer" : "default" }}
+              >
+                Save
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNamingMismatchAlert((a) => a ? { ...a, renaming: true } : null)}
+                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: "#F0FE00", border: "none", borderRadius: 8, color: "#000", cursor: "pointer" }}
+              >
+                Rename
+              </button>
+            )}
+          </div>
         </div>
       )}
 

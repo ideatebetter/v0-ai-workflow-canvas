@@ -10,6 +10,7 @@ interface CanvasSideToolbarProps {
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
   onOpenAIGenerate: (type: "mockup" | "collateral") => void;
+  onAddLink?: (url: string) => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -30,6 +31,7 @@ export function CanvasSideToolbar({
   onAddOperationalNode,
   onUploadFile,
   onOpenAIGenerate,
+  onAddLink,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -239,6 +241,7 @@ export function CanvasSideToolbar({
           onAddOperationalNode={onAddOperationalNode}
           onUploadFile={onUploadFile}
           onOpenAIGenerate={onOpenAIGenerate}
+          onAddLink={onAddLink}
           onClose={() => setShowAddMenu(false)}
           position={addMenuPosition}
         />

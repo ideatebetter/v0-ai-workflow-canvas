@@ -273,6 +273,9 @@ export interface FileNodeData {
   versions?: FileVersion[]; // Version history
   activities?: FileActivity[]; // Activity/update history
   imageComments?: ImageComment[]; // Annotation pins on the image preview
+  linkUrl?: string; // URL for link-embedded nodes
+  linkType?: "youtube" | "figma" | "googledoc" | "generic"; // How the link is rendered
+  linkTitle?: string; // Display title fetched or set when link was added
   dueDate?: string; // Due date for the file
   assignees?: WorkspaceMember[]; // Team members assigned to this file
   blockers?: number; // Number of blockers
