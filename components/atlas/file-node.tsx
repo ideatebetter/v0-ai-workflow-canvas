@@ -279,11 +279,13 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const audioUrl = isAudio ? fileData.uploadedFile?.url : null;
 
   // Get preview image - prioritize actual uploaded file for true aspect ratio, then fall back to preview thumbnails
-  const previewImage = (isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
-    || pdfPreview
-    || fileData.previewImages?.[0]
-    || DEFAULT_PREVIEWS[fileData.fileExtension]
-    || DEFAULT_PREVIEWS.default;
+  // For PDFs: use rendered preview only (skip previewImages and DEFAULT_PREVIEWS which may contain stock photos)
+  const previewImage = isPDF
+    ? pdfPreview  // null while rendering — shows placeholder below
+    : ((isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
+        || fileData.previewImages?.[0]
+        || DEFAULT_PREVIEWS[fileData.fileExtension]
+        || DEFAULT_PREVIEWS.default);
   
   // Get video URL for video files
   const videoUrl = isVideo ? fileData.uploadedFile?.url : null;
@@ -438,9 +440,32 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 {(() => { try { return new URL(fileData.linkUrl || "").hostname; } catch { return fileData.linkUrl; } })()}
               </span>
             </div>
+          ) : isPDF && !previewImage ? (
+            // PDF loading placeholder while pdfjs renders
+            <div
+              style={{
+                width: "100%",
+                height: 160,
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.04)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.4 }}>
+                <rect width="24" height="24" rx="6" fill="#FF0000" fillOpacity="0.2"/>
+                <path d="M7 17V7H14L17 10V17H7Z" stroke="#FF5555" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M14 7V10H17" stroke="#FF5555" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M9 13H15M9 15H13" stroke="#FF5555" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Loading preview…</span>
+            </div>
           ) : (
             <img
-              src={previewImage}
+              src={previewImage!}
               alt={fileData.label}
               className="w-full"
               style={{

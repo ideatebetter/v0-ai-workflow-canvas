@@ -58,12 +58,17 @@ export async function renderPDFFirstPageToDataURL(file: File, scale = 1.5): Prom
 }
 
 // Render first page of a PDF from a URL (for existing uploaded PDFs)
+// Fetches the bytes ourselves to avoid pdfjs URL-loading issues in no-worker mode
 export async function renderPDFFromURL(url: string, scale = 1.5): Promise<string | null> {
   try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const arrayBuffer = await response.arrayBuffer();
+
     const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
     pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
-    const pdf = await pdfjsLib.getDocument({ url, useWorkerFetch: false }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
     const page = await pdf.getPage(1);
 
     const viewport = page.getViewport({ scale });
