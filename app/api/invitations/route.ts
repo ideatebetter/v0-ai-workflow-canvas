@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendInviteEmail } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET - List invitations for a workspace
@@ -109,20 +110,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create invitation", detail: error.message }, { status: 500 });
     }
 
-    // Get workspace name for the response
-    const { data: workspace } = await supabase
+    // Get workspace name for the response (use admin client to bypass RLS)
+    const { data: workspace } = await adminSupabase
       .from("workspaces")
       .select("name")
       .eq("id", workspaceId)
       .single();
 
+    const workspaceName = workspace?.name || "Workspace";
+
     // Generate invitation link
     const inviteLink = `${request.nextUrl.origin}/invite/${invitation.token}`;
 
-    return NextResponse.json({ 
+    // Send invite email (non-blocking — don't fail the request if email fails)
+    const inviterEmail = user.email ?? "a teammate";
+    sendInviteEmail({
+      to: email.toLowerCase(),
+      workspaceName,
+      inviterEmail,
+      role,
+      inviteLink,
+    }).catch(err => console.error("sendInviteEmail failed:", err));
+
+    return NextResponse.json({
       invitation,
       inviteLink,
-      workspaceName: workspace?.name || "Workspace"
+      workspaceName,
     });
   } catch (error) {
     console.error("Invitations POST error:", error);
