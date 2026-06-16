@@ -29,7 +29,9 @@ export async function sendInviteEmail({
   }
 
   const roleLabel = ROLE_LABEL[role] ?? role;
-  const fromDomain = process.env.EMAIL_FROM ?? "Atlas <noreply@atlas-prototype.com>";
+  // Use EMAIL_FROM env var for a verified custom domain, otherwise fall back to
+  // Resend's shared domain which works without domain verification
+  const fromDomain = process.env.EMAIL_FROM ?? "Atlas <onboarding@resend.dev>";
 
   const html = `<!DOCTYPE html>
 <html>
