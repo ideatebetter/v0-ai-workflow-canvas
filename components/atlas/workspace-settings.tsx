@@ -524,112 +524,133 @@ export function WorkspaceSettingsDialog({
                 </svg>
                 Team Members
               </h3>
-              
-              {/* Invite */}
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => {
-                    setInviteEmail(e.target.value);
-                    setInviteError(null);
-                    setInviteLink(null);
-                  }}
-                  placeholder="Email address"
-                  onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                  disabled={inviteLoading}
-                  className="flex-1 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
-                  style={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #333333",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                />
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as MemberRole)}
-                  disabled={inviteLoading}
-                  className="px-3 py-2 rounded-lg text-sm text-white focus:outline-none disabled:opacity-50"
-                  style={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #333333",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={handleInvite}
-                  disabled={inviteLoading || !inviteEmail.trim() || !user}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                  style={{
-                    backgroundColor: "#F0FE00",
-                    color: "#121212",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                >
-                  {inviteLoading ? "..." : "Invite"}
-                </button>
-              </div>
-              {inviteError && (
-                <div className="p-2 rounded-lg text-xs mb-3" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
-                  {inviteError}
-                </div>
-              )}
-              {inviteLink && (
-                <div className="p-2 rounded-lg mb-3" style={{ backgroundColor: "rgba(240, 254, 0, 0.05)", border: "1px solid rgba(240, 254, 0, 0.2)" }}>
-                  <div className="flex items-center gap-2">
-                    <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }} />
-                    <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "#2a2a2a", color: "#F0FE00" }}>Copy</button>
-                  </div>
-                </div>
-              )}
-              {!user && (
-                <div className="p-2 rounded-lg text-xs mb-3" style={{ backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.2)", color: "#eab308", fontFamily: "system-ui, Inter, sans-serif" }}>
-                  Sign in to invite team members
-                </div>
-              )}
 
-              {/* Member List - Compact */}
-              <div className="flex flex-wrap gap-2">
-                {settings.members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                    style={{ backgroundColor: "#1a1a1a" }}
-                  >
+              {/* Member List */}
+              <div className="space-y-1 mb-5">
+                {settings.members.map((member) => {
+                  const isCurrentUser = member.id === user?.id || member.email === user?.email;
+                  const isOwner = member.role === "owner";
+                  const canEdit = isAdminOrOwner && !isOwner;
+                  return (
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white"
-                      style={{ backgroundColor: "#333333" }}
+                      key={member.id}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                      style={{ backgroundColor: "#1a1a1a" }}
                     >
-                      {member.initials}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                          {member.name}
-                        </span>
-                        <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <div
+                        className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white"
+                        style={{ backgroundColor: "#333333" }}
+                      >
+                        {member.initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {member.name}
+                          </span>
+                          {isCurrentUser && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                              You
+                            </span>
+                          )}
+                        </div>
+                        {member.email && (
+                          <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {member.email}
+                          </div>
+                        )}
+                      </div>
+                      {canEdit ? (
+                        <select
+                          value={member.role || "viewer"}
+                          onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
+                          className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
+                          style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          <option value="viewer">Viewer</option>
+                          <option value="editor">Editor</option>
+                          <option value="admin">Admin</option>
+                          <option value="owner">Owner</option>
+                        </select>
+                      ) : (
+                        <span className="text-xs text-gray-500 px-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                           {ROLE_LABELS[member.role || "viewer"]}
                         </span>
-                      </div>
+                      )}
+                      {canEdit && !isCurrentUser && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          title="Remove member"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      )}
+                      {(!canEdit || isCurrentUser) && <div className="w-[28px] flex-shrink-0" />}
                     </div>
-                    {member.role !== "owner" && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors ml-1"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                          <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    )}
+                  );
+                })}
+              </div>
+
+              {/* Invite New Member */}
+              <div className="pt-4" style={{ borderTop: "1px solid #222222" }}>
+                <p className="text-xs text-gray-500 mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Invite someone new
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => { setInviteEmail(e.target.value); setInviteError(null); setInviteLink(null); }}
+                    placeholder="Email address"
+                    onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                    disabled={inviteLoading}
+                    className="flex-1 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                  />
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as MemberRole)}
+                    disabled={inviteLoading}
+                    className="px-3 py-2 rounded-lg text-sm text-white focus:outline-none disabled:opacity-50"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleInvite}
+                    disabled={inviteLoading || !inviteEmail.trim() || !user}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    {inviteLoading ? "..." : "Invite"}
+                  </button>
+                </div>
+                {!user && (
+                  <p className="text-xs mt-2" style={{ color: "#eab308", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Sign in to invite team members
+                  </p>
+                )}
+                {inviteError && (
+                  <div className="p-2 rounded-lg text-xs mt-2" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {inviteError}
                   </div>
-                ))}
+                )}
+                {inviteLink && (
+                  <div className="p-2 rounded-lg mt-2" style={{ backgroundColor: "rgba(240, 254, 0, 0.05)", border: "1px solid rgba(240, 254, 0, 0.2)" }}>
+                    <p className="text-xs text-gray-400 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Share this invite link:</p>
+                    <div className="flex items-center gap-2">
+                      <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }} />
+                      <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "#2a2a2a", color: "#F0FE00" }}>Copy</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
