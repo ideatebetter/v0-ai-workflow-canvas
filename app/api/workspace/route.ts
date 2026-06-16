@@ -11,8 +11,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Try to get user's owned workspace
-    let { data: workspace } = await supabase
+    // Try to get user's owned workspace (use limit(1) to handle multiple owned workspaces)
+    const { data: ownedWorkspaces } = await supabase
       .from("workspaces")
       .select(`
         *,
@@ -24,17 +24,18 @@ export async function GET() {
         )
       `)
       .eq("owner_id", user.id)
-      .single();
+      .limit(1);
+    let workspace = ownedWorkspaces?.[0] ?? null;
 
-    // If no workspace, check if user is a member of any workspace
+    // If no owned workspace, check if user is a member of any workspace
     if (!workspace) {
-      const { data: membership } = await supabase
+      const { data: memberships } = await supabase
         .from("workspace_members")
         .select("workspace_id, workspaces(*)")
         .eq("user_id", user.id)
-        .limit(1)
-        .single();
+        .limit(1);
 
+      const membership = memberships?.[0];
       if (membership?.workspaces) {
         workspace = membership.workspaces as any;
       }
