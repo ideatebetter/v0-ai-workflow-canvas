@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET - Get user's workspace (or create default one)
 export async function GET() {
   try {
+    // Verify auth with regular client, then use admin client to bypass RLS for queries
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,25 +13,19 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Try to get user's owned workspace (use limit(1) to handle multiple owned workspaces)
-    const { data: ownedWorkspaces } = await supabase
+    const admin = createAdminClient();
+
+    // Try to get user's owned workspace
+    const { data: ownedWorkspaces } = await admin
       .from("workspaces")
-      .select(`
-        *,
-        workspace_members(
-          id,
-          user_id,
-          role,
-          joined_at
-        )
-      `)
+      .select(`*, workspace_members(id, user_id, role, joined_at)`)
       .eq("owner_id", user.id)
       .limit(1);
     let workspace = ownedWorkspaces?.[0] ?? null;
 
     // If no owned workspace, check if user is a member of any workspace
     if (!workspace) {
-      const { data: memberships } = await supabase
+      const { data: memberships } = await admin
         .from("workspace_members")
         .select("workspace_id, workspaces(*)")
         .eq("user_id", user.id)
@@ -43,37 +39,24 @@ export async function GET() {
 
     // If still no workspace, create a default one
     if (!workspace) {
-      const { data: newWorkspace, error: createError } = await supabase
+      const { data: newWorkspace, error: createError } = await admin
         .from("workspaces")
-        .insert({
-          name: "My Workspace",
-          owner_id: user.id,
-        })
+        .insert({ name: "My Workspace", owner_id: user.id })
         .select()
         .single();
 
       if (createError) {
-        console.error("Error creating workspace:", createError);
-        return NextResponse.json({ error: "Failed to create workspace" }, { status: 500 });
+        console.error("Error creating workspace:", createError, JSON.stringify(createError));
+        return NextResponse.json({ error: "Failed to create workspace", detail: createError.message }, { status: 500 });
       }
 
-      // Add owner as a member
-      await supabase
+      await admin
         .from("workspace_members")
-        .insert({
-          workspace_id: newWorkspace.id,
-          user_id: user.id,
-          role: "owner",
-        });
+        .insert({ workspace_id: newWorkspace.id, user_id: user.id, role: "owner" });
 
-      workspace = { 
-        ...newWorkspace, 
-        workspace_members: [{
-          id: user.id,
-          user_id: user.id,
-          role: "owner",
-          joined_at: new Date().toISOString(),
-        }]
+      workspace = {
+        ...newWorkspace,
+        workspace_members: [{ id: user.id, user_id: user.id, role: "owner", joined_at: new Date().toISOString() }]
       };
     }
 
