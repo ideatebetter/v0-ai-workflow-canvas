@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
+import { InviteDialog } from "./invite-dialog";
 import { FileDetailModal } from "./file-detail-modal";
 import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
 import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
@@ -392,6 +393,9 @@ const [showSageChat, setShowSageChat] = useState(false);
   }, [sageMessages, canvases, onCanvasesChange, onOpenCanvas]);
   
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showDeleteConfirmInline, setShowDeleteConfirmInline] = useState(false);
+  const [deleteConfirmTextInline, setDeleteConfirmTextInline] = useState("");
   // Use external frameworks if provided, otherwise use local state
   const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const frameworks = externalFrameworks ?? localFrameworks;
@@ -1423,7 +1427,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             {/* Invite */}
             <button
               type="button"
-              onClick={() => setShowSettingsDialog(true)}
+              onClick={() => setShowInviteDialog(true)}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:bg-white/10"
               style={{
                 backgroundColor: "#1a1a1a",
@@ -2489,7 +2493,7 @@ All Frameworks
                       <span className="text-xs text-gray-500">{member.role === "owner" ? "Owner" : member.role === "admin" ? "Admin" : member.role === "editor" ? "Editor" : "Viewer"}</span>
                     </div>
                   ))}
-                  <button type="button" onClick={() => setShowSettingsDialog(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333", color: "#888888" }}>
+                  <button type="button" onClick={() => setShowInviteDialog(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333", color: "#888888" }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     Invite
                   </button>
@@ -2818,6 +2822,89 @@ All Frameworks
                   </p>
                 </div>
               </div>}
+
+              {/* Danger Zone */}
+              {onDeleteWorkspace && (workspaces?.length ?? 1) > 1 && (
+                <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #2a1515" }}>
+                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 2L14 13H2L8 2Z" stroke="#ef4444" strokeWidth="1.3" strokeLinejoin="round"/>
+                      <path d="M8 6V9" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
+                      <circle cx="8" cy="11" r="0.6" fill="#ef4444"/>
+                    </svg>
+                    Danger Zone
+                  </h3>
+
+                  {!showDeleteConfirmInline ? (
+                    <button
+                      type="button"
+                      onClick={() => { setShowDeleteConfirmInline(true); setDeleteConfirmTextInline(""); }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left w-full hover:bg-red-950/30"
+                      style={{ backgroundColor: "#1a0d0d", border: "1px solid #3a1a1a" }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#ef444415" }}>
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                          <path d="M5 6H15L14 17H6L5 6Z" stroke="#ef4444" strokeWidth="1.4" strokeLinejoin="round"/>
+                          <path d="M3 6H17" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
+                          <path d="M8 3H12" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
+                          <path d="M8 10V14M12 10V14" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>Delete Workspace</div>
+                        <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Permanently delete this workspace and all its canvases</div>
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#1a0d0d", border: "1px solid #3a1a1a" }}>
+                      <p className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                        This will permanently delete <span className="font-bold">{workspaceSettings.name}</span> and all its canvases. This cannot be undone.
+                      </p>
+                      <p className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Type <span className="font-mono font-semibold text-white">delete {workspaceSettings.name}</span> to confirm
+                      </p>
+                      <input
+                        type="text"
+                        value={deleteConfirmTextInline}
+                        onChange={e => setDeleteConfirmTextInline(e.target.value)}
+                        placeholder={`delete ${workspaceSettings.name}`}
+                        autoFocus
+                        className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                        style={{
+                          backgroundColor: "#0d0d0d",
+                          border: `1px solid ${deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#ef4444" : "#2a2a2a"}`,
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      />
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => { setShowDeleteConfirmInline(false); setDeleteConfirmTextInline(""); }}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm font-medium"
+                          style={{ backgroundColor: "#1e1e1e", border: "1px solid #333", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deleteConfirmTextInline !== `delete ${workspaceSettings.name}`}
+                          onClick={() => { onDeleteWorkspace(); setShowDeleteConfirmInline(false); setDeleteConfirmTextInline(""); }}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={{
+                            backgroundColor: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#ef4444" : "#2a1a1a",
+                            color: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#fff" : "#555",
+                            border: "none",
+                            cursor: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "pointer" : "not-allowed",
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          Delete Workspace
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ) : activeView === "home" ? (
@@ -4455,6 +4542,13 @@ All Frameworks
         onSettingsChange={onWorkspaceSettingsChange}
         onDeleteWorkspace={onDeleteWorkspace}
         canDeleteWorkspace={(workspaces?.length ?? 1) > 1}
+      />
+
+      <InviteDialog
+        open={showInviteDialog}
+        onClose={() => setShowInviteDialog(false)}
+        settings={workspaceSettings}
+        onSettingsChange={onWorkspaceSettingsChange}
       />
 
       {/* Create Workspace Dialog */}
