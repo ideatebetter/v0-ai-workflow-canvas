@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET - List invitations for a workspace
@@ -85,9 +86,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the invitation
+    // Create the invitation using the admin client to bypass RLS
+    const adminSupabase = createAdminClient();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: invitation, error } = await supabase
+    const token = crypto.randomUUID();
+    const { data: invitation, error } = await adminSupabase
       .from("workspace_invitations")
       .insert({
         workspace_id: workspaceId,
@@ -96,6 +99,7 @@ export async function POST(request: NextRequest) {
         invited_by: user.id,
         expires_at: expiresAt,
         status: "pending",
+        token,
       })
       .select()
       .single();
