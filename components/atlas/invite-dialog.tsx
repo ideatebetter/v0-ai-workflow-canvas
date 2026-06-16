@@ -41,11 +41,20 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
     setInviteLink(null);
 
     try {
+      const workspaceRes = await fetch("/api/workspace");
+      const workspaceData = workspaceRes.ok ? await workspaceRes.json() : null;
+      const workspaceId = workspaceData?.workspace?.id;
+      if (!workspaceId) {
+        setError("Could not resolve workspace. Make sure you're signed in and try again.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          workspaceId: settings.id,
+          workspaceId,
           email: email.toLowerCase(),
           role,
         }),
