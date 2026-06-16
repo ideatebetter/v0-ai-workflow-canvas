@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the invitation
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: invitation, error } = await supabase
       .from("workspace_invitations")
       .insert({
@@ -93,13 +94,15 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         role,
         invited_by: user.id,
+        expires_at: expiresAt,
+        status: "pending",
       })
       .select()
       .single();
 
     if (error) {
-      console.error("Error creating invitation:", error);
-      return NextResponse.json({ error: "Failed to create invitation" }, { status: 500 });
+      console.error("Error creating invitation:", error, JSON.stringify(error));
+      return NextResponse.json({ error: "Failed to create invitation", detail: error.message }, { status: 500 });
     }
 
     // Get workspace name for the response
