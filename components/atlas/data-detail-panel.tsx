@@ -310,6 +310,17 @@ function TeamHealthViz({ data }: { data: TeamHealthNodeData }) {
   );
 }
 
+// ─── sage icon ────────────────────────────────────────────────────────────────
+
+function SageStar({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z"
+        stroke="#121212" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ─── embedded chat ────────────────────────────────────────────────────────────
 
 function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; nodeData: Record<string, unknown>; nodeId: string }) {
@@ -346,14 +357,11 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#121212" strokeWidth="1.2" strokeLinejoin="round" />
-              </svg>
+              <SageStar size={16} />
             </div>
             <div>
               <p className="text-sm font-medium text-white" style={font}>Ask Sage about this data</p>
@@ -371,13 +379,11 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
             <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               {!isUser && (
                 <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0 mt-0.5" style={{ backgroundColor: "#F0FE00" }}>
-                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#121212" strokeWidth="1.2" strokeLinejoin="round" />
-                  </svg>
+                  <SageStar size={10} />
                 </div>
               )}
               <div className="max-w-[90%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
-                style={{ backgroundColor: isUser ? "#ffffff" : "#1a1a1a", color: isUser ? "#000" : "#e5e5e5", border: isUser ? "none" : "1px solid #2a2a2a", ...font }}>
+                style={{ backgroundColor: isUser ? "#ffffff" : "#1e1e1e", color: isUser ? "#000" : "#e5e5e5", border: isUser ? "none" : "1px solid #2a2a2a", ...font }}>
                 {text}
               </div>
             </div>
@@ -386,11 +392,9 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
         {isStreaming && (
           <div className="flex justify-start">
             <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0" style={{ backgroundColor: "#F0FE00" }}>
-              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#121212" strokeWidth="1.2" strokeLinejoin="round" />
-              </svg>
+              <SageStar size={10} />
             </div>
-            <div className="flex items-center gap-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center gap-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a" }}>
               {[0, 1, 2].map(i => (
                 <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "#F0FE00", animationDelay: `${i * 0.15}s` }} />
               ))}
@@ -400,9 +404,8 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="px-3 pb-3 pt-2" style={{ borderTop: "1px solid #2a2a2a" }}>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a" }}>
           <input
             type="text"
             value={input}
@@ -443,73 +446,116 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose }: DataDet
   const meta = TYPE_META[nodeType];
   const label = (nodeData.label as string) || meta.label;
   const font = { fontFamily: "system-ui, Inter, sans-serif" };
+  const [sageOpen, setSageOpen] = useState(false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal — two-column: data viz left, Sage chat right */}
+      {/* Data viz modal — single column */}
       <div
-        className="relative w-full max-h-[85vh] overflow-hidden rounded-2xl shadow-2xl flex"
-        style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a", maxWidth: 900 }}
+        className="relative flex flex-col overflow-hidden rounded-2xl shadow-2xl"
+        style={{
+          backgroundColor: "#141414",
+          border: "1px solid #2a2a2a",
+          width: 540,
+          maxWidth: "calc(100vw - 48px)",
+          maxHeight: "85vh",
+        }}
       >
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-
-        {/* Left — data visualization */}
-        <div className="flex flex-col" style={{ width: 480, borderRight: "1px solid #2a2a2a" }}>
-          {/* Header */}
-          <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${meta.accent}20` }}>
-              {meta.icon}
-            </div>
-            <div>
-              <div className="text-white font-semibold text-sm" style={font}>{label}</div>
-              <div className="text-xs" style={{ color: meta.accent, ...font }}>{meta.label}</div>
-            </div>
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${meta.accent}20` }}>
+            {meta.icon}
           </div>
-
-          {/* Scrollable visualization */}
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            {nodeType === "capacity"      && <CapacityViz     data={nodeData as unknown as CapacityNodeData} />}
-            {nodeType === "financial"     && <FinancialViz    data={nodeData as unknown as FinancialNodeData} />}
-            {nodeType === "projectHealth" && <ProjectHealthViz data={nodeData as unknown as ProjectHealthNodeData} />}
-            {nodeType === "pipeline"      && <PipelineViz     data={nodeData as unknown as PipelineNodeData} />}
-            {nodeType === "teamHealth"    && <TeamHealthViz   data={nodeData as unknown as TeamHealthNodeData} />}
+          <div className="flex-1 min-w-0">
+            <div className="text-white font-semibold text-sm truncate" style={font}>{label}</div>
+            <div className="text-xs" style={{ color: meta.accent, ...font }}>{meta.label}</div>
           </div>
+          {/* Close */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* Right — Sage chat */}
-        <div className="flex flex-col flex-1 min-w-0">
-          {/* Chat header */}
-          <div className="flex items-center gap-2.5 px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#121212" strokeWidth="1.2" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-white font-semibold text-sm" style={font}>Sage</div>
-              <div className="text-xs text-gray-500" style={font}>Ask questions about this data</div>
-            </div>
-          </div>
-
-          {/* Chat messages + input */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <DataChat nodeType={nodeType} nodeData={nodeData as Record<string, unknown>} nodeId={nodeId} />
-          </div>
+        {/* Scrollable visualization */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {nodeType === "capacity"      && <CapacityViz     data={nodeData as unknown as CapacityNodeData} />}
+          {nodeType === "financial"     && <FinancialViz    data={nodeData as unknown as FinancialNodeData} />}
+          {nodeType === "projectHealth" && <ProjectHealthViz data={nodeData as unknown as ProjectHealthNodeData} />}
+          {nodeType === "pipeline"      && <PipelineViz     data={nodeData as unknown as PipelineNodeData} />}
+          {nodeType === "teamHealth"    && <TeamHealthViz   data={nodeData as unknown as TeamHealthNodeData} />}
         </div>
       </div>
+
+      {/* Sage side panel — slides in from the right */}
+      <div
+        className="absolute top-0 right-0 h-full flex flex-col"
+        style={{
+          width: 340,
+          backgroundColor: "#141414",
+          borderLeft: "1px solid #2a2a2a",
+          transform: sageOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+          zIndex: 10,
+        }}
+      >
+        {/* Sage panel header */}
+        <div className="flex items-center gap-2.5 px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
+            <SageStar size={13} />
+          </div>
+          <div className="flex-1">
+            <div className="text-white font-semibold text-sm" style={font}>Sage</div>
+            <div className="text-xs text-gray-500" style={font}>Ask questions about this data</div>
+          </div>
+          {/* Collapse */}
+          <button
+            type="button"
+            onClick={() => setSageOpen(false)}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Chat */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <DataChat nodeType={nodeType} nodeData={nodeData as Record<string, unknown>} nodeId={nodeId} />
+        </div>
+      </div>
+
+      {/* Ask Sage floating pill — visible when panel is closed */}
+      <button
+        type="button"
+        onClick={() => setSageOpen(true)}
+        className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-xl transition-all duration-200"
+        style={{
+          backgroundColor: "#F0FE00",
+          color: "#121212",
+          fontFamily: "system-ui, Inter, sans-serif",
+          fontSize: 13,
+          fontWeight: 600,
+          opacity: sageOpen ? 0 : 1,
+          pointerEvents: sageOpen ? "none" : "auto",
+          transform: sageOpen ? "scale(0.85)" : "scale(1)",
+          transition: "opacity 0.2s, transform 0.2s",
+        }}
+      >
+        <SageStar size={13} />
+        Ask Sage
+      </button>
     </div>
   );
 }
