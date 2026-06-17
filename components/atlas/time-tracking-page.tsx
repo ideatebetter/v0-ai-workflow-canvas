@@ -105,13 +105,47 @@ function getWeekDates(offsetWeeks = 0): string[] {
   });
 }
 
-const TODAY = new Date().toISOString().slice(0, 10);
-const WEEK  = getWeekDates(0);
+const TODAY     = new Date().toISOString().slice(0, 10);
+const WEEK      = getWeekDates(0);
+const LAST_WEEK = getWeekDates(-1);
 
 const TEAM_DATA: TeamMember[] = [
   {
     id: "m1", name: "Alex Rivera", role: "Creative Director", color: "#3b82f6",
     logs: [
+      // ── last week ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "6:12 PM", blocks: makeBlocks([
+        ["9:00","10:30","nike","Visual Design","Figma"],
+        ["10:30","12:00","google","Strategy","Miro"],
+        ["13:00","14:30","levis","Communications","Zoom"],
+        ["14:30","16:00","google","Design Iteration","Figma"],
+        ["16:00","17:30","nike","Concept Dev","Figma"],
+      ])},
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "5:45 PM", blocks: makeBlocks([
+        ["9:00","11:00","nike","Visual Design","Figma"],
+        ["11:00","12:30","deloitte","Visual Research","Chrome"],
+        ["13:30","15:30","google","Design Iteration","Figma"],
+        ["15:30","17:00","internal","Team Sync","Zoom"],
+      ])},
+      { date: LAST_WEEK[2], submitted: true, submittedAt: "6:30 PM", blocks: makeBlocks([
+        ["9:00","11:30","levis","Strategy","Notion"],
+        ["11:30","12:30","nike","Client Review","Zoom"],
+        ["13:30","16:00","nike","Visual Design","Figma"],
+        ["16:00","17:30","deloitte","Concept Dev","Figma"],
+      ])},
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "5:50 PM", blocks: makeBlocks([
+        ["9:00","11:00","google","Visual Research","Chrome"],
+        ["11:00","12:00","internal","Admin","Notion"],
+        ["13:00","15:00","nike","Visual Design","Figma"],
+        ["15:00","17:00","levis","Design Iteration","Figma"],
+      ])},
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "4:58 PM", blocks: makeBlocks([
+        ["9:00","11:30","deloitte","Concept Dev","Figma"],
+        ["11:30","12:30","nike","Communications","Slack"],
+        ["13:30","15:00","google","Strategy","Miro"],
+        ["15:00","16:30","admin","Admin","Notion"],
+      ])},
+      // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "6:34 PM", blocks: makeBlocks([
         ["9:04","9:44","nike","Communications","Slack"],
         ["9:44","11:32","nike","Visual Design","Figma"],
@@ -142,6 +176,36 @@ const TEAM_DATA: TeamMember[] = [
   {
     id: "m2", name: "Jordan Kim", role: "Senior Designer", color: "#8b5cf6",
     logs: [
+      // ── last week ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "5:30 PM", blocks: makeBlocks([
+        ["9:00","11:30","patagonia","Visual Design","Figma"],
+        ["11:30","12:30","google","Visual Research","Chrome"],
+        ["13:30","16:00","patagonia","Design Iteration","Figma"],
+        ["16:00","17:00","internal","Team Sync","Slack"],
+      ])},
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "6:15 PM", blocks: makeBlocks([
+        ["9:00","12:00","patagonia","Visual Design","Figma"],
+        ["13:00","15:00","google","Design Iteration","Figma"],
+        ["15:00","17:30","patagonia","Concept Dev","Figma"],
+      ])},
+      { date: LAST_WEEK[2], submitted: true, submittedAt: "5:55 PM", blocks: makeBlocks([
+        ["9:00","11:00","levis","Visual Research","Chrome"],
+        ["11:00","12:30","patagonia","Client Review","Zoom"],
+        ["13:30","16:00","patagonia","Visual Design","Figma"],
+        ["16:00","17:00","admin","Admin","Notion"],
+      ])},
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "6:00 PM", blocks: makeBlocks([
+        ["9:00","11:30","google","Design Iteration","Figma"],
+        ["11:30","12:30","patagonia","Communications","Slack"],
+        ["13:30","15:30","patagonia","Visual Design","Figma"],
+        ["15:30","17:00","bench","Research","Chrome"],
+      ])},
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "5:10 PM", blocks: makeBlocks([
+        ["9:00","12:00","patagonia","Concept Dev","Figma"],
+        ["13:00","14:30","internal","Team Sync","Zoom"],
+        ["14:30","16:30","google","Visual Research","Chrome"],
+      ])},
+      // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "5:47 PM", blocks: makeBlocks([
         ["9:00","11:00","patagonia","Visual Design","Figma"],
         ["11:00","12:00","patagonia","Client Review","Zoom"],
@@ -167,6 +231,34 @@ const TEAM_DATA: TeamMember[] = [
   {
     id: "m3", name: "Sam Torres", role: "Motion Designer", color: "#10b981",
     logs: [
+      // ── last week ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "7:00 PM", blocks: makeBlocks([
+        ["9:00","12:30","nike","Visual Design","After Effects"],
+        ["13:30","16:00","nike","Concept Dev","Figma"],
+        ["16:00","18:00","deloitte","Visual Design","After Effects"],
+      ])},
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "6:50 PM", blocks: makeBlocks([
+        ["9:00","12:00","nike","Design Iteration","After Effects"],
+        ["13:00","15:00","bench","Research","Chrome"],
+        ["15:00","17:30","nike","Visual Design","After Effects"],
+      ])},
+      { date: LAST_WEEK[2], submitted: true, submittedAt: "6:05 PM", blocks: makeBlocks([
+        ["9:00","11:30","deloitte","Concept Dev","Figma"],
+        ["11:30","12:30","nike","Communications","Slack"],
+        ["13:30","16:00","nike","Visual Design","After Effects"],
+        ["16:00","17:00","admin","Admin","Notion"],
+      ])},
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "5:45 PM", blocks: makeBlocks([
+        ["9:00","12:00","nike","Visual Design","After Effects"],
+        ["13:00","15:00","deloitte","Design Iteration","Figma"],
+        ["15:00","16:30","bench","Research","Chrome"],
+      ])},
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "4:30 PM", blocks: makeBlocks([
+        ["9:00","11:30","nike","Concept Dev","Figma"],
+        ["11:30","12:00","internal","Team Sync","Zoom"],
+        ["13:00","15:00","nike","Visual Design","After Effects"],
+      ])},
+      // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "7:12 PM", blocks: makeBlocks([
         ["9:00","12:00","nike","Visual Design","After Effects"],
         ["13:00","15:30","nike","Concept Dev","Figma"],
@@ -190,6 +282,36 @@ const TEAM_DATA: TeamMember[] = [
   {
     id: "m4", name: "Casey Morgan", role: "Strategist", color: "#f59e0b",
     logs: [
+      // ── last week ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "5:20 PM", blocks: makeBlocks([
+        ["9:00","11:00","levis","Strategy","Notion"],
+        ["11:00","12:00","google","Research","Chrome"],
+        ["13:00","15:00","levis","Client Review","Zoom"],
+        ["15:00","17:00","google","Strategy","Notion"],
+      ])},
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "6:10 PM", blocks: makeBlocks([
+        ["9:00","11:30","levis","Strategy","Notion"],
+        ["11:30","12:30","internal","Team Sync","Zoom"],
+        ["13:30","15:00","google","Strategy","Notion"],
+        ["15:00","17:00","levis","Design Iteration","Miro"],
+      ])},
+      { date: LAST_WEEK[2], submitted: true, submittedAt: "5:40 PM", blocks: makeBlocks([
+        ["9:00","12:00","google","Research","Chrome"],
+        ["13:00","15:30","levis","Communications","Zoom"],
+        ["15:30","17:00","admin","Admin","Notion"],
+      ])},
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "6:00 PM", blocks: makeBlocks([
+        ["9:00","11:00","levis","Strategy","Notion"],
+        ["11:00","12:30","google","Client Review","Zoom"],
+        ["13:30","16:00","levis","Design Iteration","Miro"],
+        ["16:00","17:30","bench","Research","Chrome"],
+      ])},
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "4:45 PM", blocks: makeBlocks([
+        ["9:00","11:30","google","Strategy","Notion"],
+        ["11:30","12:30","levis","Communications","Slack"],
+        ["13:30","15:30","levis","Strategy","Notion"],
+      ])},
+      // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "5:30 PM", blocks: makeBlocks([
         ["9:00","11:00","google","Strategy","Notion"],
         ["11:00","12:00","levis","Communications","Zoom"],
@@ -211,6 +333,35 @@ const TEAM_DATA: TeamMember[] = [
   {
     id: "m5", name: "Riley Chen", role: "Designer", color: "#ec4899",
     logs: [
+      // ── last week ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "5:05 PM", blocks: makeBlocks([
+        ["9:00","11:30","patagonia","Visual Design","Figma"],
+        ["11:30","12:30","bench","Research","Chrome"],
+        ["13:30","15:30","patagonia","Design Iteration","Figma"],
+        ["15:30","16:30","internal","Team Sync","Zoom"],
+      ])},
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "6:00 PM", blocks: makeBlocks([
+        ["9:00","12:00","patagonia","Visual Design","Figma"],
+        ["13:00","14:30","levis","Visual Research","Chrome"],
+        ["14:30","16:30","patagonia","Concept Dev","Figma"],
+      ])},
+      { date: LAST_WEEK[2], submitted: true, submittedAt: "5:45 PM", blocks: makeBlocks([
+        ["9:00","11:00","patagonia","Design Iteration","Figma"],
+        ["11:00","12:30","bench","Research","Chrome"],
+        ["13:30","16:00","patagonia","Visual Design","Figma"],
+        ["16:00","17:00","admin","Admin","Notion"],
+      ])},
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "5:30 PM", blocks: makeBlocks([
+        ["9:00","12:00","patagonia","Concept Dev","Figma"],
+        ["13:00","15:00","levis","Visual Research","Chrome"],
+        ["15:00","16:30","internal","Team Sync","Slack"],
+      ])},
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "4:15 PM", blocks: makeBlocks([
+        ["9:00","11:30","patagonia","Visual Design","Figma"],
+        ["11:30","12:30","bench","Research","Chrome"],
+        ["13:30","15:30","patagonia","Design Iteration","Figma"],
+      ])},
+      // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "5:15 PM", blocks: makeBlocks([
         ["9:00","11:00","patagonia","Visual Design","Figma"],
         ["11:00","12:00","bench","Research","Chrome"],
