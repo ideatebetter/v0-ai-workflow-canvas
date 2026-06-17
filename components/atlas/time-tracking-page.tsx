@@ -493,14 +493,6 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
                 <>
                   <div className="text-sm font-semibold text-white" style={font}>{fmtDuration(mins)}</div>
 
-                  {/* Mini stacked bar: billable vs non-billable */}
-                  <div className="flex h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#2a2a2a" }}>
-                    <div className="h-full rounded-full" style={{
-                      width: `${Math.min(100, (billableMins / (40 / 5 * 60)) * 100)}%`,
-                      backgroundColor: member.color,
-                    }} />
-                  </div>
-
                   {/* Project color strip */}
                   <div className="relative h-3 rounded overflow-hidden w-full" style={{ backgroundColor: "#1e1e1e" }}>
                     {log.blocks.map((b, bi) => {
