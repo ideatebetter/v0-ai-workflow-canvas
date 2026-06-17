@@ -414,26 +414,37 @@ export interface CapacityNodeData {
   lastUpdated: string;
 }
 
-// Financial Performance node data interface
-export interface FinancialNodeData {
-  label: string;
-  projectMargin: number; // percentage
-  budgetConsumed: number; // percentage
-  revenueRealized: number; // percentage
-  blendedRateEfficiency: number; // percentage
-  utilizationAdjustedMargin: number; // percentage
-  status: "healthy" | "at-risk" | "underperforming";
-  lastUpdated: string;
-}
-
 // Project Health node data interface
 export interface ProjectHealthNodeData {
   label: string;
   daysSinceClientTouchpoint: number;
   openFeedbackCycles: number;
   revisionCount: number;
-  projectPhase: "discovery" | "design" | "development" | "review" | "delivery";
+  projectPhase: "discovery" | "design" | "development" | "review" | "delivery" | "concept" | "research" | "strategy";
   healthStatus: "on-track" | "needs-attention" | "at-risk";
+  lastUpdated: string;
+  // Org-level portfolio view
+  portfolioProjects?: {
+    name: string;
+    color: string;
+    phase: string;
+    health: "on-track" | "needs-attention" | "at-risk";
+    daysSince: number;
+    feedbackCycles: number;
+    revisions: number;
+  }[];
+}
+
+// Financial Performance node data interface — scope indicates org vs project
+export interface FinancialNodeData {
+  label: string;
+  projectMargin: number; // percentage (portfolio avg when scope="org")
+  budgetConsumed: number; // percentage
+  revenueRealized: number; // percentage
+  blendedRateEfficiency: number; // percentage
+  utilizationAdjustedMargin: number; // percentage
+  status: "healthy" | "at-risk" | "underperforming";
+  scope?: "org" | "project";
   lastUpdated: string;
 }
 

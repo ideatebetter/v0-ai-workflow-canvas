@@ -123,10 +123,11 @@ function CapacityViz({ data }: { data: CapacityNodeData }) {
 function FinancialViz({ data }: { data: FinancialNodeData }) {
   const statusColor = data.status === "healthy" ? "#22c55e" : data.status === "at-risk" ? "#f59e0b" : "#ef4444";
   const marginColor = data.projectMargin >= 30 ? "#22c55e" : data.projectMargin >= 15 ? "#f59e0b" : "#ef4444";
+  const isOrg = data.scope === "org" || !data.scope; // default to org when unset
   const metrics = [
-    { label: "Project Margin", value: data.projectMargin, color: marginColor },
-    { label: "Budget Consumed", value: data.budgetConsumed, color: data.budgetConsumed > 85 ? "#f59e0b" : "#3b82f6" },
-    { label: "Revenue Realized", value: data.revenueRealized, color: "#10b981" },
+    { label: isOrg ? "Avg Portfolio Margin" : "Project Margin", value: data.projectMargin, color: marginColor },
+    { label: isOrg ? "Avg Budget Consumed" : "Budget Consumed", value: data.budgetConsumed, color: data.budgetConsumed > 85 ? "#f59e0b" : "#3b82f6" },
+    { label: isOrg ? "Avg Revenue Realized" : "Revenue Realized", value: data.revenueRealized, color: "#10b981" },
     { label: "Blended Rate Efficiency", value: data.blendedRateEfficiency, color: "#8b5cf6" },
     { label: "Util-Adjusted Margin", value: data.utilizationAdjustedMargin, color: "#ec4899" },
   ];
@@ -158,17 +159,96 @@ function FinancialViz({ data }: { data: FinancialNodeData }) {
 }
 
 function ProjectHealthViz({ data }: { data: ProjectHealthNodeData }) {
+  // ── Portfolio (org-level) view ───────────────────────────────────────────
+  if (data.portfolioProjects && data.portfolioProjects.length > 0) {
+    const pp = data.portfolioProjects;
+    const onTrack    = pp.filter(p => p.health === "on-track").length;
+    const needsAttn  = pp.filter(p => p.health === "needs-attention").length;
+    const atRisk     = pp.filter(p => p.health === "at-risk").length;
+    const totalFB    = pp.reduce((a, p) => a + p.feedbackCycles, 0);
+    const totalRev   = pp.reduce((a, p) => a + p.revisions, 0);
+    const stalest    = Math.max(...pp.map(p => p.daysSince));
+    const overallColor = atRisk > 0 ? "#ef4444" : needsAttn > 0 ? "#f59e0b" : "#22c55e";
+    const overallLabel = atRisk > 0 ? "at risk" : needsAttn > 0 ? "needs attention" : "on track";
+
+    return (
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="p-4 rounded-xl" style={{ backgroundColor: "#1a1a1a", border: `1px solid ${overallColor}30` }}>
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Portfolio Status</div>
+              <div className="text-xl font-bold" style={{ color: overallColor }}>{onTrack} of {pp.length} on track</div>
+            </div>
+            <div className="flex gap-3">
+              {atRisk > 0 && <div className="text-center"><div className="text-xl font-bold text-red-400">{atRisk}</div><div className="text-[10px] text-gray-500">at risk</div></div>}
+              {needsAttn > 0 && <div className="text-center"><div className="text-xl font-bold text-amber-400">{needsAttn}</div><div className="text-[10px] text-gray-500">attention</div></div>}
+              <div className="text-center"><div className="text-xl font-bold text-green-400">{onTrack}</div><div className="text-[10px] text-gray-500">on track</div></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Per-project rows */}
+        <div className="space-y-2">
+          {pp.map(p => {
+            const hc = p.health === "on-track" ? "#22c55e" : p.health === "needs-attention" ? "#f59e0b" : "#ef4444";
+            return (
+              <div key={p.name} className="p-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#1a1a1a", border: `1px solid ${hc}22` }}>
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">{p.name}</div>
+                  <div className="text-[11px] text-gray-500 capitalize">{p.phase}</div>
+                </div>
+                <div className="text-xs text-gray-500">{p.daysSince}d</div>
+                <div className="text-[10px] px-1.5 py-0.5 rounded capitalize" style={{ color: hc, backgroundColor: `${hc}18`, border: `1px solid ${hc}33` }}>{p.health.replace("-", " ")}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Portfolio metrics */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Open feedback", value: totalFB,  suffix: "",  color: totalFB > 8 ? "#f59e0b" : "#fff" },
+            { label: "Total revisions", value: totalRev, suffix: "", color: totalRev > 15 ? "#f59e0b" : "#fff" },
+            { label: "Stalest touchpoint", value: stalest, suffix: "d", color: stalest > 5 ? "#f59e0b" : "#22c55e" },
+          ].map(m => (
+            <div key={m.label} className="p-3 rounded-xl text-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="text-2xl font-bold" style={{ color: m.color }}>{m.value}{m.suffix}</div>
+              <div className="text-[10px] text-gray-500 mt-1">{m.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Signals */}
+        <div className="p-3 rounded-xl space-y-2" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Signals</div>
+          {atRisk > 0 && <Signal color="#ef4444" text={`${atRisk} project${atRisk > 1 ? "s" : ""} at risk — escalation may be needed`} />}
+          {needsAttn > 0 && <Signal color="#f59e0b" text={`${needsAttn} project${needsAttn > 1 ? "s" : ""} need${needsAttn === 1 ? "s" : ""} attention — review with PMs`} />}
+          {totalFB > 8 && <Signal color="#f59e0b" text={`${totalFB} open feedback cycles across portfolio`} />}
+          {stalest > 5 && <Signal color="#f59e0b" text={`Oldest client touchpoint was ${stalest} days ago`} />}
+          {atRisk === 0 && needsAttn === 0 && <Signal color="#22c55e" text="All projects running smoothly" />}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Single-project view ──────────────────────────────────────────────────
   const statusColor = data.healthStatus === "on-track" ? "#22c55e" : data.healthStatus === "needs-attention" ? "#f59e0b" : "#ef4444";
   const touchColor = data.daysSinceClientTouchpoint <= 3 ? "#22c55e" : data.daysSinceClientTouchpoint <= 7 ? "#f59e0b" : "#ef4444";
-  const phases = ["discovery", "design", "development", "review", "delivery"];
+  const phases = ["discovery", "research", "strategy", "concept", "design", "development", "review", "delivery"];
   const phaseIdx = phases.indexOf(data.projectPhase);
+  const displayPhases = ["discovery", "design", "development", "review", "delivery"];
+  const displayIdx = displayPhases.indexOf(
+    ["research", "strategy", "concept"].includes(data.projectPhase) ? "discovery" : data.projectPhase
+  );
   return (
     <div className="space-y-4">
       <div className="p-4 rounded-xl" style={{ backgroundColor: "#1a1a1a", border: `1px solid ${statusColor}30` }}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="text-xs text-gray-500 mb-1">Health Status</div>
-            <div className="text-xl font-bold capitalize" style={{ color: statusColor }}>{data.healthStatus?.replace("-", " ")}</div>
+            <div className="text-xl font-bold capitalize" style={{ color: statusColor }}>{data.healthStatus?.replace(/-/g, " ")}</div>
           </div>
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-1">Phase</div>
@@ -176,10 +256,10 @@ function ProjectHealthViz({ data }: { data: ProjectHealthNodeData }) {
           </div>
         </div>
         <div className="flex gap-1.5">
-          {phases.map((p, i) => (
+          {displayPhases.map((p, i) => (
             <div key={p} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full h-1.5 rounded-full"
-                style={{ background: i <= phaseIdx ? "linear-gradient(90deg,#8b5cf6,#a78bfa)" : "rgba(255,255,255,0.06)" }} />
+                style={{ background: i <= displayIdx ? "linear-gradient(90deg,#8b5cf6,#a78bfa)" : "rgba(255,255,255,0.06)" }} />
               <span className="text-[9px] text-gray-500 capitalize">{p}</span>
             </div>
           ))}
@@ -188,8 +268,8 @@ function ProjectHealthViz({ data }: { data: ProjectHealthNodeData }) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Days since touchpoint", value: data.daysSinceClientTouchpoint, color: touchColor, suffix: "d" },
-          { label: "Open feedback cycles", value: data.openFeedbackCycles, color: "#fff", suffix: "" },
-          { label: "Total revisions", value: data.revisionCount, color: "#fff", suffix: "" },
+          { label: "Open feedback cycles",  value: data.openFeedbackCycles,        color: "#fff",     suffix: "" },
+          { label: "Total revisions",       value: data.revisionCount,             color: "#fff",     suffix: "" },
         ].map(m => (
           <div key={m.label} className="p-3 rounded-xl text-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
             <div className="text-2xl font-bold" style={{ color: m.color }}>{m.value}{m.suffix}</div>

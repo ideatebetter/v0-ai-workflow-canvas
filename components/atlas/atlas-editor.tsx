@@ -1117,32 +1117,50 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Financial Performance`,
+            scope: scope,
             // org: weighted avg across Nike/Google/Deloitte/Levi's/Patagonia
-            projectMargin:           proj ? proj.margin : 38,
-            budgetConsumed:          proj ? proj.consumed : 54,
-            revenueRealized:         proj ? Math.round(proj.consumed * 0.92) : 49,
-            blendedRateEfficiency:   proj ? (proj.margin >= 35 ? 94 : 82) : 91,
+            projectMargin:             proj ? proj.margin : 38,
+            budgetConsumed:            proj ? proj.consumed : 54,
+            revenueRealized:           proj ? Math.round(proj.consumed * 0.92) : 49,
+            blendedRateEfficiency:     proj ? (proj.margin >= 35 ? 94 : 82) : 91,
             utilizationAdjustedMargin: proj ? Math.round(proj.margin * 0.87) : 33,
             status: proj ? (proj.consumed > 60 && proj.margin < 32 ? "at-risk" : "healthy") : "healthy",
             lastUpdated: "just now",
           },
         };
       } else if (opType === "projectHealth") {
+        // Org level: portfolio health across all active projects
+        const PORTFOLIO_PROJECTS = [
+          { name: "Nike Running",       color: "#3a6bb5", phase: "design",   health: "on-track"        as const, daysSince: 2, feedbackCycles: 2, revisions: 4 },
+          { name: "Google Brand Sprint", color: "#2e8b57", phase: "research", health: "on-track"        as const, daysSince: 1, feedbackCycles: 1, revisions: 2 },
+          { name: "Deloitte Digital",   color: "#c27030", phase: "concept",  health: "needs-attention" as const, daysSince: 4, feedbackCycles: 3, revisions: 6 },
+          { name: "Levi's Identity",    color: "#8b3a8b", phase: "strategy", health: "on-track"        as const, daysSince: 3, feedbackCycles: 2, revisions: 3 },
+          { name: "Patagonia Social",   color: "#2e6b4f", phase: "design",   health: "on-track"        as const, daysSince: 2, feedbackCycles: 2, revisions: 3 },
+        ];
         newNode = {
           id: nodeId,
           type: "projectHealth",
           position: nodePosition,
           selected: true,
-          data: {
-            label: `${scopePrefix}Project Health`,
-            daysSinceClientTouchpoint: proj ? proj.touchpoint : 2,
-            openFeedbackCycles:        proj ? proj.feedbackCycles : 3,
-            revisionCount:             proj ? proj.revisions : 5,
-            projectPhase:              proj ? proj.phase : "design",
-            healthStatus: proj
-              ? (proj.consumed > proj.loggedH / proj.budgetH * 100 + 15 ? "at-risk" : "on-track")
-              : "on-track",
-            lastUpdated: "just now",
+          data: proj ? {
+            // Project-scoped: single project view
+            label:                     `${scopePrefix}Project Health`,
+            daysSinceClientTouchpoint: proj.touchpoint,
+            openFeedbackCycles:        proj.feedbackCycles,
+            revisionCount:             proj.revisions,
+            projectPhase:              proj.phase as "discovery" | "design" | "development" | "review" | "delivery" | "concept" | "research" | "strategy",
+            healthStatus:              proj.consumed > 60 && proj.margin < 32 ? "needs-attention" : "on-track",
+            lastUpdated:               "just now",
+          } : {
+            // Org-scoped: portfolio view
+            label:                     "Portfolio Health",
+            daysSinceClientTouchpoint: 4, // stalest touchpoint (Deloitte)
+            openFeedbackCycles:        10, // total across all projects
+            revisionCount:             18, // total across all projects
+            projectPhase:              "design" as const, // unused at org level
+            healthStatus:              "needs-attention" as const, // 1 of 5 needs attention
+            lastUpdated:               "just now",
+            portfolioProjects:         PORTFOLIO_PROJECTS,
           },
         };
       } else if (opType === "pipeline") {
