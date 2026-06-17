@@ -291,6 +291,15 @@ export interface ImageComment {
   createdAt: string;
 }
 
+// Comment pinned to a timestamp on a video
+export interface VideoTimestampComment {
+  id: string;
+  timestamp: number; // seconds into the video
+  text: string;
+  author: WorkspaceMember;
+  createdAt: string;
+}
+
 // File activity/history entry
 export interface FileActivity {
   id: string;
@@ -315,6 +324,7 @@ export interface FileNodeData {
   versions?: FileVersion[]; // Version history
   activities?: FileActivity[]; // Activity/update history
   imageComments?: ImageComment[]; // Annotation pins on the image preview
+  videoComments?: VideoTimestampComment[]; // Comments pinned to video timestamps
   linkUrl?: string; // URL for link-embedded nodes
   linkType?: "youtube" | "figma" | "googledoc" | "generic"; // How the link is rendered
   linkTitle?: string; // Display title fetched or set when link was added

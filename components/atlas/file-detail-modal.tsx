@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import type { FileNodeData, FileVersion, FileActivity, ImageComment, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
+import type { FileNodeData, FileVersion, FileActivity, ImageComment, VideoTimestampComment, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
 import { STATUS_COLORS, STATUS_LABELS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { upload } from "@vercel/blob/client";
@@ -232,6 +232,350 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
         <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           {fileData.uploadedFile?.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function VideoPlayerWithComments({
+  fileData,
+  onUpdateFile,
+}: {
+  fileData: FileNodeData;
+  onUpdateFile?: (updates: Partial<FileNodeData>) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isCommentMode, setIsCommentMode] = useState(false);
+  const [pendingTimestamp, setPendingTimestamp] = useState<number | null>(null);
+  const [pendingPos, setPendingPos] = useState(0);
+  const [pendingText, setPendingText] = useState("");
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
+
+  const videoComments = fileData.videoComments || [];
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!timelineRef.current || !duration) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const time = pct * duration;
+
+    if (isCommentMode) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = time;
+        setIsPlaying(false);
+      }
+      setCurrentTime(time);
+      setPendingTimestamp(time);
+      setPendingPos(pct * 100);
+      setPendingText("");
+    } else {
+      if (videoRef.current) {
+        videoRef.current.currentTime = time;
+        setCurrentTime(time);
+      }
+    }
+  };
+
+  const handleAddComment = () => {
+    if (pendingTimestamp === null || !pendingText.trim() || !onUpdateFile) return;
+    const newComment: VideoTimestampComment = {
+      id: `vc-${Date.now()}`,
+      timestamp: pendingTimestamp,
+      text: pendingText.trim(),
+      author: WORKSPACE_MEMBERS[0],
+      createdAt: new Date().toISOString(),
+    };
+    const newActivity: FileActivity = {
+      id: `a-${Date.now()}`,
+      type: "comment",
+      description: pendingText.trim(),
+      user: WORKSPACE_MEMBERS[0],
+      timestamp: new Date().toISOString(),
+      metadata: { videoTimestamp: pendingTimestamp },
+    };
+    onUpdateFile({
+      videoComments: [...videoComments, newComment],
+      activities: [...(fileData.activities || []), newActivity],
+    });
+    setPendingTimestamp(null);
+    setPendingText("");
+    setIsCommentMode(false);
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="mb-8 rounded-xl overflow-visible" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+      {/* Video */}
+      <div className="relative rounded-t-xl overflow-hidden bg-black" style={{ aspectRatio: "16/9" }}>
+        <video
+          ref={videoRef}
+          src={fileData.uploadedFile?.url}
+          className="w-full h-full object-contain"
+          playsInline
+          onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
+          onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+        >
+          <track kind="captions" />
+        </video>
+      </div>
+
+      {/* Controls */}
+      <div className="px-3 pt-3 pb-3 border-t" style={{ borderColor: "#2a2a2a" }}>
+        {/* Timeline with comment ticks */}
+        <div className="relative mb-3" style={{ paddingBottom: 4 }}>
+          <div
+            ref={timelineRef}
+            className="relative h-2 rounded-full"
+            style={{
+              backgroundColor: "#333",
+              cursor: isCommentMode ? "crosshair" : "pointer",
+            }}
+            onClick={handleTimelineClick}
+          >
+            {/* Progress fill */}
+            <div
+              className="absolute left-0 top-0 h-full rounded-full pointer-events-none"
+              style={{ width: `${progress}%`, backgroundColor: "#F0FE00" }}
+            />
+
+            {/* Existing comment ticks */}
+            {videoComments.map((comment) => {
+              const pct = duration > 0 ? (comment.timestamp / duration) * 100 : 0;
+              return (
+                <div
+                  key={comment.id}
+                  style={{
+                    position: "absolute",
+                    left: `${pct}%`,
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    backgroundColor: "#7C3AED",
+                    border: "2px solid #1a1a1a",
+                    zIndex: 5,
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={() => setHoveredCommentId(comment.id)}
+                  onMouseLeave={() => setHoveredCommentId(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = comment.timestamp;
+                      setCurrentTime(comment.timestamp);
+                    }
+                  }}
+                >
+                  {hoveredCommentId === comment.id && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "calc(100% + 10px)",
+                        left: pct > 65 ? "auto" : "50%",
+                        right: pct > 65 ? "50%" : "auto",
+                        transform: pct > 65 ? "none" : "translateX(-50%)",
+                        width: 200,
+                        backgroundColor: "#1a1a1a",
+                        border: "1px solid #3a3a3a",
+                        borderRadius: 8,
+                        padding: "8px 10px",
+                        zIndex: 30,
+                        pointerEvents: "none",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
+                        fontFamily: "system-ui, Inter, sans-serif",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <div
+                          style={{
+                            width: 18, height: 18, borderRadius: "50%",
+                            backgroundColor: comment.author.avatarColor || "#666",
+                            color: "#fff", fontSize: 9, fontWeight: 700,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}
+                        >
+                          {comment.author.name.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <span style={{ fontSize: 10, color: "#888" }}>{comment.author.name.split(" ")[0]}</span>
+                        <span style={{ fontSize: 10, color: "#555", marginLeft: "auto" }}>{formatTime(comment.timestamp)}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: "#e0e0e0", margin: 0 }}>{comment.text}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Pending marker */}
+            {pendingTimestamp !== null && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: `${pendingPos}%`,
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  backgroundColor: "#F0FE00",
+                  border: "2px solid #1a1a1a",
+                  zIndex: 10,
+                  pointerEvents: "none",
+                }}
+              />
+            )}
+          </div>
+
+          {/* Pending comment popup */}
+          {pendingTimestamp !== null && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 16px)",
+                left: pendingPos > 55 ? "auto" : `${Math.max(pendingPos, 2)}%`,
+                right: pendingPos > 55 ? `${Math.max(100 - pendingPos, 2)}%` : "auto",
+                width: 230,
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: 8,
+                padding: 10,
+                zIndex: 40,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                Comment at {formatTime(pendingTimestamp)}
+              </div>
+              <input
+                autoFocus
+                type="text"
+                value={pendingText}
+                onChange={(e) => setPendingText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddComment();
+                  if (e.key === "Escape") setPendingTimestamp(null);
+                }}
+                placeholder="Add a comment…"
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "#e0e0e0",
+                  fontSize: 13,
+                  marginBottom: 8,
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setPendingTimestamp(null)}
+                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #3a3a3a", backgroundColor: "transparent", color: "#888", fontSize: 12, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddComment}
+                  disabled={!pendingText.trim()}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none",
+                    backgroundColor: pendingText.trim() ? "#F0FE00" : "#2a2a2a",
+                    color: pendingText.trim() ? "#000" : "#666",
+                    fontSize: 12, fontWeight: 600,
+                    cursor: pendingText.trim() ? "pointer" : "default",
+                  }}
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Controls row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Play / Pause */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!videoRef.current) return;
+                if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
+              }}
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              {isPlaying ? (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <rect x="5" y="4" width="3" height="12" rx="1" />
+                  <rect x="12" y="4" width="3" height="12" rx="1" />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M6 4L16 10L6 16V4Z" />
+                </svg>
+              )}
+            </button>
+            {/* Time */}
+            <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Comment count */}
+            {videoComments.length > 0 && (
+              <span className="text-xs flex items-center gap-1" style={{ color: "#7C3AED", fontFamily: "system-ui, Inter, sans-serif" }}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {videoComments.length}
+              </span>
+            )}
+            {/* Comment mode toggle */}
+            <button
+              type="button"
+              onClick={() => { setIsCommentMode((v) => !v); setPendingTimestamp(null); }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: isCommentMode ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                color: isCommentMode ? "#000" : "#aaa",
+                border: isCommentMode ? "none" : "1px solid #3a3a3a",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {isCommentMode ? "Click timeline…" : "Comment"}
+            </button>
+            {/* File name + size */}
+            <div className="flex items-center gap-2">
+              <FileTypeIcon extension={fileData.fileExtension} />
+              <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                {fileData.uploadedFile?.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : fileData.fileName}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1023,33 +1367,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             </div>
           )}
 
-          {/* Video Player - Only show for video files */}
-          {[".mp4", ".mov", ".avi", ".webm", ".mkv"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
-            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-              <div className="relative aspect-video">
-                <video
-                  src={fileData.uploadedFile.url}
-                  controls
-                  className="w-full h-full object-contain bg-black"
-                  style={{ maxHeight: "400px" }}
-                  playsInline
-                >
-                  <track kind="captions" />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
-                <div className="flex items-center gap-2">
-                  <FileTypeIcon extension={fileData.fileExtension} />
-                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    {fileData.fileName}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  {fileData.uploadedFile.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
-                </span>
-              </div>
-            </div>
+          {/* Video Player with timestamp comments */}
+          {[".mp4", ".mov", ".avi", ".webm", ".mkv", ".m4v"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
+            <VideoPlayerWithComments fileData={fileData} onUpdateFile={onUpdateFile} />
           )}
 
           {/* Audio Player - Only show for audio files */}
