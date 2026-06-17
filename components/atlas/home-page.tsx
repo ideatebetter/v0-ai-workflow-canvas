@@ -1197,6 +1197,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden flex-shrink-0"
               style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
+              suppressHydrationWarning
             >
               {workspaceSettings.branding?.workspaceIcon ? (
                 <img
