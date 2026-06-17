@@ -575,8 +575,44 @@ const [showSageChat, setShowSageChat] = useState(false);
     return list;
   }, [workspaceCanvases]);
 
-  // 28-day ribbon: green every day, turns yellow on days that have tasks due
+  // 28-day ribbon: demo accounts get rich filler data; real accounts derive from task due dates
+  const DEMO_RIBBON_DAYS = [
+    // Week 1 (14-20 days ago) - Past
+    { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+    { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+    { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+    { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+    { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+    { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+    { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+    // Week 2 (7-13 days ago) - Past
+    { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+    { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+    { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+    { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+    { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+    { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+    { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
+    // Week 3 - Current week (today is index 17)
+    { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+    { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+    { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+    { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY (index 17)
+    { status: "minor", title: "Review Scheduled", description: "Client presentation scheduled for tomorrow", tags: ["Prepared", "Confident"], isFuture: true },
+    { status: "minor", title: "Handoff Prep", description: "Preparing final deliverables package", tags: ["In Progress", "On Schedule"], isFuture: true },
+    { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"], isFuture: true },
+    // Week 4 - Future (projected)
+    { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"], isFuture: true },
+    { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"], isFuture: true },
+    { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"], isFuture: true },
+    { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"], isFuture: true },
+    { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"], isFuture: true },
+    { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"], isFuture: true },
+    { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"], isFuture: true },
+  ];
+
   const ribbonDays = useMemo(() => {
+    if (isDemoAccount) return DEMO_RIBBON_DAYS;
     const todayIndex = 17;
     const today = new Date();
     return Array.from({ length: 28 }, (_, i) => {
@@ -597,7 +633,7 @@ const [showSageChat, setShowSageChat] = useState(false);
         isFuture,
       };
     });
-  }, [todosByDate]);
+  }, [isDemoAccount, todosByDate]);
 
   const handleAddGlobalTodo = useCallback((canvasId: string, nodeId: string, task: import("@/lib/atlas-types").TaskItem) => {
     const addToNode = (n: import("@/lib/atlas-types").AtlasNode) => {
