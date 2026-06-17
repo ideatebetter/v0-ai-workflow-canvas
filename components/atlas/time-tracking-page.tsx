@@ -113,19 +113,19 @@ const TEAM_DATA: TeamMember[] = [
   {
     id: "m1", name: "Alex Rivera", role: "Creative Director", color: "#3b82f6",
     logs: [
-      // ── last week ──
-      { date: LAST_WEEK[0], submitted: true, submittedAt: "6:12 PM", blocks: makeBlocks([
-        ["9:00","10:30","nike","Visual Design","Figma"],
-        ["10:30","12:00","google","Strategy","Miro"],
-        ["13:00","14:30","levis","Communications","Zoom"],
-        ["14:30","16:00","google","Design Iteration","Figma"],
-        ["16:00","17:30","nike","Concept Dev","Figma"],
+      // ── last week (51h — burnout risk demo) ──
+      { date: LAST_WEEK[0], submitted: true, submittedAt: "7:30 PM", blocks: makeBlocks([
+        ["8:00","10:30","nike","Visual Design","Figma"],
+        ["10:30","12:30","google","Strategy","Miro"],
+        ["13:00","15:00","levis","Communications","Zoom"],
+        ["15:00","17:30","google","Design Iteration","Figma"],
+        ["17:30","19:00","nike","Concept Dev","Figma"],
       ])},
-      { date: LAST_WEEK[1], submitted: true, submittedAt: "5:45 PM", blocks: makeBlocks([
-        ["9:00","11:00","nike","Visual Design","Figma"],
+      { date: LAST_WEEK[1], submitted: true, submittedAt: "7:00 PM", blocks: makeBlocks([
+        ["8:30","11:00","nike","Visual Design","Figma"],
         ["11:00","12:30","deloitte","Visual Research","Chrome"],
-        ["13:30","15:30","google","Design Iteration","Figma"],
-        ["15:30","17:00","internal","Team Sync","Zoom"],
+        ["13:00","15:30","google","Design Iteration","Figma"],
+        ["15:30","18:00","internal","Team Sync","Zoom"],
       ])},
       { date: LAST_WEEK[2], submitted: true, submittedAt: "6:30 PM", blocks: makeBlocks([
         ["9:00","11:30","levis","Strategy","Notion"],
@@ -133,17 +133,17 @@ const TEAM_DATA: TeamMember[] = [
         ["13:30","16:00","nike","Visual Design","Figma"],
         ["16:00","17:30","deloitte","Concept Dev","Figma"],
       ])},
-      { date: LAST_WEEK[3], submitted: true, submittedAt: "5:50 PM", blocks: makeBlocks([
-        ["9:00","11:00","google","Visual Research","Chrome"],
+      { date: LAST_WEEK[3], submitted: true, submittedAt: "7:15 PM", blocks: makeBlocks([
+        ["8:30","11:00","google","Visual Research","Chrome"],
         ["11:00","12:00","internal","Admin","Notion"],
-        ["13:00","15:00","nike","Visual Design","Figma"],
-        ["15:00","17:00","levis","Design Iteration","Figma"],
+        ["13:00","15:30","nike","Visual Design","Figma"],
+        ["15:30","18:00","levis","Design Iteration","Figma"],
       ])},
-      { date: LAST_WEEK[4], submitted: true, submittedAt: "4:58 PM", blocks: makeBlocks([
+      { date: LAST_WEEK[4], submitted: true, submittedAt: "6:30 PM", blocks: makeBlocks([
         ["9:00","11:30","deloitte","Concept Dev","Figma"],
         ["11:30","12:30","nike","Communications","Slack"],
-        ["13:30","15:00","google","Strategy","Miro"],
-        ["15:00","16:30","admin","Admin","Notion"],
+        ["13:30","16:00","google","Strategy","Miro"],
+        ["16:00","18:00","admin","Admin","Notion"],
       ])},
       // ── this week ──
       { date: WEEK[0], submitted: true, submittedAt: "6:34 PM", blocks: makeBlocks([
@@ -584,13 +584,33 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
     [member, weekDates]
   );
 
-  const weeklyTotal = useMemo(() => weekLogs.reduce((a, l) => a + totalMin(l.blocks), 0), [weekLogs]);
+  const weeklyTotal    = useMemo(() => weekLogs.reduce((a, l) => a + totalMin(l.blocks), 0), [weekLogs]);
   const submittedCount = weekLogs.filter(l => l.submitted).length;
-  const utilization = Math.round((weeklyTotal / 60 / 40) * 100);
-  const utilizationColor = utilization > 110 ? "#ef4444" : utilization >= 70 ? "#22c55e" : "#f59e0b";
+  const weeklyHours    = weeklyTotal / 60;
+  const burnoutRisk    = weeklyHours > 50;
+  const utilization    = Math.round((weeklyHours / 40) * 100);
+  const utilizationColor = burnoutRisk ? "#ef4444" : utilization >= 70 ? "#22c55e" : "#f59e0b";
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}>
+    <div className="rounded-2xl overflow-hidden"
+      style={{
+        backgroundColor: "#141414",
+        border: burnoutRisk ? "1px solid #ef444440" : "1px solid #2a2a2a",
+      }}>
+      {/* Burnout risk banner */}
+      {burnoutRisk && (
+        <div className="flex items-center gap-2 px-5 py-2.5"
+          style={{ backgroundColor: "#ef444412", borderBottom: "1px solid #ef444430" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span className="text-xs font-semibold" style={{ color: "#ef4444", ...font }}>
+            Burnout risk — {weeklyHours.toFixed(1)}h logged this week (50h threshold exceeded)
+          </span>
+        </div>
+      )}
+
       {/* Header row */}
       <div className="flex items-center gap-4 px-5 py-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
         <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
@@ -604,7 +624,9 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
         <div className="flex items-center gap-6">
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-0.5" style={font}>Week total</div>
-            <div className="text-sm font-semibold text-white" style={font}>{fmtH(weeklyTotal)}</div>
+            <div className="text-sm font-semibold" style={{ color: burnoutRisk ? "#ef4444" : "#fff", ...font }}>
+              {fmtH(weeklyTotal)}
+            </div>
           </div>
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-0.5" style={font}>Utilization</div>
