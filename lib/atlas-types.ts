@@ -103,6 +103,9 @@ export interface TaskItem {
 // Member role type
 export type MemberRole = "owner" | "admin" | "editor" | "viewer";
 
+export const DEMO_EMAIL = "rahmi@ideatebetter.com";
+export const FAKE_MEMBER_IDS = new Set(["m1", "m2", "m3", "m4", "m5"]);
+
 // Workspace member interface
 export interface WorkspaceMember {
   id: string;
@@ -167,6 +170,45 @@ export const DEFAULT_NAMING_CONVENTIONS: NamingConventions = {
   defaultRule: DEFAULT_NAMING_RULE,
   fileTypeRules: {},
 };
+
+// Apply a naming rule to generate a label given contextual values
+export function applyNamingRule(
+  rule: NamingRule,
+  ctx: { project?: string; product?: string; type?: string; version?: string; author?: string; status?: string; custom?: string }
+): string {
+  const date = new Date();
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const formattedDate = rule.dateFormat === "YYYYMMDD" ? `${yyyy}${mm}${dd}`
+    : rule.dateFormat === "MM-DD-YYYY" ? `${mm}-${dd}-${yyyy}`
+    : rule.dateFormat === "DD-MM-YYYY" ? `${dd}-${mm}-${yyyy}`
+    : `${yyyy}-${mm}-${dd}`;
+
+  const values: Record<NamingToken, string> = {
+    project: ctx.project ?? "project",
+    product: ctx.product ?? ctx.project ?? "product",
+    type: ctx.type ?? "file",
+    version: ctx.version ?? "v1",
+    date: formattedDate,
+    author: ctx.author ?? "",
+    status: ctx.status ?? "draft",
+    custom: ctx.custom ?? rule.customPrefix ?? "custom",
+  };
+
+  const parts = rule.tokens.map(t => values[t] || t);
+  const sep = rule.separator;
+  let result = parts.join(sep);
+
+  switch (rule.caseStyle) {
+    case "lowercase": return result.toLowerCase();
+    case "uppercase": return result.toUpperCase();
+    case "titlecase": return result.split(sep).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(sep);
+    case "kebab-case": return result.toLowerCase().replace(new RegExp(`\\${sep}`, "g"), "-");
+    case "snake_case": return result.toLowerCase().replace(new RegExp(`\\${sep}`, "g"), "_");
+    default: return result;
+  }
+}
 
 // Workspace settings interface
   export interface WorkspaceSettings {
@@ -688,11 +730,26 @@ export const HEALTH_STATUS_COLORS: Record<SageHealthStatus, string> = {
   "critical": "#fca5a5",
 };
 
+// Document frame node (parsed PDF / text file accordion)
+export interface DocSection {
+  id: string;
+  pageNum: number;
+  label: string;
+  content: string;
+}
+
+export interface DocFrameNodeData {
+  title: string;
+  pageCount: number;
+  sections: DocSection[];
+  collapsed?: boolean;
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt" | "presentationGroup";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt" | "presentationGroup" | "docFrame";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | DocFrameNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

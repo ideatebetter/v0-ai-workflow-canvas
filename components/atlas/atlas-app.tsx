@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Canvas, WorkspaceSettings, CanvasFramework, WorkspaceMember } from "@/lib/atlas-types";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, DEMO_EMAIL, FAKE_MEMBER_IDS } from "@/lib/atlas-types";
 import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
@@ -10,52 +10,40 @@ import { useAuth } from "@/lib/auth-context";
 
 type View = "home" | "canvas";
 
-const SETTINGS_STORAGE_KEY = "atlas-workspace-settings";
-const WORKSPACES_STORAGE_KEY = "atlas-workspaces";
-const ACTIVE_WORKSPACE_STORAGE_KEY = "atlas-active-workspace";
-
-function loadSettings(): WorkspaceSettings {
-  if (typeof window === "undefined") return DEFAULT_WORKSPACE_SETTINGS;
-  try {
-    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load settings from localStorage:", e);
-  }
-  return DEFAULT_WORKSPACE_SETTINGS;
-}
-
-const FAKE_MEMBER_IDS = new Set(["m1", "m2", "m3", "m4", "m5"]);
-
-function loadWorkspaces(): WorkspaceSettings[] {
-  if (typeof window === "undefined") return [DEFAULT_WORKSPACE_SETTINGS];
-  try {
-    const stored = localStorage.getItem(WORKSPACES_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as WorkspaceSettings[];
-      }
-    }
-  } catch (e) {
-    console.error("Failed to load workspaces from localStorage:", e);
-  }
-  return [DEFAULT_WORKSPACE_SETTINGS];
-}
+const ACTIVE_WORKSPACE_SESSION_KEY = "atlas-active-workspace";
+const WORKSPACES_CACHE_SESSION_KEY = "atlas-workspaces-cache";
 
 export function AtlasApp() {
   const { user, loading: authLoading } = useAuth();
   const [view, setView] = useState<View>("home");
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const [canvases, setCanvases] = useState<Canvas[]>([]);
-  const [workspaces, setWorkspaces] = useState<WorkspaceSettings[]>([DEFAULT_WORKSPACE_SETTINGS]);
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(DEFAULT_WORKSPACE_SETTINGS.id);
+  const [workspaces, setWorkspaces] = useState<WorkspaceSettings[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(WORKSPACES_CACHE_SESSION_KEY);
+      if (cached) {
+        const parsed: Array<{ id: string; name: string; description: string }> = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((w: any) => ({ ...DEFAULT_WORKSPACE_SETTINGS, id: w.id, name: w.name, description: w.description ?? "", branding: w.branding ?? DEFAULT_WORKSPACE_SETTINGS.branding }));
+        }
+      }
+    } catch { /* ignore */ }
+    return [DEFAULT_WORKSPACE_SETTINGS];
+  });
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(() => {
+    try {
+      const savedId = sessionStorage.getItem(ACTIVE_WORKSPACE_SESSION_KEY);
+      if (savedId) return savedId;
+    } catch { /* ignore */ }
+    return DEFAULT_WORKSPACE_SETTINGS.id;
+  });
   const workspaceSettings: WorkspaceSettings = workspaces.find(w => w.id === activeWorkspaceId) ?? workspaces[0];
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
+  const [isWorkspaceSynced, setIsWorkspaceSynced] = useState(() => {
+    try { return !!sessionStorage.getItem(WORKSPACES_CACHE_SESSION_KEY); } catch { return false; }
+  });
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
@@ -63,8 +51,6 @@ export function AtlasApp() {
 
   // Load canvases from API
   const loadCanvasesFromAPI = useCallback(async () => {
-    const DEMO_EMAIL = "rahmi@ideatebetter.com";
-
     if (!user) {
       console.log("[v0] No user, using INITIAL_CANVASES");
       setCanvases(INITIAL_CANVASES);
@@ -114,47 +100,6 @@ export function AtlasApp() {
     }
   }, [user]);
 
-  // Seed the logged-in user into workspace members
-  useEffect(() => {
-    if (!user) return;
-    const DEMO_EMAIL = "rahmi@ideatebetter.com";
-    const isDemo = user.email === DEMO_EMAIL;
-
-    const displayName: string =
-      (user.user_metadata?.display_name as string) ||
-      user.email?.split("@")[0] ||
-      "You";
-    const initials = displayName
-      .split(" ")
-      .map((n: string) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-    const realMember: WorkspaceMember = {
-      id: user.id,
-      name: displayName,
-      email: user.email ?? "",
-      initials,
-      role: "owner",
-    };
-
-    setWorkspaces(prev =>
-      prev.map(w => {
-        const alreadyReal = w.members.some(m => m.id === user.id);
-        const isFirstWorkspace = prev.indexOf(w) === 0;
-        if (isDemo && isFirstWorkspace) {
-          // Demo account first workspace: real user + fake members
-          if (alreadyReal && w.members.some(m => FAKE_MEMBER_IDS.has(m.id))) return w;
-          const fakeMembers = WORKSPACE_MEMBERS.filter(m => FAKE_MEMBER_IDS.has(m.id));
-          return { ...w, members: [realMember, ...fakeMembers] };
-        } else {
-          // All other workspaces (including demo's secondary workspaces): only real user
-          if (alreadyReal) return { ...w, members: w.members.filter(m => !FAKE_MEMBER_IDS.has(m.id)) };
-          return { ...w, members: [realMember] };
-        }
-      })
-    );
-  }, [user]);
 
   // Save canvas to API (debounced)
   const saveCanvasToAPI = useCallback(async (canvas: Canvas) => {
@@ -240,20 +185,9 @@ export function AtlasApp() {
     }
   }, [user]);
 
-  // Load settings and canvases on mount; also handle deep links (?canvas=&node=)
+  // Handle deep links on mount (?canvas=&node=)
   useEffect(() => {
-    const loadedWorkspaces = loadWorkspaces();
-    setWorkspaces(loadedWorkspaces);
-    try {
-      const storedActiveId = localStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY);
-      if (storedActiveId && loadedWorkspaces.find(w => w.id === storedActiveId)) {
-        setActiveWorkspaceId(storedActiveId);
-      } else {
-        setActiveWorkspaceId(loadedWorkspaces[0].id);
-      }
-    } catch (e) { /* ignore */ }
     setIsHydrated(true);
-
     const params = new URLSearchParams(window.location.search);
     const targetCanvas = params.get("canvas");
     const targetNode = params.get("node");
@@ -272,51 +206,162 @@ export function AtlasApp() {
     }
   }, [user, authLoading, loadCanvasesFromAPI]);
 
-  // Save workspaces to localStorage whenever they change
+  // Load all workspaces from Supabase on login. Workspace identity lives in Supabase only.
   useEffect(() => {
-    if (isHydrated) {
-      try {
-        localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(workspaces));
-        localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, activeWorkspaceId);
-        // Keep legacy key in sync with active workspace for backward compat
-        const active = workspaces.find(w => w.id === activeWorkspaceId);
-        if (active) localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(active));
-      } catch (e) {
-        console.error("Failed to save workspaces to localStorage:", e);
-      }
+    if (authLoading) return;
+    if (!user) {
+      setWorkspaces([DEFAULT_WORKSPACE_SETTINGS]);
+      setActiveWorkspaceId(DEFAULT_WORKSPACE_SETTINGS.id);
+      setIsWorkspaceSynced(true);
+      return;
     }
-  }, [workspaces, activeWorkspaceId, isHydrated]);
+
+    const isDemo = user.email === DEMO_EMAIL;
+    setIsWorkspaceSynced(false);
+
+    fetch("/api/workspace")
+      .then(r => r.ok ? r.json() : null)
+      .then(async (data) => {
+        const serverWorkspaces: any[] = data?.workspaces ?? [];
+        if (serverWorkspaces.length === 0) return;
+
+        // Fetch members for all workspaces in parallel
+        const allMembersResults = await Promise.all(
+          serverWorkspaces.map(sw =>
+            fetch(`/api/workspace/members?workspaceId=${sw.id}`).catch(() => null)
+          )
+        );
+        const allMembersData = await Promise.all(
+          allMembersResults.map(r => (r?.ok ? r.json().catch(() => null) : null))
+        );
+
+        const toWsMembers = (membersData: any): WorkspaceMember[] =>
+          (membersData?.members ?? []).map((m: any) => ({
+            id: m.userId,
+            name: m.name,
+            email: m.email,
+            initials: m.initials,
+            role: m.role,
+          }));
+
+        // Demo account: merge fake placeholder members into the primary workspace only
+        const primaryMembers = toWsMembers(allMembersData[0]);
+        const primaryMembersFinal = isDemo && primaryMembers.length > 0
+          ? (() => {
+              const realIds = new Set(primaryMembers.map((m: WorkspaceMember) => m.id));
+              const fakes = WORKSPACE_MEMBERS.filter(m => FAKE_MEMBER_IDS.has(m.id) && !realIds.has(m.id));
+              return [...primaryMembers, ...fakes];
+            })()
+          : primaryMembers;
+
+        // Map server workspaces to WorkspaceSettings with real member lists
+        const mapped: WorkspaceSettings[] = serverWorkspaces.map((sw: any, i: number) => ({
+          ...DEFAULT_WORKSPACE_SETTINGS,
+          id: sw.id,
+          name: sw.name,
+          description: sw.description ?? "",
+          branding: sw.settings?.branding ?? DEFAULT_WORKSPACE_SETTINGS.branding,
+          members: i === 0 ? primaryMembersFinal : toWsMembers(allMembersData[i]),
+        }));
+
+        setWorkspaces(mapped);
+
+        // Cache workspace names/ids so next load is instant (sessionStorage = current session only)
+        try {
+          sessionStorage.setItem(WORKSPACES_CACHE_SESSION_KEY, JSON.stringify(
+            mapped.map(w => ({ id: w.id, name: w.name, description: w.description, branding: w.branding }))
+          ));
+        } catch { /* ignore */ }
+
+        // Restore last active workspace from sessionStorage
+        try {
+          const savedId = sessionStorage.getItem(ACTIVE_WORKSPACE_SESSION_KEY);
+          if (savedId && mapped.find(w => w.id === savedId)) {
+            setActiveWorkspaceId(savedId);
+          } else {
+            setActiveWorkspaceId(mapped[0].id);
+          }
+        } catch {
+          setActiveWorkspaceId(mapped[0].id);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsWorkspaceSynced(true));
+  }, [user, authLoading]);
+
+  // Persist active workspace across page refreshes (sessionStorage only — no localStorage)
+  useEffect(() => {
+    if (!isHydrated || activeWorkspaceId === DEFAULT_WORKSPACE_SETTINGS.id) return;
+    try { sessionStorage.setItem(ACTIVE_WORKSPACE_SESSION_KEY, activeWorkspaceId); } catch { /* ignore */ }
+  }, [activeWorkspaceId, isHydrated]);
 
   const handleWorkspaceSettingsChange = useCallback((settings: WorkspaceSettings) => {
     setWorkspaces(prev => prev.map(w => w.id === settings.id ? settings : w));
+  }, []);
+
+  const handleSaveWorkspaceDetails = useCallback((settings: WorkspaceSettings) => {
+    if (!settings.id || settings.id === DEFAULT_WORKSPACE_SETTINGS.id) return;
+    fetch("/api/workspace", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workspaceId: settings.id,
+        name: settings.name,
+        description: settings.description || null,
+        settings: settings.branding ? { branding: settings.branding } : undefined,
+      }),
+    })
+      .then(r => r.json().then(d => { if (!r.ok) console.error("Workspace save failed:", d); }))
+      .catch(e => console.error("Workspace save error:", e));
   }, []);
 
   const handleWorkspaceSwitch = useCallback((workspaceId: string) => {
     setActiveWorkspaceId(workspaceId);
   }, []);
 
-  const handleCreateWorkspace = useCallback((name: string) => {
+  const handleCreateWorkspace = useCallback(async (name: string) => {
+    if (!user) return;
+    const res = await fetch("/api/workspace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }).catch(() => null);
+
+    if (!res?.ok) return;
+    const data = await res.json();
+    const sw = data.workspace;
+    if (!sw?.id) return;
+
+    const displayName = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "You";
+    const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
     const newWorkspace: WorkspaceSettings = {
       ...DEFAULT_WORKSPACE_SETTINGS,
-      id: `ws-${Date.now()}`,
-      name,
-      description: "",
-      members: [],
+      id: sw.id,
+      name: sw.name,
+      members: [{ id: user.id, name: displayName, email: user.email ?? "", initials, role: "owner" }],
     };
     setWorkspaces(prev => [...prev, newWorkspace]);
     setActiveWorkspaceId(newWorkspace.id);
-  }, []);
+  }, [user]);
 
-  const handleDeleteWorkspace = useCallback(() => {
+  const handleDeleteWorkspace = useCallback(async () => {
+    if (workspaces.length <= 1) return;
+    const isOwner = workspaces.find(w => w.id === activeWorkspaceId)?.members.some(
+      m => m.id === user?.id && m.role === "owner"
+    );
+
+    if (isOwner) {
+      await fetch(`/api/workspace?workspaceId=${activeWorkspaceId}`, { method: "DELETE" }).catch(() => {});
+    }
+
     setWorkspaces(prev => {
-      if (prev.length <= 1) return prev; // never delete the last workspace
       const remaining = prev.filter(w => w.id !== activeWorkspaceId);
+      if (remaining.length === 0) return prev;
       setActiveWorkspaceId(remaining[0].id);
-      // Remove all canvases belonging to the deleted workspace
       setCanvases(c => c.filter(canvas => canvas.workspaceId !== activeWorkspaceId));
       return remaining;
     });
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, workspaces, user]);
 
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
@@ -527,7 +572,7 @@ export function AtlasApp() {
             name: canvasName,
             nodes: newNodes,
             edges: [],
-            settings: { comments: [] },
+            settings: { comments: [], workspaceId: activeWorkspaceId },
           }),
         });
         
@@ -766,10 +811,12 @@ export function AtlasApp() {
       onWorkspaceSwitch={handleWorkspaceSwitch}
       onWorkspaceCreate={handleCreateWorkspace}
       onDeleteWorkspace={handleDeleteWorkspace}
+      onSaveWorkspaceDetails={handleSaveWorkspaceDetails}
       canvases={canvases}
       onCanvasesChange={handleCanvasesChange}
       onSaveAllToCloud={handleSaveAllToCloud}
       isLoadingCanvases={isLoadingCanvases}
+      isWorkspaceSynced={isWorkspaceSynced}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
       onRemoveFramework={handleRemoveFramework}

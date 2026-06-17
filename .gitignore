@@ -12,3 +12,4 @@ node_modules/
 .DS_Store
 .vercel
 v0-ai-workflow-canvas/
+.env*

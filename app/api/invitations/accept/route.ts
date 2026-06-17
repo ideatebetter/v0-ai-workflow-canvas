@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // POST - Accept an invitation
@@ -17,8 +18,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invitation token required" }, { status: 400 });
     }
 
-    // Get the invitation
-    const { data: invitation, error: inviteError } = await supabase
+    // Use admin client to bypass RLS — the invitee is not yet a workspace member
+    const admin = createAdminClient();
+    const { data: invitation, error: inviteError } = await admin
       .from("workspace_invitations")
       .select("*, workspaces(name)")
       .eq("token", token)
@@ -34,16 +36,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (new Date(invitation.expires_at) < new Date()) {
-      // Mark as expired
-      await supabase
-        .from("workspace_invitations")
-        .update({ status: "expired" })
-        .eq("id", invitation.id);
+      await admin.from("workspace_invitations").update({ status: "expired" }).eq("id", invitation.id);
       return NextResponse.json({ error: "This invitation has expired" }, { status: 400 });
     }
 
-    // Check if already a member
-    const { data: existingMember } = await supabase
+    // Check if already a member — treat as success so the UI can redirect them in
+    const { data: existingMember } = await admin
       .from("workspace_members")
       .select("id")
       .eq("workspace_id", invitation.workspace_id)
@@ -51,11 +49,21 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingMember) {
-      return NextResponse.json({ error: "You are already a member of this workspace" }, { status: 400 });
+      await admin
+        .from("workspace_invitations")
+        .update({ status: "accepted", accepted_at: new Date().toISOString() })
+        .eq("id", invitation.id);
+
+      return NextResponse.json({
+        success: true,
+        alreadyMember: true,
+        workspaceId: invitation.workspace_id,
+        workspaceName: (invitation.workspaces as { name?: string } | null)?.name || "Workspace",
+      });
     }
 
-    // Add user as member
-    const { error: memberError } = await supabase
+    // Add user as member (admin client bypasses RLS — invitee is not yet a member)
+    const { error: memberError } = await admin
       .from("workspace_members")
       .insert({
         workspace_id: invitation.workspace_id,
@@ -69,12 +77,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark invitation as accepted
-    await supabase
+    await admin
       .from("workspace_invitations")
-      .update({ 
-        status: "accepted",
-        accepted_at: new Date().toISOString()
-      })
+      .update({ status: "accepted", accepted_at: new Date().toISOString() })
       .eq("id", invitation.id);
 
     return NextResponse.json({ 
@@ -97,9 +102,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS — the invitee is not yet a workspace member
+    const admin = createAdminClient();
 
-    const { data: invitation, error } = await supabase
+    const { data: invitation, error } = await admin
       .from("workspace_invitations")
       .select("id, email, role, status, expires_at, workspaces(id, name)")
       .eq("token", token)

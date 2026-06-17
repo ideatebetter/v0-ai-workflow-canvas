@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 type Tab = "signin" | "signup";
 
-export default function LoginPage() {
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/";
+  const tabParam = searchParams.get("tab");
+  const emailParam = searchParams.get("email");
+  const supabase = createClient();
+
   const [activeTab, setActiveTab] = useState<Tab>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,8 +23,10 @@ export default function LoginPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
-  const supabase = createClient();
+  useEffect(() => {
+    if (tabParam === "signup") setActiveTab("signup");
+    if (emailParam) setEmail(emailParam);
+  }, [tabParam, emailParam]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +39,7 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/");
+      router.push(returnTo);
       router.refresh();
     }
   };
@@ -40,6 +49,34 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     setSuccess(null);
+
+    // If coming from an invite link, create the account via admin API (no email verification needed)
+    const inviteTokenMatch = returnTo.match(/^\/invite\/([^/?]+)/);
+    const inviteToken = inviteTokenMatch?.[1];
+
+    if (inviteToken) {
+      const res = await fetch("/api/auth/invite-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, displayName, inviteToken }),
+      });
+      const data = await res.json();
+      if (!res.ok && res.status !== 409) {
+        setError(data.error || "Failed to create account");
+        setLoading(false);
+        return;
+      }
+      // Account created (or already existed) — sign in immediately
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(false);
+        return;
+      }
+      router.push(returnTo);
+      router.refresh();
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -63,7 +100,6 @@ export default function LoginPage() {
     setActiveTab(tab);
     setError(null);
     setSuccess(null);
-    setEmail("");
     setPassword("");
     setDisplayName("");
   };
@@ -256,5 +292,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

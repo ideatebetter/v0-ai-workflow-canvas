@@ -51,6 +51,9 @@ export async function updateSession(request: NextRequest) {
     '/auth/error',
     '/auth/change-password',
     '/api/waitlist',  // Allow waitlist submissions without auth
+    '/invite/',                  // Invite links must be visible to unauthenticated users
+    '/api/invitations/accept',   // Token lookup must work before the user is logged in
+    '/api/auth/invite-signup',   // Account creation for invited users (no session yet)
   ]
 
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))

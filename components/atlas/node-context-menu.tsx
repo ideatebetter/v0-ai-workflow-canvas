@@ -18,6 +18,7 @@ interface NodeContextMenuProps {
   isSynced?: boolean;
   onOrganize?: () => void;
   onCopyLink?: () => void;
+  onGroupForPresentation?: () => void;
 }
 
 export function NodeContextMenu({
@@ -36,6 +37,7 @@ export function NodeContextMenu({
   isSynced,
   onOrganize,
   onCopyLink,
+  onGroupForPresentation,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -156,6 +158,25 @@ export function NodeContextMenu({
             <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
           Organize
+        </button>
+      )}
+
+      {/* Group for Presentation - shown when 2+ nodes selected */}
+      {selectedCount > 1 && onGroupForPresentation && (
+        <button
+          type="button"
+          onClick={() => {
+            onGroupForPresentation();
+            onClose();
+          }}
+          className="w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors flex items-center gap-3"
+          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif", color: "#F0FE00" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "#F0FE00" }}>
+            <rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2"/>
+            <path d="M5 8H11M8 5V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Group for Presentation
         </button>
       )}
 

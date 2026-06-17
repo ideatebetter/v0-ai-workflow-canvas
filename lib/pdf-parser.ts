@@ -1,89 +1,31 @@
-// PDF text extraction and rendering using pdfjs-dist (no worker — avoids Next.js bundler issues)
+// PDF utilities — text extraction is server-side; thumbnail rendering is skipped (no worker available in browser)
 
 export interface ParsedPDFPage {
   pageNumber: number;
   text: string;
 }
 
+// Text extraction via server-side API (Node.js pdfjs, no worker)
 export async function parsePDFToText(file: File): Promise<ParsedPDFPage[]> {
-  // Dynamically import to avoid SSR issues
-  const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
+  const form = new FormData();
+  form.append("file", file);
 
-  // Disable worker entirely — runs on the main thread, avoids worker URL resolution issues in Next.js
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+  const res = await fetch("/api/parse-pdf", { method: "POST", body: form });
+  if (!res.ok) throw new Error("PDF parse failed");
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
-  const pages: ParsedPDFPage[] = [];
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ")
-      .replace(/\s{2,}/g, "\n")
-      .trim();
-    if (text.length > 20) {
-      pages.push({ pageNumber: i, text });
-    }
-  }
-
-  return pages;
+  const { pages } = await res.json();
+  return pages as ParsedPDFPage[];
 }
 
-// Render first page of a PDF File to a data URL for use as a preview image
-export async function renderPDFFirstPageToDataURL(file: File, scale = 1.5): Promise<string | null> {
-  try {
-    const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
-    const page = await pdf.getPage(1);
-
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-    return canvas.toDataURL("image/jpeg", 0.85);
-  } catch {
-    return null;
-  }
+// Returns null — PDF thumbnail rendering requires a browser worker which isn't reliable cross-origin.
+// The file node will show the PDF icon placeholder instead.
+export async function renderPDFFirstPageToDataURL(_file: File, _scale = 1.5): Promise<string | null> {
+  return null;
 }
 
-// Render first page of a PDF from a URL (for existing uploaded PDFs)
-// Fetches the bytes ourselves to avoid pdfjs URL-loading issues in no-worker mode
-export async function renderPDFFromURL(url: string, scale = 1.5): Promise<string | null> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const arrayBuffer = await response.arrayBuffer();
-
-    const pdfjsLib = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as typeof import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, useWorkerFetch: false }).promise;
-    const page = await pdf.getPage(1);
-
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-    return canvas.toDataURL("image/jpeg", 0.85);
-  } catch {
-    return null;
-  }
+// Returns null for the same reason — existing PDFs show the icon placeholder.
+export async function renderPDFFromURL(_url: string, _scale = 1.5): Promise<string | null> {
+  return null;
 }
 
 // Split a block of text into logical sections by double-newlines or headings
@@ -95,7 +37,6 @@ export function splitIntoSections(rawText: string, maxSections = 8): string[] {
 
   if (chunks.length <= maxSections) return chunks;
 
-  // Merge smallest adjacent chunks until within limit
   while (chunks.length > maxSections) {
     let minIdx = 0;
     let minLen = chunks[0].length;

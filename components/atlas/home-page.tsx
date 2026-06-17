@@ -10,7 +10,7 @@ import { InviteDialog } from "./invite-dialog";
 import { FileDetailModal } from "./file-detail-modal";
 import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
 import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, FRAMEWORK_CATEGORIES, PROJECT_COLORS, DEMO_EMAIL, FAKE_MEMBER_IDS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { ReactFlow, Background, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
@@ -188,7 +188,6 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
   );
 }
 
-const DEMO_EMAIL = "rahmi@ideatebetter.com";
 
 interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
@@ -199,6 +198,7 @@ interface HomePageProps {
   onWorkspaceSwitch?: (workspaceId: string) => void;
   onWorkspaceCreate?: (name: string) => void;
   onDeleteWorkspace?: () => void;
+  onSaveWorkspaceDetails?: (settings: WorkspaceSettings) => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
   frameworks?: CanvasFramework[];
@@ -206,10 +206,11 @@ interface HomePageProps {
   onRemoveFramework?: (frameworkId: string) => void;
   onSaveAllToCloud?: () => void;
   isLoadingCanvases?: boolean;
+  isWorkspaceSynced?: boolean;
   userEmail?: string;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, onDeleteWorkspace, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases, userEmail }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, onDeleteWorkspace, onSaveWorkspaceDetails, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases, isWorkspaceSynced, userEmail }: HomePageProps) {
   const isDemoAccount = userEmail === DEMO_EMAIL;
   const onSettingsChange = onWorkspaceSettingsChange;
   const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
@@ -218,6 +219,34 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
+
+  // Restore activeView from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    const validViews: HomeView[] = ["home", "canvases", "community", "frameworks", "workspace-canvas", "settings", "all-files", "todos"];
+    if (viewParam && validViews.includes(viewParam as HomeView)) {
+      setActiveView(viewParam as HomeView);
+    }
+  }, []);
+
+  // Keep URL in sync with activeView (skip first render so the mount effect reads URL before we overwrite it)
+  const viewSyncFirstRender = useRef(true);
+  useEffect(() => {
+    if (viewSyncFirstRender.current) {
+      viewSyncFirstRender.current = false;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (activeView === "home") {
+      params.delete("view");
+    } else {
+      params.set("view", activeView);
+    }
+    const search = params.toString();
+    window.history.replaceState({}, "", search ? `?${search}` : window.location.pathname);
+  }, [activeView]);
+
   const [canvasSubView, setCanvasSubView] = useState<CanvasSubView>("canvases");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
@@ -394,6 +423,51 @@ const [showSageChat, setShowSageChat] = useState(false);
   
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+
+  // Real Supabase member count for sidebar (loaded on mount)
+  // Settings page — real Supabase member management
+  const [settingsSupabaseWorkspaceId, setSettingsSupabaseWorkspaceId] = useState<string | null>(null);
+  type SettingsMember = { id: string; userId: string; role: string; email: string; name: string; initials: string; isOwner: boolean };
+  const [settingsRealMembers, setSettingsRealMembers] = useState<SettingsMember[]>([]);
+  const [settingsMembersLoading, setSettingsMembersLoading] = useState(false);
+  const [settingsMemberError, setSettingsMemberError] = useState<string | null>(null);
+  const [settingsTransferConfirmId, setSettingsTransferConfirmId] = useState<string | null>(null);
+  type PendingInvitation = { id: string; email: string; role: string; createdAt: string; expiresAt: string };
+  const [settingsPendingInvitations, setSettingsPendingInvitations] = useState<PendingInvitation[]>([]);
+  const [settingsResendingId, setSettingsResendingId] = useState<string | null>(null);
+  const [settingsResendSuccessId, setSettingsResendSuccessId] = useState<string | null>(null);
+
+  const loadSettingsMembers = useCallback(async (wsId: string) => {
+    setSettingsMembersLoading(true);
+    try {
+      const [membersRes, invitesRes] = await Promise.all([
+        fetch(`/api/workspace/members?workspaceId=${wsId}`),
+        fetch(`/api/invitations?workspaceId=${wsId}`),
+      ]);
+      if (membersRes.ok) setSettingsRealMembers((await membersRes.json()).members ?? []);
+      if (invitesRes.ok) {
+        const inv = (await invitesRes.json()).invitations ?? [];
+        setSettingsPendingInvitations(inv.map((i: { id: string; email: string; role: string; created_at: string; expires_at: string }) => ({ id: i.id, email: i.email, role: i.role, createdAt: i.created_at, expiresAt: i.expires_at })));
+      }
+    } catch { /* fall back to localStorage members */ }
+    finally { setSettingsMembersLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (activeView !== "settings") return;
+    setSettingsMemberError(null);
+    setSettingsTransferConfirmId(null);
+    setSettingsPendingInvitations([]);
+    setSettingsRealMembers([]);
+
+    // workspaceSettings.id is the Supabase UUID for all workspaces
+    const wsId = workspaceSettings.id;
+    if (!wsId || wsId === "ws-1") return; // skip default placeholder
+
+    setSettingsSupabaseWorkspaceId(wsId);
+    loadSettingsMembers(wsId);
+  }, [activeView, workspaceSettings.id, loadSettingsMembers]);
+
   const [showDeleteConfirmInline, setShowDeleteConfirmInline] = useState(false);
   const [deleteConfirmTextInline, setDeleteConfirmTextInline] = useState("");
   // Use external frameworks if provided, otherwise use local state
@@ -409,14 +483,22 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [ribbonMinimized, setRibbonMinimized] = useState(false);
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
-  // Canvases with no workspaceId are legacy — treat them as belonging to the first workspace
+  // Canvases with no workspaceId (legacy) or a stale workspaceId from a different
+  // browser session belong to the first/primary workspace.
   const primaryWorkspaceId = workspaces[0]?.id ?? activeWorkspaceId;
+  const knownWorkspaceIds = useMemo(() => new Set(workspaces.map(w => w.id)), [workspaces]);
 
-  // All canvases scoped to the active workspace (used for every display operation below)
-  const workspaceCanvases = useMemo(() =>
-    canvases.filter(c => (c.workspaceId ?? primaryWorkspaceId) === activeWorkspaceId),
-    [canvases, primaryWorkspaceId, activeWorkspaceId]
-  );
+  // All canvases scoped to the active workspace (used for every display operation below).
+  // Returns empty while workspace sync is in flight to prevent cross-workspace canvas flash.
+  const workspaceCanvases = useMemo(() => {
+    if (!isWorkspaceSynced) return [];
+    return canvases.filter(c => {
+      const effectiveId = (c.workspaceId && knownWorkspaceIds.has(c.workspaceId))
+        ? c.workspaceId
+        : primaryWorkspaceId;
+      return effectiveId === activeWorkspaceId;
+    });
+  }, [canvases, primaryWorkspaceId, activeWorkspaceId, knownWorkspaceIds, isWorkspaceSynced]);
 
   // Collect all todos from workspace canvases (all pages), keyed by the date they were created (YYYY-MM-DD)
   const todosByDate = useMemo(() => {
@@ -578,10 +660,15 @@ const [showSageChat, setShowSageChat] = useState(false);
   }, [workspaceCanvases, activeWorkspaceId]);
 
   const filteredCanvases = useMemo(() => {
+    // Block display until workspace identity is confirmed from Supabase
+    if (!isWorkspaceSynced) return [];
+
     // Only show canvases belonging to the active workspace
     // (legacy canvases with no workspaceId belong to the first/primary workspace)
     let filtered = canvases.filter(c => {
-      const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+      const cWorkspace = (c.workspaceId && knownWorkspaceIds.has(c.workspaceId))
+        ? c.workspaceId
+        : primaryWorkspaceId;
       return cWorkspace === activeWorkspaceId;
     });
 
@@ -607,7 +694,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
-  }, [canvases, sidebarFilter, searchQuery]);
+  }, [canvases, sidebarFilter, searchQuery, isWorkspaceSynced, knownWorkspaceIds, primaryWorkspaceId, activeWorkspaceId]);
 
   const handleCreateCanvas = () => {
     if (!newCanvasName.trim()) return;
@@ -681,7 +768,9 @@ const [showSageChat, setShowSageChat] = useState(false);
   const getProjectCanvases = (projectId: string) => {
     return canvases
       .filter(c => {
-        const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+        const cWorkspace = (c.workspaceId && knownWorkspaceIds.has(c.workspaceId))
+          ? c.workspaceId
+          : primaryWorkspaceId;
         return c.projectId === projectId && cWorkspace === activeWorkspaceId;
       })
       .sort((a, b) => {
@@ -693,7 +782,9 @@ const [showSageChat, setShowSageChat] = useState(false);
   const getUngroupedCanvases = () => {
     return canvases
       .filter(c => {
-        const cWorkspace = c.workspaceId ?? primaryWorkspaceId;
+        const cWorkspace = (c.workspaceId && knownWorkspaceIds.has(c.workspaceId))
+          ? c.workspaceId
+          : primaryWorkspaceId;
         return !c.projectId && cWorkspace === activeWorkspaceId;
       })
       .sort((a, b) => {
@@ -1114,15 +1205,15 @@ const [showSageChat, setShowSageChat] = useState(false);
                   className="max-w-full max-h-full object-contain p-0.5"
                 />
               ) : (
-                workspaceSettings.name.charAt(0)
+                isWorkspaceSynced ? workspaceSettings.name.charAt(0) : ""
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="text-sm font-medium text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                {workspaceSettings.name}
+                {isWorkspaceSynced ? workspaceSettings.name : <span className="inline-block w-24 h-3 bg-white/10 rounded animate-pulse" />}
               </div>
               <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                {workspaceSettings.members.length} Member{workspaceSettings.members.length !== 1 ? "s" : ""}
+                {isWorkspaceSynced ? `${workspaceSettings.members.length} Member${workspaceSettings.members.length !== 1 ? "s" : ""}` : <span className="inline-block w-12 h-2.5 bg-white/10 rounded animate-pulse" />}
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-500">
@@ -1153,10 +1244,14 @@ const [showSageChat, setShowSageChat] = useState(false);
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
                 >
                   <div
-                    className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                    style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0 overflow-hidden"
+                    style={{ backgroundColor: ws.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
                   >
-                    {ws.name.charAt(0)}
+                    {ws.branding?.workspaceIcon ? (
+                      <img src={ws.branding.workspaceIcon} alt={ws.name} className="w-full h-full object-contain" />
+                    ) : (
+                      ws.name.charAt(0)
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{ws.name}</div>
@@ -2387,6 +2482,7 @@ All Frameworks
                       type="text"
                       value={workspaceSettings.name}
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, name: e.target.value })}
+                      onBlur={(e) => onSaveWorkspaceDetails?.({ ...workspaceSettings, name: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
                       style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
                     />
@@ -2402,6 +2498,7 @@ All Frameworks
                     <textarea
                       value={workspaceSettings.description || ""}
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, description: e.target.value })}
+                      onBlur={(e) => onSaveWorkspaceDetails?.({ ...workspaceSettings, description: e.target.value })}
                       rows={2}
                       className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
                       style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
@@ -2433,7 +2530,7 @@ All Frameworks
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Icon
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
                     <div className="text-[10px] text-gray-500 mt-1">Square</div>
                   </div>
@@ -2449,7 +2546,7 @@ All Frameworks
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Wordmark
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
                     <div className="text-[10px] text-gray-500 mt-1">Horizontal</div>
                   </div>
@@ -2465,7 +2562,7 @@ All Frameworks
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Photo
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); onWorkspaceSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: blob.url } }); } catch (error) { console.error("Upload failed:", error); } }} />
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
                     <div className="text-[10px] text-gray-500 mt-1">Square</div>
                   </div>
@@ -2474,30 +2571,271 @@ All Frameworks
 
               {/* Team Members */}
               <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                    <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="5.83333" cy="4.66667" r="2.66667" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M15.3333 14V12.6667C15.3329 12.0758 15.1362 11.5019 14.7742 11.0349C14.4122 10.5679 13.9054 10.2344 13.3333 10.0867" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M10.6667 2.08667C11.2403 2.23354 11.7487 2.56714 12.1118 3.03488C12.4748 3.50262 12.6719 4.07789 12.6719 4.67C12.6719 5.26211 12.4748 5.83738 12.1118 6.30512C11.7487 6.77286 11.2403 7.10646 10.6667 7.25333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Team Members
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {workspaceSettings.members.map((member) => (
-                    <div key={member.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
-                        {member.initials}
-                      </div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
-                      <span className="text-xs text-gray-500">{member.role === "owner" ? "Owner" : member.role === "admin" ? "Admin" : member.role === "editor" ? "Editor" : "Viewer"}</span>
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => setShowInviteDialog(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333", color: "#888888" }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                      <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="5.83333" cy="4.66667" r="2.66667" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M15.3333 14V12.6667C15.3329 12.0758 15.1362 11.5019 14.7742 11.0349C14.4122 10.5679 13.9054 10.2344 13.3333 10.0867" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10.6667 2.08667C11.2403 2.23354 11.7487 2.56714 12.1118 3.03488C12.4748 3.50262 12.6719 4.07789 12.6719 4.67C12.6719 5.26211 12.4748 5.83738 12.1118 6.30512C11.7487 6.77286 11.2403 7.10646 10.6667 7.25333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Team Members
+                    {settingsMembersLoading && <span className="text-xs text-gray-600 font-normal">Loading…</span>}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteDialog(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                    style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     Invite
                   </button>
                 </div>
+
+                {settingsMemberError && (
+                  <div className="mb-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {settingsMemberError}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  {settingsMembersLoading ? (
+                    <div className="space-y-1">
+                      {[1, 2].map(i => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse" style={{ backgroundColor: "#1a1a1a" }}>
+                          <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: "#2a2a2a" }} />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-3 rounded" style={{ backgroundColor: "#2a2a2a", width: "40%" }} />
+                            <div className="h-2.5 rounded" style={{ backgroundColor: "#222", width: "60%" }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {!settingsMembersLoading && (() => {
+                    const members: SettingsMember[] = settingsRealMembers;
+                    const realMemberIds = new Set(members.map(m => m.userId));
+                    // Fake members only appear in the primary (first) workspace for the demo account
+                    const fakeMembers = isDemoAccount && workspaceSettings.id === workspaces[0]?.id
+                      ? WORKSPACE_MEMBERS.filter(m => FAKE_MEMBER_IDS.has(m.id) && !realMemberIds.has(m.id))
+                      : [];
+
+                    const currentUserMember = members.find(m => m.email === userEmail);
+                    const isCurrentUserOwner = currentUserMember?.isOwner ?? false;
+                    const isCurrentUserAdminOrOwner = isCurrentUserOwner || currentUserMember?.role === "admin";
+
+                    return <>
+                    {members.map(member => {
+                      const isCurrentUser = member.email === userEmail;
+                      const canChangeRole = isCurrentUserAdminOrOwner && !member.isOwner && !isCurrentUser;
+                      const canRemove = isCurrentUserAdminOrOwner && !member.isOwner && !isCurrentUser;
+                      const canTransfer = isCurrentUserOwner && !member.isOwner && !isCurrentUser;
+                      const confirmingTransfer = settingsTransferConfirmId === member.userId;
+                      const ROLE_LABELS: Record<string, string> = { owner: "Owner", admin: "Admin", editor: "Editor", viewer: "Viewer" };
+
+                      return (
+                        <div key={member.userId}>
+                          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
+                              {member.initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
+                                {isCurrentUser && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>You</span>}
+                              </div>
+                              {member.email && <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.email}</div>}
+                            </div>
+
+                            {canChangeRole ? (
+                              <select
+                                value={member.role}
+                                onChange={async (e) => {
+                                  if (!settingsSupabaseWorkspaceId) return;
+                                  const newRole = e.target.value;
+                                  setSettingsRealMembers(prev => prev.map(m => m.userId === member.userId ? { ...m, role: newRole } : m));
+                                  const res = await fetch("/api/workspace/members", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ workspaceId: settingsSupabaseWorkspaceId, userId: member.userId, role: newRole }),
+                                  });
+                                  if (!res.ok) {
+                                    setSettingsMemberError((await res.json()).error || "Failed to update role");
+                                    loadSettingsMembers(settingsSupabaseWorkspaceId);
+                                  }
+                                }}
+                                className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
+                                style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
+                              >
+                                <option value="viewer">Viewer</option>
+                                <option value="editor">Editor</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                            ) : (
+                              <span className="text-xs text-gray-500 px-2 flex-shrink-0" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                {ROLE_LABELS[member.role] ?? member.role}
+                              </span>
+                            )}
+
+                            {canTransfer && (
+                              <button
+                                type="button"
+                                title="Transfer ownership"
+                                onClick={() => setSettingsTransferConfirmId(confirmingTransfer ? null : member.userId)}
+                                className="flex-shrink-0 p-1.5 rounded transition-colors"
+                                style={{ color: confirmingTransfer ? "#F0FE00" : "#555", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                  <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            )}
+
+                            {canRemove && (
+                              <button
+                                type="button"
+                                title="Remove member"
+                                onClick={async () => {
+                                  if (!settingsSupabaseWorkspaceId) return;
+                                  setSettingsRealMembers(prev => prev.filter(m => m.userId !== member.userId));
+                                  const res = await fetch(`/api/workspace/members?workspaceId=${settingsSupabaseWorkspaceId}&userId=${member.userId}`, { method: "DELETE" });
+                                  if (!res.ok) {
+                                    setSettingsMemberError((await res.json()).error || "Failed to remove member");
+                                    loadSettingsMembers(settingsSupabaseWorkspaceId);
+                                  }
+                                }}
+                                className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            )}
+                            {!canRemove && !canTransfer && <div className="w-[28px] flex-shrink-0" />}
+                          </div>
+
+                          {confirmingTransfer && (
+                            <div className="mx-1 mb-1 px-3 py-2.5 rounded-lg flex items-center justify-between gap-3" style={{ backgroundColor: "#1a1500", border: "1px solid #3a3000" }}>
+                              <p className="text-xs" style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                                Transfer ownership to <strong>{member.name}</strong>? You&apos;ll become an Admin.
+                              </p>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <button type="button" onClick={() => setSettingsTransferConfirmId(null)} className="text-xs px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#2a2a2a", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}>Cancel</button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!settingsSupabaseWorkspaceId) return;
+                                    setSettingsTransferConfirmId(null);
+                                    const res = await fetch("/api/workspace/members", {
+                                      method: "PATCH",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ workspaceId: settingsSupabaseWorkspaceId, userId: member.userId, action: "transfer-ownership" }),
+                                    });
+                                    if (!res.ok) setSettingsMemberError((await res.json()).error || "Failed to transfer ownership");
+                                    else loadSettingsMembers(settingsSupabaseWorkspaceId);
+                                  }}
+                                  className="text-xs px-2.5 py-1 rounded-lg font-semibold"
+                                  style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                                >Confirm</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {fakeMembers.map(member => (
+                      <div key={member.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
+                          {member.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
+                          {member.email && <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.email}</div>}
+                        </div>
+                        <span className="text-xs text-gray-500 px-2 flex-shrink-0 capitalize" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.role}</span>
+                        <div className="w-[28px] flex-shrink-0" />
+                      </div>
+                    ))}
+                    </>;
+                  })()}
+                </div>
+
+                {/* Pending Invitations */}
+                {settingsPendingInvitations.length > 0 && (
+                  <div className="mt-4 pt-4" style={{ borderTop: "1px solid #222222" }}>
+                    <p className="text-xs font-medium mb-2" style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Pending Invitations
+                    </p>
+                    <div className="space-y-1">
+                      {settingsPendingInvitations.map(inv => {
+                        const isResending = settingsResendingId === inv.id;
+                        const didResend = settingsResendSuccessId === inv.id;
+                        const ROLE_LABELS: Record<string, string> = { owner: "Owner", admin: "Admin", editor: "Editor", viewer: "Viewer" };
+                        return (
+                          <div key={inv.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: "#222222", color: "#666666" }}>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate" style={{ color: "#aaaaaa", fontFamily: "system-ui, Inter, sans-serif" }}>{inv.email}</div>
+                              <div className="text-xs" style={{ color: "#555555", fontFamily: "system-ui, Inter, sans-serif" }}>{ROLE_LABELS[inv.role] ?? inv.role} · Expires {new Date(inv.expiresAt).toLocaleDateString()}</div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={isResending || didResend}
+                              onClick={async () => {
+                                setSettingsResendingId(inv.id);
+                                setSettingsResendSuccessId(null);
+                                try {
+                                  const res = await fetch("/api/invitations", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ invitationId: inv.id }),
+                                  });
+                                  if (res.ok) {
+                                    setSettingsResendSuccessId(inv.id);
+                                    setTimeout(() => setSettingsResendSuccessId(null), 3000);
+                                    if (settingsSupabaseWorkspaceId) loadSettingsMembers(settingsSupabaseWorkspaceId);
+                                  } else {
+                                    setSettingsMemberError((await res.json()).error || "Failed to resend");
+                                  }
+                                } catch { setSettingsMemberError("Failed to resend invitation"); }
+                                finally { setSettingsResendingId(null); }
+                              }}
+                              className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                              style={{
+                                backgroundColor: didResend ? "#0f2a0f" : "#222222",
+                                color: didResend ? "#4ade80" : isResending ? "#555555" : "#aaaaaa",
+                                border: `1px solid ${didResend ? "#166534" : "#333333"}`,
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              {isResending ? "Sending…" : didResend ? "Sent ✓" : "Resend"}
+                            </button>
+                            <button
+                              type="button"
+                              title="Revoke invitation"
+                              onClick={async () => {
+                                setSettingsPendingInvitations(prev => prev.filter(i => i.id !== inv.id));
+                                const res = await fetch(`/api/invitations?id=${inv.id}`, { method: "DELETE" });
+                                if (!res.ok) {
+                                  setSettingsMemberError((await res.json()).error || "Failed to revoke invitation");
+                                  if (settingsSupabaseWorkspaceId) loadSettingsMembers(settingsSupabaseWorkspaceId);
+                                }
+                              }}
+                              className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preferences */}
@@ -3824,7 +4162,7 @@ All Frameworks
                         ))}
                       </div>
                     </>
-                  ) : filteredCanvases.length === 0 ? (
+                  ) : isWorkspaceSynced && filteredCanvases.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
                         <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="#444" strokeWidth="2"/><path d="M10 14H18M14 10V18" stroke="#444" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -4022,7 +4360,7 @@ All Frameworks
                 </div>
               ))}
             </div>
-          ) : (
+          ) : isWorkspaceSynced ? (
             <div className="flex-1 flex flex-col items-center justify-center py-20">
               <div
                 className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
@@ -4054,7 +4392,7 @@ All Frameworks
                 New canvas
               </button>
             </div>
-          )}
+          ) : null}
               </div>
             ) : (
               /* Files Tree View */

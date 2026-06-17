@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth-context";
-import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingConventions } from "@/lib/atlas-types";
+import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingConventions, NamingRule } from "@/lib/atlas-types";
 import { DEFAULT_NAMING_CONVENTIONS } from "@/lib/atlas-types";
 
 // Admin emails that can create users
@@ -60,6 +60,17 @@ const ROLE_LABELS: Record<MemberRole, string> = {
   viewer: "Viewer",
 };
 
+interface RealMember {
+  id: string;
+  userId: string;
+  role: MemberRole;
+  joinedAt: string;
+  email: string;
+  name: string;
+  initials: string;
+  isOwner: boolean;
+}
+
 export function WorkspaceSettingsDialog({
   open,
   onClose,
@@ -78,6 +89,13 @@ export function WorkspaceSettingsDialog({
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const { user } = useAuth();
 
+  // Real Supabase members state
+  const [supabaseWorkspaceId, setSupabaseWorkspaceId] = useState<string | null>(null);
+  const [realMembers, setRealMembers] = useState<RealMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [memberActionError, setMemberActionError] = useState<string | null>(null);
+  const [transferConfirmUserId, setTransferConfirmUserId] = useState<string | null>(null);
+
   // Admin: Create user state
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -89,11 +107,12 @@ export function WorkspaceSettingsDialog({
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || "");
 
-  // Check if current user is owner or admin of this workspace
-  const currentMember = settings.members.find(
-    m => m.id === user?.id || m.email === user?.email
-  );
-  const isAdminOrOwner = currentMember?.role === "owner" || currentMember?.role === "admin" || isAdmin;
+  // Derive permission from real Supabase members when loaded, fall back to localStorage
+  const currentRealMember = realMembers.find(m => m.userId === user?.id);
+  const currentLocalMember = settings.members.find(m => m.id === user?.id || m.email === user?.email);
+  const effectiveRole = currentRealMember?.role ?? currentLocalMember?.role;
+  const isCurrentUserOwner = currentRealMember?.isOwner ?? (currentLocalMember?.role === "owner");
+  const isAdminOrOwner = effectiveRole === "owner" || effectiveRole === "admin" || !!isAdmin;
 
   // Figma sync token
   const [figmaToken, setFigmaToken] = useState<string | null>(null);
@@ -109,6 +128,33 @@ export function WorkspaceSettingsDialog({
       .then(d => { if (d.token) setFigmaToken(d.token); else throw new Error("no token"); })
       .catch(() => setFigmaTokenError(true));
   }, [open]);
+
+  // Load real Supabase members whenever the dialog opens
+  const loadRealMembers = useCallback(async (wsId: string) => {
+    setMembersLoading(true);
+    try {
+      const res = await fetch(`/api/workspace/members?workspaceId=${wsId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRealMembers(data.members ?? []);
+      }
+    } catch {
+      // silently fall back to localStorage members
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open || !user) return;
+    setMemberActionError(null);
+    setTransferConfirmUserId(null);
+    const wsId = settings.id;
+    if (wsId && wsId !== "ws-1") {
+      setSupabaseWorkspaceId(wsId);
+      loadRealMembers(wsId);
+    }
+  }, [open, user, settings.id, loadRealMembers]);
 
   function copyFigmaToken() {
     if (!figmaToken) return;
@@ -180,78 +226,99 @@ export function WorkspaceSettingsDialog({
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail.trim() || !user) return;
-    
+
     setInviteLoading(true);
     setInviteError(null);
     setInviteLink(null);
 
     try {
-      // First ensure user has a workspace
-      const workspaceRes = await fetch("/api/workspace");
-      const workspaceData = await workspaceRes.json();
-      
-      if (!workspaceRes.ok || !workspaceData.workspace) {
-        setInviteError("Failed to get workspace. Please try again.");
+      const wsId = settings.id && settings.id !== "ws-1" ? settings.id : supabaseWorkspaceId;
+      if (!wsId) {
+        setInviteError("Could not resolve workspace. Make sure you're signed in and try again.");
         return;
       }
 
       const res = await fetch("/api/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workspaceId: workspaceData.workspace.id,
-          email: inviteEmail.toLowerCase(),
-          role: inviteRole,
-        }),
+        body: JSON.stringify({ workspaceId: wsId, email: inviteEmail.toLowerCase(), role: inviteRole }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         setInviteError(data.error || "Failed to send invitation");
         return;
       }
 
-      // Show the invite link
       setInviteLink(data.inviteLink);
-      
-      // Add to local members list as pending
-      const newMember = {
-        id: `pending-${Date.now()}`,
-        name: inviteEmail.split("@")[0],
-        email: inviteEmail,
-        initials: inviteEmail.slice(0, 2).toUpperCase(),
-        role: inviteRole,
-      };
-      
-      onSettingsChange({
-        ...settings,
-        members: [...settings.members, newMember],
-      });
-      
       setInviteEmail("");
     } catch {
       setInviteError("Failed to send invitation. Please try again.");
     } finally {
       setInviteLoading(false);
     }
-  }, [inviteEmail, inviteRole, user, settings, onSettingsChange]);
+  }, [inviteEmail, inviteRole, user, supabaseWorkspaceId]);
 
-  const handleRoleChange = (memberId: string, role: MemberRole) => {
-    onSettingsChange({
-      ...settings,
-      members: settings.members.map((m) =>
-        m.id === memberId ? { ...m, role } : m
-      ),
-    });
-  };
+  const handleRoleChange = useCallback(async (userId: string, role: MemberRole) => {
+    setMemberActionError(null);
+    if (!supabaseWorkspaceId) return;
 
-  const handleRemoveMember = (memberId: string) => {
-    onSettingsChange({
-      ...settings,
-      members: settings.members.filter((m) => m.id !== memberId),
+    // Optimistic update
+    setRealMembers(prev => prev.map(m => m.userId === userId ? { ...m, role } : m));
+
+    const res = await fetch("/api/workspace/members", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspaceId: supabaseWorkspaceId, userId, role }),
     });
-  };
+
+    if (!res.ok) {
+      const data = await res.json();
+      setMemberActionError(data.error || "Failed to update role");
+      // Revert optimistic update
+      if (supabaseWorkspaceId) loadRealMembers(supabaseWorkspaceId);
+    }
+  }, [supabaseWorkspaceId, loadRealMembers]);
+
+  const handleRemoveMember = useCallback(async (userId: string) => {
+    setMemberActionError(null);
+    if (!supabaseWorkspaceId) return;
+
+    // Optimistic update
+    setRealMembers(prev => prev.filter(m => m.userId !== userId));
+
+    const res = await fetch(
+      `/api/workspace/members?workspaceId=${supabaseWorkspaceId}&userId=${userId}`,
+      { method: "DELETE" }
+    );
+
+    if (!res.ok) {
+      const data = await res.json();
+      setMemberActionError(data.error || "Failed to remove member");
+      // Revert
+      if (supabaseWorkspaceId) loadRealMembers(supabaseWorkspaceId);
+    }
+  }, [supabaseWorkspaceId, loadRealMembers]);
+
+  const handleTransferOwnership = useCallback(async (userId: string) => {
+    setMemberActionError(null);
+    setTransferConfirmUserId(null);
+    if (!supabaseWorkspaceId) return;
+
+    const res = await fetch("/api/workspace/members", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspaceId: supabaseWorkspaceId, userId, action: "transfer-ownership" }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      setMemberActionError(data.error || "Failed to transfer ownership");
+    } else {
+      // Reload to reflect new ownership
+      loadRealMembers(supabaseWorkspaceId);
+    }
+  }, [supabaseWorkspaceId, loadRealMembers]);
 
   const handleProductToggle = (productId: string) => {
     onSettingsChange({
@@ -523,73 +590,140 @@ export function WorkspaceSettingsDialog({
                   <path d="M6.75 8.25C8.40685 8.25 9.75 6.90685 9.75 5.25C9.75 3.59315 8.40685 2.25 6.75 2.25C5.09315 2.25 3.75 3.59315 3.75 5.25C3.75 6.90685 5.09315 8.25 6.75 8.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Team Members
+                {membersLoading && (
+                  <span className="text-xs text-gray-600 font-normal" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Loading…</span>
+                )}
               </h3>
 
-              {/* Member List */}
+              {memberActionError && (
+                <div className="mb-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {memberActionError}
+                </div>
+              )}
+
+              {/* Member List — uses real Supabase data when loaded */}
               <div className="space-y-1 mb-5">
-                {settings.members.map((member) => {
-                  const isCurrentUser = member.id === user?.id || member.email === user?.email;
-                  const isOwner = member.role === "owner";
-                  const canEdit = isAdminOrOwner && !isOwner;
+                {(realMembers.length > 0 ? realMembers : settings.members.map(m => ({
+                  id: m.id,
+                  userId: m.id,
+                  role: m.role as MemberRole,
+                  joinedAt: "",
+                  email: m.email ?? "",
+                  name: m.name,
+                  initials: m.initials,
+                  isOwner: m.role === "owner",
+                }))).map((member) => {
+                  const isCurrentUser = member.userId === user?.id || member.email === user?.email;
+                  const canChangeRole = isAdminOrOwner && !member.isOwner && !isCurrentUser;
+                  const canRemove = isAdminOrOwner && !member.isOwner && !isCurrentUser;
+                  const canTransfer = isCurrentUserOwner && !member.isOwner && !isCurrentUser;
+                  const confirmingTransfer = transferConfirmUserId === member.userId;
+
                   return (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                      style={{ backgroundColor: "#1a1a1a" }}
-                    >
+                    <div key={member.userId} className="space-y-0">
                       <div
-                        className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white"
-                        style={{ backgroundColor: "#333333" }}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                        style={{ backgroundColor: "#1a1a1a" }}
                       >
-                        {member.initials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                            {member.name}
-                          </span>
-                          {isCurrentUser && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
-                              You
+                        <div
+                          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white"
+                          style={{ backgroundColor: "#333333" }}
+                        >
+                          {member.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {member.name}
                             </span>
+                            {isCurrentUser && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                                You
+                              </span>
+                            )}
+                          </div>
+                          {member.email && (
+                            <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {member.email}
+                            </div>
                           )}
                         </div>
-                        {member.email && (
-                          <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                            {member.email}
-                          </div>
+
+                        {/* Role selector or label */}
+                        {canChangeRole ? (
+                          <select
+                            value={member.role}
+                            onChange={(e) => handleRoleChange(member.userId, e.target.value as MemberRole)}
+                            className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
+                            style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <option value="viewer">Viewer</option>
+                            <option value="editor">Editor</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        ) : (
+                          <span className="text-xs text-gray-500 px-2 flex-shrink-0" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {ROLE_LABELS[member.role] ?? member.role}
+                          </span>
                         )}
+
+                        {/* Transfer ownership button */}
+                        {canTransfer && (
+                          <button
+                            type="button"
+                            onClick={() => setTransferConfirmUserId(confirmingTransfer ? null : member.userId)}
+                            title="Transfer ownership"
+                            className="flex-shrink-0 p-1.5 rounded transition-colors"
+                            style={{ color: confirmingTransfer ? "#F0FE00" : "#555", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                              <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Remove member button */}
+                        {canRemove && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(member.userId)}
+                            className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            title="Remove member"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        )}
+                        {!canRemove && !canTransfer && <div className="w-[28px] flex-shrink-0" />}
                       </div>
-                      {canEdit ? (
-                        <select
-                          value={member.role || "viewer"}
-                          onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
-                          className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-                          style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
-                        >
-                          <option value="viewer">Viewer</option>
-                          <option value="editor">Editor</option>
-                          <option value="admin">Admin</option>
-                          <option value="owner">Owner</option>
-                        </select>
-                      ) : (
-                        <span className="text-xs text-gray-500 px-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                          {ROLE_LABELS[member.role || "viewer"]}
-                        </span>
+
+                      {/* Transfer ownership confirmation inline */}
+                      {confirmingTransfer && (
+                        <div className="mx-1 mb-1 px-3 py-2.5 rounded-lg flex items-center justify-between gap-3" style={{ backgroundColor: "#1a1500", border: "1px solid #3a3000" }}>
+                          <p className="text-xs" style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                            Transfer ownership to <strong>{member.name}</strong>? You'll become an Admin.
+                          </p>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setTransferConfirmUserId(null)}
+                              className="text-xs px-2.5 py-1 rounded-lg transition-colors"
+                              style={{ backgroundColor: "#2a2a2a", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTransferOwnership(member.userId)}
+                              className="text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors"
+                              style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              Confirm
+                            </button>
+                          </div>
+                        </div>
                       )}
-                      {canEdit && !isCurrentUser && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMember(member.id)}
-                          className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                          title="Remove member"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      )}
-                      {(!canEdit || isCurrentUser) && <div className="w-[28px] flex-shrink-0" />}
                     </div>
                   );
                 })}

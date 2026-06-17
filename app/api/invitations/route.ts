@@ -14,12 +14,14 @@ export async function GET(request: NextRequest) {
     }
 
     const workspaceId = request.nextUrl.searchParams.get("workspaceId");
-    
+
     if (!workspaceId) {
       return NextResponse.json({ error: "Workspace ID required" }, { status: 400 });
     }
 
-    const { data: invitations, error } = await supabase
+    // Use admin client to bypass RLS — only authenticated workspace members call this
+    const admin = createAdminClient();
+    const { data: invitations, error } = await admin
       .from("workspace_invitations")
       .select("id, email, role, status, created_at, expires_at, invited_by")
       .eq("workspace_id", workspaceId)
@@ -54,17 +56,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Workspace ID and email required" }, { status: 400 });
     }
 
-    // Check if user already has a pending invitation
-    const { data: existing } = await supabase
+    // Check if user already has a pending invitation — if so, refresh and resend it
+    const adminSupabase = createAdminClient();
+    const { data: existing } = await adminSupabase
       .from("workspace_invitations")
-      .select("id")
+      .select("id, token, role")
       .eq("workspace_id", workspaceId)
       .eq("email", email.toLowerCase())
       .eq("status", "pending")
       .single();
 
     if (existing) {
-      return NextResponse.json({ error: "An invitation is already pending for this email" }, { status: 400 });
+      const newToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      await adminSupabase
+        .from("workspace_invitations")
+        .update({ token: newToken, expires_at: expiresAt, role })
+        .eq("id", existing.id);
+
+      const { data: workspace } = await adminSupabase.from("workspaces").select("name").eq("id", workspaceId).single();
+      const workspaceName = workspace?.name || "Workspace";
+      const inviteLink = `${request.nextUrl.origin}/invite/${newToken}`;
+      sendInviteEmail({ to: email.toLowerCase(), workspaceName, inviterEmail: user.email ?? "a teammate", role, inviteLink })
+        .catch(err => console.error("sendInviteEmail failed:", err));
+
+      return NextResponse.json({ invitation: { id: existing.id }, inviteLink, workspaceName, resent: true });
     }
 
     // Check if user is already a member
@@ -88,7 +104,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the invitation using the admin client to bypass RLS
-    const adminSupabase = createAdminClient();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const token = crypto.randomUUID();
     const { data: invitation, error } = await adminSupabase
@@ -139,6 +154,55 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Invitations POST error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// PATCH - Resend an invitation (refresh token + expiry, re-send email)
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { invitationId } = await request.json();
+    if (!invitationId) return NextResponse.json({ error: "invitationId required" }, { status: 400 });
+
+    const admin = createAdminClient();
+
+    const { data: invitation, error: fetchErr } = await admin
+      .from("workspace_invitations")
+      .select("id, email, role, workspace_id, status")
+      .eq("id", invitationId)
+      .single();
+
+    if (fetchErr || !invitation) return NextResponse.json({ error: "Invitation not found" }, { status: 404 });
+    if (invitation.status !== "pending") return NextResponse.json({ error: "Invitation is no longer pending" }, { status: 400 });
+
+    const newToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: updateErr } = await admin
+      .from("workspace_invitations")
+      .update({ token: newToken, expires_at: expiresAt })
+      .eq("id", invitationId);
+
+    if (updateErr) return NextResponse.json({ error: "Failed to refresh invitation" }, { status: 500 });
+
+    const { data: workspace } = await admin.from("workspaces").select("name").eq("id", invitation.workspace_id).single();
+    const inviteLink = `${request.nextUrl.origin}/invite/${newToken}`;
+
+    sendInviteEmail({
+      to: invitation.email,
+      workspaceName: workspace?.name ?? "Workspace",
+      inviterEmail: user.email ?? "a teammate",
+      role: invitation.role,
+      inviteLink,
+    }).catch(err => console.error("resend invite email failed:", err));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Invitations PATCH error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

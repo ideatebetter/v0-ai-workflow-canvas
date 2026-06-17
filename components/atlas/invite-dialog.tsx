@@ -41,10 +41,8 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
     setInviteLink(null);
 
     try {
-      const workspaceRes = await fetch("/api/workspace");
-      const workspaceData = workspaceRes.ok ? await workspaceRes.json() : null;
-      const workspaceId = workspaceData?.workspace?.id;
-      if (!workspaceId) {
+      const workspaceId = settings.id;
+      if (!workspaceId || workspaceId === "ws-1") {
         setError("Could not resolve workspace. Make sure you're signed in and try again.");
         setLoading(false);
         return;

@@ -57,7 +57,12 @@ export default function InvitePage() {
 
   const handleAccept = async () => {
     if (!user) {
-      router.push(`/auth/login?returnTo=/invite/${token}`);
+      const params = new URLSearchParams({
+        returnTo: `/invite/${token}`,
+        tab: "signup",
+        ...(invitation?.email ? { email: invitation.email } : {}),
+      });
+      router.push(`/auth/login?${params.toString()}`);
       return;
     }
 
@@ -79,9 +84,20 @@ export default function InvitePage() {
       }
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+
+      // Sync the invited workspace name into localStorage so the app shows it immediately
+      if (data.workspaceName) {
+        try {
+          const stored = localStorage.getItem("atlas-workspaces");
+          const workspaces = stored ? JSON.parse(stored) : [];
+          if (workspaces.length > 0) {
+            workspaces[0] = { ...workspaces[0], name: data.workspaceName };
+            localStorage.setItem("atlas-workspaces", JSON.stringify(workspaces));
+          }
+        } catch { /* ignore */ }
+      }
+
+      setTimeout(() => router.push("/"), data.alreadyMember ? 0 : 2000);
     } catch {
       setError("Failed to accept invitation");
     } finally {
@@ -205,16 +221,38 @@ export default function InvitePage() {
 
               {!user ? (
                 <div className="space-y-3">
-                  <p className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    Sign in or create an account to accept this invitation
-                  </p>
                   <button
                     onClick={handleAccept}
                     className="w-full px-6 py-3 rounded-lg text-sm font-medium transition-colors"
                     style={{ backgroundColor: "#F0FE00", color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    Sign in to Accept
+                    Create Account to Accept
                   </button>
+                  <p className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => router.push(`/auth/login?returnTo=/invite/${token}&tab=signin${invitation?.email ? `&email=${invitation.email}` : ""}`)}
+                      className="text-gray-300 underline"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                </div>
+              ) : user.email?.toLowerCase() !== invitation.email.toLowerCase() ? (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg text-left" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333" }}>
+                    <p className="text-yellow-400 text-xs font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Wrong account</p>
+                    <p className="text-gray-400 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      You&apos;re signed in as <span className="text-white">{user.email}</span>, but this invite was sent to <span className="text-white">{invitation.email}</span>.
+                    </p>
+                  </div>
+                  <Link
+                    href={`/auth/login?returnTo=/invite/${token}`}
+                    className="block w-full px-6 py-3 rounded-lg text-sm font-medium text-center transition-colors"
+                    style={{ backgroundColor: "#F0FE00", color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Sign in as {invitation.email}
+                  </Link>
                 </div>
               ) : (
                 <button

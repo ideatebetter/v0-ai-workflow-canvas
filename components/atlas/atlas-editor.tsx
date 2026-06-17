@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 
 import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage, NamingConventions } from "@/lib/atlas-types";
-import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
+import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS, applyNamingRule } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
@@ -354,16 +354,35 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         const baseX = promptNode?.position.x || (sourceNode.position.x + 320);
         const baseY = promptNode?.position.y || sourceNode.position.y;
         
+        // Apply workspace naming convention to mockup labels
+        const ws = workspaceSettingsRef.current;
+        const conventions = ws.namingConventions;
+        const namingRule = conventions?.enabled
+          ? (conventions.fileTypeRules?.image ?? conventions.defaultRule)
+          : null;
+        const projectName = ws.name;
+        const authorInitials = ws.members[0]?.initials ?? "";
+
+        const getMockupLabel = (index: number): string => {
+          if (!namingRule) return mockups[index]?.name ?? `Mockup ${index + 1}`;
+          return applyNamingRule(namingRule, {
+            project: projectName,
+            type: "mockup",
+            version: `v${index + 1}`,
+            author: authorInitials,
+          });
+        };
+
         // Create mockup image nodes
         const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
           id: mockupIds[index],
           type: "mockupImage" as const,
-          position: { 
-            x: baseX, 
+          position: {
+            x: baseX,
             y: baseY + (index * 280)
           },
           data: {
-            label: mockup.name,
+            label: getMockupLabel(index),
             imageUrl: mockup.imageUrl,
             sourceFileName: (sourceNode.data as FileNodeData).fileName,
             prompt: prompt,
@@ -428,6 +447,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       window.removeEventListener("atlas:close-ai-prompt", handleClosePrompt as EventListener);
     };
   }, [activeAIPromptNodeId, setNodes, setEdges]);
+
+  // Keep a ref to workspaceSettings so event handlers always see the latest value
+  const workspaceSettingsRef = useRef(workspaceSettings);
+  useEffect(() => { workspaceSettingsRef.current = workspaceSettings; }, [workspaceSettings]);
 
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
@@ -1316,14 +1339,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
     const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
     
-    // Extract thumbnails from file nodes
+    // Extract thumbnails — support file nodes and mockupImage nodes
     const thumbnails = selectedNodes
       .map(n => {
+        if (n.type === "mockupImage") {
+          return (n.data as { imageUrl?: string }).imageUrl || "";
+        }
         const fileData = n.data as { thumbnail?: string; uploadedFile?: { url?: string } };
         return fileData.thumbnail || fileData.uploadedFile?.url || "";
       })
       .filter(url => url);
-    
+
     // Store original nodes for restoration when leaving presentation mode
     const originalNodes = selectedNodes.map(n => ({
       id: n.id,
@@ -1331,14 +1357,24 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       position: { ...n.position },
       data: { ...n.data } as Record<string, unknown>,
     }));
-    
+
+    // Generate group label from naming convention if enabled
+    const ws = workspaceSettings;
+    const conventions = ws.namingConventions;
+    const namingRule = conventions?.enabled
+      ? (conventions.fileTypeRules?.image ?? conventions.defaultRule)
+      : null;
+    const groupLabel = namingRule
+      ? `${applyNamingRule(namingRule, { project: ws.name, type: "mockups", version: `v1`, author: ws.members[0]?.initials ?? "" })} (${freshIds.length})`
+      : `Slide Group (${freshIds.length})`;
+
     // Create the presentation group node
     const groupNode: AtlasNode = {
       id: groupId,
       type: "presentationGroup",
       position: { x: avgX, y: avgY },
       data: {
-        label: `Slide Group (${freshIds.length} images)`,
+        label: groupLabel,
         nodeIds: freshIds,
         thumbnails,
         originalNodes,
@@ -1349,7 +1385,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setPresentationGroups(groups => [...groups, {
       id: groupId,
       nodeIds: freshIds,
-      label: `Slide Group (${freshIds.length})`,
+      label: groupLabel,
       thumbnails,
       originalNodes,
     }]);
@@ -1829,31 +1865,49 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const handleParseAsMultiple = useCallback(async () => {
     if (!parseFileDialog) return;
     const { rawFile, position, fileType } = parseFileDialog;
-    const sections: string[] = [];
+    const ts = Date.now();
+    const docSections: Array<{ id: string; pageNum: number; label: string; content: string }> = [];
+
     if (fileType === "pdf") {
-      const { parsePDFToText, splitIntoSections } = await import("@/lib/pdf-parser");
+      const { parsePDFToText } = await import("@/lib/pdf-parser");
       const pages = await parsePDFToText(rawFile);
-      const fullText = pages.map(p => p.text).join("\n\n");
-      const splits = splitIntoSections(fullText, 8);
-      sections.push(...splits);
+      pages.forEach((p, i) => {
+        const firstLine = p.text.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60);
+        docSections.push({
+          id: `s-${ts}-${i}`,
+          pageNum: p.pageNumber,
+          label: firstLine || `Page ${p.pageNumber}`,
+          content: p.text.slice(0, 6000),
+        });
+      });
     } else {
       const text = await rawFile.text();
-      const chunks = text.split(/\n{2,}/).map(s => s.trim()).filter(s => s.length > 20).slice(0, 12);
-      sections.push(...chunks);
+      const chunks = text.split(/\n{2,}/).map((s: string) => s.trim()).filter((s: string) => s.length > 20).slice(0, 20);
+      chunks.forEach((chunk: string, i: number) => {
+        const firstLine = chunk.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60);
+        docSections.push({
+          id: `s-${ts}-${i}`,
+          pageNum: i + 1,
+          label: firstLine || `Section ${i + 1}`,
+          content: chunk.slice(0, 6000),
+        });
+      });
     }
-    const ts = Date.now();
+
+    const title = rawFile.name.replace(/\.[^.]+$/, "");
     setNodes(nds => [
       ...nds,
-      ...sections.map((sec, i) => ({
-        id: `text-parse-${ts}-${i}`,
-        type: "text" as const,
-        position: { x: position.x + 300 + (i % 3) * 280, y: position.y + Math.floor(i / 3) * 200 },
+      {
+        id: `doc-frame-${ts}`,
+        type: "docFrame" as const,
+        position: { x: position.x + 300, y: position.y },
         data: {
-          label: sec.split("\n")[0].slice(0, 40) || `Section ${i + 1}`,
-          content: sec.slice(0, 5000),
-          lastModified: "Updated just now",
+          title,
+          pageCount: docSections.length,
+          sections: docSections,
+          collapsed: false,
         },
-      })),
+      },
     ]);
     setParseFileDialog(null);
   }, [parseFileDialog, setNodes]);
@@ -2655,6 +2709,10 @@ presentationMode={presentationMode}
           hasSyncableNodes={contextMenu.nodes.length > 1}
           isSynced={contextMenu.nodes.length === 1 && !!((contextMenu.nodes[0].data as any).syncGroupId)}
           onCopyLink={contextMenu.nodes.length === 1 ? () => handleCopyNodeLink(contextMenu.nodes[0].id) : undefined}
+          onGroupForPresentation={contextMenu.nodes.length >= 2 ? () => {
+            handleCreatePresentationGroup(contextMenu.nodes.map(n => n.id));
+            setContextMenu(null);
+          } : undefined}
         />
       )}
 
