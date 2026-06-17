@@ -7,7 +7,7 @@ const FIGMA_CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Short-circuit Figma plugin routes before any Supabase auth processing.
   // Plugin UI runs from a null origin so standard auth middleware would redirect it.
   if (request.nextUrl.pathname.startsWith('/demo')) {
