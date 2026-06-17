@@ -836,7 +836,12 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-white font-semibold text-xl" style={font}>Time Tracking</h1>
+            <h1 className="text-white font-semibold text-xl flex items-center gap-2.5" style={font}>
+              Time Tracking
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 999, background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b55" }}>
+                COMING SOON
+              </span>
+            </h1>
             <p className="text-gray-500 text-sm mt-0.5" style={font}>Project budget burn · Manager view</p>
           </div>
           <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
