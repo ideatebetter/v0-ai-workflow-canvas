@@ -8,6 +8,7 @@ export const usePresentationNodes = () => useContext(PresentationNodesContext);
 import {
   ReactFlow,
   Background,
+  Controls,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -40,6 +41,7 @@ import { MockupImageNode } from "./nodes/mockup-image-node";
 import { AIPromptNode } from "./nodes/ai-prompt-node";
 import { BriefInputNode } from "./nodes/brief-input-node";
 import { PresentationGroupNode } from "./presentation-group-node";
+import { DocFrameNode } from "./doc-frame-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
 import { SelectionBox } from "./selection-box";
@@ -66,6 +68,7 @@ const nodeTypes: NodeTypes = {
   aiPrompt: AIPromptNode,
   briefInput: BriefInputNode,
   presentationGroup: PresentationGroupNode,
+  docFrame: DocFrameNode,
 };
 
 interface AtlasCanvasProps {
@@ -782,6 +785,9 @@ onClick={(event) => {
           size={1}
           color="#333333"
         />
+        <Controls
+          style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8 }}
+        />
         <MiniMap
           nodeColor="#444444"
           maskColor="rgba(10,10,10,0.7)"
@@ -965,8 +971,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <button
   type="button"
   onClick={() => {
-    const fileNodeIds = selectedNodes.filter(n => n.type === "file").map(n => n.id);
-    onCreatePresentationGroup(fileNodeIds);
+    onCreatePresentationGroup(validMoodboardNodes.map(n => n.id));
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
