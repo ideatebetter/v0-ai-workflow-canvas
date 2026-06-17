@@ -60,27 +60,6 @@ function extractNamedScenes(prompt: string): string[] {
   return best.length >= 2 ? best : [];
 }
 
-// Build N scene-specific prompts by substituting each location into the master prompt.
-function buildScenePrompts(masterPrompt: string, scenes: string[]): string[] {
-  // Find the preposition + list span in the original prompt
-  const prep = /(\b(?:in|at|across|for|around)\s+)([^.!?]+)/i;
-  const match = masterPrompt.match(prep);
-
-  if (match) {
-    const [fullMatch, prep_, list] = match;
-    const listItems = list
-      .split(/,\s*(?:and\s+)?|\s+and\s+/i)
-      .map((s) => s.trim());
-    if (listItems.length >= 2) {
-      return scenes.map((scene) =>
-        masterPrompt.replace(fullMatch, `${prep_}${scene}`)
-      );
-    }
-  }
-
-  // Fallback: append location as context
-  return scenes.map((scene) => `${masterPrompt} — specifically in ${scene}`);
-}
 
 export function MockupGeneratorDialog({
   isOpen,
@@ -119,11 +98,6 @@ export function MockupGeneratorDialog({
     setSelectedMockups(new Set());
 
     try {
-      // When multiple named scenes are detected, build scene-specific prompts
-      const scenes = hasMultipleScenes
-        ? buildScenePrompts(prompt.trim(), detectedScenes.slice(0, effectiveCount))
-        : undefined;
-
       const response = await fetch("/api/ai/generate-mockup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,7 +106,6 @@ export function MockupGeneratorDialog({
           sourceImageUrl,
           count: effectiveCount,
           aspectRatio: sourceIsRenderable ? undefined : aspectRatio,
-          scenes,
         }),
       });
 
