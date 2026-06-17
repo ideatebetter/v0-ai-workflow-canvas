@@ -1051,14 +1051,46 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   );
 
   const handleAddOperationalNode = useCallback(
-    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" = "org", _projectId?: string, projectName?: string) => {
+    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" = "org", projectId?: string, projectName?: string) => {
       const nodeId = `op-${Date.now()}`;
       const nodePosition = position ?? getNextPosition(nodes);
       const scopePrefix = scope === "project" && projectName ? `${projectName} · ` : "";
 
+      // ── team members matching time-tracking-page.tsx ──────────────────────
+      const STUDIO_TEAM = [
+        { id: "m1", name: "Alex Rivera",  email: "alex@ideate.com",   initials: "AR", role: "Creative Director" },
+        { id: "m2", name: "Jordan Kim",   email: "jordan@ideate.com", initials: "JK", role: "Senior Designer" },
+        { id: "m3", name: "Sam Torres",   email: "sam@ideate.com",    initials: "ST", role: "Motion Designer" },
+        { id: "m4", name: "Casey Morgan", email: "casey@ideate.com",  initials: "CM", role: "Strategist" },
+        { id: "m5", name: "Riley Chen",   email: "riley@ideate.com",  initials: "RC", role: "Designer" },
+      ];
+
+      // ── per-project data matching time-tracking-page.tsx budgets ─────────
+      const PROJECT_DATA: Record<string, { margin: number; budgetH: number; loggedH: number; consumed: number; phase: string; touchpoint: number; revisions: number; feedbackCycles: number; memberIds: string[] }> = {
+        nike:      { margin: 38, budgetH: 120, loggedH: 30, consumed: 25, phase: "design",    touchpoint: 2, revisions: 4, feedbackCycles: 2, memberIds: ["m1","m3"] },
+        google:    { margin: 44, budgetH: 80,  loggedH: 26, consumed: 33, phase: "research",  touchpoint: 1, revisions: 2, feedbackCycles: 1, memberIds: ["m1","m2","m4"] },
+        deloitte:  { margin: 29, budgetH: 60,  loggedH: 40, consumed: 67, phase: "concept",   touchpoint: 4, revisions: 6, feedbackCycles: 3, memberIds: ["m1","m3","m4","m5"] },
+        levis:     { margin: 41, budgetH: 90,  loggedH: 22, consumed: 24, phase: "strategy",  touchpoint: 3, revisions: 3, feedbackCycles: 2, memberIds: ["m2","m4","m5"] },
+        patagonia: { margin: 35, budgetH: 50,  loggedH: 20, consumed: 40, phase: "design",    touchpoint: 2, revisions: 3, feedbackCycles: 2, memberIds: ["m2","m5"] },
+      };
+
+      const proj = projectId ? PROJECT_DATA[projectId] : null;
+
       let newNode: AtlasNode;
 
       if (opType === "capacity") {
+        const members = proj
+          ? STUDIO_TEAM.filter(m => proj.memberIds.includes(m.id))
+          : STUDIO_TEAM;
+
+        const utilMap: Record<string, { util: number; alloc: number; bench: number; skills: string[] }> = {
+          m1: { util: 91, alloc: 95, bench: 0,  skills: ["Brand Strategy", "Visual Design"] },
+          m2: { util: 84, alloc: 87, bench: 5,  skills: ["UI Design", "Motion"] },
+          m3: { util: 86, alloc: 89, bench: 3,  skills: ["Motion Design", "After Effects"] },
+          m4: { util: 78, alloc: 80, bench: 12, skills: ["Strategy", "Research"] },
+          m5: { util: 72, alloc: 75, bench: 18, skills: ["UI Design", "Branding"] },
+        };
+
         newNode = {
           id: nodeId,
           type: "capacity",
@@ -1066,13 +1098,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Capacity & Resourcing`,
-            teamMembers: WORKSPACE_MEMBERS.slice(0, 3).map((m, idx) => ({
+            teamMembers: members.map(m => ({
               member: m,
-              utilizationRate: 75 + idx * 8,
-              currentAllocation: 80 + idx * 5,
-              plannedAllocation: 85,
-              benchTime: idx === 0 ? 12 : 0,
-              skills: ["UI Design", "Branding"],
+              utilizationRate:    utilMap[m.id].util,
+              currentAllocation:  utilMap[m.id].alloc,
+              plannedAllocation:  85,
+              benchTime:          utilMap[m.id].bench,
+              skills:             utilMap[m.id].skills,
             })),
             lastUpdated: "just now",
           },
@@ -1085,12 +1117,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Financial Performance`,
-            projectMargin: 28,
-            budgetConsumed: 65,
-            revenueRealized: 72,
-            blendedRateEfficiency: 94,
-            utilizationAdjustedMargin: 24,
-            status: "healthy",
+            // org: weighted avg across Nike/Google/Deloitte/Levi's/Patagonia
+            projectMargin:           proj ? proj.margin : 38,
+            budgetConsumed:          proj ? proj.consumed : 54,
+            revenueRealized:         proj ? Math.round(proj.consumed * 0.92) : 49,
+            blendedRateEfficiency:   proj ? (proj.margin >= 35 ? 94 : 82) : 91,
+            utilizationAdjustedMargin: proj ? Math.round(proj.margin * 0.87) : 33,
+            status: proj ? (proj.consumed > 60 && proj.margin < 32 ? "at-risk" : "healthy") : "healthy",
             lastUpdated: "just now",
           },
         };
@@ -1102,11 +1135,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Project Health`,
-            daysSinceClientTouchpoint: 3,
-            openFeedbackCycles: 2,
-            revisionCount: 4,
-            projectPhase: "design",
-            healthStatus: "on-track",
+            daysSinceClientTouchpoint: proj ? proj.touchpoint : 2,
+            openFeedbackCycles:        proj ? proj.feedbackCycles : 3,
+            revisionCount:             proj ? proj.revisions : 5,
+            projectPhase:              proj ? proj.phase : "design",
+            healthStatus: proj
+              ? (proj.consumed > proj.loggedH / proj.budgetH * 100 + 15 ? "at-risk" : "on-track")
+              : "on-track",
             lastUpdated: "just now",
           },
         };
@@ -1119,15 +1154,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           data: {
             label: `${scopePrefix}Pipeline Forecast`,
             forecast30Days: [
-              { projectName: "Acme Rebrand", probability: 85, estimatedHours: 120 },
-              { projectName: "TechCorp Website", probability: 60, estimatedHours: 80 },
+              { projectName: "REI Outdoor Campaign",    probability: 82, estimatedHours: 95 },
+              { projectName: "Spotify Visual Identity", probability: 65, estimatedHours: 80 },
             ],
             forecast60Days: [
-              { projectName: "StartupX Identity", probability: 40, estimatedHours: 60 },
+              { projectName: "Samsung Mobile UX",       probability: 42, estimatedHours: 140 },
             ],
-            forecast90Days: [],
-            currentCapacity: 320,
-            projectedLoad: 260,
+            forecast90Days: [
+              { projectName: "Adobe Creative Suite",    probability: 22, estimatedHours: 200 },
+            ],
+            currentCapacity: 340,
+            projectedLoad: 285,
             capacityStatus: "balanced",
             lastUpdated: "just now",
           },
@@ -1141,9 +1178,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Team Health`,
-            feedbackLoopVelocity: 18,
-            revisionToApprovalRatio: 2.3,
-            timeSavedHours: 42,
+            feedbackLoopVelocity: 14,
+            revisionToApprovalRatio: proj ? (proj.revisions / 2.5) : 2.1,
+            timeSavedHours: 38,
             trendDirection: "improving",
             lastUpdated: "just now",
           },
