@@ -431,7 +431,7 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
   const isOver   = overBy > 0.5;
   const isClose  = overBy > -2 && !isOver;
 
-  const barColor = isOver ? "#ef4444" : isClose ? "#f59e0b" : "#22c55e";
+  const barColor    = isOver ? "#ef4444" : isClose ? "#f59e0b" : "#22c55e";
   const loggedPct   = Math.min(100, (logged   / p.budgetHours) * 100);
   const expectedPct = Math.min(100, (expected / p.budgetHours) * 100);
 
@@ -439,78 +439,122 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
   const end   = new Date(p.endDate);
   const now   = new Date(TODAY);
   const timelinePct = Math.round(Math.max(0, Math.min(100, ((now.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100)));
-
   const marginColor = p.margin >= 40 ? "#22c55e" : p.margin >= 30 ? "#f59e0b" : "#ef4444";
+  const remaining   = p.budgetHours - logged;
 
   return (
-    <div className="p-4 rounded-xl flex flex-col gap-3" style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: p.color }} />
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate" style={font}>{p.name}</div>
-            <div className="text-xs text-gray-500 mt-0.5" style={font}>{p.client}</div>
-          </div>
+    <div className="flex flex-col gap-5 p-6 rounded-2xl flex-shrink-0"
+      style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a", width: 300 }}>
+
+      {/* Client dot + name */}
+      <div className="flex items-center gap-2.5">
+        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+        <div>
+          <div className="text-[11px] text-gray-500 uppercase tracking-wider" style={font}>{p.client}</div>
+          <div className="text-base font-semibold text-white mt-0.5 leading-tight" style={font}>{p.name}</div>
         </div>
-        {/* Margin */}
-        <div className="text-right flex-shrink-0">
-          <div className="text-xl font-bold" style={{ color: marginColor, ...font }}>{p.margin}%</div>
-          <div className="text-[10px] text-gray-600 mt-0.5" style={font}>margin</div>
+      </div>
+
+      {/* Margin + timeline pct */}
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="text-[11px] text-gray-500 mb-1" style={font}>Profit margin</div>
+          <div className="text-4xl font-bold leading-none" style={{ color: marginColor, ...font }}>{p.margin}%</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[11px] text-gray-500 mb-1" style={font}>Timeline</div>
+          <div className="text-2xl font-semibold text-white leading-none" style={font}>{timelinePct}%</div>
+          <div className="text-[11px] text-gray-600 mt-0.5" style={font}>through project</div>
         </div>
       </div>
 
       {/* Budget bar */}
       <div>
-        <div className="relative h-3 rounded-full overflow-visible" style={{ backgroundColor: "#1e1e1e" }}>
-          {/* Logged hours fill */}
-          <div className="absolute left-0 top-0 h-full rounded-full transition-all"
+        <div className="flex justify-between text-[11px] text-gray-500 mb-2" style={font}>
+          <span>Hours logged</span>
+          <span>{p.budgetHours}h budget</span>
+        </div>
+        <div className="relative h-4 rounded-lg overflow-hidden" style={{ backgroundColor: "#1e1e1e" }}>
+          <div className="absolute left-0 top-0 h-full rounded-lg transition-all"
             style={{ width: `${loggedPct}%`, backgroundColor: barColor }} />
-          {/* Expected-to-date tick */}
           {expectedPct > 0 && (
-            <div className="absolute top-[-3px] bottom-[-3px] w-0.5 rounded-full"
-              style={{ left: `${expectedPct}%`, backgroundColor: "#ffffff40", zIndex: 2 }} />
+            <div className="absolute top-0 bottom-0 w-0.5"
+              style={{ left: `${expectedPct}%`, backgroundColor: "rgba(255,255,255,0.5)", zIndex: 2 }} />
           )}
         </div>
-        {/* Labels */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold" style={{ color: barColor, ...font }}>
-              {logged.toFixed(1)}h logged
-            </span>
-            <span className="text-xs text-gray-600" style={font}>
-              · {expected.toFixed(1)}h expected
-            </span>
-          </div>
-          <span className="text-xs text-gray-600" style={font}>{p.budgetHours}h budget</span>
+        <div className="flex justify-between mt-2">
+          <span className="text-sm font-bold" style={{ color: barColor, ...font }}>{logged.toFixed(1)}h</span>
+          <span className="text-xs text-gray-500" style={font}>{remaining > 0 ? `${remaining.toFixed(1)}h remaining` : `${Math.abs(remaining).toFixed(1)}h over budget`}</span>
         </div>
       </div>
 
-      {/* Pace indicator */}
+      {/* Divider */}
+      <div style={{ borderTop: "1px solid #2a2a2a" }} />
+
+      {/* Pace status */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {isOver ? (
-            <>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#ef4444" }} />
-              <span className="text-xs font-medium" style={{ color: "#ef4444", ...font }}>
-                {overBy.toFixed(1)}h over pace
-              </span>
-            </>
-          ) : isClose ? (
-            <>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
-              <span className="text-xs font-medium" style={{ color: "#f59e0b", ...font }}>On the edge</span>
-            </>
-          ) : (
-            <>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
-              <span className="text-xs font-medium" style={{ color: "#22c55e", ...font }}>
-                {Math.abs(overBy).toFixed(1)}h under pace
-              </span>
-            </>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: barColor }} />
+          <span className="text-sm font-semibold" style={{ color: barColor, ...font }}>
+            {isOver
+              ? `${overBy.toFixed(1)}h over pace`
+              : isClose
+              ? "On the edge"
+              : `${Math.abs(overBy).toFixed(1)}h under pace`}
+          </span>
         </div>
-        <span className="text-[11px] text-gray-600" style={font}>{timelinePct}% through timeline</span>
+        <span className="text-xs text-gray-600" style={font}>
+          {expected.toFixed(0)}h expected now
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ProjectCarousel() {
+  const [idx, setIdx] = useState(0);
+  const visible = 3;
+  const canPrev = idx > 0;
+  const canNext = idx + visible < PROJECT_BUDGETS.length;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-white font-semibold text-sm" style={font}>Project Budget Overview</h2>
+          <div className="flex items-center gap-4 ml-4 text-[11px] text-gray-600" style={font}>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded inline-block" style={{ backgroundColor: "#22c55e" }} />under pace</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded inline-block" style={{ backgroundColor: "#f59e0b" }} />close</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded inline-block" style={{ backgroundColor: "#ef4444" }} />over pace</span>
+            <span className="flex items-center gap-1.5"><span className="w-0.5 h-3 rounded inline-block" style={{ backgroundColor: "rgba(255,255,255,0.4)" }} />expected to date</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={!canPrev}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+            style={{ backgroundColor: canPrev ? "#2a2a2a" : "#1a1a1a", color: canPrev ? "#fff" : "#444" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <button type="button" onClick={() => setIdx(i => Math.min(PROJECT_BUDGETS.length - visible, i + 1))} disabled={!canNext}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+            style={{ backgroundColor: canNext ? "#2a2a2a" : "#1a1a1a", color: canNext ? "#fff" : "#444" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
+          </button>
+        </div>
+      </div>
+      <div className="overflow-hidden">
+        <div className="flex gap-4 transition-transform duration-300"
+          style={{ transform: `translateX(calc(-${idx} * (300px + 16px)))` }}>
+          {PROJECT_BUDGETS.map(p => <ProjectCard key={p.id} p={p} />)}
+        </div>
+      </div>
+      {/* Dot indicators */}
+      <div className="flex justify-center gap-1.5 mt-4">
+        {Array.from({ length: PROJECT_BUDGETS.length - visible + 1 }).map((_, i) => (
+          <button key={i} type="button" onClick={() => setIdx(i)}
+            className="w-1.5 h-1.5 rounded-full transition-colors"
+            style={{ backgroundColor: i === idx ? "#fff" : "#333" }} />
+        ))}
       </div>
     </div>
   );
@@ -794,29 +838,8 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
           ))}
         </div>
 
-        {/* ── Project Budget Overview ── */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-white font-semibold text-sm" style={font}>Project Budget Overview</h2>
-            <div className="flex items-center gap-3 ml-4 text-[11px] text-gray-600" style={font}>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: "#22c55e" }} />under pace
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: "#f59e0b" }} />close
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: "#ef4444" }} />over pace
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-0.5 h-3 rounded" style={{ backgroundColor: "#ffffff40" }} />expected-to-date
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 xl:grid-cols-5">
-            {PROJECT_BUDGETS.map(p => <ProjectCard key={p.id} p={p} />)}
-          </div>
-        </div>
+        {/* ── Project Budget Overview carousel ── */}
+        <ProjectCarousel />
 
         {/* ── Team Hours ── */}
         <div>
