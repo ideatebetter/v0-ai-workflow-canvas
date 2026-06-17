@@ -194,8 +194,11 @@ export function AtlasApp() {
     if (targetCanvas) {
       setActiveCanvasId(targetCanvas);
       setView("canvas");
-      if (targetNode) setDeepLinkNodeId(targetNode);
-      window.history.replaceState({}, "", window.location.pathname);
+      if (targetNode) {
+        setDeepLinkNodeId(targetNode);
+        // Strip the one-time ?node= param but keep ?canvas= so refresh works
+        window.history.replaceState({}, "", `?canvas=${targetCanvas}`);
+      }
     }
   }, []);
 
@@ -366,6 +369,7 @@ export function AtlasApp() {
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);
     setView("canvas");
+    window.history.replaceState({}, "", `?canvas=${canvasId}`);
     setRecentCanvasIds(prev => {
       const filtered = prev.filter(id => id !== canvasId);
       return [canvasId, ...filtered].slice(0, 5);
@@ -398,6 +402,7 @@ export function AtlasApp() {
   const handleBack = useCallback(() => {
     setView("home");
     setActiveCanvasId(null);
+    window.history.replaceState({}, "", "/");
   }, []);
 
   // Force save all canvases to cloud
