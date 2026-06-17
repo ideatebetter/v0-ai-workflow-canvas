@@ -239,7 +239,7 @@ const TEAM_DATA: TeamMember[] = [
       ])},
       { date: LAST_WEEK[1], submitted: true, submittedAt: "6:50 PM", blocks: makeBlocks([
         ["9:00","12:00","nike","Design Iteration","After Effects"],
-        ["13:00","15:00","bench","Research","Chrome"],
+        ["13:00","15:00","deloitte","Motion Research","After Effects"],
         ["15:00","17:30","nike","Visual Design","After Effects"],
       ])},
       { date: LAST_WEEK[2], submitted: true, submittedAt: "6:05 PM", blocks: makeBlocks([
@@ -262,18 +262,18 @@ const TEAM_DATA: TeamMember[] = [
       { date: WEEK[0], submitted: true, submittedAt: "7:12 PM", blocks: makeBlocks([
         ["9:00","12:00","nike","Visual Design","After Effects"],
         ["13:00","15:30","nike","Concept Dev","Figma"],
-        ["15:30","17:00","bench","Research","Chrome"],
+        ["15:30","17:00","deloitte","Motion Design","After Effects"],
         ["17:00","18:00","admin","Admin","Notion"],
       ])},
       { date: WEEK[1], submitted: true, submittedAt: "6:45 PM", blocks: makeBlocks([
         ["9:00","12:00","nike","Visual Design","After Effects"],
         ["13:00","16:00","nike","Design Iteration","After Effects"],
-        ["16:00","17:45","bench","Research","Chrome"],
+        ["16:00","17:45","deloitte","Motion Design","After Effects"],
       ])},
       { date: WEEK[2], submitted: true, submittedAt: "5:55 PM", blocks: makeBlocks([
         ["9:30","12:00","nike","Concept Dev","Figma"],
         ["13:00","15:00","nike","Visual Design","After Effects"],
-        ["15:00","16:30","admin","Admin","Notion"],
+        ["15:00","16:30","deloitte","Motion Design","After Effects"],
       ])},
       { date: WEEK[3], submitted: false, blocks: [] },
       { date: WEEK[4], submitted: false, blocks: [] },
@@ -287,7 +287,7 @@ const TEAM_DATA: TeamMember[] = [
         ["9:00","11:00","levis","Strategy","Notion"],
         ["11:00","12:00","google","Research","Chrome"],
         ["13:00","15:00","levis","Client Review","Zoom"],
-        ["15:00","17:00","google","Strategy","Notion"],
+        ["15:00","17:00","deloitte","Strategy","Notion"],
       ])},
       { date: LAST_WEEK[1], submitted: true, submittedAt: "6:10 PM", blocks: makeBlocks([
         ["9:00","11:30","levis","Strategy","Notion"],
@@ -304,7 +304,7 @@ const TEAM_DATA: TeamMember[] = [
         ["9:00","11:00","levis","Strategy","Notion"],
         ["11:00","12:30","google","Client Review","Zoom"],
         ["13:30","16:00","levis","Design Iteration","Miro"],
-        ["16:00","17:30","bench","Research","Chrome"],
+        ["16:00","17:30","deloitte","Strategy","Notion"],
       ])},
       { date: LAST_WEEK[4], submitted: true, submittedAt: "4:45 PM", blocks: makeBlocks([
         ["9:00","11:30","google","Strategy","Notion"],
@@ -316,13 +316,13 @@ const TEAM_DATA: TeamMember[] = [
         ["9:00","11:00","google","Strategy","Notion"],
         ["11:00","12:00","levis","Communications","Zoom"],
         ["13:00","15:00","levis","Strategy","Notion"],
-        ["15:00","16:30","google","Research","Chrome"],
+        ["15:00","16:30","deloitte","Strategy","Notion"],
         ["16:30","17:10","admin","Admin","Slack"],
       ])},
       { date: WEEK[1], submitted: true, submittedAt: "6:00 PM", blocks: makeBlocks([
         ["9:00","11:30","levis","Strategy","Notion"],
         ["11:30","12:30","levis","Client Review","Zoom"],
-        ["13:30","16:00","google","Strategy","Notion"],
+        ["13:30","16:00","deloitte","Strategy","Notion"],
         ["16:00","17:30","internal","Team Sync","Slack"],
       ])},
       { date: WEEK[2], submitted: false, blocks: [] },
@@ -342,7 +342,7 @@ const TEAM_DATA: TeamMember[] = [
       ])},
       { date: LAST_WEEK[1], submitted: true, submittedAt: "6:00 PM", blocks: makeBlocks([
         ["9:00","12:00","patagonia","Visual Design","Figma"],
-        ["13:00","14:30","levis","Visual Research","Chrome"],
+        ["13:00","14:30","deloitte","Visual Research","Chrome"],
         ["14:30","16:30","patagonia","Concept Dev","Figma"],
       ])},
       { date: LAST_WEEK[2], submitted: true, submittedAt: "5:45 PM", blocks: makeBlocks([
@@ -370,7 +370,7 @@ const TEAM_DATA: TeamMember[] = [
       ])},
       { date: WEEK[1], submitted: true, submittedAt: "6:20 PM", blocks: makeBlocks([
         ["9:00","12:00","patagonia","Visual Design","Figma"],
-        ["13:00","15:00","bench","Research","Chrome"],
+        ["13:00","15:00","deloitte","Visual Design","Figma"],
         ["15:00","17:00","patagonia","Concept Dev","Figma"],
       ])},
       { date: WEEK[2], submitted: false, blocks: [] },
