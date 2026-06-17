@@ -512,13 +512,29 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
 }
 
 function ProjectCarousel() {
-  const [idx, setIdx] = useState(0);
-  const visible = 3;
-  const canPrev = idx > 0;
-  const canNext = idx + visible < PROJECT_BUDGETS.length;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const CARD_W  = 316; // 300px card + 16px gap
+  const VISIBLE = 3;
+  const MAX_IDX = Math.max(0, PROJECT_BUDGETS.length - VISIBLE);
+
+  const scrollTo = (i: number) => {
+    scrollRef.current?.scrollTo({ left: i * CARD_W, behavior: "smooth" });
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    setActiveIdx(Math.min(MAX_IDX, Math.round(scrollRef.current.scrollLeft / CARD_W)));
+  };
+
+  const canPrev = activeIdx > 0;
+  const canNext = activeIdx < MAX_IDX;
 
   return (
     <div>
+      {/* Hide webkit scrollbar via injected style */}
+      <style>{`.proj-carousel::-webkit-scrollbar { display: none; }`}</style>
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <h2 className="text-white font-semibold text-sm" style={font}>Project Budget Overview</h2>
@@ -530,30 +546,45 @@ function ProjectCarousel() {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={!canPrev}
+          <button type="button" onClick={() => scrollTo(Math.max(0, activeIdx - 1))} disabled={!canPrev}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
             style={{ backgroundColor: canPrev ? "#2a2a2a" : "#1a1a1a", color: canPrev ? "#fff" : "#444" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          <button type="button" onClick={() => setIdx(i => Math.min(PROJECT_BUDGETS.length - visible, i + 1))} disabled={!canNext}
+          <button type="button" onClick={() => scrollTo(Math.min(MAX_IDX, activeIdx + 1))} disabled={!canNext}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
             style={{ backgroundColor: canNext ? "#2a2a2a" : "#1a1a1a", color: canNext ? "#fff" : "#444" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
           </button>
         </div>
       </div>
-      <div className="overflow-hidden">
-        <div className="flex gap-4 transition-transform duration-300"
-          style={{ transform: `translateX(calc(-${idx} * (300px + 16px)))` }}>
-          {PROJECT_BUDGETS.map(p => <ProjectCard key={p.id} p={p} />)}
-        </div>
+
+      {/* Native-scroll track — trackpad swipes work out of the box */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="proj-carousel flex gap-4"
+        style={{
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          cursor: "grab",
+        }}
+      >
+        {PROJECT_BUDGETS.map(p => (
+          <div key={p.id} style={{ scrollSnapAlign: "start", flexShrink: 0 }}>
+            <ProjectCard p={p} />
+          </div>
+        ))}
       </div>
+
       {/* Dot indicators */}
       <div className="flex justify-center gap-1.5 mt-4">
-        {Array.from({ length: PROJECT_BUDGETS.length - visible + 1 }).map((_, i) => (
-          <button key={i} type="button" onClick={() => setIdx(i)}
-            className="w-1.5 h-1.5 rounded-full transition-colors"
-            style={{ backgroundColor: i === idx ? "#fff" : "#333" }} />
+        {Array.from({ length: MAX_IDX + 1 }).map((_, i) => (
+          <button key={i} type="button" onClick={() => scrollTo(i)}
+            className="rounded-full transition-all duration-200"
+            style={{ width: i === activeIdx ? 16 : 6, height: 6, backgroundColor: i === activeIdx ? "#fff" : "#333" }} />
         ))}
       </div>
     </div>
