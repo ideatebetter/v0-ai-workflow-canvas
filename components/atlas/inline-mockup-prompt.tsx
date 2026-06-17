@@ -4,8 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 interface GeneratedMockup {
-  base64: string;
-  mediaType: string;
+  url: string;
 }
 
 interface InlineMockupPromptProps {
@@ -26,23 +25,20 @@ export function InlineMockupPrompt({
   onMockupsGenerated,
 }: InlineMockupPromptProps) {
   const [prompt, setPrompt] = useState("");
+  const [count, setCount] = useState(2);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when opened
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
-  // Close on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
     if (isOpen) {
       window.addEventListener("keydown", handleKeyDown);
@@ -63,7 +59,7 @@ export function InlineMockupPrompt({
         body: JSON.stringify({
           prompt: prompt.trim(),
           sourceImageUrl,
-          count: 2,
+          count,
         }),
       });
 
@@ -73,10 +69,9 @@ export function InlineMockupPrompt({
       }
 
       const data = await response.json();
-      
-      // Convert to image URLs and create nodes
+
       const mockups = data.images.map((mockup: GeneratedMockup, index: number) => ({
-        imageUrl: `data:${mockup.mediaType};base64,${mockup.base64}`,
+        imageUrl: mockup.url,
         name: `${sourceFileName} Mockup ${index + 1}`,
       }));
 
@@ -105,11 +100,7 @@ export function InlineMockupPrompt({
     <>
       {/* Backdrop */}
       <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9998,
-        }}
+        style={{ position: "fixed", inset: 0, zIndex: 9998 }}
         onClick={onClose}
       />
 
@@ -124,7 +115,7 @@ export function InlineMockupPrompt({
           border: "1px solid #333",
           borderRadius: 12,
           padding: 12,
-          width: 320,
+          width: 340,
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
         }}
       >
@@ -155,7 +146,7 @@ export function InlineMockupPrompt({
           </span>
         </div>
 
-        {/* Source preview thumbnail */}
+        {/* Source preview + input */}
         <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
           <div
             style={{
@@ -193,6 +184,31 @@ export function InlineMockupPrompt({
               ...fontStyle,
             }}
           />
+        </div>
+
+        {/* Count selector */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+          {[1, 2, 3, 4].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setCount(n)}
+              style={{
+                flex: 1,
+                padding: "5px 0",
+                borderRadius: 6,
+                backgroundColor: count === n ? "#F0FE00" : "#0d0d0d",
+                border: `1px solid ${count === n ? "#F0FE00" : "#333"}`,
+                fontSize: 12,
+                fontWeight: 500,
+                color: count === n ? "#121212" : "#888",
+                cursor: "pointer",
+                ...fontStyle,
+              }}
+            >
+              {n}
+            </button>
+          ))}
         </div>
 
         {/* Error */}
@@ -253,32 +269,14 @@ export function InlineMockupPrompt({
           >
             {isGenerating ? (
               <>
-                <svg
-                  className="animate-spin"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeOpacity="0.25"
-                  />
-                  <path
-                    d="M12 2a10 10 0 019.95 9"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
+                <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 </svg>
-                Generating...
+                Generating {count}...
               </>
             ) : (
-              "Generate"
+              `Generate ${count}`
             )}
           </button>
         </div>

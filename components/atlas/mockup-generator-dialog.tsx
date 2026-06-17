@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import type { FileNodeData } from "@/lib/atlas-types";
 
 interface GeneratedMockup {
-  base64: string;
-  mediaType: string;
+  url: string;
 }
 
 interface MockupGeneratorDialogProps {
@@ -22,6 +21,13 @@ interface MockupGeneratorDialogProps {
   onCreateNodes: (mockups: Array<{ imageUrl: string; name: string }>) => void;
 }
 
+const ASPECT_RATIOS = [
+  { label: "Widescreen", value: "landscape_16_9", display: "16:9" },
+  { label: "Square", value: "square_hd", display: "1:1" },
+  { label: "Portrait", value: "portrait_4_3", display: "4:5" },
+  { label: "Billboard", value: "portrait_16_9", display: "9:16" },
+];
+
 export function MockupGeneratorDialog({
   isOpen,
   onClose,
@@ -30,6 +36,7 @@ export function MockupGeneratorDialog({
 }: MockupGeneratorDialogProps) {
   const [prompt, setPrompt] = useState("");
   const [count, setCount] = useState(2);
+  const [aspectRatio, setAspectRatio] = useState("landscape_16_9");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMockups, setGeneratedMockups] = useState<GeneratedMockup[]>([]);
   const [selectedMockups, setSelectedMockups] = useState<Set<number>>(new Set());
@@ -40,7 +47,6 @@ export function MockupGeneratorDialog({
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
-    // Validate source image URL
     if (!sourceImageUrl) {
       setError("No source image available. Please ensure the file has an uploaded image.");
       return;
@@ -59,6 +65,7 @@ export function MockupGeneratorDialog({
           prompt: prompt.trim(),
           sourceImageUrl,
           count,
+          aspectRatio,
         }),
       });
 
@@ -69,8 +76,6 @@ export function MockupGeneratorDialog({
 
       const data = await response.json();
       setGeneratedMockups(data.images);
-      
-      // Auto-select all generated mockups
       setSelectedMockups(new Set(data.images.map((_: GeneratedMockup, i: number) => i)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
@@ -93,14 +98,12 @@ export function MockupGeneratorDialog({
     const mockupsToAdd = generatedMockups
       .filter((_, index) => selectedMockups.has(index))
       .map((mockup, index) => ({
-        imageUrl: `data:${mockup.mediaType};base64,${mockup.base64}`,
+        imageUrl: mockup.url,
         name: `${sourceFile.label} Mockup ${index + 1}`,
       }));
 
     onCreateNodes(mockupsToAdd);
     onClose();
-    
-    // Reset state
     setPrompt("");
     setGeneratedMockups([]);
     setSelectedMockups(new Set());
@@ -132,7 +135,7 @@ export function MockupGeneratorDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           {/* Source Preview */}
           <div className="flex gap-4">
             {sourceImageUrl && (
@@ -141,7 +144,7 @@ export function MockupGeneratorDialog({
                   Source
                 </p>
                 <div
-                  className="w-24 h-24 rounded-lg overflow-hidden"
+                  className="w-20 h-20 rounded-lg overflow-hidden"
                   style={{ border: "1px solid #2a2a2a" }}
                 >
                   <img
@@ -154,76 +157,104 @@ export function MockupGeneratorDialog({
             )}
 
             {/* Prompt Input */}
-            <div className="flex-1 space-y-3">
-              <div>
-                <label 
-                  className="text-xs text-gray-500 block mb-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Describe your mockup
-                </label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g., Show this graphic on a billboard in Times Square at night..."
-                  className="w-full h-24 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-white/20"
-                  style={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #2a2a2a",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                />
-              </div>
+            <div className="flex-1">
+              <label
+                className="text-xs text-gray-500 block mb-2"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Describe your mockup suite
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g., Create a series of long exposure billboards showcasing this graphic in major US cities at night — New York, Chicago, LA, Miami..."
+                className="w-full h-28 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-white/20"
+                style={{
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #2a2a2a",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              />
+            </div>
+          </div>
 
-              <div className="flex items-center gap-4">
-                <div>
-                  <label 
-                    className="text-xs text-gray-500 block mb-1"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    Variations
-                  </label>
-                  <select
-                    value={count}
-                    onChange={(e) => setCount(Number(e.target.value))}
-                    className="px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none"
+          {/* Controls row */}
+          <div className="flex items-end gap-4">
+            {/* Aspect ratio */}
+            <div>
+              <label
+                className="text-xs text-gray-500 block mb-1"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Format
+              </label>
+              <div className="flex gap-1">
+                {ASPECT_RATIOS.map((ar) => (
+                  <button
+                    key={ar.value}
+                    type="button"
+                    onClick={() => setAspectRatio(ar.value)}
+                    className="px-3 py-1.5 rounded-lg text-xs transition-colors"
                     style={{
-                      backgroundColor: "#1a1a1a",
-                      border: "1px solid #2a2a2a",
+                      backgroundColor: aspectRatio === ar.value ? "#ffffff" : "#1a1a1a",
+                      color: aspectRatio === ar.value ? "#000000" : "#888888",
+                      border: `1px solid ${aspectRatio === ar.value ? "#ffffff" : "#2a2a2a"}`,
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={3}>3</option>
-                    <option value={4}>4</option>
-                  </select>
-                </div>
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!prompt.trim() || isGenerating}
-                  className="ml-auto"
-                  style={{
-                    backgroundColor: isGenerating ? "#2a2a2a" : "#ffffff",
-                    color: isGenerating ? "#666666" : "#000000",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                >
-                  {isGenerating ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                      </svg>
-                      Generating...
-                    </span>
-                  ) : (
-                    "Generate"
-                  )}
-                </Button>
+                    {ar.display}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Count */}
+            <div>
+              <label
+                className="text-xs text-gray-500 block mb-1"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Count
+              </label>
+              <select
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                className="px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none"
+                style={{
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #2a2a2a",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                <option value={1}>1 image</option>
+                <option value={2}>2 images</option>
+                <option value={3}>3 images</option>
+                <option value={4}>4 images</option>
+              </select>
+            </div>
+
+            <Button
+              onClick={handleGenerate}
+              disabled={!prompt.trim() || isGenerating}
+              className="ml-auto"
+              style={{
+                backgroundColor: isGenerating ? "#2a2a2a" : "#ffffff",
+                color: isGenerating ? "#666666" : "#000000",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+            >
+              {isGenerating ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                  Generating {count} image{count > 1 ? "s" : ""}...
+                </span>
+              ) : (
+                `Generate ${count} image${count > 1 ? "s" : ""}`
+              )}
+            </Button>
           </div>
 
           {/* Error */}
@@ -240,9 +271,9 @@ export function MockupGeneratorDialog({
           {generatedMockups.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Generated mockups (click to select)
+                Click to select / deselect
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${generatedMockups.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                 {generatedMockups.map((mockup, index) => (
                   <button
                     key={index}
@@ -251,11 +282,10 @@ export function MockupGeneratorDialog({
                     className="relative rounded-lg overflow-hidden transition-all"
                     style={{
                       border: selectedMockups.has(index) ? "2px solid white" : "1px solid #2a2a2a",
-                      outline: selectedMockups.has(index) ? "none" : "none",
                     }}
                   >
                     <img
-                      src={`data:${mockup.mediaType};base64,${mockup.base64}`}
+                      src={mockup.url}
                       alt={`Mockup ${index + 1}`}
                       className="w-full aspect-video object-cover"
                     />

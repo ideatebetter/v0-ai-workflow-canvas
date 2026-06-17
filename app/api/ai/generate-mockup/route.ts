@@ -16,41 +16,75 @@ function isImageUrl(url: string): boolean {
   }
 }
 
+// Build a distinct scene prompt for each index in a suite.
+// If the master prompt already contains variation cues (cities, locations, etc.)
+// we honour them; otherwise we inject generic scene differentiation.
+function buildVariationPrompt(masterPrompt: string, index: number, total: number): string {
+  if (total === 1) return masterPrompt;
+
+  const lower = masterPrompt.toLowerCase();
+
+  // Detect location-based suite intent
+  const isCityTheme = /\b(cit(y|ies)|location|town|downtown|urban|street)\b/.test(lower);
+  const isUSTheme = /\b(u\.?s\.?a?|united states|america[n]?)\b/.test(lower);
+
+  if (isCityTheme && isUSTheme) {
+    const cities = [
+      "New York City — Times Square at night",
+      "Los Angeles — Sunset Boulevard at golden hour",
+      "Chicago — Michigan Avenue in winter",
+      "Miami — South Beach at dusk",
+      "San Francisco — Market Street in fog",
+      "Seattle — Capitol Hill in rain",
+      "Austin — 6th Street at night",
+      "Nashville — Broadway neon lights",
+    ];
+    return `${masterPrompt}. Scene ${index + 1} of ${total}: ${cities[index % cities.length]}. Make this scene distinctly different from the others in the series.`;
+  }
+
+  if (isCityTheme) {
+    return `${masterPrompt}. Scene ${index + 1} of ${total}: a unique location and setting, distinctly different from the other scenes in the series.`;
+  }
+
+  // Generic suite variation
+  const perspectives = [
+    "wide establishing shot",
+    "close-up detail view",
+    "medium shot at eye level",
+    "elevated bird's eye perspective",
+  ];
+  return `${masterPrompt}. Scene ${index + 1} of ${total}: ${perspectives[index % perspectives.length]}. Make this image distinctly different in composition and atmosphere from the others.`;
+}
+
 export async function POST(request: Request) {
   try {
-    const { prompt, sourceImageUrl, count = 1, variations } = await request.json();
-    const imageCount = Math.min(variations || count, 4);
+    const { prompt, sourceImageUrl, count = 1, aspectRatio = "landscape_16_9" } = await request.json();
+    const imageCount = Math.min(Math.max(Number(count), 1), 4);
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
-    // Only use image editing when sourceImageUrl is a renderable image format.
-    // PSD, AI, PDF, etc. are stored as raw files and can't be ingested by the model.
     const useImageEditing = !!sourceImageUrl && isImageUrl(sourceImageUrl);
 
     const generationPromises = Array.from({ length: imageCount }, async (_, index) => {
-      const variedPrompt = imageCount > 1
-        ? `${prompt}. Variation ${index + 1}, unique perspective and composition.`
-        : prompt;
+      const variedPrompt = buildVariationPrompt(prompt, index, imageCount);
 
       if (useImageEditing) {
-        // Composite the source graphic into the described scene
         const result = await fal.subscribe("fal-ai/flux-pro/kontext", {
           input: {
             image_url: sourceImageUrl,
-            prompt: `${variedPrompt}. Keep the design clearly visible and legible. High quality, photorealistic.`,
+            prompt: `${variedPrompt}. Keep the source design clearly visible and legible. High quality, photorealistic.`,
             num_images: 1,
           },
         }) as { images?: Array<{ url: string }> };
 
         return result.images?.[0]?.url;
       } else {
-        // Text-only: no image source, or source is a non-image file
         const result = await fal.subscribe("fal-ai/flux/schnell", {
           input: {
             prompt: `Create a professional mockup: ${variedPrompt}. High quality, photorealistic rendering.`,
-            image_size: "landscape_16_9",
+            image_size: aspectRatio,
             num_inference_steps: 4,
             num_images: 1,
           },
