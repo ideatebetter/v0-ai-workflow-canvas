@@ -2533,8 +2533,8 @@ presentationMode={presentationMode}
         onClose={() => setShowSaveFrameworkDialog(false)}
         canvas={canvas}
         currentUser={{
-          ...workspaceSettings.members[0],
-          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
+          ...(workspaceSettings.members[0] ?? {}),
+          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0]?.avatar,
         }}
         onSaveFramework={(framework) => {
           if (onSaveFramework) onSaveFramework(framework);
@@ -2548,8 +2548,8 @@ presentationMode={presentationMode}
         onClose={() => setShowFrameworkCreator(false)}
         canvas={canvas}
         currentUser={{
-          ...workspaceSettings.members[0],
-          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
+          ...(workspaceSettings.members[0] ?? {}),
+          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0]?.avatar,
         }}
         onSaveFramework={(framework) => {
           if (onSaveFramework) onSaveFramework(framework);
@@ -2562,7 +2562,7 @@ presentationMode={presentationMode}
         isOpen={showFrameworkLibrary}
         onClose={() => setShowFrameworkLibrary(false)}
         frameworks={frameworks ?? []}
-        currentUserId={workspaceSettings.members[0].id}
+        currentUserId={workspaceSettings.members[0]?.id ?? ""}
         onRun={(fw) => {
           setShowFrameworkLibrary(false);
           setRunFramework(fw);

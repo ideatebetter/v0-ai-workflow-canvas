@@ -41,9 +41,7 @@ export function AtlasApp() {
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
-  const [isWorkspaceSynced, setIsWorkspaceSynced] = useState(() => {
-    try { return !!sessionStorage.getItem(WORKSPACES_CACHE_SESSION_KEY); } catch { return false; }
-  });
+  const [isWorkspaceSynced, setIsWorkspaceSynced] = useState(false);
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
@@ -188,6 +186,9 @@ export function AtlasApp() {
   // Handle deep links on mount (?canvas=&node=)
   useEffect(() => {
     setIsHydrated(true);
+    try {
+      if (sessionStorage.getItem(WORKSPACES_CACHE_SESSION_KEY)) setIsWorkspaceSynced(true);
+    } catch { /* ignore */ }
     const params = new URLSearchParams(window.location.search);
     const targetCanvas = params.get("canvas");
     const targetNode = params.get("node");
