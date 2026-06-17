@@ -19,9 +19,10 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
+import { TimeTrackingPage } from "./time-tracking-page";
 
 type SidebarFilter = "all" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "community" | "frameworks" | "workspace-canvas" | "settings" | "all-files" | "todos";
+type HomeView = "home" | "canvases" | "community" | "frameworks" | "workspace-canvas" | "settings" | "all-files" | "todos" | "time-tracking";
 type FrameworksFilter = "all" | "mine" | "team" | "drafts";
 type CanvasSubView = "canvases" | "files";
 
@@ -224,7 +225,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get("view");
-    const validViews: HomeView[] = ["home", "canvases", "community", "frameworks", "workspace-canvas", "settings", "all-files", "todos"];
+    const validViews: HomeView[] = ["home", "canvases", "community", "frameworks", "workspace-canvas", "settings", "all-files", "todos", "time-tracking"];
     if (viewParam && validViews.includes(viewParam as HomeView)) {
       setActiveView(viewParam as HomeView);
     }
@@ -1355,6 +1356,20 @@ const [showSageChat, setShowSageChat] = useState(false);
             </button>
             <button
               type="button"
+              onClick={() => setActiveView("time-tracking")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "time-tracking" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 5.5V9.5L11.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Time Tracking
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveView("frameworks")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 activeView === "frameworks" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -1476,6 +1491,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
             {activeView === "settings" && "Settings"}
+            {activeView === "time-tracking" && "Time Tracking"}
           </div>
 
           <div className="flex items-center gap-3">
@@ -2454,6 +2470,8 @@ All Frameworks
               />
             </ReactFlowProvider>
           </div>
+        ) : activeView === "time-tracking" ? (
+          <TimeTrackingPage members={workspaceSettings.members} />
         ) : activeView === "settings" ? (
           /* All Settings View - Single Page */
           <div className="flex-1 overflow-y-auto p-6">
