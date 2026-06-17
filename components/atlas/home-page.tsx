@@ -1491,7 +1491,14 @@ const [showSageChat, setShowSageChat] = useState(false);
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
             {activeView === "settings" && "Settings"}
-            {activeView === "time-tracking" && "Time Tracking"}
+            {activeView === "time-tracking" && (
+              <span className="flex items-center gap-2">
+                Time Tracking
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", padding: "2px 8px", borderRadius: 999, background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b55" }}>
+                  COMING SOON
+                </span>
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
