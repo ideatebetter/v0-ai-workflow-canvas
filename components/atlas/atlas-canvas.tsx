@@ -677,8 +677,10 @@ const reactFlowInstance = useReactFlow();
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__handle")) return;
           
-          // Handle file, sage, and mockup nodes
-          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder", "mockupImage"];
+          const expandableTypes = [
+            "file", "sageChatbot", "sageOverview", "stakeholder", "mockupImage",
+            "capacity", "financial", "projectHealth", "pipeline", "teamHealth",
+          ];
           if (expandableTypes.includes(node.type || "") && onNodeDoubleClick) {
             onNodeDoubleClick(node.id);
           }

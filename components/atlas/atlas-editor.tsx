@@ -38,6 +38,7 @@ import { NodeContextMenu } from "./node-context-menu";
 import { SyncFileDialog } from "./sync-file-dialog";
 import { SyncMultipleDialog } from "./sync-multiple-dialog";
 import { ParseFileDialog } from "./parse-file-dialog";
+import { DataDetailPanel } from "./data-detail-panel";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -2889,6 +2890,22 @@ presentationMode={presentationMode}
         return (
           <MockupDetailModal
             data={node.data as unknown as MockupImageNodeData}
+            onClose={() => setDetailModalNodeId(null)}
+          />
+        );
+      })()}
+
+      {/* Operational Data Detail Panel */}
+      {detailModalNodeId && (() => {
+        const DATA_TYPES = ["capacity", "financial", "projectHealth", "pipeline", "teamHealth"] as const;
+        type DataNodeType = typeof DATA_TYPES[number];
+        const node = nodes.find(n => n.id === detailModalNodeId && DATA_TYPES.includes(n.type as DataNodeType));
+        if (!node) return null;
+        return (
+          <DataDetailPanel
+            nodeId={node.id}
+            nodeType={node.type as DataNodeType}
+            nodeData={node.data as Record<string, unknown>}
             onClose={() => setDetailModalNodeId(null)}
           />
         );
