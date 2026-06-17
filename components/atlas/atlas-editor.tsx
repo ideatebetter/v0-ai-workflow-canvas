@@ -1051,9 +1051,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   );
 
   const handleAddOperationalNode = useCallback(
-    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => {
+    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" = "org", _projectId?: string, projectName?: string) => {
       const nodeId = `op-${Date.now()}`;
       const nodePosition = position ?? getNextPosition(nodes);
+      const scopePrefix = scope === "project" && projectName ? `${projectName} · ` : "";
 
       let newNode: AtlasNode;
 
@@ -1064,7 +1065,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: {
-            label: "Capacity & Resourcing",
+            label: `${scopePrefix}Capacity & Resourcing`,
             teamMembers: WORKSPACE_MEMBERS.slice(0, 3).map((m, idx) => ({
               member: m,
               utilizationRate: 75 + idx * 8,
@@ -1083,7 +1084,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: {
-            label: "Financial Performance",
+            label: `${scopePrefix}Financial Performance`,
             projectMargin: 28,
             budgetConsumed: 65,
             revenueRealized: 72,
@@ -1100,7 +1101,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: {
-            label: "Project Health",
+            label: `${scopePrefix}Project Health`,
             daysSinceClientTouchpoint: 3,
             openFeedbackCycles: 2,
             revisionCount: 4,
@@ -1116,7 +1117,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: {
-            label: "Pipeline Forecast",
+            label: `${scopePrefix}Pipeline Forecast`,
             forecast30Days: [
               { projectName: "Acme Rebrand", probability: 85, estimatedHours: 120 },
               { projectName: "TechCorp Website", probability: 60, estimatedHours: 80 },
@@ -1139,7 +1140,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: {
-            label: "Team Health",
+            label: `${scopePrefix}Team Health`,
             feedbackLoopVelocity: 18,
             revisionToApprovalRatio: 2.3,
             timeSavedHours: 42,
@@ -2113,9 +2114,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddSageNode, closeDoubleClickMenu]);
 
-  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => {
+  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", scope: "org" | "project" = "org", projectId?: string, projectName?: string) => {
     if (doubleClickPosition) {
-      handleAddOperationalNode(opType, doubleClickPosition);
+      handleAddOperationalNode(opType, doubleClickPosition, undefined, scope, projectId, projectName);
     }
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddOperationalNode, closeDoubleClickMenu]);
@@ -2348,7 +2349,7 @@ presentationMode={presentationMode}
         onAddStatusPill={handleAddStatusPill}
         onAddTextNode={() => handleAddTextNode()}
   onAddSageNode={handleAddSageNode}
-  onAddOperationalNode={handleAddOperationalNode}
+  onAddOperationalNode={(opType, scope, projectId, projectName) => handleAddOperationalNode(opType, undefined, undefined, scope, projectId, projectName)}
   onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
   onOpenAIGenerate={(type) => {
     if (type === "mockup") {
