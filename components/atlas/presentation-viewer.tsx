@@ -4,6 +4,19 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import type { FileNodeData, TextNodeData, MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 import Image from "next/image";
+import { detectFocalPoint, type FocalPoint } from "@/lib/focal-point";
+
+// Shared hook for focal point detection
+function useFocalPoint(url: string | undefined | null): FocalPoint {
+  const [focal, setFocal] = useState<FocalPoint>({ x: 0.5, y: 0.38 });
+  useEffect(() => {
+    if (!url) return;
+    let alive = true;
+    detectFocalPoint(url, fp => { if (alive) setFocal(fp); });
+    return () => { alive = false; };
+  }, [url]);
+  return focal;
+}
 
 // ─── Moodboard Slide ────────────────────────────────────────────────────────
 
@@ -252,6 +265,258 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
   );
 }
 
+// ─── Bento layout helpers ────────────────────────────────────────────────────
+
+function getBentoLayout(count: number): string {
+  switch (count) {
+    case 2: return "grid-cols-2 grid-rows-1";
+    case 3: return "grid-cols-2 grid-rows-2";
+    case 4: return "grid-cols-2 grid-rows-2";
+    case 5: return "grid-cols-3 grid-rows-2";
+    case 6: return "grid-cols-3 grid-rows-2";
+    default: return count > 6 ? "grid-cols-3 grid-rows-3" : "grid-cols-1 grid-rows-1";
+  }
+}
+
+function getBentoItemClass(index: number, total: number): string {
+  if (total === 3 && index === 0) return "row-span-2";
+  if (total === 5 && index === 0) return "row-span-2";
+  return "";
+}
+
+// Extract the media URL from any node type
+function getNodeMediaUrl(node: Node): string | undefined {
+  if (node.type === "mockupImage") return (node.data as { imageUrl?: string }).imageUrl;
+  const d = node.data as unknown as FileNodeData & { thumbnail?: string };
+  return d.uploadedFile?.url || d.previewImages?.[0] || d.thumbnail;
+}
+
+// Pure renderer — no state, just draws the image at the given focal position
+function BentoCellMedia({ node, focal }: { node: Node; focal: FocalPoint }) {
+  const objPos = `${(focal.x * 100).toFixed(1)}% ${(focal.y * 100).toFixed(1)}%`;
+  const imgStyle: React.CSSProperties = {
+    width: "100%", height: "100%",
+    objectFit: "cover", objectPosition: objPos,
+    userSelect: "none", pointerEvents: "none", display: "block",
+  };
+
+  if (node.type === "mockupImage") {
+    const d = node.data as { imageUrl: string; label?: string };
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={d.imageUrl} alt={d.label || "Mockup"} draggable={false} style={imgStyle} />;
+  }
+
+  const fileData = node.data as unknown as FileNodeData & { thumbnail?: string };
+  const mediaUrl = fileData.uploadedFile?.url || fileData.previewImages?.[0] || fileData.thumbnail;
+  const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+
+  if (isVideo && mediaUrl) {
+    return <video src={mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted loop autoPlay playsInline />;
+  }
+  if (mediaUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={mediaUrl} alt={fileData.fileName || "Image"} draggable={false} style={imgStyle} />;
+  }
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontSize: 24, color: "#6b7280" }}>{fileData.fileExtension?.toUpperCase()}</span>
+    </div>
+  );
+}
+
+// Individual cell: owns pan state, renders media, exposes drag handles for swap
+function BentoGridCell({
+  node,
+  itemClass,
+  panOverride,
+  isDragSource,
+  isDragOver,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onPanUpdate,
+}: {
+  node: Node;
+  itemClass: string;
+  panOverride?: FocalPoint;
+  isDragSource: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+  onPanUpdate: (fp: FocalPoint) => void;
+}) {
+  const mediaUrl = getNodeMediaUrl(node);
+  const detectedFocal = useFocalPoint(mediaUrl);
+  const effectiveFocal = panOverride ?? detectedFocal;
+
+  const panRef = useRef<{
+    startX: number; startY: number;
+    startFocalX: number; startFocalY: number;
+  } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("[data-drag-handle]")) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    panRef.current = {
+      startX: e.clientX, startY: e.clientY,
+      startFocalX: effectiveFocal.x, startFocalY: effectiveFocal.y,
+    };
+    setIsPanning(true);
+  }, [effectiveFocal]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!panRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dx = e.clientX - panRef.current.startX;
+    const dy = e.clientY - panRef.current.startY;
+    onPanUpdate({
+      x: Math.max(0, Math.min(1, panRef.current.startFocalX - dx / rect.width)),
+      y: Math.max(0, Math.min(1, panRef.current.startFocalY - dy / rect.height)),
+    });
+  }, [onPanUpdate]);
+
+  const handlePointerUp = useCallback(() => {
+    panRef.current = null;
+    setIsPanning(false);
+  }, []);
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-lg group/cell ${itemClass}`}
+      style={{
+        backgroundColor: "#1a1a1a",
+        opacity: isDragSource ? 0.35 : 1,
+        outline: isDragOver ? "2px solid #F0FE00" : "none",
+        outlineOffset: -2,
+        cursor: isPanning ? "grabbing" : "grab",
+        touchAction: "none",
+        transition: isDragSource ? "none" : "opacity 0.15s, outline 0.1s",
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      <BentoCellMedia node={node} focal={effectiveFocal} />
+
+      {/* Drag-to-swap handle — 4-dot grid icon, top-right, appears on hover */}
+      <div
+        data-drag-handle
+        draggable
+        onDragStart={e => { e.dataTransfer.effectAllowed = "move"; onDragStart(); }}
+        onDragEnd={onDragEnd}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover/cell:opacity-100 transition-opacity"
+        style={{
+          width: 26, height: 26,
+          backgroundColor: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(6px)",
+          borderRadius: 7,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "grab",
+        }}
+        title="Drag to swap"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <circle cx="2.5" cy="2.5" r="1.1" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="7.5" cy="2.5" r="1.1" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="2.5" cy="7.5" r="1.1" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="7.5" cy="7.5" r="1.1" fill="rgba(255,255,255,0.85)"/>
+        </svg>
+      </div>
+
+      {/* Pan hint — bottom-left, visible on hover when not panning */}
+      {!isPanning && (
+        <div className="absolute bottom-2 left-2 z-10 opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2V5M9 13V16M2 9H5M13 9H16" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="9" cy="9" r="2.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Bento grid — manages node ordering (drag-to-swap) and per-node pan overrides
+function BentoGrid({ nodes: initialNodes }: { nodes: Node[] }) {
+  const count = initialNodes.length;
+  const nodeKey = initialNodes.map(n => n.id).join(",");
+
+  // Display order: indices into initialNodes
+  const [order, setOrder] = useState<number[]>(() => initialNodes.map((_, i) => i));
+  // Pan overrides keyed by original node index so they follow the image when swapped
+  const [panOverrides, setPanOverrides] = useState<Record<number, FocalPoint>>({});
+
+  // Reset when slide changes
+  useEffect(() => {
+    setOrder(initialNodes.map((_, i) => i));
+    setPanOverrides({});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeKey]);
+
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  const handleSwap = useCallback((fromDisplay: number, toDisplay: number) => {
+    if (fromDisplay === toDisplay) return;
+    setOrder(prev => {
+      const next = [...prev];
+      [next[fromDisplay], next[toDisplay]] = [next[toDisplay], next[fromDisplay]];
+      return next;
+    });
+    // Pan overrides follow the images, so swap them too
+    setPanOverrides(prev => {
+      const fromOrig = order[fromDisplay];
+      const toOrig = order[toDisplay];
+      const next = { ...prev };
+      const tmp = next[fromOrig];
+      if (next[toOrig] !== undefined) next[fromOrig] = next[toOrig]; else delete next[fromOrig];
+      if (tmp !== undefined) next[toOrig] = tmp; else delete next[toOrig];
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order]);
+
+  return (
+    <div className={`grid ${getBentoLayout(count)} gap-3 w-full max-w-6xl`} style={{ height: "65vh" }}>
+      {order.map((origIdx, displayIdx) => {
+        const node = initialNodes[origIdx];
+        return (
+          <BentoGridCell
+            key={`${node.id}-${displayIdx}`}
+            node={node}
+            itemClass={getBentoItemClass(displayIdx, count)}
+            panOverride={panOverrides[origIdx]}
+            isDragSource={dragFrom === displayIdx}
+            isDragOver={dragOver === displayIdx && dragFrom !== null && dragFrom !== displayIdx}
+            onDragStart={() => setDragFrom(displayIdx)}
+            onDragEnd={() => { setDragFrom(null); setDragOver(null); }}
+            onDragOver={e => { e.preventDefault(); setDragOver(displayIdx); }}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={e => {
+              e.preventDefault();
+              if (dragFrom !== null) handleSwap(dragFrom, displayIdx);
+              setDragFrom(null);
+              setDragOver(null);
+            }}
+            onPanUpdate={fp => setPanOverrides(prev => ({ ...prev, [origIdx]: fp }))}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Presentation Viewer ─────────────────────────────────────────────────────
 
 interface PresentationGroup {
@@ -399,62 +664,13 @@ export function PresentationViewer({
     );
   }
 
-  const getBentoLayout = (count: number): string => {
-    switch (count) {
-      case 2: return "grid-cols-2 grid-rows-1";
-      case 3: return "grid-cols-2 grid-rows-2";
-      case 4: return "grid-cols-2 grid-rows-2";
-      case 5: return "grid-cols-3 grid-rows-2";
-      case 6: return "grid-cols-3 grid-rows-2";
-      default: return count > 6 ? "grid-cols-3 grid-rows-3" : "grid-cols-1 grid-rows-1";
-    }
-  };
-
-  const getBentoItemClass = (index: number, total: number): string => {
-    if (total === 3 && index === 0) return "row-span-2";
-    if (total === 5 && index === 0) return "row-span-2";
-    return "";
-  };
-
-  const renderBentoMedia = (node: Node, index: number, total: number) => {
-    // Mockup image nodes
-    if (node.type === "mockupImage") {
-      const mockupData = node.data as { imageUrl: string; label?: string };
-      return (
-        <div key={`${node.id}-${index}`} className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`} style={{ backgroundColor: "#1a1a1a" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mockupData.imageUrl} alt={mockupData.label || "Mockup"} className="w-full h-full object-cover" />
-        </div>
-      );
-    }
-    const fileData = node.data as FileNodeData;
-    const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
-    const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
-    return (
-      <div key={`${node.id}-${index}`} className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`} style={{ backgroundColor: "#1a1a1a" }}>
-        {isVideo && mediaUrl ? (
-          <video src={mediaUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-        ) : mediaUrl ? (
-          <Image src={mediaUrl} alt={fileData.fileName || "Image"} fill className="object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-2xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderSlideContent = () => {
     if (!currentSlide) return null;
 
     if (currentSlide.type === "group" && currentNodes.length > 1) {
-      const count = currentNodes.length;
       return (
         <div className="flex flex-col items-center justify-center h-full w-full px-8">
-          <div className={`grid ${getBentoLayout(count)} gap-3 w-full max-w-6xl`} style={{ height: "65vh" }}>
-            {currentNodes.map((node, index) => renderBentoMedia(node, index, count))}
-          </div>
+          <BentoGrid nodes={currentNodes} />
         </div>
       );
     }

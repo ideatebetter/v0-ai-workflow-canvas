@@ -5,13 +5,46 @@ import { useReactFlow, type NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
 import type { PresentationGroupNodeData } from "@/lib/atlas-types";
 import { useCanvasNodeActions } from "./canvas-node-actions-context";
+import { detectFocalPoint, type FocalPoint } from "@/lib/focal-point";
+
+// Thumbnail cell with subject-aware cropping
+function ThumbCell({ url, index }: { url: string; index: number }) {
+  const [focal, setFocal] = useState<FocalPoint>({ x: 0.5, y: 0.38 });
+
+  useEffect(() => {
+    if (!url) return;
+    let alive = true;
+    detectFocalPoint(url, fp => { if (alive) setFocal(fp); });
+    return () => { alive = false; };
+  }, [url]);
+
+  return (
+    <div className="relative aspect-square rounded overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+      {url ? (
+        <img
+          src={url}
+          alt={`Preview ${index + 1}`}
+          className="w-full h-full"
+          style={{
+            objectFit: "cover",
+            objectPosition: `${focal.x * 100}% ${focal.y * 100}%`,
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="text-[10px] text-gray-600">{index + 1}</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PresentationGroupNode({
   data,
   selected,
   id,
 }: NodeProps<PresentationGroupNodeData>) {
-  const { thumbnails = [], nodeIds = [], label } = data;
+  const { thumbnails = [], nodeIds = [], label } = data as unknown as PresentationGroupNodeData;
   const count = nodeIds.length;
   const { setNodes } = useReactFlow();
   const { onCopyNodeLink } = useCanvasNodeActions();
@@ -137,7 +170,7 @@ export function PresentationGroupNode({
           title="Copy link"
           onClick={e => {
             e.stopPropagation();
-            onCopyNodeLink(id);
+            onCopyNodeLink(id as string);
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
           }}
@@ -157,23 +190,7 @@ export function PresentationGroupNode({
       {/* Thumbnail Grid Preview */}
       <div className={`grid ${getGridClass()} gap-1 p-2`}>
         {thumbnails.slice(0, 6).map((url, index) => (
-          <div
-            key={index}
-            className="relative aspect-square rounded overflow-hidden"
-            style={{ backgroundColor: "#0a0a0a" }}
-          >
-            {url ? (
-              <img
-                src={url}
-                alt={`Preview ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-[10px] text-gray-600">{index + 1}</span>
-              </div>
-            )}
-          </div>
+          <ThumbCell key={index} url={url} index={index} />
         ))}
       </div>
 

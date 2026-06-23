@@ -3,15 +3,22 @@
 import React, { useState, useEffect } from "react";
 import type { CanvasFramework, FrameworkParameter } from "@/lib/atlas-types";
 
+type FileEntry = { url: string; fileName: string; fileType: "image" | "video" };
+
 interface FrameworkRunDialogProps {
   framework: CanvasFramework | null;
   isOpen: boolean;
   onClose: () => void;
-  onRun: (framework: CanvasFramework, paramValues: Record<string, string>) => void;
+  onRun: (
+    framework: CanvasFramework,
+    paramValues: Record<string, string>,
+    fileValues: Record<string, FileEntry[]>
+  ) => void;
 }
 
 export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: FrameworkRunDialogProps) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fileValues, setFileValues] = useState<Record<string, FileEntry[]>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -21,6 +28,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
         initial[p.id] = p.defaultValue ?? "";
       });
       setValues(initial);
+      setFileValues({});
       setErrors({});
     }
   }, [isOpen, framework]);
@@ -32,8 +40,12 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
   const validate = () => {
     const next: Record<string, string> = {};
     for (const p of params) {
-      if (p.required && !values[p.id]?.trim()) {
-        next[p.id] = `${p.label} is required`;
+      if (p.required) {
+        if (p.type === "file") {
+          if (!fileValues[p.id]?.length) next[p.id] = `${p.label} is required`;
+        } else if (!values[p.id]?.trim()) {
+          next[p.id] = `${p.label} is required`;
+        }
       }
     }
     setErrors(next);
@@ -42,7 +54,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
 
   const handleRun = () => {
     if (!validate()) return;
-    onRun(framework, values);
+    onRun(framework, values, fileValues);
     onClose();
   };
 
@@ -102,9 +114,14 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
                   key={param.id}
                   param={param}
                   value={values[param.id] ?? ""}
+                  files={fileValues[param.id] ?? []}
                   error={errors[param.id]}
                   onChange={val => {
                     setValues(prev => ({ ...prev, [param.id]: val }));
+                    if (errors[param.id]) setErrors(prev => ({ ...prev, [param.id]: "" }));
+                  }}
+                  onFilesChange={files => {
+                    setFileValues(prev => ({ ...prev, [param.id]: files }));
                     if (errors[param.id]) setErrors(prev => ({ ...prev, [param.id]: "" }));
                   }}
                 />
@@ -136,13 +153,17 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
 function ParameterInput({
   param,
   value,
+  files,
   error,
   onChange,
+  onFilesChange,
 }: {
   param: FrameworkParameter;
   value: string;
+  files: FileEntry[];
   error?: string;
   onChange: (val: string) => void;
+  onFilesChange: (files: FileEntry[]) => void;
 }) {
   const labelEl = (
     <label className="block text-sm font-medium text-gray-300 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -210,6 +231,14 @@ function ParameterInput({
           style={inputStyle}
         />
       )}
+      {param.type === "file" && (
+        <FileUploadInput
+          multiple={param.multiple ?? false}
+          files={files}
+          onChange={onFilesChange}
+          inputStyle={inputStyle}
+        />
+      )}
       {param.type === "select" && (
         <select
           value={value}
@@ -224,6 +253,94 @@ function ParameterInput({
         </select>
       )}
       {error && <p className="mt-1 text-xs text-red-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{error}</p>}
+    </div>
+  );
+}
+
+function FileUploadInput({
+  multiple,
+  files,
+  onChange,
+  inputStyle,
+}: {
+  multiple: boolean;
+  files: FileEntry[];
+  onChange: (files: FileEntry[]) => void;
+  inputStyle: React.CSSProperties;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleFiles = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setLoading(true);
+    const results: FileEntry[] = [];
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      const isVideo = file.type.startsWith("video/");
+      const reader = new FileReader();
+      const url: string = await new Promise(res => {
+        reader.onload = e => res(e.target?.result as string ?? "");
+        reader.readAsDataURL(file);
+      });
+      results.push({ url, fileName: file.name, fileType: isVideo ? "video" : "image" });
+    }
+    onChange(multiple ? [...files, ...results] : results.slice(0, 1));
+    setLoading(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label
+        className="flex flex-col items-center justify-center gap-2 w-full py-5 rounded-lg cursor-pointer transition-colors hover:opacity-80"
+        style={{ ...inputStyle, border: "1.5px dashed #444" }}
+      >
+        <input
+          type="file"
+          accept="image/*,video/*"
+          multiple={multiple}
+          className="sr-only"
+          onChange={e => handleFiles(e.target.files)}
+        />
+        {loading ? (
+          <svg className="animate-spin w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 4V14M4 10H16" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        )}
+        <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          {multiple ? "Upload images / videos" : "Upload a file"}
+        </span>
+      </label>
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {files.map((f, i) => (
+            <div
+              key={i}
+              className="relative group rounded-lg overflow-hidden flex-shrink-0"
+              style={{ width: 64, height: 64, backgroundColor: "#252525", border: "1px solid #333" }}
+            >
+              {f.fileType === "image" ? (
+                <img src={f.url} alt={f.fileName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 4L15 10L5 16V4Z" fill="#555"/></svg>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((_, j) => j !== i))}
+                className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 1.5L6.5 6.5M6.5 1.5L1.5 6.5" stroke="white" strokeWidth="1.3" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -24,8 +24,7 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
-import { SaveFrameworkDialog } from "./save-template-dialog";
-import { FrameworkCreatorDialog } from "./framework-creator-dialog";
+import { CanvasToFrameworkPanel } from "./canvas-to-framework-panel";
 import { FrameworkLibraryPanel } from "./framework-library-panel";
 import { FrameworkRunDialog } from "./framework-run-dialog";
 import { CanvasNodeActionsProvider } from "./canvas-node-actions-context";
@@ -167,8 +166,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
-  const [showFrameworkCreator, setShowFrameworkCreator] = useState(false);
+  const [showFrameworkBuilder, setShowFrameworkBuilder] = useState(false);
   const [linkCopiedNodeId, setLinkCopiedNodeId] = useState<string | null>(null);
   const [showFrameworkLibrary, setShowFrameworkLibrary] = useState(false);
   const [runFramework, setRunFramework] = useState<CanvasFramework | null>(null);
@@ -453,6 +451,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const workspaceSettingsRef = useRef(workspaceSettings);
   useEffect(() => { workspaceSettingsRef.current = workspaceSettings; }, [workspaceSettings]);
 
+  // Keep a ref to canvas so the auto-save timeout always reads the latest canvas (including
+  // presentationFlows, comments, etc. saved out-of-band) instead of a stale closure value.
+  const canvasRef = useRef(canvas);
+  useEffect(() => { canvasRef.current = canvas; }, [canvas]);
+
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
 
@@ -465,7 +468,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const syncCanvas = useCallback((updatedComments?: CanvasComment[]) => {
     const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
     onCanvasChange({
-      ...canvas,
+      ...canvasRef.current,
       nodes,
       edges,
       pages: updatedPages,
@@ -473,7 +476,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       comments: updatedComments || comments,
       updatedAt: new Date().toISOString(),
     });
-  }, [canvas, nodes, edges, comments, onCanvasChange, buildUpdatedPages]);
+  }, [nodes, edges, comments, onCanvasChange, buildUpdatedPages]);
 
   // Merge nodes added externally (e.g. Figma sync) into local state without overwriting local edits
   useEffect(() => {
@@ -507,7 +510,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       if (nodes.length > 0 || edges.length > 0) {
         const updatedPages = buildUpdatedPages(nodes, edges, pagesRef.current, activePageRef.current);
         onCanvasChange({
-          ...canvas,
+          ...canvasRef.current,
           nodes,
           edges,
           pages: updatedPages,
@@ -2300,7 +2303,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         canvasName={canvas.name}
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
-        onSaveAsFramework={() => setShowFrameworkCreator(true)}
+        onSaveAsFramework={() => setShowFrameworkBuilder(true)}
         onBrowseFrameworks={() => setShowFrameworkLibrary(true)}
         onCopyToCanvas={() => {
           setMoveToCanvasMode("copy");
@@ -2541,6 +2544,25 @@ presentationMode={presentationMode}
         </div>
       )}
 
+        {/* Framework Builder Side Panel — z-50 overlays the side toolbar (z-40) */}
+        {showFrameworkBuilder && (
+          <div className="absolute right-0 top-0 bottom-0 z-50 flex shadow-2xl">
+            <CanvasToFrameworkPanel
+              canvas={canvas}
+              currentUser={{
+                ...(workspaceSettings.members[0] ?? {}),
+                avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0]?.avatar,
+              }}
+              selectedCanvasNodes={nodes.filter(n => n.selected)}
+              onClearSelection={() => setNodes(nds => nds.map(n => ({ ...n, selected: false })))}
+              onClose={() => setShowFrameworkBuilder(false)}
+              onSave={(framework) => {
+                if (onSaveFramework) onSaveFramework(framework);
+                setShowFrameworkBuilder(false);
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Double-click Add Node Menu */}
@@ -2579,39 +2601,10 @@ presentationMode={presentationMode}
         onSettingsChange={onWorkspaceSettingsChange}
         onMakeFramework={() => {
           setShowSettingsDialog(false);
-          setShowFrameworkCreator(true);
+          setShowFrameworkBuilder(true);
         }}
       />
 
-      {/* Save as Framework Dialog (legacy — kept for backwards compat) */}
-      <SaveFrameworkDialog
-        open={showSaveFrameworkDialog}
-        onClose={() => setShowSaveFrameworkDialog(false)}
-        canvas={canvas}
-        currentUser={{
-          ...(workspaceSettings.members[0] ?? {}),
-          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0]?.avatar,
-        }}
-        onSaveFramework={(framework) => {
-          if (onSaveFramework) onSaveFramework(framework);
-          setShowSaveFrameworkDialog(false);
-        }}
-      />
-
-      {/* Framework Creator Dialog (new — 2-step with parameters) */}
-      <FrameworkCreatorDialog
-        open={showFrameworkCreator}
-        onClose={() => setShowFrameworkCreator(false)}
-        canvas={canvas}
-        currentUser={{
-          ...(workspaceSettings.members[0] ?? {}),
-          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0]?.avatar,
-        }}
-        onSaveFramework={(framework) => {
-          if (onSaveFramework) onSaveFramework(framework);
-          setShowFrameworkCreator(false);
-        }}
-      />
 
       {/* Framework Library Panel */}
       <FrameworkLibraryPanel
@@ -2631,18 +2624,52 @@ presentationMode={presentationMode}
         framework={runFramework}
         isOpen={runFramework !== null}
         onClose={() => setRunFramework(null)}
-        onRun={(fw, paramValues) => {
+        onRun={(fw, paramValues, fileValues) => {
           const ts = Date.now();
           const idMap = new Map<string, string>();
           fw.nodes.forEach((n, i) => idMap.set(n.id, `fw-${ts}-${i}`));
 
-          // Clone nodes and replace {{param}} placeholders
+          // Build a map of node-bound params (these populate a specific node field directly)
+          const boundParams = new Map<string, { targetNodeId: string; targetField: string }>();
+          (fw.parameters ?? []).forEach(p => {
+            if (p.targetNodeId && p.targetField) {
+              boundParams.set(p.id, { targetNodeId: p.targetNodeId, targetField: p.targetField });
+            }
+          });
+
+          // Clone nodes: substitute {{placeholders}} for unbound params, apply file values to bound nodes
           const newNodes = fw.nodes.map(node => {
             let dataStr = JSON.stringify(node.data);
             for (const [pid, val] of Object.entries(paramValues)) {
+              if (boundParams.has(pid)) continue;
               dataStr = dataStr.split(`{{${pid}}}`).join(val.replace(/\\/g, "\\\\").replace(/"/g, '\\"'));
             }
-            return { ...node, id: idMap.get(node.id)!, data: JSON.parse(dataStr), selected: true };
+            let data = JSON.parse(dataStr);
+
+            // Apply node-bound file uploads
+            for (const [pid, binding] of boundParams.entries()) {
+              if (binding.targetNodeId !== node.id) continue;
+              const uploadedFiles = fileValues?.[pid] ?? [];
+              if (uploadedFiles.length === 0) continue;
+
+              if (binding.targetField === "images") {
+                const existing = Array.isArray(data.images) ? data.images : [];
+                const added = uploadedFiles.map(f => ({
+                  id: `fw-img-${ts}-${Math.random().toString(36).substr(2, 6)}`,
+                  url: f.url,
+                  fileName: f.fileName,
+                  fileType: f.fileType,
+                }));
+                data = { ...data, images: [...existing, ...added] };
+              } else if (binding.targetField === "content") {
+                data = { ...data, content: uploadedFiles[0]?.url ?? data.content };
+              } else if (binding.targetField === "uploadedFile") {
+                const f = uploadedFiles[0];
+                data = { ...data, uploadedFile: { url: f.url, pathname: f.fileName, size: 0, uploadedAt: new Date().toISOString() } };
+              }
+            }
+
+            return { ...node, id: idMap.get(node.id)!, data, selected: true };
           });
 
           // Position below existing nodes
@@ -2664,8 +2691,37 @@ presentationMode={presentationMode}
             target: idMap.get(e.target) ?? e.target,
           }));
 
+          // Remap and attach saved presentation flows from the framework template
+          const remappedFlows: SavedPresentationFlow[] = (fw.presentationFlows ?? []).map(flow => ({
+            ...flow,
+            id: `flow-fw-${ts}-${flow.id}`,
+            edges: flow.edges.map((e, i) => ({
+              ...e,
+              id: `fw-flow-edge-${ts}-${i}`,
+              source: idMap.get(e.source) ?? e.source,
+              target: idMap.get(e.target) ?? e.target,
+            })),
+            groups: flow.groups.map(g => ({
+              ...g,
+              id: `fw-group-${ts}-${g.id}`,
+              nodeIds: g.nodeIds.map(id => idMap.get(id) ?? id),
+              originalNodes: g.originalNodes.map(on => ({
+                ...on,
+                id: idMap.get(on.id) ?? on.id,
+              })),
+            })),
+          }));
+
           setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...positionedNodes]);
           setEdges(eds => [...eds, ...newEdges]);
+
+          if (remappedFlows.length > 0) {
+            onCanvasChange({
+              ...canvas,
+              presentationFlows: [...(canvas.presentationFlows ?? []), ...remappedFlows],
+            });
+          }
+
           setRunFramework(null);
         }}
       />

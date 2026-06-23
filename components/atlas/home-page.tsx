@@ -11,7 +11,6 @@ import { FileDetailModal } from "./file-detail-modal";
 import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
 import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, FRAMEWORK_CATEGORIES, PROJECT_COLORS, DEMO_EMAIL, FAKE_MEMBER_IDS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
-import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { ReactFlow, Background, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
@@ -472,7 +471,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [showDeleteConfirmInline, setShowDeleteConfirmInline] = useState(false);
   const [deleteConfirmTextInline, setDeleteConfirmTextInline] = useState("");
   // Use external frameworks if provided, otherwise use local state
-  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
+  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>([]);
   const frameworks = externalFrameworks ?? localFrameworks;
   const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
@@ -1028,19 +1027,37 @@ const [showSageChat, setShowSageChat] = useState(false);
       }
     };
 
-    // Handle strategy PDF
+    // Handle strategy PDF or manual text
     const strategyPDF = paramValues["strategy_pdf"];
     if (strategyPDF instanceof File && strategyPDF.name.endsWith(".pdf")) {
       await makePDFNodes(strategyPDF, -600, 280, "brief", "strategy");
+    } else if (typeof strategyPDF === "string" && strategyPDF.trim()) {
+      const now = new Date().toISOString();
+      extraNodes.push({
+        id: `fw-strategy-${ts}-0`,
+        type: "text",
+        position: { x: -600, y: 280 },
+        selected: false,
+        data: { label: "Brand Strategy", content: strategyPDF, textType: "brief", lastModified: now },
+      } as CanvasFramework["nodes"][0]);
     }
 
-    // Handle brief PDF
+    // Handle brief PDF or manual text
     const briefPDF = paramValues["brief_pdf"];
     if (briefPDF instanceof File && briefPDF.name.endsWith(".pdf")) {
       await makePDFNodes(briefPDF, -600, 2000, "brief", "brief");
+    } else if (typeof briefPDF === "string" && briefPDF.trim()) {
+      const now = new Date().toISOString();
+      extraNodes.push({
+        id: `fw-brief-${ts}-0`,
+        type: "text",
+        position: { x: -600, y: 2000 },
+        selected: false,
+        data: { label: "Creative Brief", content: briefPDF, textType: "brief", lastModified: now },
+      } as CanvasFramework["nodes"][0]);
     }
 
-    // Handle logo file — inject as the logo node's preview image
+    // Handle logo file
     const logoFile = paramValues["logo_file"];
     let logoDataUrl: string | undefined;
     if (logoFile instanceof File) {
@@ -1051,19 +1068,68 @@ const [showSageChat, setShowSageChat] = useState(false);
       });
     }
 
+    // Map each mockup node to a Flux Kontext prompt — Sage enhances these at runtime
+    const logoFileName = logoFile instanceof File ? logoFile.name : "logo";
+    const mockupNodePrompts: Record<string, string> = {
+      [idMap.get("ls-mockup-1") ?? ""]: "Show this logo as an app icon sitting in the macOS dock on a MacBook desktop",
+      [idMap.get("ls-mockup-2") ?? ""]: "Show this logo on the front of a business card with a clean minimal design, product photography",
+      [idMap.get("ls-mockup-3") ?? ""]: "Show this logo as a small embroidered badge on the breast pocket area of a premium white t-shirt, flat lay",
+      [idMap.get("ls-mockup-4") ?? ""]: "Place this logo centered on a pure black background, brand identity shot",
+      [idMap.get("ls-mockup-5") ?? ""]: "Place this logo centered on a pure white background, brand identity shot",
+    };
+    // Remove the empty-string key that appears when no mapping exists
+    delete mockupNodePrompts[""];
+
+    const logoFileCanvasId = idMap.get("ls-logo-file") ?? "";
+
+    // Stagger aiPrompt auto-generation by 15s per node to stay under rate limits
+    const STAGGER_MS = 15_000;
+    let mockupNodeIndex = 0;
+
     const allNodes = [
       ...baseNodes.map((n) => {
-        // Inject logo preview if this is the logo file node
-        if (logoDataUrl && n.data && (n.data as Record<string, unknown>).fileExtension === ".ai") {
+        const d = n.data as Record<string, unknown>;
+
+        // Logo file node: inject preview when logo provided, or convert to briefInput when not
+        if (d.fileExtension === ".ai") {
+          if (logoDataUrl) {
+            return {
+              ...n,
+              data: {
+                ...d,
+                previewImages: [logoDataUrl],
+                fileName: logoFileName,
+              },
+            };
+          } else {
+            // No logo provided — show a file drop input node on canvas
+            return {
+              ...n,
+              type: "briefInput",
+              data: { label: d.label ?? "Logo File", cardKey: "brand-discovery", mode: "idle", fields: {} },
+            };
+          }
+        }
+
+        // When a logo is provided, replace each mockupImage node with a pre-filled aiPrompt node
+        // that auto-enhances and generates via Flux Kontext on mount
+        if (logoDataUrl && mockupNodePrompts[n.id]) {
+          const nodeDelay = mockupNodeIndex * STAGGER_MS;
+          mockupNodeIndex++;
           return {
             ...n,
+            type: "aiPrompt",
             data: {
-              ...(n.data as Record<string, unknown>),
-              previewImages: [logoDataUrl],
-              fileName: logoFile instanceof File ? logoFile.name : "brand-logo",
+              sourceNodeId: logoFileCanvasId,
+              sourceImageUrl: logoDataUrl,
+              sourceFileName: logoFileName,
+              initialPrompt: mockupNodePrompts[n.id],
+              autoGenerate: true,
+              autoGenerateDelay: nodeDelay,
             },
           };
         }
+
         return n;
       }),
       ...extraNodes,

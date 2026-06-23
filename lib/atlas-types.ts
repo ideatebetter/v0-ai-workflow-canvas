@@ -1163,6 +1163,9 @@ export interface FrameworkParameter {
   defaultValue?: string;
   tooltip?: string;       // shown in an info popover next to the label
   multiple?: boolean;     // for "file" type: allow multiple file uploads
+  // Node binding — skips {{placeholder}} substitution and instead populates a specific node field
+  targetNodeId?: string;  // template node ID this param populates directly
+  targetField?: string;   // field within that node (e.g. "images" for moodboard, "content" for text)
 }
 
 // Framework interface
@@ -1186,6 +1189,10 @@ export interface CanvasFramework {
   isPublished?: boolean;  // false = draft, true = published to library
   teamId?: string;
   presentationFlows?: SavedPresentationFlow[]; // Pre-configured presentation flows
+  nodeRoles?: {
+    inputs: { nodeId: string; label: string; description: string }[];
+    outputs: { nodeId: string; label: string; description: string }[];
+  };
 }
 
 // Framework categories with labels

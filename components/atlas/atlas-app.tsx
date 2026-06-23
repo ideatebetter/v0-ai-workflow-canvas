@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Canvas, WorkspaceSettings, CanvasFramework, WorkspaceMember } from "@/lib/atlas-types";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, DEMO_EMAIL, FAKE_MEMBER_IDS } from "@/lib/atlas-types";
-import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
 import { useAuth } from "@/lib/auth-context";
@@ -38,7 +37,7 @@ export function AtlasApp() {
     return DEFAULT_WORKSPACE_SETTINGS.id;
   });
   const workspaceSettings: WorkspaceSettings = workspaces.find(w => w.id === activeWorkspaceId) ?? workspaces[0];
-  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
+  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
   const [isWorkspaceSynced, setIsWorkspaceSynced] = useState(false);

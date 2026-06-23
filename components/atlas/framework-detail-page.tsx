@@ -48,13 +48,14 @@ function FileDropZone({
   onChange,
 }: {
   param: FrameworkParameter;
-  value: File | null;
-  onChange: (f: File | null) => void;
+  value: File | string | null;
+  onChange: (f: File | string | null) => void;
 }) {
   const [dragging, setDragging] = useState(false);
+  const [manualMode, setManualMode] = useState(typeof value === "string");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isPDF = param.id.includes("pdf") || param.label.toLowerCase().includes("pdf");
+  const isPDF = param.id.includes("pdf") || param.id === "strategy_pdf" || param.id === "brief_pdf";
   const isMoodboard = param.id === "moodboard_content";
   const isCollateral = param.id === "collateral";
   const accept = isPDF
@@ -68,6 +69,38 @@ function FileDropZone({
     onChange(files[0]);
   };
 
+  if (manualMode && isPDF) {
+    return (
+      <div className="space-y-2">
+        <textarea
+          rows={6}
+          value={typeof value === "string" ? value : ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Type or paste your content here — it will become text nodes on the canvas…"
+          className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 resize-none"
+          style={{
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #2a2a2a",
+            fontFamily: "system-ui, Inter, sans-serif",
+            outline: "none",
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(240,254,0,0.4)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
+        />
+        <button
+          type="button"
+          onClick={() => { setManualMode(false); onChange(null); }}
+          className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-white transition-colors"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M6 2L3 5L6 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Upload a file instead
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <input
@@ -77,7 +110,7 @@ function FileDropZone({
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
-      {value ? (
+      {value instanceof File ? (
         <div
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
           style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
@@ -111,44 +144,55 @@ function FileDropZone({
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            handleFiles(e.dataTransfer.files);
-          }}
-          className="w-full rounded-lg flex flex-col items-center justify-center gap-2 py-5 transition-all"
-          style={{
-            border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
-            backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
-          }}
-        >
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            className="w-full rounded-lg flex flex-col items-center justify-center gap-2 py-5 transition-all"
+            style={{
+              border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
+              backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
+            }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span className="text-xs text-gray-500">
-            Drop file or <span style={{ color: "#F0FE00" }}>browse</span>
-          </span>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <span className="text-xs text-gray-500">
+              Drop file or <span style={{ color: "#F0FE00" }}>browse</span>
+            </span>
+            {isPDF && (
+              <span className="text-[10px] text-gray-600">PDF → auto-creates text nodes</span>
+            )}
+            {isMoodboard && (
+              <span className="text-[10px] text-gray-600">Images, PDFs, mood references</span>
+            )}
+            {isCollateral && (
+              <span className="text-[10px] text-gray-600">PNG, JPG, PDF — logo applied in context</span>
+            )}
+          </button>
           {isPDF && (
-            <span className="text-[10px] text-gray-600">PDF → auto-creates text nodes</span>
+            <button
+              type="button"
+              onClick={() => { setManualMode(true); onChange(""); }}
+              className="w-full text-center text-[11px] text-gray-500 hover:text-white transition-colors py-1"
+            >
+              or <span style={{ color: "#F0FE00" }}>input manually</span>
+            </button>
           )}
-          {isMoodboard && (
-            <span className="text-[10px] text-gray-600">Images, PDFs, mood references</span>
-          )}
-          {isCollateral && (
-            <span className="text-[10px] text-gray-600">PNG, JPG, PDF — logo applied in context</span>
-          )}
-        </button>
+        </div>
       )}
     </div>
   );
@@ -309,7 +353,7 @@ function ParamInput({
     return (
       <FileDropZone
         param={param}
-        value={value instanceof File ? value : null}
+        value={value instanceof File ? value : typeof value === "string" ? value : null}
         onChange={onChange}
       />
     );

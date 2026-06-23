@@ -10,12 +10,27 @@ fal.config({
 const IMAGE_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|avif|bmp)(\?.*)?$/i;
 
 function isImageUrl(url: string): boolean {
-  try {
-    return IMAGE_EXTENSIONS.test(new URL(url).pathname);
-  } catch {
-    return IMAGE_EXTENSIONS.test(url);
+  if (url.startsWith("https://") || url.startsWith("http://")) {
+    try {
+      return IMAGE_EXTENSIONS.test(new URL(url).pathname) || url.includes("fal.media") || url.includes("fal.run");
+    } catch {
+      return IMAGE_EXTENSIONS.test(url);
+    }
   }
+  return false;
 }
+
+// Map human-readable aspect ratios to fal.ai image_size dimensions
+const ASPECT_RATIO_SIZES: Record<string, { width: number; height: number }> = {
+  "1:1": { width: 1024, height: 1024 },
+  "16:9": { width: 1024, height: 576 },
+  "9:16": { width: 576, height: 1024 },
+  "4:3": { width: 1024, height: 768 },
+  "3:4": { width: 768, height: 1024 },
+  "21:9": { width: 1024, height: 440 },
+  landscape_16_9: { width: 1024, height: 576 },
+  square_hd: { width: 1024, height: 1024 },
+};
 
 // Use Claude Haiku to intelligently split a suite prompt into N distinct scene prompts.
 async function buildScenePromptsWithAI(
@@ -71,7 +86,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
-    const useImageEditing = !!sourceImageUrl && isImageUrl(sourceImageUrl);
+    // Upload data URLs to fal.ai storage so Kontext gets a real HTTP URL
+    let resolvedSourceUrl: string | undefined = sourceImageUrl;
+    if (typeof sourceImageUrl === "string" && sourceImageUrl.startsWith("data:")) {
+      try {
+        const [meta, base64] = sourceImageUrl.split(",");
+        const mimeType = meta.match(/:(.*?);/)?.[1] ?? "image/png";
+        const buffer = Buffer.from(base64, "base64");
+        const blob = new Blob([buffer], { type: mimeType });
+        resolvedSourceUrl = await fal.storage.upload(blob);
+      } catch (uploadErr) {
+        console.error("Failed to upload source image to fal storage:", uploadErr);
+        resolvedSourceUrl = undefined;
+      }
+    }
+
+    const useImageEditing = !!resolvedSourceUrl && isImageUrl(resolvedSourceUrl);
 
     // Determine the scene-specific prompts for each image.
     // Priority: client-provided scenes > AI-generated > master prompt repeated
@@ -89,7 +119,7 @@ export async function POST(request: Request) {
         if (useImageEditing) {
           const result = await fal.subscribe("fal-ai/flux-pro/kontext", {
             input: {
-              image_url: sourceImageUrl,
+              image_url: resolvedSourceUrl,
               prompt: `${scenePrompt}. Keep the source graphic clearly visible and legible. High quality, photorealistic.`,
               num_images: 1,
             },
@@ -97,10 +127,11 @@ export async function POST(request: Request) {
 
           return result.images?.[0]?.url ?? null;
         } else {
+          const imageDimensions = ASPECT_RATIO_SIZES[aspectRatio] ?? { width: 1024, height: 576 };
           const result = await fal.subscribe("fal-ai/flux/schnell", {
             input: {
               prompt: `Create a professional mockup: ${scenePrompt}. High quality, photorealistic rendering.`,
-              image_size: aspectRatio,
+              image_size: imageDimensions,
               num_inference_steps: 4,
               num_images: 1,
             },
@@ -109,7 +140,8 @@ export async function POST(request: Request) {
           return result.images?.[0]?.url ?? null;
         }
       } catch (err) {
-        console.error("Image generation error:", err);
+        const errObj = err as { status?: number; body?: unknown; message?: string };
+        console.error("Image generation error:", JSON.stringify({ status: errObj.status, body: errObj.body, message: errObj.message }, null, 2));
         return null;
       }
     });
