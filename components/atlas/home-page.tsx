@@ -495,6 +495,8 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [frameworksFilter, setFrameworksFilter] = useState<FrameworksFilter>("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17; drives ribbon center + left panel
+  const [ribbonView, setRibbonView] = useState<"list" | "calendar">("list");
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState<number>(0); // months shifted from current month
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Canvases with no workspaceId (legacy) or a stale workspaceId from a different
@@ -616,9 +618,9 @@ const [showSageChat, setShowSageChat] = useState(false);
     { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"], isFuture: true },
     // Week 4 - Future (projected)
     { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"], isFuture: true },
-    { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"], isFuture: true },
+    { status: "high", title: "Team Overload", description: "Multiple critical projects competing for the same resources", tags: ["Escalated", "Conflict"], isFuture: true },
     { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"], isFuture: true },
-    { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"], isFuture: true },
+    { status: "high", title: "Budget Shortfall Alert", description: "Q3 allocations require executive intervention", tags: ["At Risk", "Urgent"], isFuture: true },
     { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"], isFuture: true },
     { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"], isFuture: true },
     { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"], isFuture: true },
@@ -3549,27 +3551,24 @@ All Frameworks
                     focusedStatus === "smooth" ? "healthy" :
                     focusedStatus === "high" ? "critical" : "caution";
 
-                  const statusConfig: Record<StatusLevel, { label: string; color: string; description: string; projects: string; cashFlow: string }> = {
+                  const statusConfig: Record<StatusLevel, { label: string; color: string; description: string; projects: string }> = {
                     healthy: {
                       label: "Healthy",
                       color: "#4ADE80",
                       description: "Stable operations with capacity for growth",
                       projects: "Smooth",
-                      cashFlow: "87%",
                     },
                     caution: {
                       label: "Caution",
                       color: "#FCD34D",
                       description: "Performance maintained, but pressure points emerging",
                       projects: `${Math.max(1, blockerCount)} Blocker${Math.max(1, blockerCount) === 1 ? "" : "s"}`,
-                      cashFlow: "50%",
                     },
                     critical: {
                       label: "Critical",
                       color: "#F87171",
                       description: "Unsustainable conditions requiring immediate action",
                       projects: `${Math.max(3, blockerCount)} Blockers`,
-                      cashFlow: "16%",
                     },
                   };
                   const cfg = statusConfig[statusLevel];
@@ -3640,6 +3639,33 @@ All Frameworks
                     ? "Today"
                     : focusedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
+                  // Calendar view: month grid with colored day circles
+                  const monthAnchor = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+                  const calYear = monthAnchor.getFullYear();
+                  const calMonth = monthAnchor.getMonth();
+                  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                  // Convert to Mon-first (0=Mon, 6=Sun) — JS getDay is Sun-first
+                  const firstWeekday = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
+                  const calendarHeader = monthAnchor.toLocaleDateString('en-US', { month: 'long' });
+                  type CalCell = { day: number; status: string | null; isToday: boolean; isFuture: boolean; idx: number } | null;
+                  const calendarCells: CalCell[] = [];
+                  for (let i = 0; i < firstWeekday; i++) calendarCells.push(null);
+                  const todayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                  for (let d = 1; d <= daysInMonth; d++) {
+                    const cellDate = new Date(calYear, calMonth, d);
+                    const cellMs = cellDate.getTime();
+                    const daysFromToday = Math.round((cellMs - todayMs) / (1000 * 60 * 60 * 24));
+                    const idx = todayIndex + daysFromToday;
+                    const rd = ribbonDays[idx];
+                    calendarCells.push({
+                      day: d,
+                      status: rd?.status ?? null,
+                      isToday: cellMs === todayMs,
+                      isFuture: cellMs > todayMs,
+                      idx,
+                    });
+                  }
+
                   return (
                     <div className="grid grid-cols-[2fr_1fr] gap-4">
                       {/* Left column */}
@@ -3661,15 +3687,9 @@ All Frameworks
                               <p className="text-sm text-gray-400 max-w-xs mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
                                 {cfg.description}
                               </p>
-                              <div className="flex gap-8">
-                                <div>
-                                  <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Projects</div>
-                                  <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.projects}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Cash Flow</div>
-                                  <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.cashFlow}</div>
-                                </div>
+                              <div>
+                                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Projects</div>
+                                <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.projects}</div>
                               </div>
                             </div>
                             <div
@@ -3797,20 +3817,26 @@ All Frameworks
                           <div className="flex items-center gap-4">
                             <button
                               type="button"
-                              onClick={() => setSelectedRibbonDay(d => Math.max(0, d - 7))}
+                              onClick={() => ribbonView === "calendar"
+                                ? setCalendarMonthOffset(o => o - 1)
+                                : setSelectedRibbonDay(d => Math.max(0, d - 7))}
                               className="text-gray-500 hover:text-white transition-colors"
-                              aria-label="Previous week"
+                              aria-label={ribbonView === "calendar" ? "Previous month" : "Previous week"}
                             >
                               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
                                 <path d="M6.5 1L1.5 6L6.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
-                            <h4 className="text-white font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>{rangeLabel}</h4>
+                            <h4 className="text-white font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>
+                              {ribbonView === "calendar" ? calendarHeader : rangeLabel}
+                            </h4>
                             <button
                               type="button"
-                              onClick={() => setSelectedRibbonDay(d => Math.min(ribbonDays.length - 1, d + 7))}
+                              onClick={() => ribbonView === "calendar"
+                                ? setCalendarMonthOffset(o => o + 1)
+                                : setSelectedRibbonDay(d => Math.min(ribbonDays.length - 1, d + 7))}
                               className="text-gray-500 hover:text-white transition-colors"
-                              aria-label="Next week"
+                              aria-label={ribbonView === "calendar" ? "Next month" : "Next week"}
                             >
                               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
                                 <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -3818,7 +3844,16 @@ All Frameworks
                             </button>
                           </div>
                           <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                            <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-500 hover:text-white transition-colors" type="button" title="Grid view">
+                            <button
+                              type="button"
+                              onClick={() => setRibbonView("calendar")}
+                              className="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                              style={{
+                                backgroundColor: ribbonView === "calendar" ? "#2a2a2a" : "transparent",
+                                color: ribbonView === "calendar" ? "#ffffff" : "#6b7280",
+                              }}
+                              title="Calendar view"
+                            >
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
                                 <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
@@ -3826,7 +3861,16 @@ All Frameworks
                                 <rect x="9" y="9" width="5.5" height="5.5" rx="1" fill="currentColor"/>
                               </svg>
                             </button>
-                            <button className="w-8 h-8 rounded-md flex items-center justify-center text-white transition-colors" type="button" title="List view" style={{ backgroundColor: "#2a2a2a" }}>
+                            <button
+                              type="button"
+                              onClick={() => setRibbonView("list")}
+                              className="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                              style={{
+                                backgroundColor: ribbonView === "list" ? "#2a2a2a" : "transparent",
+                                color: ribbonView === "list" ? "#ffffff" : "#6b7280",
+                              }}
+                              title="List view"
+                            >
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <rect x="1.5" y="3" width="13" height="2" rx="1" fill="currentColor"/>
                                 <rect x="1.5" y="7" width="13" height="2" rx="1" fill="currentColor"/>
@@ -3835,6 +3879,7 @@ All Frameworks
                             </button>
                           </div>
                         </div>
+                        {ribbonView === "list" ? (
                         <div className="flex-1 flex flex-col items-center justify-center gap-2 mx-auto w-full" style={{ maxWidth: 320 }}>
                           {days.map((day) => {
                             const isFocused = day.offset === 0;
@@ -3883,6 +3928,50 @@ All Frameworks
                             );
                           })}
                         </div>
+                        ) : (
+                          <div className="flex-1 flex flex-col mx-auto w-full" style={{ maxWidth: 360 }}>
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                              {["MON","TUE","WED","THU","FRI","SAT","SUN"].map(d => (
+                                <div key={d} className="text-center text-[10px] font-semibold tracking-wide text-gray-500" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+                                  {d}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-y-1.5 gap-x-1 flex-1 content-start">
+                              {calendarCells.map((cell, i) => {
+                                if (!cell) return <div key={`e-${i}`} />;
+                                const isPast = !cell.isToday && !cell.isFuture;
+                                const bg = isPast
+                                  ? "#3a3a3a"
+                                  : cell.status === "smooth"
+                                  ? "#00db75"
+                                  : cell.status === "high"
+                                  ? "#e52a05"
+                                  : cell.status === "minor" || cell.status === "moderate"
+                                  ? "#fdd33b"
+                                  : "#3a3a3a";
+                                const textColor = isPast ? "#7a7a7a" : "#0a0a0a";
+                                return (
+                                  <button
+                                    key={`d-${cell.day}`}
+                                    type="button"
+                                    onClick={() => setSelectedRibbonDay(cell.idx)}
+                                    className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-transform hover:scale-110"
+                                    style={{
+                                      backgroundColor: bg,
+                                      color: textColor,
+                                      fontFamily: "Inter, system-ui, sans-serif",
+                                      outline: cell.isToday ? "2px solid #ffffff" : "none",
+                                      outlineOffset: cell.isToday ? "2px" : undefined,
+                                    }}
+                                  >
+                                    {cell.day}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
