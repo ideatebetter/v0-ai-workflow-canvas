@@ -2,9 +2,11 @@
 
 import React, { useMemo } from "react";
 import type { AtlasNode } from "@/lib/atlas-types";
+import type { Edge } from "@xyflow/react";
 
 interface CanvasPreviewProps {
   nodes: AtlasNode[];
+  edges?: Edge[];
   className?: string;
 }
 
@@ -12,11 +14,17 @@ interface CanvasPreviewProps {
 const NODE_TYPE_COLORS: Record<string, string> = {
   "file-node": "#3B82F6", // Blue
   "atlas-file-node": "#3B82F6",
+  "file": "#3B82F6", // Blue (file upload nodes)
   "text-note": "#F0FE00", // Yellow
+  "text": "#F0FE00", // Yellow (text nodes)
   "sage-chatbot": "#10B981", // Green
   "presentation-group": "#8B5CF6", // Purple
+  "presentationGroup": "#8B5CF6", // Purple
   "canvas-group": "#F59E0B", // Orange
   "briefInput": "#3B82F6", // Blue (strategy) — overridden below for brief cards
+  "mockupImage": "#EC4899", // Pink (generative mockup nodes)
+  "aiPrompt": "#EC4899", // Pink
+  "moodboard": "#F59E0B", // Orange
   default: "#6B7280", // Gray
 };
 
@@ -34,7 +42,7 @@ function getNodeColor(node: AtlasNode): string {
   const nodeType = node.type || "default";
 
   // Check for file node with status
-  if (nodeType === "file-node" || nodeType === "atlas-file-node") {
+  if (nodeType === "file-node" || nodeType === "atlas-file-node" || nodeType === "file") {
     const status = (node.data as Record<string, unknown>)?.status as string;
     if (status === "approved") return "#10B981"; // Green
     if (status === "in-review") return "#F59E0B"; // Orange
@@ -51,11 +59,11 @@ function getNodeColor(node: AtlasNode): string {
   return NODE_TYPE_COLORS[nodeType] || NODE_TYPE_COLORS.default;
 }
 
-export function CanvasPreview({ nodes, className = "" }: CanvasPreviewProps) {
+export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewProps) {
   // Calculate bounds and scale to fit nodes into the preview area
-  const { scaledNodes, viewBox } = useMemo(() => {
+  const { scaledNodes, scaledEdges, viewBox } = useMemo(() => {
     if (!nodes || nodes.length === 0) {
-      return { scaledNodes: [], viewBox: "0 0 100 100" };
+      return { scaledNodes: [], scaledEdges: [], viewBox: "0 0 100 100" };
     }
 
     // Find bounds of all nodes
@@ -87,26 +95,30 @@ export function CanvasPreview({ nodes, className = "" }: CanvasPreviewProps) {
     const contentHeight = maxY - minY;
 
     // Create scaled node representations
+    const nodeMap = new Map<string, { cx: number; cy: number; color: string }>();
     const scaled = nodes.map((node) => {
       const width = (node.width as number) || 200;
       const height = (node.height as number) || 100;
+      const x = node.position.x - minX;
+      const y = node.position.y - minY;
+      nodeMap.set(node.id, { cx: x + width / 2, cy: y + height / 2, color: getNodeColor(node) });
+      return { id: node.id, x, y, width, height, color: getNodeColor(node), type: node.type };
+    });
 
-      return {
-        id: node.id,
-        x: node.position.x - minX,
-        y: node.position.y - minY,
-        width,
-        height,
-        color: getNodeColor(node),
-        type: node.type,
-      };
+    // Create scaled edge representations (center-to-center lines)
+    const scaledE = (edges ?? []).flatMap((edge) => {
+      const src = nodeMap.get(edge.source);
+      const tgt = nodeMap.get(edge.target);
+      if (!src || !tgt) return [];
+      return [{ id: edge.id, x1: src.cx, y1: src.cy, x2: tgt.cx, y2: tgt.cy }];
     });
 
     return {
       scaledNodes: scaled,
+      scaledEdges: scaledE,
       viewBox: `0 0 ${contentWidth} ${contentHeight}`,
     };
-  }, [nodes]);
+  }, [nodes, edges]);
 
   if (!nodes || nodes.length === 0) {
     return (
@@ -155,12 +167,27 @@ export function CanvasPreview({ nodes, className = "" }: CanvasPreviewProps) {
         }}
       />
 
-      {/* Nodes preview */}
+      {/* Nodes and edges preview */}
       <svg
         viewBox={viewBox}
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
       >
+        {/* Edges rendered below nodes */}
+        {scaledEdges.map((edge) => (
+          <line
+            key={edge.id}
+            x1={edge.x1}
+            y1={edge.y1}
+            x2={edge.x2}
+            y2={edge.y2}
+            stroke="#333333"
+            strokeWidth={2}
+            strokeDasharray="6 4"
+            strokeLinecap="round"
+          />
+        ))}
+
         {scaledNodes.map((node, nodeIndex) => (
           <g key={`${node.id}-${nodeIndex}`}>
             {/* Node rectangle */}

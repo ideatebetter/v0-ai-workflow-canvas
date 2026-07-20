@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage, NamingConventions } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity, SavedPresentationFlow, CanvasPage, NamingConventions, ProjectPhase } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS, applyNamingRule } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -38,6 +38,8 @@ import { SyncFileDialog } from "./sync-file-dialog";
 import { SyncMultipleDialog } from "./sync-multiple-dialog";
 import { ParseFileDialog } from "./parse-file-dialog";
 import { DataDetailPanel } from "./data-detail-panel";
+import { ShareCanvasDialog } from "./share-canvas-dialog";
+import { ActivitySidePanel } from "./activity-side-panel";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -166,6 +168,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareNodeContext, setShareNodeContext] = useState<{ nodeId: string; nodeLabel: string; nodeType: string } | null>(null);
   const [showFrameworkBuilder, setShowFrameworkBuilder] = useState(false);
   const [linkCopiedNodeId, setLinkCopiedNodeId] = useState<string | null>(null);
   const [showFrameworkLibrary, setShowFrameworkLibrary] = useState(false);
@@ -196,6 +200,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   }>>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Activity panel state
+  const [activityOpen, setActivityOpen] = useState(false);
+
   // Comment mode state
   const [commentMode, setCommentMode] = useState(false);
   const [newCommentPosition, setNewCommentPosition] = useState<{ x: number; y: number } | null>(null);
@@ -264,6 +271,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Create AI Prompt node connected to source file
   const createAIPromptNode = useCallback((sourceNodeId: string, fileData: FileNodeData) => {
+    if (canvasRef.current.aiEnabled === false) return;
     const sourceNode = nodes.find(n => n.id === sourceNodeId);
     if (!sourceNode) return;
     
@@ -1086,12 +1094,18 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           ? STUDIO_TEAM.filter(m => proj.memberIds.includes(m.id))
           : STUDIO_TEAM;
 
-        const utilMap: Record<string, { util: number; alloc: number; bench: number; skills: string[] }> = {
-          m1: { util: 91, alloc: 95, bench: 0,  skills: ["Brand Strategy", "Visual Design"] },
-          m2: { util: 84, alloc: 87, bench: 5,  skills: ["UI Design", "Motion"] },
-          m3: { util: 86, alloc: 89, bench: 3,  skills: ["Motion Design", "After Effects"] },
-          m4: { util: 78, alloc: 80, bench: 12, skills: ["Strategy", "Research"] },
-          m5: { util: 72, alloc: 75, bench: 18, skills: ["UI Design", "Branding"] },
+        type UtilEntry = { util: number; bill: number; avail: number; alloc: number; planned: number; bench: number; skills: string[]; risk: "clear" | "warning" | "critical"; projects: { projectName: string; allocationPct: number; color: string }[] };
+        const utilMap: Record<string, UtilEntry> = {
+          m1: { util: 91, bill: 36, avail: 40, alloc: 95, planned: 85, bench: 0,  risk: "critical", skills: ["Brand Strategy", "Visual Design"],
+            projects: [{ projectName: "Google Brand Sprint", allocationPct: 60, color: "#3b82f6" }, { projectName: "Nike Campaign", allocationPct: 35, color: "#8b5cf6" }] },
+          m2: { util: 84, bill: 34, avail: 40, alloc: 87, planned: 85, bench: 5,  risk: "warning",  skills: ["UI Design", "Motion"],
+            projects: [{ projectName: "Nike Campaign", allocationPct: 50, color: "#8b5cf6" }, { projectName: "Internal Rebrand", allocationPct: 37, color: "#f59e0b" }] },
+          m3: { util: 86, bill: 34, avail: 40, alloc: 89, planned: 85, bench: 3,  risk: "warning",  skills: ["Motion Design", "After Effects"],
+            projects: [{ projectName: "Google Brand Sprint", allocationPct: 55, color: "#3b82f6" }, { projectName: "Pitch Deck", allocationPct: 31, color: "#10b981" }] },
+          m4: { util: 62, bill: 25, avail: 40, alloc: 65, planned: 80, bench: 14, risk: "clear",    skills: ["Strategy", "Research"],
+            projects: [{ projectName: "Internal Rebrand", allocationPct: 45, color: "#f59e0b" }, { projectName: "Pitch Deck", allocationPct: 20, color: "#10b981" }] },
+          m5: { util: 45, bill: 18, avail: 40, alloc: 50, planned: 80, bench: 22, risk: "clear",    skills: ["UI Design", "Branding"],
+            projects: [{ projectName: "Pitch Deck", allocationPct: 50, color: "#10b981" }] },
         };
 
         newNode = {
@@ -1103,16 +1117,37 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             label: `${scopePrefix}Capacity & Resourcing`,
             teamMembers: members.map(m => ({
               member: m,
-              utilizationRate:    utilMap[m.id].util,
-              currentAllocation:  utilMap[m.id].alloc,
-              plannedAllocation:  85,
-              benchTime:          utilMap[m.id].bench,
-              skills:             utilMap[m.id].skills,
+              utilizationRate:    utilMap[m.id]?.util ?? 75,
+              billableHours:      utilMap[m.id]?.bill ?? 30,
+              availableHours:     utilMap[m.id]?.avail ?? 40,
+              currentAllocation:  utilMap[m.id]?.alloc ?? 75,
+              plannedAllocation:  utilMap[m.id]?.planned ?? 85,
+              benchTime:          utilMap[m.id]?.bench ?? 10,
+              skills:             utilMap[m.id]?.skills ?? [],
+              projectAllocations: utilMap[m.id]?.projects ?? [],
+              overloadRisk:       utilMap[m.id]?.risk ?? "clear",
             })),
             lastUpdated: "just now",
           },
         };
       } else if (opType === "financial") {
+        const isAtRisk = proj ? (proj.consumed > 70 && proj.margin < 28) : false;
+        // Standalone team breakdown (KL×89h, MT×124h, JP×127h = 340h total)
+        // KL: bill $225, cost $140 → billed $20,025, cost $12,460
+        // MT: bill $185, cost $110 → billed $22,940, cost $13,640
+        // JP: bill $150, cost $85  → billed $19,050, cost $10,795
+        const TEAM_BILLED = 20025 + 22940 + 19050; // 62,015
+        const TEAM_COST   = 12460 + 13640 + 10795; // 36,895
+        const TEAM_HOURS  = 89 + 124 + 127;         // 340
+
+        const hoursLogged    = proj ? Math.round(proj.consumed * 4.8) : TEAM_HOURS;
+        const hoursEstimated = 480;
+        const revenue    = proj ? Math.round(proj.margin > 30 ? 148000 : 112000) : TEAM_BILLED;
+        const costToDate = proj ? Math.round(revenue * (proj.margin >= 35 ? 0.58 : 0.68)) : TEAM_COST;
+        const grossMarginPct = proj ? proj.margin : Math.round(((TEAM_BILLED - TEAM_COST) / TEAM_BILLED) * 100); // 41
+        // Blended rates derived from team breakdown (matching what avg-cost will show)
+        const effBill = proj ? Math.round(revenue / hoursEstimated) : Math.round(TEAM_BILLED / TEAM_HOURS); // 182
+        const effCost = proj ? Math.round(costToDate / hoursLogged)  : Math.round(TEAM_COST / TEAM_HOURS);   // 109
         newNode = {
           id: nodeId,
           type: "financial",
@@ -1121,24 +1156,52 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           data: {
             label: `${scopePrefix}Financial Performance`,
             scope: scope,
-            // org: weighted avg across Nike/Google/Deloitte/Levi's/Patagonia
-            projectMargin:             proj ? proj.margin : 38,
-            budgetConsumed:            proj ? proj.consumed : 54,
-            revenueRealized:           proj ? Math.round(proj.consumed * 0.92) : 49,
-            blendedRateEfficiency:     proj ? (proj.margin >= 35 ? 94 : 82) : 91,
-            utilizationAdjustedMargin: proj ? Math.round(proj.margin * 0.87) : 33,
-            status: proj ? (proj.consumed > 60 && proj.margin < 32 ? "at-risk" : "healthy") : "healthy",
+            billingType: proj ? "flat_fee" : "hourly",
+            currency: "USD",
+            viewRole: "owner",
+            status: isAtRisk ? "at-risk" : "healthy",
             lastUpdated: "just now",
+
+            // Project Margin
+            revenue,
+            costToDate,
+            grossMarginPct,
+            projectedMarginPct: proj ? Math.max(grossMarginPct - 3, 10) : grossMarginPct,
+            hoursLogged,
+            hoursEstimated,
+
+            // Blended Rate Efficiency — derived from team breakdown so avg-cost matches
+            effectiveBillRate: effBill,
+            effectiveCostRate: effCost,
+            rateEfficiencyRatio: Math.round((effBill / effCost) * 100) / 100,
+            teamBreakdown: [
+              { name: "K. Laurent", initials: "KL", role: "Senior",  hoursLogged: 89,  billRate: 225, costRate: 140 },
+              { name: "M. Torres",  initials: "MT", role: "Mid",     hoursLogged: 124, billRate: 185, costRate: 110 },
+              { name: "J. Park",    initials: "JP", role: "Junior",  hoursLogged: 127, billRate: 150, costRate: 85  },
+            ],
+
+            // Utilization-Adjusted Margin
+            // Scope: 45h over planned pace (-45h × $109 ≈ -$4,900)
+            // Staffing: junior mix cheaper than planned Senior-heavy plan (+$2,200)
+            scopeVariance:    -4800,
+            staffingVariance:  2200,
+            totalVariance:    -2600,
+
+            // Legacy fields
+            projectMargin:             grossMarginPct,
+            budgetConsumed:            proj ? proj.consumed : Math.round((TEAM_HOURS / hoursEstimated) * 100),
+            revenueRealized:           proj ? Math.round(proj.consumed * 0.92) : 65,
+            blendedRateEfficiency:     proj ? (proj.margin >= 35 ? 94 : 82) : 94,
+            utilizationAdjustedMargin: proj ? Math.round(proj.margin * 0.87) : 33,
           },
         };
       } else if (opType === "projectHealth") {
-        // Org level: portfolio health across all active projects
         const PORTFOLIO_PROJECTS = [
-          { name: "Nike Running",       color: "#3a6bb5", phase: "design",   health: "on-track"        as const, daysSince: 2, feedbackCycles: 2, revisions: 4 },
-          { name: "Google Brand Sprint", color: "#2e8b57", phase: "research", health: "on-track"        as const, daysSince: 1, feedbackCycles: 1, revisions: 2 },
-          { name: "Deloitte Digital",   color: "#c27030", phase: "concept",  health: "needs-attention" as const, daysSince: 4, feedbackCycles: 3, revisions: 6 },
-          { name: "Levi's Identity",    color: "#8b3a8b", phase: "strategy", health: "on-track"        as const, daysSince: 3, feedbackCycles: 2, revisions: 3 },
-          { name: "Patagonia Social",   color: "#2e6b4f", phase: "design",   health: "on-track"        as const, daysSince: 2, feedbackCycles: 2, revisions: 3 },
+          { name: "Nike Running",        color: "#3a6bb5", phase: "design",     health: "on-track"        as const, daysSince: 2,  feedbackCycles: 2, revisions: 4 },
+          { name: "Google Brand Sprint", color: "#2e8b57", phase: "concepting", health: "needs-attention" as const, daysSince: 3,  feedbackCycles: 2, revisions: 4 },
+          { name: "Deloitte Digital",    color: "#c27030", phase: "concept",    health: "needs-attention" as const, daysSince: 11, feedbackCycles: 3, revisions: 6 },
+          { name: "Levi's Identity",     color: "#8b3a8b", phase: "strategy",   health: "on-track"        as const, daysSince: 3,  feedbackCycles: 2, revisions: 3 },
+          { name: "Patagonia Social",    color: "#2e6b4f", phase: "design",     health: "on-track"        as const, daysSince: 1,  feedbackCycles: 1, revisions: 2 },
         ];
         newNode = {
           id: nodeId,
@@ -1146,22 +1209,50 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           position: nodePosition,
           selected: true,
           data: proj ? {
-            // Project-scoped: single project view
             label:                     `${scopePrefix}Project Health`,
+            viewRole:                  "owner" as const,
             daysSinceClientTouchpoint: proj.touchpoint,
+            lastTouchpointType:        "meeting" as const,
+            lastTouchpointSource:      "calendar" as const,
+            touchpointLog: [
+              { date: "Jun 26", type: "meeting" as const,               source: "calendar" as const,          notes: "Alignment call — client happy with direction" },
+              { date: "Jun 22", type: "platform_interaction" as const,   source: "client_experience" as const, notes: "Approved logo mark v3" },
+              { date: "Jun 18", type: "manual_log" as const,            source: "manual_log" as const,        notes: "Slack thread on color palette" },
+            ],
             openFeedbackCycles:        proj.feedbackCycles,
+            feedbackCycles: [
+              { id: "fc1", nodeLabel: "Brand Guidelines", daysOpen: 5, lastClientAction: "Requested changes", status: "awaiting_revision" as const },
+            ],
             revisionCount:             proj.revisions,
-            projectPhase:              proj.phase as "discovery" | "design" | "development" | "review" | "delivery" | "concept" | "research" | "strategy",
-            healthStatus:              proj.consumed > 60 && proj.margin < 32 ? "needs-attention" : "on-track",
+            expectedRevisionMin:       2,
+            expectedRevisionMax:       3,
+            projectPhase:              proj.phase as ProjectPhase,
+            healthStatus:              proj.consumed > 60 && proj.margin < 32 ? "needs-attention" as const : "on-track" as const,
             lastUpdated:               "just now",
           } : {
-            // Org-scoped: portfolio view
-            label:                     "Portfolio Health",
-            daysSinceClientTouchpoint: 4, // stalest touchpoint (Deloitte)
-            openFeedbackCycles:        10, // total across all projects
-            revisionCount:             18, // total across all projects
-            projectPhase:              "design" as const, // unused at org level
-            healthStatus:              "needs-attention" as const, // 1 of 5 needs attention
+            // Standalone: Google Brand Sprint single-project view
+            label:                     "Project Health",
+            viewRole:                  "owner" as const,
+            daysSinceClientTouchpoint: 3,
+            lastTouchpointType:        "meeting" as const,
+            lastTouchpointSource:      "calendar" as const,
+            touchpointLog: [
+              { date: "Jun 26", type: "meeting" as const,               source: "calendar" as const,          notes: "Alignment call — client aligned on direction, wants 2 more logo options" },
+              { date: "Jun 22", type: "platform_interaction" as const,   source: "client_experience" as const, notes: "Client approved logo mark v3 via Client Experience link" },
+              { date: "Jun 18", type: "manual_log" as const,            source: "manual_log" as const,        notes: "Slack thread — client raised concerns about color palette" },
+              { date: "Jun 12", type: "meeting" as const,               source: "calendar" as const,          notes: "Kickoff — brief confirmed, timeline agreed" },
+            ],
+            openFeedbackCycles:        2,
+            feedbackCycles: [
+              { id: "fc1", nodeLabel: "Brand Guidelines",  daysOpen: 5,  lastClientAction: "Requested 2 more logo options", status: "awaiting_revision" as const },
+              { id: "fc2", nodeLabel: "Color System",      daysOpen: 11, lastClientAction: "Left comment on palette",        status: "stalled" as const },
+            ],
+            revisionCount:             4,
+            expectedRevisionMin:       2,
+            expectedRevisionMax:       3,
+            projectPhase:              "concepting" as const,
+            sageRevisionInsight:       "4 revisions exceeds the 2–3 expected for Concepting. Drift Detection flagged recurring feedback on color direction — possible brief ambiguity around brand tone.",
+            healthStatus:              "needs-attention" as const,
             lastUpdated:               "just now",
             portfolioProjects:         PORTFOLIO_PROJECTS,
           },
@@ -1199,11 +1290,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           selected: true,
           data: {
             label: `${scopePrefix}Team Health`,
-            feedbackLoopVelocity: 14,
-            revisionToApprovalRatio: proj ? (proj.revisions / 2.5) : 2.1,
-            timeSavedHours: 38,
+            feedbackLoopVelocity: 18,
+            revisionToApprovalRatio: proj ? (proj.revisions / 2.5) : 2.3,
+            timeSavedHours: 42,
             trendDirection: "improving",
             lastUpdated: "just now",
+            overallHealthScore: 74,
+            onTimeDeliveryRate: 87,
+            openBlockers: 1,
+            weeklyVelocity: [3, 5, 4, 7, 6, 5, 8],
+            avgCostRate: 85,
           },
         };
       }
@@ -1500,6 +1596,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     window.addEventListener("atlas:ungroup-presentation", handler as EventListener);
     return () => window.removeEventListener("atlas:ungroup-presentation", handler as EventListener);
   }, [handleUngroupPresentation]);
+
+  // Share node event
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ nodeId: string; nodeLabel: string; nodeType: string }>) => {
+      setShareNodeContext(e.detail);
+      setShowShareDialog(true);
+    };
+    window.addEventListener("atlas:share-node", handler as EventListener);
+    return () => window.removeEventListener("atlas:share-node", handler as EventListener);
+  }, []);
 
   // Start presentation
   const handleStartPresentation = useCallback(() => {
@@ -2318,6 +2424,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         onSwitchPage={switchPage}
         onAddPage={handleAddPage}
         onRenamePage={handleRenamePage}
+        onShareClick={() => setShowShareDialog(true)}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -2401,6 +2508,8 @@ presentationMode={presentationMode}
       nodes: selectedNodes,
     });
   }}
+  initialViewport={canvas.viewport}
+  onViewportChange={(vp) => onCanvasChange({ ...canvas, viewport: vp })}
   />
 
 <CanvasSideToolbar
@@ -2435,6 +2544,7 @@ presentationMode={presentationMode}
   }}
   onAddLink={(url) => handleAddLink(url, { x: 400, y: 300 })}
   onSettingsClick={() => setShowSettingsDialog(true)}
+  onShareClick={() => setShowShareDialog(true)}
   onSearchChange={setSearchQuery}
   searchQuery={searchQuery}
   commentMode={commentMode}
@@ -2445,7 +2555,28 @@ presentationMode={presentationMode}
   onStartPresentation={handleStartPresentation}
   presentationEdgeCount={new Set(presentationEdges.flatMap(e => [e.source, e.target])).size}
   hasPlayableFlow={selectedFlowId !== null || presentationEdges.length > 0 || presentationGroups.length > 0}
+  onActivityClick={() => setActivityOpen(o => !o)}
+  activityOpen={activityOpen}
+  todoCount={nodes.filter(n => n.type === "file").reduce((sum, n) => sum + ((n.data as FileNodeData).tasks?.filter(t => !t.completed).length ?? 0), 0)}
+  activityCount={comments.filter(c => !c.resolved).length}
   />
+
+      {/* Activity Side Panel — slides in from right edge, behind the toolbar */}
+      <div
+        className="absolute top-0 bottom-0 z-30 overflow-hidden"
+        style={{
+          right: 68,
+          width: 320,
+          transform: activityOpen ? "translateX(0)" : "translateX(calc(100% + 68px))",
+          transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        <ActivitySidePanel
+          nodes={nodes}
+          comments={comments}
+          onClose={() => setActivityOpen(false)}
+        />
+      </div>
 
       {/* Saved presentation flows panel — top-right of canvas, shown in builder mode */}
       {presentationMode && (
@@ -2593,12 +2724,24 @@ presentationMode={presentationMode}
         onFilesUploaded={handleFilesUploaded}
       />
 
+      {/* Share Canvas / Node Dialog */}
+      <ShareCanvasDialog
+        open={showShareDialog}
+        onClose={() => { setShowShareDialog(false); setShareNodeContext(null); }}
+        canvas={canvas}
+        workspaceSettings={workspaceSettings}
+        shareTitle={shareNodeContext?.nodeType === "moodboard" ? "Share Moodboard" : shareNodeContext?.nodeType === "presentation" ? "Share Presentation" : "Share Board"}
+        shareDescription={shareNodeContext ? `Generate a public link to share '${shareNodeContext.nodeLabel}'. Anyone with the link can access it based on the permissions you set.` : undefined}
+      />
+
       {/* Settings Dialog */}
       <WorkspaceSettingsDialog
         open={showSettingsDialog}
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
+        canvas={canvas}
+        onCanvasChange={onCanvasChange}
         onMakeFramework={() => {
           setShowSettingsDialog(false);
           setShowFrameworkBuilder(true);
@@ -3019,6 +3162,7 @@ presentationMode={presentationMode}
             nodeType={node.type as DataNodeType}
             nodeData={node.data as Record<string, unknown>}
             onClose={() => setDetailModalNodeId(null)}
+            onNodeDataChange={(newData) => setNodes(nds => nds.map(n => n.id === node.id ? { ...n, data: newData as typeof n.data } : n))}
           />
         );
       })()}
@@ -3111,11 +3255,12 @@ presentationMode={presentationMode}
         return (
           <MoodboardExpanded
             data={moodboardNode.data as MoodboardNodeData}
+            nodeId={expandedMoodboardId}
             onClose={() => setExpandedMoodboardId(null)}
             onUngroup={handleUngroupMoodboard}
             onDataChange={(newData) => {
-              setNodes(prevNodes => prevNodes.map(n => 
-                n.id === expandedMoodboardId 
+              setNodes(prevNodes => prevNodes.map(n =>
+                n.id === expandedMoodboardId
                   ? { ...n, data: newData }
                   : n
               ));

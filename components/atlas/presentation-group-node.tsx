@@ -50,7 +50,6 @@ export function PresentationGroupNode({
   const { onCopyNodeLink } = useCanvasNodeActions();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [editValue, setEditValue] = useState(label || `Slide Group (${count})`);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -163,27 +162,20 @@ export function PresentationGroupNode({
             <rect x="6" y="6" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
           </svg>
         </button>
-        {/* Share / copy link */}
+        {/* Share */}
         <button
           type="button"
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 flex-shrink-0"
-          title="Copy link"
+          title="Share presentation flow"
           onClick={e => {
             e.stopPropagation();
-            onCopyNodeLink(id as string);
-            setLinkCopied(true);
-            setTimeout(() => setLinkCopied(false), 2000);
+            window.dispatchEvent(new CustomEvent("atlas:share-node", { detail: { nodeId: id, nodeLabel: label || `Slide Group (${count})`, nodeType: "presentation" } }));
           }}
         >
-          {linkCopied ? (
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5L4 8L9.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          ) : (
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <path d="M4.5 6.5L6.5 4.5" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
-              <path d="M6 2.5L6.8 1.7C7.47 1.03 8.53 1.03 9.2 1.7C9.87 2.37 9.87 3.43 9.2 4.1L8.4 4.9" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
-              <path d="M5 8.5L4.2 9.3C3.53 9.97 2.47 9.97 1.8 9.3C1.13 8.63 1.13 7.57 1.8 6.9L2.6 6.1" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.6"/>
-            </svg>
-          )}
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+            <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="#F0FE00" strokeWidth="1.4" strokeLinejoin="round" strokeOpacity="0.7"/>
+            <path d="M6.5 9L14 2" stroke="#F0FE00" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.7"/>
+          </svg>
         </button>
       </div>
 

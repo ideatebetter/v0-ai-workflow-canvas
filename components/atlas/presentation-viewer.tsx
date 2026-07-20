@@ -6,6 +6,217 @@ import type { FileNodeData, TextNodeData, MoodboardNodeData, MoodboardImagePosit
 import Image from "next/image";
 import { detectFocalPoint, type FocalPoint } from "@/lib/focal-point";
 
+// ─── Invisible snap grid ──────────────────────────────────────────────────────
+// 12 columns × 8 rows — grid lines invisible to the user
+const GRID_COLS = 12;
+const GRID_ROWS = 8;
+
+// Snap a percentage-based position to the nearest grid intersection
+function snapPct(xPct: number, yPct: number): { x: number; y: number } {
+  const colSize = 100 / GRID_COLS;
+  const rowSize = 100 / GRID_ROWS;
+  return {
+    x: Math.max(0, Math.min(100, Math.round(xPct / colSize) * colSize)),
+    y: Math.max(0, Math.min(100, Math.round(yPct / rowSize) * rowSize)),
+  };
+}
+
+// Snap size to nearest grid cell multiples (min 2 cols × 2 rows)
+function snapSize(wPct: number, hPct: number): { w: number; h: number } {
+  const colSize = 100 / GRID_COLS;
+  const rowSize = 100 / GRID_ROWS;
+  return {
+    w: Math.max(colSize * 2, Math.min(100, Math.round(wPct / colSize) * colSize)),
+    h: Math.max(rowSize * 2, Math.min(100, Math.round(hPct / rowSize) * rowSize)),
+  };
+}
+
+// px from edge of the content box that triggers resize instead of drag
+const EDGE_HIT = 14;
+
+function getEdgeHandle(e: React.PointerEvent<HTMLDivElement>): string {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const n = y < EDGE_HIT;
+  const s = y > rect.height - EDGE_HIT;
+  const w = x < EDGE_HIT;
+  const ee = x > rect.width - EDGE_HIT;
+  return `${n ? "n" : ""}${s ? "s" : ""}${w ? "w" : ""}${ee ? "e" : ""}`;
+}
+
+function getEdgeCursor(e: React.MouseEvent<HTMLDivElement>): string {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const n = y < EDGE_HIT;
+  const s = y > rect.height - EDGE_HIT;
+  const w = x < EDGE_HIT;
+  const ee = x > rect.width - EDGE_HIT;
+  if (n && w) return "nw-resize";
+  if (n && ee) return "ne-resize";
+  if (s && w) return "sw-resize";
+  if (s && ee) return "se-resize";
+  if (n) return "n-resize";
+  if (s) return "s-resize";
+  if (w) return "w-resize";
+  if (ee) return "e-resize";
+  return "grab";
+}
+
+// ─── Draggable + resizable single-image wrapper with grid snap ───────────────
+function DraggableSlideImage({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const dragRef = useRef<{ startMouseX: number; startMouseY: number; startX: number; startY: number } | null>(null);
+  const resizeRef = useRef<{
+    startMouseX: number; startMouseY: number;
+    startW: number; startH: number;
+    startX: number; startY: number;
+    handle: string;
+  } | null>(null);
+
+  const [pos, setPos] = useState({ x: 50, y: 48 });
+  const [size, setSize] = useState({ w: 58.33, h: 62.5 }); // 7 cols × 5 rows default
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [cursor, setCursor] = useState("grab");
+
+  const isActive = isDragging || isResizing;
+  const colPct = `${(100 / GRID_COLS).toFixed(4)}%`;
+  const rowPct = `${(100 / GRID_ROWS).toFixed(4)}%`;
+
+  // Single pointerdown handler: resize if near edge, drag otherwise
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const handle = getEdgeHandle(e);
+    if (handle) {
+      resizeRef.current = {
+        startMouseX: e.clientX, startMouseY: e.clientY,
+        startW: size.w, startH: size.h,
+        startX: pos.x, startY: pos.y,
+        handle,
+      };
+      setIsResizing(true);
+    } else {
+      dragRef.current = { startMouseX: e.clientX, startMouseY: e.clientY, startX: pos.x, startY: pos.y };
+      setIsDragging(true);
+    }
+  }, [pos, size]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+
+    if (dragRef.current) {
+      const dx = ((e.clientX - dragRef.current.startMouseX) / rect.width) * 100;
+      const dy = ((e.clientY - dragRef.current.startMouseY) / rect.height) * 100;
+      setPos({
+        x: Math.max(size.w / 2, Math.min(100 - size.w / 2, dragRef.current.startX + dx)),
+        y: Math.max(size.h / 2, Math.min(100 - size.h / 2, dragRef.current.startY + dy)),
+      });
+      return;
+    }
+
+    if (resizeRef.current) {
+      const dx = ((e.clientX - resizeRef.current.startMouseX) / rect.width) * 100;
+      const dy = ((e.clientY - resizeRef.current.startMouseY) / rect.height) * 100;
+      const { handle, startW, startH, startX, startY } = resizeRef.current;
+      const minW = (100 / GRID_COLS) * 2;
+      const minH = (100 / GRID_ROWS) * 2;
+      let newW = startW, newH = startH, newX = startX, newY = startY;
+      if (handle.includes("e")) { newW = Math.max(minW, Math.min(100, startW + dx)); newX = startX + (newW - startW) / 2; }
+      if (handle.includes("w")) { newW = Math.max(minW, Math.min(100, startW - dx)); newX = startX - (newW - startW) / 2; }
+      if (handle.includes("s")) { newH = Math.max(minH, Math.min(100, startH + dy)); newY = startY + (newH - startH) / 2; }
+      if (handle.includes("n")) { newH = Math.max(minH, Math.min(100, startH - dy)); newY = startY - (newH - startH) / 2; }
+      setSize({ w: newW, h: newH });
+      setPos({ x: Math.max(newW / 2, Math.min(100 - newW / 2, newX)), y: Math.max(newH / 2, Math.min(100 - newH / 2, newY)) });
+    }
+  }, [size]);
+
+  const handlePointerUp = useCallback(() => {
+    if (dragRef.current) setPos(prev => snapPct(prev.x, prev.y));
+    if (resizeRef.current) setSize(prev => snapSize(prev.w, prev.h));
+    dragRef.current = null;
+    resizeRef.current = null;
+    setIsDragging(false);
+    setIsResizing(false);
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isActive) return;
+    setCursor(getEdgeCursor(e));
+  }, [isActive]);
+
+  const snapDot = isDragging ? snapPct(pos.x, pos.y) : null;
+  const snapBox = isResizing ? snapSize(size.w, size.h) : null;
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-full relative"
+      style={{ touchAction: "none", userSelect: "none" }}
+    >
+      {/* Grid overlay — fades in while active */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)
+          `,
+          backgroundSize: `${colPct} ${rowPct}`,
+          opacity: isActive ? 1 : 0,
+          transition: "opacity 0.15s ease",
+        }}
+      />
+
+      {/* Drag snap dot */}
+      {snapDot && (
+        <div className="absolute pointer-events-none" style={{
+          left: `${snapDot.x}%`, top: `${snapDot.y}%`,
+          transform: "translate(-50%,-50%)", width: 8, height: 8,
+          borderRadius: "50%", backgroundColor: "#F0FE00",
+          boxShadow: "0 0 0 3px rgba(240,254,0,0.25)",
+        }} />
+      )}
+
+      {/* Resize snap-preview ghost */}
+      {snapBox && (
+        <div className="absolute pointer-events-none" style={{
+          left: `${pos.x - snapBox.w / 2}%`, top: `${pos.y - snapBox.h / 2}%`,
+          width: `${snapBox.w}%`, height: `${snapBox.h}%`,
+          border: "1px dashed rgba(240,254,0,0.5)", borderRadius: 8,
+          backgroundColor: "rgba(240,254,0,0.04)",
+        }} />
+      )}
+
+      {/* Content wrapper — unified drag/resize target */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${pos.x}%`, top: `${pos.y}%`,
+          width: `${size.w}%`, height: `${size.h}%`,
+          transform: "translate(-50%,-50%)",
+          transition: isActive ? "none" : "left 0.12s ease, top 0.12s ease, width 0.12s ease, height 0.12s ease",
+          cursor: isDragging ? "grabbing" : isResizing ? cursor : cursor,
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => { if (!isActive) setCursor("grab"); }}
+      >
+        <div className="w-full h-full pointer-events-none overflow-hidden flex items-center justify-center">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Shared hook for focal point detection
 function useFocalPoint(url: string | undefined | null): FocalPoint {
   const [focal, setFocal] = useState<FocalPoint>({ x: 0.5, y: 0.38 });
@@ -564,15 +775,18 @@ export function PresentationViewer({
       }
       if (!startNodeId && presentationEdges.length > 0) startNodeId = presentationEdges[0].source;
 
-      const sequence: string[] = [startNodeId];
-      const visited = new Set([startNodeId]);
-      let currentId = startNodeId;
-      while (true) {
-        const nextEdge = presentationEdges.find(e => e.source === currentId && !visited.has(e.target));
-        if (!nextEdge) break;
-        sequence.push(nextEdge.target);
-        visited.add(nextEdge.target);
-        currentId = nextEdge.target;
+      // BFS so fan-out (one source → many targets) and linear chains both work
+      const sequence: string[] = [];
+      const visited = new Set<string>();
+      const queue = [startNodeId];
+      while (queue.length > 0) {
+        const id = queue.shift()!;
+        if (visited.has(id)) continue;
+        visited.add(id);
+        sequence.push(id);
+        for (const edge of presentationEdges) {
+          if (edge.source === id && !visited.has(edge.target)) queue.push(edge.target);
+        }
       }
 
       for (const nodeId of sequence) {
@@ -681,18 +895,21 @@ export function PresentationViewer({
     if (currentNode.type === "mockupImage") {
       const mockupData = currentNode.data as { imageUrl: string; label?: string; prompt?: string; generatedAt?: string };
       return (
-        <div className="flex flex-col items-center justify-center h-full w-full">
-          <div className="relative w-full max-w-5xl" style={{ maxHeight: "70vh" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={mockupData.imageUrl}
-              alt={mockupData.label || "Mockup"}
-              style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", display: "block", margin: "0 auto", borderRadius: 12 }}
-            />
-          </div>
-          <span className="mt-4 text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
-            {mockupData.label || "AI Mockup"}
-          </span>
+        <div className="w-full h-full">
+          <DraggableSlideImage>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={mockupData.imageUrl}
+                alt={mockupData.label || "Mockup"}
+                style={{ flex: "1 1 0", minHeight: 0, maxWidth: "100%", objectFit: "contain", borderRadius: 12 }}
+                draggable={false}
+              />
+              <span className="flex-none text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
+                {mockupData.label || "AI Mockup"}
+              </span>
+            </div>
+          </DraggableSlideImage>
         </div>
       );
     }
@@ -714,19 +931,22 @@ export function PresentationViewer({
       }
 
       return (
-        <div className="flex flex-col items-center justify-center h-full w-full">
-          {mediaUrl ? (
-            <div className="relative w-full max-w-6xl h-[70vh]">
-              <Image src={mediaUrl} alt={fileData.fileName || "Slide"} fill className="object-contain rounded-lg" />
+        <div className="w-full h-full">
+          <DraggableSlideImage>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              {mediaUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mediaUrl} alt={fileData.fileName || "Slide"} style={{ flex: "1 1 0", minHeight: 0, maxWidth: "100%", objectFit: "contain", borderRadius: 12 }} draggable={false} />
+              ) : (
+                <div className="flex-1 flex items-center justify-center rounded-lg" style={{ backgroundColor: "#1a1a1a", minWidth: 120 }}>
+                  <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
+                </div>
+              )}
+              <span className="flex-none text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
+                {fileData.fileName || fileData.label}
+              </span>
             </div>
-          ) : (
-            <div className="w-64 h-64 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
-              <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
-            </div>
-          )}
-          <span className="mt-4 text-xs font-normal tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>
-            {fileData.fileName || fileData.label}
-          </span>
+          </DraggableSlideImage>
         </div>
       );
     }

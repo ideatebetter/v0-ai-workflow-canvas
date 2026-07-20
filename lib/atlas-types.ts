@@ -114,6 +114,7 @@ export interface WorkspaceMember {
   avatar?: string;
   initials: string;
   role?: MemberRole;
+  color?: string;
 }
 
 // Product configuration
@@ -230,6 +231,7 @@ export function applyNamingRule(
     wordmark?: string; // URL to wordmark/logo
     profilePicture?: string; // URL to user profile picture
   };
+  figmaPat?: string; // Figma Personal Access Token for canvas-level sync
   }
 
 // Default workspace members
@@ -411,26 +413,67 @@ export interface StakeholderNodeData {
 }
 
 // Capacity & Resourcing node data interface
+export interface CapacityProjectAllocation {
+  projectName: string;
+  allocationPct: number;   // 0-100 share of this person's time
+  color: string;
+}
+
+export interface CapacityTeamMember {
+  member: WorkspaceMember;
+  utilizationRate: number;     // 0-100 (billable / available)
+  billableHours: number;       // hours currently billed this week
+  availableHours: number;      // total available hours per week
+  currentAllocation: number;   // 0-100 % formally assigned to projects
+  plannedAllocation: number;   // 0-100 target allocation %
+  benchTime: number;           // hours with no project assignment
+  skills: string[];
+  projectAllocations: CapacityProjectAllocation[];
+  overloadRisk: "clear" | "warning" | "critical";
+}
+
 export interface CapacityNodeData {
   label: string;
-  teamMembers: {
-    member: WorkspaceMember;
-    utilizationRate: number; // 0-100
-    currentAllocation: number; // 0-100
-    plannedAllocation: number; // 0-100
-    benchTime: number; // hours available
-    skills: string[];
-  }[];
+  teamMembers: CapacityTeamMember[];
   lastUpdated: string;
 }
 
 // Project Health node data interface
+export type ProjectPhase = "discovery" | "concepting" | "production" | "delivery" | "design" | "development" | "review" | "concept" | "research" | "strategy";
+
+export interface ClientTouchpoint {
+  date: string;           // e.g. "Jun 26"
+  type: "meeting" | "platform_interaction" | "manual_log";
+  source: "calendar" | "client_experience" | "manual_log";
+  notes?: string;
+}
+
+export interface FeedbackCycle {
+  id: string;
+  nodeLabel: string;      // which deliverable node this originated from
+  daysOpen: number;
+  lastClientAction: string;
+  status: "active" | "awaiting_revision" | "stalled";
+}
+
 export interface ProjectHealthNodeData {
   label: string;
+  viewRole?: "owner" | "manager";
+  // Signal 1: touchpoint
   daysSinceClientTouchpoint: number;
+  lastTouchpointType?: "meeting" | "platform_interaction" | "manual_log";
+  lastTouchpointSource?: "calendar" | "client_experience" | "manual_log";
+  touchpointLog?: ClientTouchpoint[];
+  // Signal 2: feedback cycles
   openFeedbackCycles: number;
+  feedbackCycles?: FeedbackCycle[];
+  // Signal 3: revisions
   revisionCount: number;
-  projectPhase: "discovery" | "design" | "development" | "review" | "delivery" | "concept" | "research" | "strategy";
+  expectedRevisionMin?: number;
+  expectedRevisionMax?: number;
+  projectPhase: ProjectPhase;
+  sageRevisionInsight?: string;
+  // Overall
   healthStatus: "on-track" | "needs-attention" | "at-risk";
   lastUpdated: string;
   // Org-level portfolio view
@@ -446,16 +489,49 @@ export interface ProjectHealthNodeData {
 }
 
 // Financial Performance node data interface — scope indicates org vs project
+export interface FinancialTeamMember {
+  name: string;
+  initials: string;
+  role: string;
+  hoursLogged: number;
+  billRate: number;  // $/hr
+  costRate: number;  // $/hr
+}
+
 export interface FinancialNodeData {
   label: string;
-  projectMargin: number; // percentage (portfolio avg when scope="org")
-  budgetConsumed: number; // percentage
-  revenueRealized: number; // percentage
-  blendedRateEfficiency: number; // percentage
-  utilizationAdjustedMargin: number; // percentage
+  billingType: "flat_fee" | "hourly";
+  currency: string;
+  viewRole: "owner" | "manager";
   status: "healthy" | "at-risk" | "underperforming";
-  scope?: "org" | "project";
   lastUpdated: string;
+  scope?: "org" | "project";
+
+  // Project Margin
+  revenue: number;
+  costToDate: number;
+  grossMarginPct: number;
+  projectedMarginPct: number;
+  hoursLogged: number;
+  hoursEstimated: number;
+
+  // Blended Rate Efficiency
+  effectiveBillRate: number;
+  effectiveCostRate: number;
+  rateEfficiencyRatio: number;
+  teamBreakdown: FinancialTeamMember[];
+
+  // Utilization-Adjusted Margin
+  scopeVariance: number;    // $ (negative = over budget)
+  staffingVariance: number; // $ (negative = more expensive team than planned)
+  totalVariance: number;    // $ sum
+
+  // Legacy fields kept for backwards compat
+  projectMargin?: number;
+  budgetConsumed?: number;
+  revenueRealized?: number;
+  blendedRateEfficiency?: number;
+  utilizationAdjustedMargin?: number;
 }
 
 // Pipeline & Workload Forecast node data interface
@@ -468,6 +544,9 @@ export interface PipelineNodeData {
   projectedLoad: number; // hours needed
   capacityStatus: "available" | "balanced" | "overloaded";
   lastUpdated: string;
+  // Project-scoped additions
+  projectId?: string;
+  competingProjects?: { projectName: string; teamOverlap: string[]; impactLevel: "low" | "medium" | "high"; hours: number }[];
 }
 
 // Team & Operational Health node data interface
@@ -478,6 +557,15 @@ export interface TeamHealthNodeData {
   timeSavedHours: number; // hours saved by Ideate
   trendDirection: "improving" | "stable" | "declining";
   lastUpdated: string;
+  // Extended dashboard fields
+  overallHealthScore?: number; // 0-100
+  onTimeDeliveryRate?: number; // 0-100 percentage
+  openBlockers?: number;
+  weeklyVelocity?: number[]; // feedback cycles resolved per week, last 7 weeks
+  avgCostRate?: number; // blended average hourly cost rate across team ($/ hr)
+  // Project-scoped additions
+  projectId?: string;
+  teamMembers?: { name: string; initials: string; role: string; healthScore: number; onTimeRate: number; blockers: number }[];
 }
 
 // Moodboard image position for freeform layout
@@ -1111,6 +1199,9 @@ export interface Canvas {
   presentationFlows?: SavedPresentationFlow[]; // Saved named presentation flows
   pages?: CanvasPage[]; // Multi-page support (Figma-style)
   activePageId?: string; // ID of the currently active page
+  aiEnabled?: boolean; // When false, AI features (mockup generation, AI prompts) are disabled for this canvas
+  figmaUrl?: string; // Optional Figma file/frame URL linked to this canvas
+  viewport?: { x: number; y: number; zoom: number }; // Last saved pan/zoom position
 }
 
 // Sample comments for initial canvas

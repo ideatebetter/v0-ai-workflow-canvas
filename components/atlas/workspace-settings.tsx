@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth-context";
-import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingConventions, NamingRule } from "@/lib/atlas-types";
+import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingConventions, NamingRule, Canvas } from "@/lib/atlas-types";
 import { DEFAULT_NAMING_CONVENTIONS } from "@/lib/atlas-types";
 
 // Admin emails that can create users
@@ -51,6 +51,8 @@ interface WorkspaceSettingsProps {
   onMakeFramework?: () => void;
   onDeleteWorkspace?: () => void;
   canDeleteWorkspace?: boolean; // false when it's the only workspace
+  canvas?: Canvas;
+  onCanvasChange?: (canvas: Canvas) => void;
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
@@ -79,6 +81,8 @@ export function WorkspaceSettingsDialog({
   onMakeFramework,
   onDeleteWorkspace,
   canDeleteWorkspace = true,
+  canvas,
+  onCanvasChange,
 }: WorkspaceSettingsProps) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MemberRole>("viewer");
@@ -118,6 +122,11 @@ export function WorkspaceSettingsDialog({
   const [figmaToken, setFigmaToken] = useState<string | null>(null);
   const [figmaTokenCopied, setFigmaTokenCopied] = useState(false);
   const [figmaTokenError, setFigmaTokenError] = useState(false);
+
+  // Figma canvas import
+  const [figmaPatInput, setFigmaPatInput] = useState(settings.figmaPat ?? "");
+  const [figmaImportStatus, setFigmaImportStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [figmaImportMessage, setFigmaImportMessage] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -162,6 +171,76 @@ export function WorkspaceSettingsDialog({
       setFigmaTokenCopied(true);
       setTimeout(() => setFigmaTokenCopied(false), 2000);
     });
+  }
+
+  async function syncFigmaCanvas() {
+    if (!canvas?.figmaUrl || !figmaPatInput.trim()) return;
+    setFigmaImportStatus("loading");
+    setFigmaImportMessage("");
+    try {
+      // Save PAT to settings
+      onSettingsChange({ ...settings, figmaPat: figmaPatInput.trim() });
+
+      const res = await fetch("/api/figma/import-canvas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ figmaUrl: canvas.figmaUrl, pat: figmaPatInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Unknown error");
+
+      const frames: { id: string; name: string; thumbnailUrl: string | null; pageName: string }[] = data.frames ?? [];
+      if (frames.length === 0) {
+        setFigmaImportStatus("done");
+        setFigmaImportMessage("No top-level frames found in this Figma file.");
+        return;
+      }
+
+      // Build file nodes from frames, laid out in a grid
+      const COLS = 4;
+      const NODE_W = 220;
+      const NODE_H = 200;
+      const GAP = 40;
+      const OFFSET_X = 100;
+      const OFFSET_Y = 100;
+
+      const now = new Date().toISOString();
+      const existingNodes = canvas.nodes ?? [];
+      const newNodes = frames.map((frame, i) => {
+        const col = i % COLS;
+        const row = Math.floor(i / COLS);
+        return {
+          id: `figma-import-${Date.now()}-${i}`,
+          type: "file" as const,
+          position: { x: OFFSET_X + col * (NODE_W + GAP), y: OFFSET_Y + row * (NODE_H + GAP) },
+          data: {
+            label: frame.name,
+            fileName: `${frame.name}.fig`,
+            product: "atlas" as const,
+            status: "draft" as const,
+            fileExtension: ".fig" as const,
+            lastModified: now,
+            previewImages: frame.thumbnailUrl ? [frame.thumbnailUrl] : [],
+            figmaSync: {
+              figmaFileKey: data.fileKey ?? "",
+              figmaFrameId: frame.id,
+              figmaFrameName: frame.name,
+              lastSynced: now,
+            },
+          },
+        };
+      });
+
+      if (onCanvasChange) {
+        onCanvasChange({ ...canvas, nodes: [...existingNodes, ...newNodes], updatedAt: now });
+      }
+
+      setFigmaImportStatus("done");
+      setFigmaImportMessage(`Synced ${frames.length} frame${frames.length !== 1 ? "s" : ""} from Figma.`);
+    } catch (err) {
+      setFigmaImportStatus("error");
+      setFigmaImportMessage(err instanceof Error ? err.message : "Sync failed");
+    }
   }
 
   // Fetch all users for admin
@@ -499,6 +578,107 @@ export function WorkspaceSettingsDialog({
                   </div>
                 )}
               </div>
+
+              {/* Figma Personal Access Token — always visible */}
+              <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+                <div className="flex items-center gap-2">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <p className="text-xs font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Figma Personal Access Token
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Required to sync frames from Figma into canvases. Generate one at{" "}
+                  <a href="https://www.figma.com/settings#personal-access-tokens" target="_blank" rel="noreferrer"
+                    className="underline" style={{ color: "#60a5fa" }}>figma.com/settings</a>.
+                </p>
+                <input
+                  type="password"
+                  value={figmaPatInput}
+                  onChange={e => {
+                    setFigmaPatInput(e.target.value);
+                    onSettingsChange({ ...settings, figmaPat: e.target.value.trim() });
+                  }}
+                  placeholder="figd_…"
+                  className="w-full text-xs px-3 py-2 rounded-lg outline-none"
+                  style={{ backgroundColor: "#0d0d0d", border: "1px solid #2a2a2a", color: "#e5e5e5", fontFamily: "monospace" }}
+                />
+                {figmaPatInput.trim() && (
+                  <div className="flex items-center gap-1.5 text-xs" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Token saved
+                  </div>
+                )}
+              </div>
+
+              {/* Canvas sync from Figma — only when opened from a canvas */}
+              {canvas && (
+                <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+                  <div className="flex items-center gap-2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p className="text-xs font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Sync Canvas from Figma
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Pulls all top-level frames from the linked Figma file and creates nodes on this canvas.
+                  </p>
+
+                  {canvas.figmaUrl ? (
+                    <div className="text-xs rounded px-2 py-1.5 truncate" style={{ backgroundColor: "#0d0d0d", border: "1px solid #2a2a2a", color: "#60a5fa", fontFamily: "monospace" }}>
+                      {canvas.figmaUrl}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      No Figma URL linked to this canvas. Add one when creating or editing the canvas.
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={syncFigmaCanvas}
+                    disabled={!canvas.figmaUrl || !figmaPatInput.trim() || figmaImportStatus === "loading"}
+                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-all"
+                    style={{
+                      backgroundColor: !canvas.figmaUrl || !figmaPatInput.trim() ? "#1e1e1e" : "#F0FE00",
+                      color: !canvas.figmaUrl || !figmaPatInput.trim() ? "#555" : "#000",
+                      border: "none",
+                      minWidth: 80,
+                    }}
+                  >
+                    {figmaImportStatus === "loading" ? (
+                      <><div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />Syncing…</>
+                    ) : (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.8"/>
+                        </svg>
+                        Sync All Frames
+                      </>
+                    )}
+                  </button>
+
+                  {figmaImportMessage && (
+                    <div className="flex items-center gap-2 text-xs px-2.5 py-2 rounded-lg"
+                      style={{
+                        backgroundColor: figmaImportStatus === "error" ? "#ef444412" : "#22c55e12",
+                        border: `1px solid ${figmaImportStatus === "error" ? "#ef444430" : "#22c55e30"}`,
+                        color: figmaImportStatus === "error" ? "#ef4444" : "#22c55e",
+                        fontFamily: "system-ui, Inter, sans-serif",
+                      }}>
+                      {figmaImportStatus === "error"
+                        ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                      {figmaImportMessage}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Workspace Details Section */}
@@ -790,6 +970,40 @@ export function WorkspaceSettingsDialog({
 
             {/* Divider */}
             <div style={{ borderTop: "1px solid #222222" }} />
+
+            {/* Canvas Settings Section — shown only when opened from a specific canvas */}
+            {canvas && onCanvasChange && (
+              <>
+                <div>
+                  <h3
+                    className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
+                      <rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M6 9H12M9 6V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    Canvas Settings
+                    <span className="text-xs text-gray-500 font-normal ml-1 truncate max-w-[180px]">{canvas.name}</span>
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div>
+                        <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>AI Features</div>
+                        <div className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          Mockup generation and AI prompts for this canvas
+                        </div>
+                      </div>
+                      <Switch
+                        checked={canvas.aiEnabled !== false}
+                        onCheckedChange={(checked) => onCanvasChange({ ...canvas, aiEnabled: checked })}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div style={{ borderTop: "1px solid #222222" }} />
+              </>
+            )}
 
             {/* Preferences Section */}
             <div>

@@ -3,104 +3,93 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
-import { ComingSoonBadge } from "./coming-soon-badge";
 import type { CapacityNodeData } from "@/lib/atlas-types";
 
+const BLUE  = "#3b82f6";
+const GREEN = "#22c55e";
+const AMBER = "#f59e0b";
+const RED   = "#ef4444";
+
 export function CapacityNode({ id, data, selected }: NodeProps) {
-  const nodeData = data as CapacityNodeData;
-  
-  // Calculate average utilization
-  const avgUtilization = nodeData.teamMembers?.length 
-    ? Math.round(nodeData.teamMembers.reduce((acc, m) => acc + m.utilizationRate, 0) / nodeData.teamMembers.length)
+  const d = data as unknown as CapacityNodeData;
+  const members       = d.teamMembers ?? [];
+  const avgUtil       = members.length
+    ? Math.round(members.reduce((a, m) => a + m.utilizationRate, 0) / members.length)
     : 0;
-  
-  const utilizationColor = avgUtilization > 90 ? "#ef4444" : avgUtilization > 75 ? "#f59e0b" : "#22c55e";
+  const totalBench    = members.reduce((a, m) => a + m.benchTime, 0);
+  const criticalCount = members.filter(m => m.overloadRisk === "critical").length;
+  const warningCount  = members.filter(m => m.overloadRisk === "warning").length;
+
+  const utilColor   = avgUtil > 90 ? RED : avgUtil > 80 ? AMBER : GREEN;
+  const statusColor = criticalCount > 0 ? RED : warningCount > 0 ? AMBER : GREEN;
+  const statusLabel = criticalCount > 0 ? `${criticalCount} overloaded` : warningCount > 0 ? `${warningCount} at risk` : "balanced";
+
+  const FONT = { fontFamily: "system-ui, Inter, sans-serif" };
 
   return (
     <div
-      className="group rounded-xl transition-all duration-200"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #3b82f6" : "1px solid #3b82f620",
-        width: 280,
+        width: 220,
+        backgroundColor: "#111",
+        borderRadius: 14,
+        border: selected ? `2px solid ${BLUE}` : `1px solid ${BLUE}22`,
+        overflow: "hidden",
+        ...FONT,
       }}
     >
-      <ComingSoonBadge />
-      {/* Header */}
-      <div
-        className="px-3 py-2 flex items-center gap-2 border-b"
-        style={{ borderColor: "#3b82f620" }}
-      >
-        <div
-          className="w-6 h-6 rounded flex items-center justify-center"
-          style={{ backgroundColor: "#3b82f620" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        </div>
-        <span className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          {nodeData.label || "Capacity & Resourcing"}
-        </span>
-      </div>
-
-      {/* Utilization Overview */}
-      <div className="p-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">Avg Utilization</span>
-          <span className="text-sm font-medium" style={{ color: utilizationColor }}>{avgUtilization}%</span>
-        </div>
-        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-          <div 
-            className="h-full rounded-full transition-all"
-            style={{ width: `${avgUtilization}%`, backgroundColor: utilizationColor }}
-          />
-        </div>
-
-        {/* Team Members */}
-        <div className="space-y-2 max-h-[120px] overflow-y-auto">
-          {nodeData.teamMembers?.slice(0, 4).map((tm, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <div 
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium"
-                style={{ backgroundColor: tm.member?.color || "#525252", color: "#fff" }}
-              >
-                {tm.member?.name?.charAt(0) || "?"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-300 truncate">{tm.member?.name || "Team Member"}</div>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-                    <div 
-                      className="h-full rounded-full"
-                      style={{ 
-                        width: `${tm.utilizationRate}%`, 
-                        backgroundColor: tm.utilizationRate > 90 ? "#ef4444" : tm.utilizationRate > 75 ? "#f59e0b" : "#22c55e" 
-                      }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-gray-500">{tm.utilizationRate}%</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Bench Time */}
-        {nodeData.teamMembers?.some(m => m.benchTime > 0) && (
-          <div className="pt-2 border-t border-white/10">
-            <div className="text-xs text-gray-400 mb-1">Available Capacity</div>
-            <div className="text-sm text-green-400">
-              {nodeData.teamMembers.reduce((acc, m) => acc + m.benchTime, 0)}h bench time
-            </div>
-          </div>
-        )}
-      </div>
-
       <SmartHandles nodeId={id} />
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: `1px solid ${BLUE}18` }}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: `${BLUE}18` }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2.2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </div>
+          <span className="text-[10px] font-medium text-gray-400 truncate">{d.label || "Capacity"}</span>
+        </div>
+        <span className="text-[9px] font-semibold" style={{ color: statusColor }}>{statusLabel}</span>
+      </div>
+
+      {/* Hero utilization */}
+      <div className="px-4 pt-4 pb-2">
+        <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: utilColor }}>
+          {avgUtil}<span style={{ fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>%</span>
+        </div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>avg utilization</div>
+      </div>
+
+      {/* Member bars */}
+      <div className="px-3 pb-2 space-y-1.5" style={{ borderTop: "1px solid #1e1e1e", paddingTop: 8 }}>
+        {members.slice(0, 3).map((tm, i) => {
+          const col = tm.utilizationRate > 90 ? RED : tm.utilizationRate > 80 ? AMBER : GREEN;
+          return (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold flex-shrink-0"
+                style={{ backgroundColor: tm.member?.color || "#333", color: "#fff" }}>
+                {tm.member?.name?.charAt(0) ?? "?"}
+              </div>
+              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff0a" }}>
+                <div className="h-full rounded-full" style={{ width: `${Math.min(tm.utilizationRate, 100)}%`, backgroundColor: col }} />
+              </div>
+              <span className="text-[9px] w-7 text-right flex-shrink-0 font-medium" style={{ color: col }}>
+                {tm.utilizationRate}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bench + team count */}
+      <div className="flex items-center justify-between px-3 py-2.5" style={{ borderTop: "1px solid #1e1e1e" }}>
+        <span className="text-[9px] text-gray-600">{members.length} people</span>
+        <div className="flex items-center gap-1">
+          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: totalBench > 0 ? GREEN : "#333" }} />
+          <span className="text-[9px]" style={{ color: totalBench > 0 ? GREEN : "#555" }}>{totalBench}h bench</span>
+        </div>
+      </div>
     </div>
   );
 }

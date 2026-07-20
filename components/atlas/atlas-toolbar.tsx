@@ -119,6 +119,7 @@ export function AtlasToolbar({
   };
 
   return (
+    <>
     <div className="fixed top-4 left-4 z-50 flex items-center gap-3">
       {/* Atlas Logo */}
       <button
@@ -341,5 +342,6 @@ export function AtlasToolbar({
         </>
       )}
     </div>
+    </>
   );
 }

@@ -3,92 +3,75 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
-import { ComingSoonBadge } from "./coming-soon-badge";
 import type { TeamHealthNodeData } from "@/lib/atlas-types";
 
+const PINK  = "#ec4899";
+const GREEN = "#22c55e";
+const AMBER = "#f59e0b";
+const RED   = "#ef4444";
+
 export function TeamHealthNode({ id, data, selected }: NodeProps) {
-  const nodeData = data as TeamHealthNodeData;
-  
-  const trendColor = nodeData.trendDirection === "improving" ? "#22c55e" : nodeData.trendDirection === "stable" ? "#3b82f6" : "#ef4444";
-  const trendIcon = nodeData.trendDirection === "improving" ? "↑" : nodeData.trendDirection === "stable" ? "→" : "↓";
+  const d = data as unknown as TeamHealthNodeData;
+
+  const trendColor = d.trendDirection === "improving" ? GREEN : d.trendDirection === "stable" ? "#3b82f6" : RED;
+  const trendIcon  = d.trendDirection === "improving" ? "↑" : d.trendDirection === "stable" ? "→" : "↓";
+
+  const fbColor  = d.feedbackLoopVelocity <= 24 ? GREEN : d.feedbackLoopVelocity <= 48 ? AMBER : RED;
+  const rvColor  = d.revisionToApprovalRatio <= 2 ? GREEN : d.revisionToApprovalRatio <= 4 ? AMBER : RED;
+
+  const FONT = { fontFamily: "system-ui, Inter, sans-serif" };
 
   return (
     <div
-      className="group rounded-xl transition-all duration-200"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #ec4899" : "1px solid #ec489920",
-        width: 260,
+        width: 220,
+        backgroundColor: "#111",
+        borderRadius: 14,
+        border: selected ? `2px solid ${PINK}` : `1px solid ${PINK}22`,
+        overflow: "hidden",
+        ...FONT,
       }}
     >
-      <ComingSoonBadge />
+      <SmartHandles nodeId={id} />
+
       {/* Header */}
-      <div
-        className="px-3 py-2 flex items-center justify-between border-b"
-        style={{ borderColor: "#ec489920" }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded flex items-center justify-center"
-            style={{ backgroundColor: "#ec489920" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2">
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: `1px solid ${PINK}18` }}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: `${PINK}18` }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={PINK} strokeWidth="2.2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            {nodeData.label || "Team Health"}
-          </span>
+          <span className="text-[10px] font-medium text-gray-400 truncate">{d.label || "Team Health"}</span>
         </div>
-        <div 
-          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
-          style={{ backgroundColor: `${trendColor}20`, color: trendColor }}
-        >
-          <span>{trendIcon}</span>
-          <span>{nodeData.trendDirection}</span>
-        </div>
+        <span className="text-[9px] font-semibold" style={{ color: trendColor }}>{trendIcon} {d.trendDirection}</span>
       </div>
 
-      {/* Metrics */}
-      <div className="p-3 space-y-3">
-        {/* Feedback Loop Velocity */}
-        <div className="bg-white/5 rounded-lg p-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-gray-400">Feedback Loop Velocity</span>
-            <span className="text-sm font-medium text-white">{nodeData.feedbackLoopVelocity}h avg</span>
-          </div>
-          <div className="text-[10px] text-gray-500">Time to resolve feedback</div>
+      {/* Hero number */}
+      <div className="px-4 pt-4 pb-2">
+        <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, letterSpacing: -3, color: fbColor }}>
+          {d.feedbackLoopVelocity}<span style={{ fontSize: 28, fontWeight: 700, letterSpacing: -1 }}>h</span>
         </div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>feedback loop avg</div>
+      </div>
 
-        {/* Revision Ratio */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-gray-400">Revision to Approval</div>
-            <div className="text-[10px] text-gray-500">Ratio per deliverable</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-medium text-white">{nodeData.revisionToApprovalRatio}x</div>
+      {/* Secondary stats */}
+      <div className="grid grid-cols-2 px-3 pb-3 pt-2 gap-1.5" style={{ borderTop: `1px solid #1e1e1e` }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Revision ratio</div>
+          <div className="text-xl font-bold leading-none" style={{ color: rvColor }}>
+            {d.revisionToApprovalRatio}<span className="text-sm font-semibold">×</span>
           </div>
         </div>
-
-        {/* Time Saved */}
-        <div className="pt-2 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs text-gray-400">Time Saved by Ideate</div>
-              <div className="text-[10px] text-gray-500">This period</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-semibold text-green-400">{nodeData.timeSavedHours}h</div>
-            </div>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Ideate saved</div>
+          <div className="text-xl font-bold leading-none" style={{ color: GREEN }}>
+            {d.timeSavedHours}<span className="text-sm font-semibold">h</span>
           </div>
         </div>
       </div>
-
-      <SmartHandles nodeId={id} />
     </div>
   );
 }

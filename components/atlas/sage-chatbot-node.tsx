@@ -71,10 +71,49 @@ function getColorHex(colorName: string): string {
   return colors[colorName] || colorName; // Return as-is if already hex
 }
 
+const SAGE_SUGGESTIONS = [
+  // Ops & delivery
+  "What's at risk in this project?",
+  "Summarize team capacity this week",
+  "Where are we losing margin?",
+  "Who's closest to burnout?",
+  "What's blocking delivery?",
+  "How's our pipeline looking?",
+  // Feedback & client health
+  "Which feedback cycles are stalled?",
+  "Where are revision cycles spiking?",
+  "How long has the client been quiet?",
+  "Which files are waiting on client approval?",
+  "Flag any client health risks",
+  "Summarize open feedback across all projects",
+  // Alignment & strategy
+  "Are we aligned on the brief?",
+  "What should we prioritize next?",
+  "Where is the team misaligned?",
+  "Is this project on track with the original scope?",
+  "What decisions are still unresolved?",
+  "Identify any scope creep risks",
+];
+
 export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps) {
   const nodeData = data as SageChatbotNodeData;
   const [inputValue, setInputValue] = useState("");
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
+
+  // Animated placeholder cycling
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
+  useEffect(() => {
+    if (inputValue) return; // stop animating while user types
+    const fade = setInterval(() => {
+      setPlaceholderVisible(false);
+      setTimeout(() => {
+        setPlaceholderIdx(i => (i + 1) % SAGE_SUGGESTIONS.length);
+        setPlaceholderVisible(true);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(fade);
+  }, [inputValue]);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -635,24 +674,44 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             )}
           </button>
           
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => {
-              e.stopPropagation();
-              setInputValue(e.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            placeholder="Message Sage..."
-            className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none nowheel nopan"
-            style={{ 
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
-              letterSpacing: "-0.01em"
-            }}
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => {
+                e.stopPropagation();
+                setInputValue(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              placeholder=""
+              className="w-full bg-transparent text-[13px] text-white outline-none nowheel nopan"
+              style={{
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+                letterSpacing: "-0.01em"
+              }}
+              disabled={isLoading}
+            />
+            {/* Animated placeholder */}
+            {!inputValue && (
+              <span
+                className="absolute inset-y-0 left-0 flex items-center text-[13px] pointer-events-none select-none"
+                style={{
+                  color: "rgba(255,255,255,0.28)",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+                  letterSpacing: "-0.01em",
+                  opacity: placeholderVisible ? 1 : 0,
+                  transition: "opacity 0.3s ease",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  maxWidth: "100%",
+                }}
+              >
+                {SAGE_SUGGESTIONS[placeholderIdx]}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleButtonClick}

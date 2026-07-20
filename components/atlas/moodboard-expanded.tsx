@@ -1,12 +1,45 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import type { MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 
 type LayoutMode = "masonry" | "freeform" | "grid";
 
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function computeInitialPositions(images: MoodboardNodeData["images"]): Record<string, MoodboardImagePosition> {
+  if (!images?.length) return {};
+  const IMAGE_W = 200;
+  const IMAGE_H = 160;
+  const GAP = 32;
+  const PAD = 40;
+  const COLS = Math.ceil(Math.sqrt(images.length));
+  const result: Record<string, MoodboardImagePosition> = {};
+  images.forEach((img, index) => {
+    const col = index % COLS;
+    const row = Math.floor(index / COLS);
+    const seed = img.id.charCodeAt(0) + index * 137;
+    const jitterX = seededRandom(seed) * 24 - 12;
+    const jitterY = seededRandom(seed + 1) * 24 - 12;
+    const rotation = (seededRandom(seed + 4) - 0.5) * 16;
+    const scale = 0.88 + seededRandom(seed + 5) * 0.18;
+    result[img.id] = {
+      x: Math.max(20, PAD + col * (IMAGE_W + GAP) + jitterX),
+      y: Math.max(20, PAD + row * (IMAGE_H + GAP) + jitterY),
+      zIndex: index + 1,
+      rotation,
+      scale,
+    };
+  });
+  return result;
+}
+
 interface MoodboardExpandedProps {
   data: MoodboardNodeData;
+  nodeId?: string;
   onClose: () => void;
   onUngroup: () => void;
   onDataChange?: (data: MoodboardNodeData) => void;
@@ -14,7 +47,7 @@ interface MoodboardExpandedProps {
 
 type PresentationLayout = "list" | "grid" | "columns" | "freeform";
 
-export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: MoodboardExpandedProps) {
+export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChange }: MoodboardExpandedProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("masonry");
   const [isPresentationMode, setIsPresentationMode] = useState(false);
@@ -23,81 +56,22 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
   const [editedLabel, setEditedLabel] = useState(data.label || "Moodboard");
   const labelInputRef = useRef<HTMLInputElement>(null);
   const [positions, setPositions] = useState<Record<string, MoodboardImagePosition>>(() => {
-    return data.freeformPositions || {};
+    const saved = data.freeformPositions;
+    if (saved && Object.keys(saved).length > 0) return saved;
+    return computeInitialPositions(data.images);
   });
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const maxZIndexRef = useRef(data.images?.length || 0);
 
-  // Seeded random number generator for consistent positions
-  const seededRandom = (seed: number) => {
-    const x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-  };
-
-  // Calculate scattered initial positions for images without saved positions
-  const initialPositions = useMemo(() => {
-    if (!data.images) return {};
-    
-    const newPositions: Record<string, MoodboardImagePosition> = {};
-    const imageCount = data.images.length;
-    
-    // Create a scattered layout that clusters toward center with organic spread
-    data.images.forEach((img, index) => {
-      // Use saved position if available
-      if (positions[img.id]) {
-        newPositions[img.id] = positions[img.id];
-      } else {
-        // Generate deterministic but scattered positions
-        const seed = img.id.charCodeAt(0) + index * 137;
-        
-        // Spread across the canvas with some clustering
-        const angle = (index / imageCount) * Math.PI * 2 + seededRandom(seed) * 0.8;
-        const radius = 150 + seededRandom(seed + 1) * 300 + (index % 3) * 100;
-        
-        // Center point offset
-        const centerX = 450;
-        const centerY = 280;
-        
-        const x = centerX + Math.cos(angle) * radius * 0.9 + seededRandom(seed + 2) * 100 - 50;
-        const y = centerY + Math.sin(angle) * radius * 0.6 + seededRandom(seed + 3) * 80 - 40;
-        
-        // Random rotation between -12 and 12 degrees
-        const rotation = (seededRandom(seed + 4) - 0.5) * 24;
-        
-        // Random scale between 0.7 and 1.1
-        const scale = 0.7 + seededRandom(seed + 5) * 0.4;
-        
-        newPositions[img.id] = {
-          x: Math.max(20, Math.min(800, x)),
-          y: Math.max(20, Math.min(500, y)),
-          zIndex: index + 1,
-          rotation,
-          scale,
-        };
-      }
-    });
-    
-    return newPositions;
-  }, [data.images, positions]);
-
-  // Merge saved positions with initial positions
-  const currentPositions = useMemo(() => {
-    return { ...initialPositions, ...positions };
-  }, [initialPositions, positions]);
-
-  // Auto-save positions when they change
+  // Auto-save positions whenever they change (debounced)
   useEffect(() => {
-    if (Object.keys(positions).length > 0 && onDataChange) {
-      const timeoutId = setTimeout(() => {
-        onDataChange({
-          ...data,
-          freeformPositions: positions,
-        });
-      }, 300); // Debounce saves
-      return () => clearTimeout(timeoutId);
-    }
+    if (!onDataChange) return;
+    const timeoutId = setTimeout(() => {
+      onDataChange({ ...data, freeformPositions: positions });
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [positions, data, onDataChange]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, imageId: string) => {
@@ -116,17 +90,19 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
     
     // Bring to front and preserve rotation/scale
     maxZIndexRef.current += 1;
-    const current = currentPositions[imageId];
-    setPositions(prev => ({
-      ...prev,
-      [imageId]: {
-        ...current,
-        zIndex: maxZIndexRef.current,
-        rotation: current?.rotation ?? 0,
-        scale: current?.scale ?? 1,
-      },
-    }));
-  }, [layoutMode, currentPositions]);
+    setPositions(prev => {
+      const current = prev[imageId];
+      return {
+        ...prev,
+        [imageId]: {
+          ...current,
+          zIndex: maxZIndexRef.current,
+          rotation: current?.rotation ?? 0,
+          scale: current?.scale ?? 1,
+        },
+      };
+    });
+  }, [layoutMode]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!draggingId || !containerRef.current) return;
@@ -136,7 +112,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
     const newY = e.clientY - containerRect.top - dragOffset.y;
     
     setPositions(prev => {
-      const current = prev[draggingId] || currentPositions[draggingId];
+      const current = prev[draggingId];
       return {
         ...prev,
         [draggingId]: {
@@ -320,6 +296,22 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
               </button>
             </div>
 
+            {/* Share button */}
+            {nodeId && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("atlas:share-node", { detail: { nodeId, nodeLabel: data.label || "Moodboard", nodeType: "moodboard" } }))}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ backgroundColor: "#ffffff08", color: "#888888" }}
+                title="Share moodboard"
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                  <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                  <path d="M6.5 9L14 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+              </button>
+            )}
+
             {/* Ungroup button */}
             <button
               type="button"
@@ -333,7 +325,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
             >
               Ungroup
             </button>
-            
+
             {/* Close button */}
             <button
               type="button"
@@ -431,7 +423,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
               onMouseLeave={handleMouseLeave}
             >
               {data.images?.map((img) => {
-                const pos = currentPositions[img.id] || { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
+                const pos = positions[img.id] || { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
                 const isSelected = selectedImage === img.id;
                 const isDragging = draggingId === img.id;
                 const rotation = pos.rotation ?? 0;
@@ -768,7 +760,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                 style={{ minHeight: "calc(100vh - 120px)" }}
               >
                 {data.images?.map((img, index) => {
-                  const pos = currentPositions[img.id] || { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
+                  const pos = positions[img.id] || { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
                   const rotation = pos.rotation ?? 0;
                   const scale = (pos.scale ?? 1) * 1.2; // Slightly larger in presentation
                   

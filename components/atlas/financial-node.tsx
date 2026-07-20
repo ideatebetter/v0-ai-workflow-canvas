@@ -3,92 +3,93 @@
 import React from "react";
 import type { NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
-import { ComingSoonBadge } from "./coming-soon-badge";
 import type { FinancialNodeData } from "@/lib/atlas-types";
 
+const GREEN = "#10b981";
+const AMBER = "#f59e0b";
+const RED   = "#ef4444";
+
+function fmt(n: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
+}
+
 export function FinancialNode({ id, data, selected }: NodeProps) {
-  const nodeData = data as FinancialNodeData;
-  
-  const statusColor = nodeData.status === "healthy" ? "#22c55e" : nodeData.status === "at-risk" ? "#f59e0b" : "#ef4444";
-  const marginColor = nodeData.projectMargin >= 30 ? "#22c55e" : nodeData.projectMargin >= 15 ? "#f59e0b" : "#ef4444";
+  const d        = data as unknown as FinancialNodeData;
+  const currency = d.currency ?? "USD";
+  const grossPct = d.grossMarginPct ?? d.projectMargin ?? 0;
+  const revenue  = d.revenue ?? 0;
+  const cost     = d.costToDate ?? 0;
+  const hoursLogged    = d.hoursLogged ?? 0;
+  const hoursEstimated = d.hoursEstimated ?? 0;
+  const hoursPct = hoursEstimated > 0 ? Math.round((hoursLogged / hoursEstimated) * 100) : 0;
+  const totalV   = d.totalVariance ?? 0;
+
+  const marginColor = grossPct >= 30 ? GREEN : grossPct >= 15 ? AMBER : RED;
+  const hoursColor  = hoursPct > 90 ? RED : hoursPct > 75 ? AMBER : GREEN;
+  const statusColor = d.status === "healthy" ? GREEN : d.status === "at-risk" ? AMBER : RED;
+  const varColor    = totalV >= 0 ? GREEN : totalV > -5000 ? AMBER : RED;
+
+  const FONT = { fontFamily: "system-ui, Inter, sans-serif" };
 
   return (
     <div
-      className="group rounded-xl transition-all duration-200"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #10b981" : "1px solid #10b98120",
-        width: 260,
+        width: 220,
+        backgroundColor: "#111",
+        borderRadius: 14,
+        border: selected ? `2px solid ${GREEN}` : `1px solid ${GREEN}22`,
+        overflow: "hidden",
+        ...FONT,
       }}
     >
-      <ComingSoonBadge />
+      <SmartHandles nodeId={id} />
+
       {/* Header */}
-      <div
-        className="px-3 py-2 flex items-center justify-between border-b"
-        style={{ borderColor: "#10b98120" }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded flex items-center justify-center"
-            style={{ backgroundColor: "#10b98120" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: `1px solid ${GREEN}18` }}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: `${GREEN}18` }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="2.2">
               <line x1="12" y1="1" x2="12" y2="23" />
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            {nodeData.label || "Financial Performance"}
+          <span className="text-[10px] font-medium text-gray-400 truncate">{d.label || "Financial Performance"}</span>
+        </div>
+        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
+      </div>
+
+      {/* Hero margin number */}
+      <div className="px-4 pt-4 pb-2">
+        <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: marginColor }}>
+          {grossPct}<span style={{ fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>%</span>
+        </div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>gross margin</div>
+      </div>
+
+      {/* Revenue / Cost */}
+      <div className="grid grid-cols-2 gap-1.5 px-3 pb-2" style={{ borderTop: "1px solid #1e1e1e", paddingTop: 10 }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Revenue</div>
+          <div className="text-sm font-bold text-white leading-none">{fmt(revenue, currency)}</div>
+        </div>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Cost</div>
+          <div className="text-sm font-bold text-white leading-none">{fmt(cost, currency)}</div>
+        </div>
+      </div>
+
+      {/* Hours bar + variance */}
+      <div className="px-3 pb-3 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] text-gray-600">{hoursPct}% hours used</span>
+          <span className="text-[9px] font-medium" style={{ color: varColor }}>
+            var {totalV >= 0 ? "+" : ""}{fmt(totalV, currency)}
           </span>
         </div>
-        <div 
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: statusColor }}
-        />
-      </div>
-
-      {/* Metrics */}
-      <div className="p-3 space-y-3">
-        {/* Project Margin */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-gray-400">Project Margin</span>
-            <span className="text-sm font-medium" style={{ color: marginColor }}>{nodeData.projectMargin}%</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div 
-              className="h-full rounded-full transition-all"
-              style={{ width: `${Math.min(nodeData.projectMargin, 100)}%`, backgroundColor: marginColor }}
-            />
-          </div>
-        </div>
-
-        {/* Budget vs Revenue */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white/5 rounded-lg p-2">
-            <div className="text-[10px] text-gray-500 uppercase">Budget Used</div>
-            <div className="text-sm font-medium text-white">{nodeData.budgetConsumed}%</div>
-          </div>
-          <div className="bg-white/5 rounded-lg p-2">
-            <div className="text-[10px] text-gray-500 uppercase">Revenue</div>
-            <div className="text-sm font-medium text-white">{nodeData.revenueRealized}%</div>
-          </div>
-        </div>
-
-        {/* Efficiency Metrics */}
-        <div className="pt-2 border-t border-white/10 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-400">Blended Rate Efficiency</span>
-            <span className="text-gray-300">{nodeData.blendedRateEfficiency}%</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-400">Util-Adjusted Margin</span>
-            <span className="text-gray-300">{nodeData.utilizationAdjustedMargin}%</span>
-          </div>
+        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+          <div className="h-full rounded-full" style={{ width: `${Math.min(hoursPct, 100)}%`, backgroundColor: hoursColor }} />
         </div>
       </div>
-
-      <SmartHandles nodeId={id} />
     </div>
   );
 }

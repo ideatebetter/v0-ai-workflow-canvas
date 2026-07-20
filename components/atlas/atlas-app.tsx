@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Canvas, WorkspaceSettings, CanvasFramework, WorkspaceMember } from "@/lib/atlas-types";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, DEMO_EMAIL, FAKE_MEMBER_IDS } from "@/lib/atlas-types";
+import { LOGO_SPRINT_FRAMEWORK } from "@/lib/logo-sprint-framework";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
 import { useAuth } from "@/lib/auth-context";
@@ -37,7 +38,7 @@ export function AtlasApp() {
     return DEFAULT_WORKSPACE_SETTINGS.id;
   });
   const workspaceSettings: WorkspaceSettings = workspaces.find(w => w.id === activeWorkspaceId) ?? workspaces[0];
-  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([]);
+  const [frameworks, setFrameworks] = useState<CanvasFramework[]>([LOGO_SPRINT_FRAMEWORK]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingCanvases, setIsLoadingCanvases] = useState(true);
   const [isWorkspaceSynced, setIsWorkspaceSynced] = useState(false);
@@ -74,6 +75,7 @@ export function AtlasApp() {
             comments: c.settings?.comments || c.comments || [],
             pages: c.settings?.pages || [],
             activePageId: c.settings?.activePageId || undefined,
+            presentationFlows: c.settings?.presentationFlows || [],
             createdAt: c.created_at,
             updatedAt: c.updated_at,
           }));
@@ -134,6 +136,7 @@ export function AtlasApp() {
               pages: canvas.pages,
               activePageId: canvas.activePageId,
               workspaceId: canvas.workspaceId,
+              presentationFlows: canvas.presentationFlows,
             },
           }),
         });
@@ -150,7 +153,7 @@ export function AtlasApp() {
             description: canvas.description,
             nodes: canvas.nodes,
             edges: canvas.edges,
-            settings: { comments: canvas.comments, workspaceId: canvas.workspaceId },
+            settings: { comments: canvas.comments, workspaceId: canvas.workspaceId, presentationFlows: canvas.presentationFlows },
           }),
         });
         
