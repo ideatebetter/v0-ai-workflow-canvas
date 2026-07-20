@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
+import { ShareCanvasDialog } from "./share-canvas-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { InviteDialog } from "./invite-dialog";
 import { FileDetailModal } from "./file-detail-modal";
 import { FrameworkDetailPage, type ParamValues } from "./framework-detail-page";
+import { ProjectCreationModal } from "./project-creation-modal";
 import { parsePDFToText, splitIntoSections } from "@/lib/pdf-parser";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, FRAMEWORK_CATEGORIES, PROJECT_COLORS, DEMO_EMAIL, FAKE_MEMBER_IDS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { ReactFlow, Background, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
@@ -211,6 +213,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, workspaces = [], activeWorkspaceId, onWorkspaceSwitch, onWorkspaceCreate, onDeleteWorkspace, onSaveWorkspaceDetails, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework, onSaveAllToCloud, isLoadingCanvases, isWorkspaceSynced, userEmail }: HomePageProps) {
+  const { user: authUser } = useAuth();
   const isDemoAccount = userEmail === DEMO_EMAIL;
   const onSettingsChange = onWorkspaceSettingsChange;
   const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
@@ -219,6 +222,11 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
+
+  // Figma integration state (settings page)
+  const [figmaPatInput, setFigmaPatInput] = useState(workspaceSettings.figmaPat ?? "");
+  const [figmaPluginToken, setFigmaPluginToken] = useState<string | null>(null);
+  const [figmaPluginTokenCopied, setFigmaPluginTokenCopied] = useState(false);
 
   // Restore activeView from URL on mount
   useEffect(() => {
@@ -250,6 +258,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [canvasSubView, setCanvasSubView] = useState<CanvasSubView>("canvases");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [showProjectCreationModal, setShowProjectCreationModal] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
@@ -423,6 +432,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [shareCanvasId, setShareCanvasId] = useState<string | null>(null);
 
   // Real Supabase member count for sidebar (loaded on mount)
   // Settings page — real Supabase member management
@@ -460,6 +470,13 @@ const [showSageChat, setShowSageChat] = useState(false);
     setSettingsPendingInvitations([]);
     setSettingsRealMembers([]);
 
+    // Load Figma plugin token
+    setFigmaPluginToken(null);
+    fetch("/api/figma/token")
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { if (d.token) setFigmaPluginToken(d.token); })
+      .catch(() => {});
+
     // workspaceSettings.id is the Supabase UUID for all workspaces
     const wsId = workspaceSettings.id;
     if (!wsId || wsId === "ws-1") return; // skip default placeholder
@@ -477,10 +494,7 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
   const [frameworksFilter, setFrameworksFilter] = useState<FrameworksFilter>("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
-  const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
-  const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
-  const [todosSectionCollapsed, setTodosSectionCollapsed] = useState(false);
-  const [ribbonMinimized, setRibbonMinimized] = useState(false);
+  const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17; drives ribbon center + left panel
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Canvases with no workspaceId (legacy) or a stale workspaceId from a different
@@ -725,7 +739,7 @@ const [showSageChat, setShowSageChat] = useState(false);
       );
     }
 
-    // Sort: favorites first, then by most recently updated
+    // Sort: pinned first, then by most recently updated
     return filtered.sort((a, b) => {
       if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -939,6 +953,40 @@ const [showSageChat, setShowSageChat] = useState(false);
     onOpenCanvas(newCanvas.id);
   };
 
+  // Returns "light" if logo is predominantly light-coloured (needs dark bg) or "dark" (needs light bg)
+  const detectLogoTone = (dataUrl: string): Promise<"light" | "dark"> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const SIZE = 64;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve("light");
+        ctx.drawImage(img, 0, 0, SIZE, SIZE);
+        const { data } = ctx.getImageData(0, 0, SIZE, SIZE);
+        let lightPx = 0, darkPx = 0, total = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3];
+          if (a < 20) continue; // skip transparent pixels
+          const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+          if (brightness > 180) lightPx++;
+          else if (brightness < 80) darkPx++;
+          total++;
+        }
+        if (total === 0) return resolve("light");
+        // "light" = logo is predominantly white/light → needs dark bg
+        // "dark"  = logo is dark or colorful → needs light bg only if mostly black
+        const lightRatio = lightPx / total;
+        const darkRatio = darkPx / total;
+        // White logos: mostly light pixels. Black logos: mostly dark. Color logos → default to black bg
+        resolve(lightRatio > 0.55 ? "light" : darkRatio > 0.55 ? "dark" : "light");
+      };
+      img.onerror = () => resolve("light");
+      img.src = dataUrl;
+    });
+
   const handleRunFromDetail = async (framework: CanvasFramework, paramValues: ParamValues) => {
     const ts = Date.now();
     // Always close the detail page and open the canvas — even if PDF parsing fails
@@ -1057,16 +1105,25 @@ const [showSageChat, setShowSageChat] = useState(false);
       } as CanvasFramework["nodes"][0]);
     }
 
-    // Handle logo file
-    const logoFile = paramValues["logo_file"];
+    // Handle logo file — read + detect tone for contrasting background mockup
+    const logoFileParam = paramValues["logo_file"];
+    const logoFile = Array.isArray(logoFileParam) ? logoFileParam[0] : (logoFileParam instanceof File ? logoFileParam : undefined);
     let logoDataUrl: string | undefined;
+    let logoTone: "light" | "dark" = "light";
     if (logoFile instanceof File) {
       logoDataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target?.result as string);
         reader.readAsDataURL(logoFile);
       });
+      logoTone = await detectLogoTone(logoDataUrl);
     }
+
+    // Contrasting background: light logo → black bg, dark/color logo → white bg
+    const contrastBg = logoTone === "light" ? "pure black" : "pure white";
+    const contrastDesc = logoTone === "light"
+      ? "black background, brand identity shot — logo appears bright against dark"
+      : "white background, brand identity shot — logo appears crisp against light";
 
     // Map each mockup node to a Flux Kontext prompt — Sage enhances these at runtime
     const logoFileName = logoFile instanceof File ? logoFile.name : "logo";
@@ -1074,8 +1131,8 @@ const [showSageChat, setShowSageChat] = useState(false);
       [idMap.get("ls-mockup-1") ?? ""]: "Show this logo as an app icon sitting in the macOS dock on a MacBook desktop",
       [idMap.get("ls-mockup-2") ?? ""]: "Show this logo on the front of a business card with a clean minimal design, product photography",
       [idMap.get("ls-mockup-3") ?? ""]: "Show this logo as a small embroidered badge on the breast pocket area of a premium white t-shirt, flat lay",
-      [idMap.get("ls-mockup-4") ?? ""]: "Place this logo centered on a pure black background, brand identity shot",
-      [idMap.get("ls-mockup-5") ?? ""]: "Place this logo centered on a pure white background, brand identity shot",
+      [idMap.get("ls-mockup-4") ?? ""]: `Place this logo centered on a ${contrastBg} background, ${contrastDesc}`,
+      [idMap.get("ls-mockup-5") ?? ""]: "Place this logo on a large exterior building sign, architectural photography, golden hour lighting",
     };
     // Remove the empty-string key that appears when no mapping exists
     delete mockupNodePrompts[""];
@@ -1669,36 +1726,40 @@ const [showSageChat, setShowSageChat] = useState(false);
               {/* Create Dropdown */}
               {showCreateMenu && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-40" 
+                  <div
+                    className="fixed inset-0 z-40"
                     onClick={() => setShowCreateMenu(false)}
                   />
                   <div
-                    className="absolute right-0 top-full mt-2 py-2 rounded-xl shadow-xl z-50 min-w-[200px]"
+                    className="absolute right-0 top-full mt-2 py-2 rounded-xl shadow-xl z-50 min-w-[220px]"
                     style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
                   >
                     <button
                       type="button"
                       onClick={() => {
                         setShowCreateMenu(false);
-                        setShowNewProjectDialog(true);
+                        setShowProjectCreationModal(true);
                       }}
                       className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#252525" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" stroke="#F0FE00" strokeWidth="1.5"/>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <rect x="2" y="2" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
+                          <path d="M5.5 8H10.5M8 5.5V10.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </div>
                       <div>
-                        <div className="font-medium">New Collection</div>
-                        <div className="text-xs text-gray-500">Group canvases together</div>
+                        <div className="font-medium text-white">New Project</div>
+                        <div className="text-xs text-gray-500">Brief, team, timeline &amp; estimate</div>
                       </div>
                     </button>
+
+                    <div style={{ height: 1, margin: "4px 12px", backgroundColor: "#2a2a2a" }} />
+
                     <button
                       type="button"
                       onClick={() => {
@@ -1709,17 +1770,40 @@ const [showSageChat, setShowSageChat] = useState(false);
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#252525" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <rect x="2" y="2" width="12" height="12" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
                           <path d="M5.5 8H10.5M8 5.5V10.5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </div>
                       <div>
                         <div className="font-medium">New Canvas</div>
-                        <div className="text-xs text-gray-500">Create a blank canvas</div>
+                        <div className="text-xs text-gray-500">Blank canvas</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        setShowNewProjectDialog(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#252525" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" stroke="#10B981" strokeWidth="1.5"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-medium">New Collection</div>
+                        <div className="text-xs text-gray-500">Group canvases together</div>
                       </div>
                     </button>
                   </div>
@@ -2690,6 +2774,83 @@ All Frameworks
                 </div>
               </div>
 
+              {/* Figma Integration */}
+              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-blue-400">
+                    <path d="M6 1.5H4.5C3.4 1.5 2.5 2.4 2.5 3.5C2.5 4.6 3.4 5.5 4.5 5.5H6V1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6 5.5H7.5C8.6 5.5 9.5 4.6 9.5 3.5C9.5 2.4 8.6 1.5 7.5 1.5H6V5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6 5.5H4.5C3.4 5.5 2.5 6.4 2.5 7.5C2.5 8.6 3.4 9.5 4.5 9.5C5.6 9.5 6 8.6 6 7.5V5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6 9.5V7.5C6 8.6 6.9 9.5 8 9.5C9.1 9.5 10 8.6 10 7.5C10 6.4 9.1 5.5 8 5.5H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8 9.5C9.1 9.5 10 10.4 10 11.5C10 12.6 9.1 13.5 8 13.5C6.9 13.5 6 12.6 6 11.5V9.5H8Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Figma Integration
+                </h3>
+                <div className="space-y-4">
+                  {/* Plugin sync token */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Plugin Sync Token
+                    </label>
+                    <p className="text-xs text-gray-600 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Paste into the <strong className="text-gray-400">Sync with Ideate</strong> Figma plugin to enable live frame syncing.
+                    </p>
+                    {figmaPluginToken ? (
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs px-3 py-2 rounded-lg select-all overflow-hidden" style={{ background: "#0d0d0d", color: "#60a5fa", fontFamily: "monospace", border: "1px solid #2a2a2a", wordBreak: "break-all", display: "block", lineHeight: 1.6 }}>
+                          {figmaPluginToken}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(figmaPluginToken); setFigmaPluginTokenCopied(true); setTimeout(() => setFigmaPluginTokenCopied(false), 2000); }}
+                          className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-all"
+                          style={{ background: figmaPluginTokenCopied ? "#0a3a1a" : "#F0FE00", color: figmaPluginTokenCopied ? "#4ade80" : "#000", border: "none", minWidth: 64 }}
+                        >
+                          {figmaPluginTokenCopied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-gray-600 animate-pulse" />
+                        <span className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Loading token…</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Personal Access Token */}
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Personal Access Token (PAT)
+                    </label>
+                    <p className="text-xs text-gray-600 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Required to sync Figma frames into canvases. Generate one at{" "}
+                      <a href="https://www.figma.com/settings#personal-access-tokens" target="_blank" rel="noreferrer" className="underline" style={{ color: "#60a5fa" }}>figma.com/settings</a>.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        value={figmaPatInput}
+                        onChange={e => {
+                          setFigmaPatInput(e.target.value);
+                          const updated = { ...workspaceSettings, figmaPat: e.target.value.trim() };
+                          onSettingsChange(updated);
+                          onSaveWorkspaceDetails?.(updated);
+                        }}
+                        placeholder="figd_…"
+                        className="flex-1 text-sm px-3 py-2 rounded-lg outline-none"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#e5e5e5", fontFamily: "monospace" }}
+                      />
+                      {figmaPatInput.trim() && (
+                        <div className="flex items-center gap-1.5 text-xs flex-shrink-0" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          Saved
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Team Members */}
               <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
                 <div className="flex items-center justify-between mb-4">
@@ -3370,595 +3531,364 @@ All Frameworks
           <>
             {/* Scrollable Content - Ribbon and Canvas Grid */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Fault Management Ribbon */}
+              {/* Pulse */}
               <div className="mb-6">
-                <div
-                  className="rounded-xl p-6"
-                  style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
-                >
-                  {/* Header */}
-                  <div className={`flex items-center justify-between ${ribbonMinimized ? "" : "mb-5"}`}>
-                    <button
-                      type="button"
-                      className="flex items-start gap-2 text-left group"
-                      onClick={() => setRibbonMinimized(v => !v)}
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 14 14"
-                        fill="none"
-                        className={`mt-[3px] flex-shrink-0 text-gray-500 group-hover:text-gray-300 transition-transform transition-colors ${ribbonMinimized ? "-rotate-90" : ""}`}
-                      >
-                        <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <div>
-                        <h3
-                          className="text-white font-semibold text-base group-hover:text-gray-200 transition-colors"
-                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                <h3 className="text-sm text-gray-400 mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Pulse</h3>
+                {(() => {
+                  const todayIndex = 17;
+                  const focusedIndex = selectedRibbonDay;
+                  const focusedStatus = ribbonDays[focusedIndex]?.status || "smooth";
+                  const isFocusedToday = focusedIndex === todayIndex;
+
+                  // Count blockers (high days) in 7 days leading up to focused day
+                  const past7 = ribbonDays.slice(Math.max(0, focusedIndex - 6), focusedIndex + 1);
+                  const blockerCount = past7.filter(d => d.status === "high").length;
+
+                  type StatusLevel = "healthy" | "caution" | "critical";
+                  const statusLevel: StatusLevel =
+                    focusedStatus === "smooth" ? "healthy" :
+                    focusedStatus === "high" ? "critical" : "caution";
+
+                  const statusConfig: Record<StatusLevel, { label: string; color: string; description: string; projects: string; cashFlow: string }> = {
+                    healthy: {
+                      label: "Healthy",
+                      color: "#4ADE80",
+                      description: "Stable operations with capacity for growth",
+                      projects: "Smooth",
+                      cashFlow: "87%",
+                    },
+                    caution: {
+                      label: "Caution",
+                      color: "#FCD34D",
+                      description: "Performance maintained, but pressure points emerging",
+                      projects: `${Math.max(1, blockerCount)} Blocker${Math.max(1, blockerCount) === 1 ? "" : "s"}`,
+                      cashFlow: "50%",
+                    },
+                    critical: {
+                      label: "Critical",
+                      color: "#F87171",
+                      description: "Unsustainable conditions requiring immediate action",
+                      projects: `${Math.max(3, blockerCount)} Blockers`,
+                      cashFlow: "16%",
+                    },
+                  };
+                  const cfg = statusConfig[statusLevel];
+
+                  // Figma tokens for the vertical calendar bars
+                  const barColorMap: Record<string, string> = {
+                    smooth: "#00db75",
+                    minor: "#fdd33b",
+                    moderate: "#fdd33b",
+                    high: "#e52a05",
+                  };
+                  const todayBorderMap: Record<string, string> = {
+                    smooth: "#00b963",
+                    minor: "#c9a52a",
+                    moderate: "#c9a52a",
+                    high: "#b41d02",
+                  };
+                  // Fixed pixel widths: 146 (today) → 64 (furthest), linear taper
+                  const widthByOffset: Record<number, number> = {
+                    [-3]: 64, [-2]: 92, [-1]: 120, [0]: 146,
+                    [1]: 120, [2]: 92, [3]: 64,
+                  };
+
+                  // 7-day window centered on the focused day
+                  const dayOffsets = [-3, -2, -1, 0, 1, 2, 3];
+                  const now = new Date();
+                  const days = dayOffsets.map(offset => {
+                    const idx = focusedIndex + offset;
+                    const day = ribbonDays[idx];
+                    const daysFromActualToday = idx - todayIndex;
+                    const date = new Date(now);
+                    date.setDate(now.getDate() + daysFromActualToday);
+                    const isActualToday = idx === todayIndex;
+                    return {
+                      idx,
+                      offset,
+                      isActualToday,
+                      status: day?.status || "smooth",
+                      label: isActualToday
+                        ? "Today"
+                        : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+                    };
+                  });
+
+                  // Todos: if focused on today, show priority (overdue + upcoming); otherwise show tasks due on the focused day
+                  const focusedDate = new Date(now);
+                  focusedDate.setDate(now.getDate() + (focusedIndex - todayIndex));
+                  const focusedDateStr = focusedDate.toISOString().slice(0, 10);
+                  const todayTodos = isFocusedToday
+                    ? allTodosFlat
+                        .filter(t => !t.task.completed && t.task.dueDate)
+                        .sort((a, b) => (a.task.dueDate || "").localeCompare(b.task.dueDate || ""))
+                        .slice(0, 3)
+                    : (todosByDate[focusedDateStr] || [])
+                        .filter(t => !t.task.completed)
+                        .slice(0, 3);
+
+                  // Range label: first and last visible day
+                  const firstDate = days[0]?.idx !== undefined ? (() => { const d = new Date(now); d.setDate(now.getDate() + (days[0].idx - todayIndex)); return d; })() : now;
+                  const lastDate = days[days.length - 1]?.idx !== undefined ? (() => { const d = new Date(now); d.setDate(now.getDate() + (days[days.length - 1].idx - todayIndex)); return d; })() : now;
+                  const sameMonth = firstDate.getMonth() === lastDate.getMonth();
+                  const rangeLabel = sameMonth
+                    ? `${firstDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${lastDate.getDate()}`
+                    : `${firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+                  // Left panel "Today" header — shows Today if focused on today, otherwise the date
+                  const focusedHeader = isFocusedToday
+                    ? "Today"
+                    : focusedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+                  return (
+                    <div className="grid grid-cols-[2fr_1fr] gap-4">
+                      {/* Left column */}
+                      <div className="flex flex-col gap-4 h-full">
+                        {/* Today status card */}
+                        <div
+                          className="rounded-xl p-6 relative overflow-hidden"
+                          style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                         >
-                          Fault Management Ribbon
-                        </h3>
-                      </div>
-                    </button>
-                    {/* Legend and View Toggle */}
-                    {!ribbonMinimized && <div className="flex items-center gap-6">
-                      {/* Legend */}
-                      <div className="flex items-center gap-5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
-                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
-                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#FB923C" }} />
-                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#F87171" }} />
-                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
-                        </div>
-                      </div>
-                      
-                      {/* View Toggle */}
-                      <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: "#1a1a1a" }}>
-                        <button
-                          type="button"
-                          onClick={() => setRibbonViewMode("ribbon")}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            ribbonViewMode === "ribbon" 
-                              ? "bg-[#2a2a2a] text-white" 
-                              : "text-gray-500 hover:text-gray-300"
-                          }`}
-                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                        >
-                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <rect x="1" y="4" width="14" height="2" rx="0.5" fill="currentColor" opacity="0.4"/>
-                            <rect x="1" y="7" width="14" height="2" rx="0.5" fill="currentColor"/>
-                            <rect x="1" y="10" width="14" height="2" rx="0.5" fill="currentColor" opacity="0.4"/>
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRibbonViewMode("calendar")}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            ribbonViewMode === "calendar" 
-                              ? "bg-[#2a2a2a] text-white" 
-                              : "text-gray-500 hover:text-gray-300"
-                          }`}
-                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                        >
-                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.25" fill="none"/>
-                            <path d="M2 6h12" stroke="currentColor" strokeWidth="1.25"/>
-                            <path d="M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
-                            <rect x="4" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-                            <rect x="7" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-                            <rect x="10" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-                            <rect x="4" y="11" width="2" height="2" rx="0.5" fill="currentColor" opacity="0.5"/>
-                            <rect x="7" y="11" width="2" height="2" rx="0.5" fill="currentColor" opacity="0.5"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>}
-                  </div>
-
-                  {!ribbonMinimized && (ribbonViewMode === "ribbon" ? (
-                  <>
-                  {/* Timeline Ribbon */}
-                  <div className="relative mb-3">
-                    {/* Today marker */}
-                    <div className="absolute top-0 left-[60%] -translate-x-1/2 -translate-y-full pb-1">
-                      <div
-                        className="px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ backgroundColor: "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Today
-                      </div>
-                    </div>
-
-                    {/* Ribbon data for each day */}
-                  {(() => {
-                    const todayIndex = 17;
-
-                    const statusColors: Record<string, string> = {
-                      smooth: "#4ADE80",
-                      minor: "#FCD34D", 
-                      moderate: "#FB923C",
-                      high: "#F87171"
-                    };
-
-                    return (
-                      <>
-                        {/* Ribbon squares */}
-                        <div className="flex gap-1 pt-6">
-                          {ribbonDays.map((day, i) => (
-                            <div
-                              key={`day-${i}`}
-                              onClick={() => setSelectedRibbonDay(i)}
-                              className={`flex-1 h-8 rounded relative cursor-pointer transition-all hover:opacity-80 ${
-                                i === selectedRibbonDay 
-                                  ? "ring-2 ring-white ring-offset-1 ring-offset-[#141414]" 
-                                  : i === todayIndex
-                                  ? "opacity-60"
-                                  : "opacity-40"
-                              }`}
-                              style={{ backgroundColor: statusColors[day.status] }}
-                              title={`${day.title}: ${day.description}`}
-                            >
-                              {i === todayIndex && i !== selectedRibbonDay && (
-                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </> 
-                    );
-                  })()}
-                  </div>
-
-                  {/* Week labels - dynamic dates */}
-                  {(() => {
-                    const today = new Date();
-                    const formatWeekDate = (weeksOffset: number) => {
-                      const date = new Date(today);
-                      date.setDate(today.getDate() + (weeksOffset * 7));
-                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    };
-                    return (
-                      <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
-                        <div className="flex-1" suppressHydrationWarning>{formatWeekDate(-2)}</div>
-                        <div className="flex-1 text-center" suppressHydrationWarning>{formatWeekDate(-1)}</div>
-                        <div className="flex-1 text-center" suppressHydrationWarning>{formatWeekDate(0)}</div>
-                        <div className="flex-1 text-right" suppressHydrationWarning>{formatWeekDate(1)}</div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Selected Day Detail Card */}
-                  {(() => {
-                    const todayIndex = 17;
-                    const selectedDay = ribbonDays[selectedRibbonDay];
-                    const daysFromToday = selectedRibbonDay - todayIndex;
-                    
-                    // Calculate the actual date for the selected day
-                    const selectedDate = new Date();
-                    selectedDate.setDate(selectedDate.getDate() + daysFromToday);
-                    const formattedDate = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-
-                    const statusConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; phaseText: string; futurePhaseText: string }> = {
-                      smooth: {
-                        color: "#4ADE80",
-                        bgColor: "rgba(74, 222, 128, 0.2)",
-                        icon: (
-                          <svg className="mt-0.5" style={{ color: "#4ADE80" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                            <path d="M5.5 8L7 9.5L10.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ),
-                        phaseText: "Completed",
-                        futurePhaseText: "Low Risk"
-                      },
-                      minor: {
-                        color: "#FCD34D",
-                        bgColor: "rgba(252, 211, 77, 0.2)",
-                        icon: (
-                          <svg className="mt-0.5" style={{ color: "#FCD34D" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
-                          </svg>
-                        ),
-                        phaseText: "Resolved",
-                        futurePhaseText: "Monitor"
-                      },
-                      moderate: {
-                        color: "#FB923C",
-                        bgColor: "rgba(251, 146, 60, 0.2)",
-                        icon: (
-                          <svg className="mt-0.5" style={{ color: "#FB923C" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-                            <path d="M8 6V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
-                          </svg>
-                        ),
-                        phaseText: "Was Disrupted",
-                        futurePhaseText: "High Risk"
-                      },
-                      high: {
-                        color: "#F87171",
-                        bgColor: "rgba(248, 113, 113, 0.2)",
-                        icon: (
-                          <svg className="mt-0.5" style={{ color: "#F87171" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
-                          </svg>
-                        ),
-                        phaseText: "Was Blocked",
-                        futurePhaseText: "Critical Risk"
-                      }
-                    };
-
-                    const config = statusConfig[selectedDay.status];
-                    const isToday = selectedRibbonDay === todayIndex;
-                    const isFuture = selectedDay.isFuture;
-
-                    // Determine the label text
-                    let dateLabel = formattedDate;
-                    if (isToday) {
-                      dateLabel = "Today";
-                    } else if (daysFromToday === -1) {
-                      dateLabel = "Yesterday";
-                    } else if (daysFromToday === 1) {
-                      dateLabel = "Tomorrow";
-                    }
-
-                    // Status summary based on time
-                    const getStatusSummary = () => {
-                      if (isToday) {
-                        if (selectedDay.status === "smooth") return "All systems running smoothly";
-                        if (selectedDay.status === "minor") return "Minor issues being addressed";
-                        if (selectedDay.status === "moderate") return "Moderate disruptions";
-                        return "Critical issues detected";
-                      } else if (isFuture) {
-                        if (selectedDay.status === "smooth") return "Low risk day - no major concerns predicted";
-                        if (selectedDay.status === "minor") return "Minor risk - deliverable or dependency scheduled";
-                        if (selectedDay.status === "moderate") return "Elevated risk - potential blockers identified";
-                        return "High risk - critical dependencies or conflicts";
-                      } else {
-                        if (selectedDay.status === "smooth") return "Day completed without issues";
-                        if (selectedDay.status === "minor") return "Minor issues were resolved";
-                        if (selectedDay.status === "moderate") return "Day had moderate disruptions";
-                        return "Critical blocker occurred";
-                      }
-                    };
-
-                    return (
-                      <div
-                        className="rounded-lg p-5"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <div
-                                className="text-xs font-medium text-gray-500"
-                                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                              >
-                                {dateLabel}
-                              </div>
-                              {isFuture && (
-                                <span
-                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                                  style={{ backgroundColor: "rgba(147, 51, 234, 0.2)", color: "#A855F7" }}
-                                >
-                                  Forecast
-                                </span>
-                              )}
-                              {!isToday && !isFuture && (
-                                <span
-                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                                  style={{ backgroundColor: "rgba(100, 100, 100, 0.2)", color: "#888888" }}
-                                >
-                                  Past
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              className="text-sm text-gray-400 mb-4"
-                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                            >
-                              {getStatusSummary()}
-                            </div>
-
-                            {/* Status */}
-                            <div className="flex items-start gap-2 mb-4">
-                              {config.icon}
-                              <div>
-                                <div
-                                  className="font-medium text-sm"
-                                  style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}
-                                >
-                                  {selectedDay.title}
-                                </div>
-                                <div
-                                  className="text-white text-sm mt-0.5"
-                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                                >
-                                  {selectedDay.description}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Tags */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {selectedDay.tags.map((tag, i) => (
-                                <span
-                                  key={i}
-                                  className="px-2 py-1 rounded text-xs font-medium"
-                                  style={{ backgroundColor: config.bgColor, color: config.color }}
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
                           <div
-                            className="text-sm text-gray-400 text-right"
-                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                          >
-                            {isToday ? "Active" : isFuture ? config.futurePhaseText : config.phaseText}
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                              background: `radial-gradient(ellipse 60% 90% at 75% 50%, ${cfg.color}33 0%, transparent 65%)`,
+                            }}
+                          />
+                          <div className="relative flex items-center justify-between gap-6">
+                            <div className="min-w-0">
+                              <h4 className="text-white font-semibold text-base mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>{focusedHeader}</h4>
+                              <p className="text-sm text-gray-400 max-w-xs mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
+                                {cfg.description}
+                              </p>
+                              <div className="flex gap-8">
+                                <div>
+                                  <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Projects</div>
+                                  <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.projects}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Cash Flow</div>
+                                  <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.cashFlow}</div>
+                                </div>
+                              </div>
+                            </div>
+                            <div
+                              className="text-5xl font-semibold flex-shrink-0"
+                              style={{ color: cfg.color, fontFamily: "system-ui, Inter, sans-serif", textShadow: `0 0 40px ${cfg.color}55` }}
+                              suppressHydrationWarning
+                            >
+                              {cfg.label}
+                            </div>
                           </div>
                         </div>
 
-                        {/* To-Dos for this day */}
-                        {(() => {
-                          const dayKey = selectedDate.toISOString().slice(0, 10);
-                          const dayTodos = todosByDate[dayKey] || [];
-                          if (dayTodos.length === 0) return null;
-                          const openCount = dayTodos.filter(d => !d.task.completed).length;
-                          return (
-                            <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2a2a2a" }}>
-                              <button
-                                type="button"
-                                onClick={() => setTodosSectionCollapsed(v => !v)}
-                                className="flex items-center gap-2 w-full mb-3 group"
-                              >
-                                <svg
-                                  width="10" height="10" viewBox="0 0 10 10" fill="none"
-                                  style={{ color: "#6b7280", flexShrink: 0, transition: "transform 0.15s", transform: todosSectionCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-                                >
-                                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <span className="text-xs font-medium text-gray-500 group-hover:text-gray-400 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                  To-Dos ({openCount} open)
-                                </span>
-                              </button>
-                              {!todosSectionCollapsed && (
-                                <div className="flex flex-col gap-2.5">
-                                  {dayTodos.map(({ task, fileName, canvasId, nodeId }) => (
-                                    <div key={task.id} className="flex items-start gap-2.5">
+                        {/* To-Dos card */}
+                        <div
+                          className="rounded-xl p-6 flex-1"
+                          style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-white font-semibold text-base" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>To-Dos</h4>
+                            <button
+                              type="button"
+                              onClick={() => setActiveView("todos")}
+                              className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#1a1a1a] transition-colors"
+                              title="Add task"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                            </button>
+                          </div>
+                          {todayTodos.length === 0 ? (
+                            <div className="text-sm text-gray-500 py-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              No tasks due today
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {todayTodos.map(({ task, canvasId, nodeId }) => {
+                                let dueLabel: { text: string; color: string } | null = null;
+                                if (task.dueDate) {
+                                  const due = new Date(task.dueDate);
+                                  const t = new Date();
+                                  t.setHours(0, 0, 0, 0);
+                                  due.setHours(0, 0, 0, 0);
+                                  const dayDiff = Math.floor((due.getTime() - t.getTime()) / (1000 * 60 * 60 * 24));
+                                  if (dayDiff < 0) {
+                                    dueLabel = {
+                                      text: dayDiff === -1 ? "Due Yesterday" : `Due ${Math.abs(dayDiff)} days ago`,
+                                      color: "#F87171",
+                                    };
+                                  } else if (dayDiff === 0) {
+                                    dueLabel = { text: "Due Today", color: "#FCD34D" };
+                                  } else if (dayDiff === 1) {
+                                    dueLabel = { text: "Due Tomorrow", color: "#888888" };
+                                  } else if (dayDiff <= 7) {
+                                    dueLabel = { text: `Due in ${dayDiff} days`, color: "#888888" };
+                                  } else {
+                                    dueLabel = {
+                                      text: `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+                                      color: "#888888",
+                                    };
+                                  }
+                                }
+                                return (
+                                  <div key={task.id} className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
                                       <button
                                         type="button"
                                         onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
-                                        className="mt-0.5 flex-shrink-0 w-3.5 h-3.5 rounded-sm border transition-colors"
-                                        style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
+                                        className="flex-shrink-0 w-4 h-4 rounded border transition-colors flex items-center justify-center"
+                                        style={{
+                                          borderColor: task.completed ? "#4ADE80" : "#444",
+                                          backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent",
+                                        }}
                                       >
                                         {task.completed && (
-                                          <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
+                                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
                                             <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                           </svg>
                                         )}
                                       </button>
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif", textDecoration: task.completed ? "line-through" : "none", color: task.completed ? "#666" : "#fff" }}>
-                                          {task.title}
-                                        </span>
-                                        <span className="text-[10px] text-gray-500 ml-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                          {fileName}
-                                        </span>
-                                      </div>
+                                      <span
+                                        className="text-sm truncate"
+                                        style={{
+                                          fontFamily: "system-ui, Inter, sans-serif",
+                                          textDecoration: task.completed ? "line-through" : "none",
+                                          color: task.completed ? "#666" : "#fff",
+                                        }}
+                                      >
+                                        {task.title || "Untitled task"}
+                                      </span>
                                     </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    );
-                  })()}
-                  </>
-                  ) : (
-                  /* Calendar View */
-                  (() => {
-                    const today = new Date();
-                    const todayIndex = 17;
-
-                    const statusColors: Record<string, string> = {
-                      smooth: "#4ADE80",
-                      minor: "#FCD34D",
-                      moderate: "#FB923C",
-                      high: "#F87171"
-                    };
-                    
-                    // Get start of the 4-week period (today - 17 days to align with ribbon)
-                    const startDate = new Date(today);
-                    startDate.setDate(today.getDate() - todayIndex);
-                    
-                    // Find the Monday of that week
-                    const dayOfWeek = startDate.getDay();
-                    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-                    const calendarStart = new Date(startDate);
-                    calendarStart.setDate(startDate.getDate() + mondayOffset);
-                    
-                    // Generate 5 weeks of calendar data
-                    const weeks: { date: Date; dayIndex: number | null; day: typeof ribbonDays[0] | null }[][] = [];
-                    let currentDate = new Date(calendarStart);
-                    
-                    for (let week = 0; week < 5; week++) {
-                      const weekDays: { date: Date; dayIndex: number | null; day: typeof ribbonDays[0] | null }[] = [];
-                      for (let d = 0; d < 7; d++) {
-                        const diffFromStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                        const dayIndex = diffFromStart >= 0 && diffFromStart < 28 ? diffFromStart : null;
-                        weekDays.push({
-                          date: new Date(currentDate),
-                          dayIndex,
-                          day: dayIndex !== null ? ribbonDays[dayIndex] : null
-                        });
-                        currentDate.setDate(currentDate.getDate() + 1);
-                      }
-                      weeks.push(weekDays);
-                    }
-                    
-                    const monthYear = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                    
-                    return (
-                      <div className="space-y-4">
-                        {/* Month header */}
-                        <div className="text-center mb-4">
-                          <span className="text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
-                            {monthYear}
-                          </span>
-                        </div>
-                        
-                        {/* Calendar grid */}
-                        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
-                          {/* Day headers */}
-                          <div className="grid grid-cols-7 gap-px" style={{ backgroundColor: "#2a2a2a" }}>
-                            {weekDays.map((day) => (
-                              <div
-                                key={day}
-                                className="p-2 text-center text-xs font-medium text-gray-500"
-                                style={{ backgroundColor: "#1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
-                              >
-                                {day}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Calendar cells */}
-                          <div className="grid grid-cols-7 gap-px" style={{ backgroundColor: "#2a2a2a" }}>
-                            {weeks.flat().map((cell, i) => {
-                              const isToday = cell.date.toDateString() === today.toDateString();
-                              const isSelected = cell.dayIndex === selectedRibbonDay;
-                              const hasData = cell.day !== null;
-                              
-                              return (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => cell.dayIndex !== null && setSelectedRibbonDay(cell.dayIndex)}
-                                  disabled={!hasData}
-                                  className={`relative p-2 min-h-[72px] text-left transition-all ${
-                                    hasData ? "cursor-pointer hover:bg-[#252525]" : "cursor-default opacity-50"
-                                  } ${isSelected ? "ring-2 ring-inset ring-white" : ""}`}
-                                  style={{ backgroundColor: "#1a1a1a" }}
-                                >
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span
-                                      className={`text-xs ${isToday ? "bg-white text-black px-1.5 py-0.5 rounded-full font-medium" : "text-gray-400"}`}
-                                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                                      suppressHydrationWarning
-                                    >
-                                      {cell.date.getDate()}
-                                    </span>
-                                    {hasData && (
-                                      <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{ backgroundColor: statusColors[cell.day!.status] }}
-                                      />
+                                    {dueLabel && (
+                                      <span
+                                        className="text-xs font-medium flex-shrink-0"
+                                        style={{
+                                          color: dueLabel.color,
+                                          fontFamily: "system-ui, Inter, sans-serif",
+                                        }}
+                                      >
+                                        {dueLabel.text}
+                                      </span>
                                     )}
                                   </div>
-                                  {hasData && (
-                                    <div
-                                      className="text-[10px] text-gray-500 line-clamp-2 leading-tight"
-                                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                                    >
-                                      {cell.day!.title}
-                                    </div>
-                                  )}
-                                  {cell.day?.isFuture && (
-                                    <div className="absolute bottom-1 right-1">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500 opacity-60" />
-                                    </div>
-                                  )}
-                                </button>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setActiveView("todos")}
+                            className="mt-4 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            See All
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right column - vertical calendar (Figma spec) */}
+                      <div
+                        className="rounded-xl p-5 h-full flex flex-col"
+                        style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                      >
+                        <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRibbonDay(d => Math.max(0, d - 7))}
+                              className="text-gray-500 hover:text-white transition-colors"
+                              aria-label="Previous week"
+                            >
+                              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                                <path d="M6.5 1L1.5 6L6.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            <h4 className="text-white font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>{rangeLabel}</h4>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRibbonDay(d => Math.min(ribbonDays.length - 1, d + 7))}
+                              className="text-gray-500 hover:text-white transition-colors"
+                              aria-label="Next week"
+                            >
+                              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                                <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                            <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-500 hover:text-white transition-colors" type="button" title="Grid view">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
+                                <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
+                                <rect x="1.5" y="9" width="5.5" height="5.5" rx="1" fill="currentColor"/>
+                                <rect x="9" y="9" width="5.5" height="5.5" rx="1" fill="currentColor"/>
+                              </svg>
+                            </button>
+                            <button className="w-8 h-8 rounded-md flex items-center justify-center text-white transition-colors" type="button" title="List view" style={{ backgroundColor: "#2a2a2a" }}>
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="1.5" y="3" width="13" height="2" rx="1" fill="currentColor"/>
+                                <rect x="1.5" y="7" width="13" height="2" rx="1" fill="currentColor"/>
+                                <rect x="1.5" y="11" width="13" height="2" rx="1" fill="currentColor"/>
+                              </svg>
+                            </button>
                           </div>
                         </div>
-                        
-                        {/* Selected day detail card (same as ribbon view) */}
-                        {(() => {
-                          const selectedDay = ribbonDays[selectedRibbonDay];
-                          const daysFromToday = selectedRibbonDay - todayIndex;
-                          const selectedDate = new Date();
-                          selectedDate.setDate(selectedDate.getDate() + daysFromToday);
-                          const formattedDate = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-                          
-                          const statusConfig: Record<string, { color: string; bgColor: string }> = {
-                            smooth: { color: "#4ADE80", bgColor: "rgba(74, 222, 128, 0.2)" },
-                            minor: { color: "#FCD34D", bgColor: "rgba(252, 211, 77, 0.2)" },
-                            moderate: { color: "#FB923C", bgColor: "rgba(251, 146, 60, 0.2)" },
-                            high: { color: "#F87171", bgColor: "rgba(248, 113, 113, 0.2)" }
-                          };
-                          
-                          const config = statusConfig[selectedDay.status];
-                          const isSelectedToday = selectedRibbonDay === todayIndex;
-                          
-                          let dateLabel = formattedDate;
-                          if (isSelectedToday) dateLabel = "Today";
-                          else if (daysFromToday === -1) dateLabel = "Yesterday";
-                          else if (daysFromToday === 1) dateLabel = "Tomorrow";
-                          
-                          return (
-                            <div
-                              className="rounded-lg p-4 mt-4"
-                              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
-                            >
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-medium text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                  {dateLabel}
+                        <div className="flex-1 flex flex-col items-center justify-center gap-2 mx-auto w-full" style={{ maxWidth: 320 }}>
+                          {days.map((day) => {
+                            const isFocused = day.offset === 0;
+                            const isPast = day.idx < todayIndex;
+                            const barWidth = widthByOffset[day.offset] ?? 100;
+                            const barHeight = isFocused ? 44 : 38;
+                            const baseColor = barColorMap[day.status] || "#00db75";
+                            const borderColor = todayBorderMap[day.status] || "#00b963";
+                            const labelColor = isFocused
+                              ? "#ffffff"
+                              : isPast
+                              ? "rgba(164,164,164,0.4)"
+                              : "#a4a4a4";
+                            return (
+                              <button
+                                key={day.idx}
+                                type="button"
+                                onClick={() => setSelectedRibbonDay(day.idx)}
+                                className="relative w-full flex items-center justify-center group"
+                                style={{ height: barHeight }}
+                              >
+                                <span
+                                  className="absolute whitespace-nowrap text-right text-base font-medium leading-none transition-colors"
+                                  style={{
+                                    right: `calc(50% + ${barWidth / 2}px + 20px)`,
+                                    color: labelColor,
+                                    fontFamily: "Inter, system-ui, sans-serif",
+                                  }}
+                                  suppressHydrationWarning
+                                >
+                                  {day.label}
                                 </span>
-                                {selectedDay.isFuture && (
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: "rgba(147, 51, 234, 0.2)", color: "#A855F7" }}>
-                                    Forecast
-                                  </span>
-                                )}
-                              </div>
-                              <div className="font-medium text-sm mb-1" style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}>
-                                {selectedDay.title}
-                              </div>
-                              <div className="text-white text-sm mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                {selectedDay.description}
-                              </div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {selectedDay.tags.map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="px-2 py-1 rounded text-xs font-medium"
-                                    style={{ backgroundColor: config.bgColor, color: config.color }}
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })()}
+                                <div
+                                  className="rounded-[8px] transition-transform group-hover:scale-[1.03]"
+                                  style={{
+                                    width: barWidth,
+                                    height: barHeight,
+                                    backgroundColor: isPast
+                                      ? `${baseColor}66`
+                                      : baseColor,
+                                    border: isFocused ? `3px solid ${borderColor}` : "none",
+                                    boxSizing: "border-box",
+                                  }}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    );
-                  })()
-                  ))}
-                </div>
+                    </div>
+                  );
+                })()}
               </div>
+
 
               {/* Collection detail view */}
               {selectedCollectionId && projects.find(p => p.id === selectedCollectionId) ? (
@@ -4012,9 +3942,10 @@ All Frameworks
                         }}
                         className="p-1.5 rounded-lg"
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                        title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
-                          <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </button>
                       <button
@@ -4223,9 +4154,15 @@ All Frameworks
                             <div className="aspect-[16/10] overflow-hidden relative">
                               <CanvasPreview nodes={canvas.nodes} />
                               <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setShareCanvasId(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }} title="Share canvas">
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
+                                    <path d="M6.5 9L14 2" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                                  </svg>
+                                </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); toggleFavorite(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                                  <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
                                   </svg>
                                 </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setCanvasToDelete(canvas.id); }} className="p-1.5 rounded-lg hover:bg-red-500/20" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
@@ -4354,9 +4291,10 @@ All Frameworks
                         }}
                         className="p-1.5 rounded-lg"
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                        title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
-                          <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </button>
                       <button
@@ -4993,6 +4931,19 @@ All Frameworks
         </div>
       )}
 
+      {/* Share Canvas Dialog */}
+      {shareCanvasId && (() => {
+        const shareCanvas = canvases.find(c => c.id === shareCanvasId);
+        return shareCanvas ? (
+          <ShareCanvasDialog
+            open={!!shareCanvasId}
+            onClose={() => setShareCanvasId(null)}
+            canvas={shareCanvas}
+            workspaceSettings={workspaceSettings}
+          />
+        ) : null;
+      })()}
+
       {/* Workspace Settings Dialog */}
       <WorkspaceSettingsDialog
         open={showSettingsDialog}
@@ -5447,6 +5398,30 @@ All Frameworks
                   : c
               ));
             }}
+          />
+        );
+      })()}
+
+      {/* Project Creation Modal */}
+      {showProjectCreationModal && (() => {
+        const displayName =
+          (authUser?.user_metadata?.display_name as string | undefined) ||
+          authUser?.email?.split("@")[0] ||
+          "You";
+        const initials = displayName.slice(0, 2).toUpperCase();
+        return (
+          <ProjectCreationModal
+            onClose={() => setShowProjectCreationModal(false)}
+            workspaceMembers={workspaceSettings.members}
+            currentUserId={authUser?.id ?? "guest"}
+            currentUserName={displayName}
+            currentUserEmail={authUser?.email ?? userEmail ?? ""}
+            currentUserInitials={initials}
+            workspaceId={activeWorkspaceId}
+            frameworks={frameworks}
+            canvases={canvases}
+            onOpenCanvas={onOpenCanvas}
+            onCanvasesChange={onCanvasesChange}
           />
         );
       })()}

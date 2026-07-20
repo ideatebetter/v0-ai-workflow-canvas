@@ -108,6 +108,8 @@ interface AtlasCanvasProps {
   onCreatePresentationGroup?: (nodeIds: string[]) => void;
   onNodeContextMenu?: (event: React.MouseEvent, nodes: AtlasNode[]) => void;
   onRemoveFromPresentation?: (nodeId: string) => void;
+  initialViewport?: { x: number; y: number; zoom: number };
+  onViewportChange?: (viewport: { x: number; y: number; zoom: number }) => void;
 }
 
 export function AtlasCanvas({
@@ -147,6 +149,8 @@ export function AtlasCanvas({
   onCreatePresentationGroup,
   onNodeContextMenu,
   onRemoveFromPresentation,
+  initialViewport,
+  onViewportChange,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -170,6 +174,12 @@ export function AtlasCanvas({
   const [showConnectors, setShowConnectors] = useState(true);
 const reactFlowInstance = useReactFlow();
   const viewport = useViewport();
+  const viewportSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleMoveEnd = useCallback((_: unknown, vp: { x: number; y: number; zoom: number }) => {
+    if (!onViewportChange) return;
+    if (viewportSaveTimer.current) clearTimeout(viewportSaveTimer.current);
+    viewportSaveTimer.current = setTimeout(() => onViewportChange(vp), 500);
+  }, [onViewportChange]);
   
   // Listen for handle click events from nodes
   useEffect(() => {
@@ -755,11 +765,11 @@ onClick={(event) => {
         selectionOnDrag
         multiSelectionKeyCode="Shift"
         panOnScroll={true}
-        fitView
-        fitViewOptions={{
-          padding: 0.3,
-          maxZoom: 1,
-        }}
+        {...(initialViewport
+          ? { defaultViewport: initialViewport }
+          : { fitView: true, fitViewOptions: { padding: 0.3, maxZoom: 1 } }
+        )}
+        onMoveEnd={handleMoveEnd}
         snapToGrid
         snapGrid={[16, 16]}
         minZoom={0.1}
@@ -784,8 +794,8 @@ onClick={(event) => {
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
-          size={1}
-          color="#333333"
+          size={1.5}
+          color="#404040"
         />
         <Controls
           style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8 }}
