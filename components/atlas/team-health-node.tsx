@@ -25,7 +25,7 @@ export function TeamHealthNode({ id, data, selected }: NodeProps) {
     <div
       style={{
         width: 220,
-        backgroundColor: "#111",
+        backgroundColor: "var(--app-bg-elevated)",
         borderRadius: 14,
         border: selected ? `2px solid ${PINK}` : `1px solid ${PINK}22`,
         overflow: "hidden",
@@ -54,18 +54,18 @@ export function TeamHealthNode({ id, data, selected }: NodeProps) {
         <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, letterSpacing: -3, color: fbColor }}>
           {d.feedbackLoopVelocity}<span style={{ fontSize: 28, fontWeight: 700, letterSpacing: -1 }}>h</span>
         </div>
-        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>feedback loop avg</div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "var(--app-text-faint)" }}>feedback loop avg</div>
       </div>
 
       {/* Secondary stats */}
-      <div className="grid grid-cols-2 px-3 pb-3 pt-2 gap-1.5" style={{ borderTop: `1px solid #1e1e1e` }}>
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+      <div className="grid grid-cols-2 px-3 pb-3 pt-2 gap-1.5" style={{ borderTop: `1px solid var(--app-card-elevated)` }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Revision ratio</div>
           <div className="text-xl font-bold leading-none" style={{ color: rvColor }}>
             {d.revisionToApprovalRatio}<span className="text-sm font-semibold">×</span>
           </div>
         </div>
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Ideate saved</div>
           <div className="text-xl font-bold leading-none" style={{ color: GREEN }}>
             {d.timeSavedHours}<span className="text-sm font-semibold">h</span>

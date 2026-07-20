@@ -174,19 +174,19 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
       {/* Content */}
       <div 
         className="relative w-full max-w-5xl max-h-[90vh] mx-4 rounded-2xl overflow-hidden flex flex-col"
-        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
       >
         {/* Header */}
         <div 
           className="flex items-center justify-between px-6 py-4 border-b"
-          style={{ borderColor: "#333333" }}
+          style={{ borderColor: "var(--app-canvas-dot)" }}
         >
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#ffffff20" }}
+              style={{ backgroundColor: "var(--app-text-primary)20" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -202,12 +202,12 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   onChange={(e) => setEditedLabel(e.target.value)}
                   onBlur={handleLabelSave}
                   onKeyDown={handleLabelKeyDown}
-                  className="text-lg font-semibold text-white bg-transparent border-b border-white/30 outline-none px-1"
+                  className="text-lg font-semibold text-foreground bg-transparent border-b border-white/30 outline-none px-1"
                   style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "120px" }}
                 />
               ) : (
                 <h2 
-                  className="text-lg font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"
+                  className="text-lg font-semibold text-foreground cursor-pointer hover:text-gray-300 transition-colors"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   onClick={handleLabelClick}
                   title="Click to edit"
@@ -227,7 +227,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               type="button"
               onClick={() => setIsPresentationMode(true)}
               className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-              style={{ backgroundColor: "#ffffff08" }}
+              style={{ backgroundColor: "var(--app-text-primary)08" }}
               title="Presentation mode"
             >
               <span className="text-sm font-semibold text-gray-400">P</span>
@@ -236,7 +236,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
             {/* Layout Toggle */}
             <div 
               className="flex items-center gap-1 p-1 rounded-lg"
-              style={{ backgroundColor: "#ffffff08" }}
+              style={{ backgroundColor: "var(--app-text-primary)08" }}
             >
               {/* Masonry */}
               <button
@@ -244,8 +244,8 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 onClick={() => setLayoutMode("masonry")}
                 className="p-2 rounded-md transition-colors"
                 style={{
-                  backgroundColor: layoutMode === "masonry" ? "#ffffff15" : "transparent",
-                  color: layoutMode === "masonry" ? "#ffffff" : "#666666",
+                  backgroundColor: layoutMode === "masonry" ? "var(--app-text-primary)15" : "transparent",
+                  color: layoutMode === "masonry" ? "var(--app-text-primary)" : "var(--app-text-muted)",
                 }}
                 title="Masonry layout"
               >
@@ -263,8 +263,8 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 onClick={() => setLayoutMode("freeform")}
                 className="p-2 rounded-md transition-colors"
                 style={{
-                  backgroundColor: layoutMode === "freeform" ? "#ffffff15" : "transparent",
-                  color: layoutMode === "freeform" ? "#ffffff" : "#666666",
+                  backgroundColor: layoutMode === "freeform" ? "var(--app-text-primary)15" : "transparent",
+                  color: layoutMode === "freeform" ? "var(--app-text-primary)" : "var(--app-text-muted)",
                 }}
                 title="Freeform layout"
               >
@@ -282,8 +282,8 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 onClick={() => setLayoutMode("grid")}
                 className="p-2 rounded-md transition-colors"
                 style={{
-                  backgroundColor: layoutMode === "grid" ? "#ffffff15" : "transparent",
-                  color: layoutMode === "grid" ? "#ffffff" : "#666666",
+                  backgroundColor: layoutMode === "grid" ? "var(--app-text-primary)15" : "transparent",
+                  color: layoutMode === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)",
                 }}
                 title="Grid layout"
               >
@@ -302,7 +302,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("atlas:share-node", { detail: { nodeId, nodeLabel: data.label || "Moodboard", nodeType: "moodboard" } }))}
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-                style={{ backgroundColor: "#ffffff08", color: "#888888" }}
+                style={{ backgroundColor: "var(--app-text-primary)08", color: "var(--app-text-muted)" }}
                 title="Share moodboard"
               >
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -318,8 +318,8 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               onClick={onUngroup}
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
               style={{
-                backgroundColor: "#ffffff08",
-                color: "#888888",
+                backgroundColor: "var(--app-text-primary)08",
+                color: "var(--app-text-muted)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
@@ -334,7 +334,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </button>
           </div>
@@ -359,7 +359,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                     <div 
                       className="relative rounded-xl overflow-hidden transition-all duration-200"
                       style={{
-                        border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid transparent",
+                        border: selectedImage === img.id ? "2px solid var(--app-text-primary)" : "1px solid transparent",
                       }}
                     >
                       {isVideo ? (
@@ -395,7 +395,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                         style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
                       >
                         <div className="p-3 w-full">
-                          <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <p className="text-sm text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {img.fileName}
                           </p>
                         </div>
@@ -415,7 +415,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               style={{ 
                 minHeight: "650px", 
                 cursor: draggingId ? "grabbing" : "default",
-                background: "linear-gradient(135deg, #0a0a0a 0%, #151515 100%)",
+                background: "linear-gradient(135deg, var(--app-bg) 0%, #151515 100%)",
                 borderRadius: "12px",
               }}
               onMouseMove={handleMouseMove}
@@ -449,7 +449,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                       className="relative overflow-hidden"
                       style={{
                         maxWidth: "200px",
-                        border: isSelected ? "3px solid #ffffff" : "none",
+                        border: isSelected ? "3px solid var(--app-text-primary)" : "none",
                         boxShadow: isDragging 
                           ? "0 25px 50px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.4)" 
                           : "0 8px 24px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)",
@@ -488,7 +488,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                         style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.85))" }}
                       >
                         <div className="p-2.5 w-full">
-                          <p className="text-xs text-white truncate font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <p className="text-xs text-foreground truncate font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {img.fileName}
                           </p>
                         </div>
@@ -514,7 +514,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                     <div 
                       className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
                       style={{
-                        border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
+                        border: selectedImage === img.id ? "2px solid var(--app-text-primary)" : "1px solid var(--app-canvas-dot)",
                       }}
                     >
                       {isVideo ? (
@@ -550,7 +550,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                         style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
                       >
                         <div className="p-3 w-full">
-                          <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <p className="text-sm text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {img.fileName}
                           </p>
                         </div>
@@ -568,25 +568,25 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
       {isPresentationMode && (
         <div 
           className="fixed inset-0 z-[60] flex flex-col"
-          style={{ backgroundColor: "#0a0a0a" }}
+          style={{ backgroundColor: "var(--app-bg)" }}
         >
           {/* Presentation Header */}
-          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #1a1a1a" }}>
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--app-card-elevated)" }}>
             {/* Left - Back button and title */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsPresentationMode(false)}
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-                style={{ backgroundColor: "#1a1a1a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M12 4L6 10L12 16" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 4L6 10L12 16" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
               <div 
                 className="px-4 py-2 rounded-full"
-                style={{ backgroundColor: "#1a1a1a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
                 {isEditingLabel ? (
                   <input
@@ -601,7 +601,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   />
                 ) : (
                   <span 
-                    className="text-sm font-medium text-gray-300 cursor-pointer hover:text-white transition-colors"
+                    className="text-sm font-medium text-gray-300 cursor-pointer hover:text-foreground transition-colors"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     onClick={handleLabelClick}
                     title="Click to edit"
@@ -617,7 +617,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               {/* Layout toggles */}
               <div 
                 className="flex items-center gap-1 p-1 rounded-xl"
-                style={{ backgroundColor: "#1a1a1a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
                 {/* List */}
                 <button
@@ -625,11 +625,11 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   onClick={() => setPresentationLayout("list")}
                   className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                   style={{
-                    backgroundColor: presentationLayout === "list" ? "#ffffff15" : "transparent",
+                    backgroundColor: presentationLayout === "list" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 4.5H15M3 9H15M3 13.5H15" stroke={presentationLayout === "list" ? "#ffffff" : "#666666"} strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M3 4.5H15M3 9H15M3 13.5H15" stroke={presentationLayout === "list" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </button>
 
@@ -639,14 +639,14 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   onClick={() => setPresentationLayout("grid")}
                   className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                   style={{
-                    backgroundColor: presentationLayout === "grid" ? "#ffffff15" : "transparent",
+                    backgroundColor: presentationLayout === "grid" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="10.5" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="2" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
+                    <rect x="2" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="10.5" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="2" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
                   </svg>
                 </button>
 
@@ -656,15 +656,15 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   onClick={() => setPresentationLayout("columns")}
                   className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                   style={{
-                    backgroundColor: presentationLayout === "columns" ? "#ffffff15" : "transparent",
+                    backgroundColor: presentationLayout === "columns" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2" y="2" width="4" height="14" rx="1" stroke={presentationLayout === "columns" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="8" y="2" width="4" height="9" rx="1" stroke={presentationLayout === "columns" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="8" y="13" width="4" height="3" rx="1" stroke={presentationLayout === "columns" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="14" y="2" width="2" height="6" rx="0.5" stroke={presentationLayout === "columns" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
-                    <rect x="14" y="10" width="2" height="6" rx="0.5" stroke={presentationLayout === "columns" ? "#ffffff" : "#666666"} strokeWidth="1.5"/>
+                    <rect x="2" y="2" width="4" height="14" rx="1" stroke={presentationLayout === "columns" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="8" y="2" width="4" height="9" rx="1" stroke={presentationLayout === "columns" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="8" y="13" width="4" height="3" rx="1" stroke={presentationLayout === "columns" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="14" y="2" width="2" height="6" rx="0.5" stroke={presentationLayout === "columns" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
+                    <rect x="14" y="10" width="2" height="6" rx="0.5" stroke={presentationLayout === "columns" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
                   </svg>
                 </button>
 
@@ -674,14 +674,14 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                   onClick={() => setPresentationLayout("freeform")}
                   className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                   style={{
-                    backgroundColor: presentationLayout === "freeform" ? "#ffffff15" : "transparent",
+                    backgroundColor: presentationLayout === "freeform" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2" y="3" width="5" height="4" stroke={presentationLayout === "freeform" ? "#ffffff" : "#666666"} strokeWidth="1.5" transform="rotate(-5 2 3)"/>
-                    <rect x="9" y="2" width="6" height="5" stroke={presentationLayout === "freeform" ? "#ffffff" : "#666666"} strokeWidth="1.5" transform="rotate(3 9 2)"/>
-                    <rect x="3" y="10" width="5" height="5" stroke={presentationLayout === "freeform" ? "#ffffff" : "#666666"} strokeWidth="1.5" transform="rotate(5 3 10)"/>
-                    <rect x="10" y="9" width="5" height="6" stroke={presentationLayout === "freeform" ? "#ffffff" : "#666666"} strokeWidth="1.5" transform="rotate(-3 10 9)"/>
+                    <rect x="2" y="3" width="5" height="4" stroke={presentationLayout === "freeform" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" transform="rotate(-5 2 3)"/>
+                    <rect x="9" y="2" width="6" height="5" stroke={presentationLayout === "freeform" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" transform="rotate(3 9 2)"/>
+                    <rect x="3" y="10" width="5" height="5" stroke={presentationLayout === "freeform" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" transform="rotate(5 3 10)"/>
+                    <rect x="10" y="9" width="5" height="6" stroke={presentationLayout === "freeform" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" transform="rotate(-3 10 9)"/>
                   </svg>
                 </button>
               </div>
@@ -691,10 +691,10 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 type="button"
                 onClick={() => setIsPresentationMode(false)}
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 ml-2"
-                style={{ backgroundColor: "#1a1a1a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M13 5L5 13M5 5L13 13" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M13 5L5 13M5 5L13 13" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
@@ -797,10 +797,10 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
           <div className="absolute bottom-6 right-6 flex items-center gap-2">
             <div 
               className="flex items-center gap-2 px-4 py-2 rounded-full"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white">1</span>
+                <span className="text-[10px] font-bold text-foreground">1</span>
               </div>
               <span className="text-xs font-semibold tracking-wider text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 PRESENTING

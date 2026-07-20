@@ -159,10 +159,10 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
         className="relative w-full max-w-xl rounded-xl overflow-hidden flex flex-col max-h-[90vh]"
-        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
       >
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid #333333" }}>
+        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F0FE0015" }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -171,7 +171,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
               </svg>
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <h2 className="text-base font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {step === 1 ? "Save as Framework" : "Define Parameters"}
               </h2>
               <p className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -179,7 +179,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
               </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button type="button" onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M4 4L14 14M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
@@ -202,8 +202,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Brand Identity Workflow"
-                  className="w-full px-3.5 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40"
-                  style={{ backgroundColor: "#252525", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                  className="w-full px-3.5 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40"
+                  style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                 />
               </div>
 
@@ -214,8 +214,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   onChange={e => setDescription(e.target.value)}
                   placeholder="What is this framework for?"
                   rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40 resize-none"
-                  style={{ backgroundColor: "#252525", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                  className="w-full px-3.5 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40 resize-none"
+                  style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                 />
               </div>
 
@@ -232,9 +232,9 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         onClick={() => setVisibility(v)}
                         className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors"
                         style={{
-                          backgroundColor: visibility === v ? "#F0FE0015" : "#252525",
-                          border: `1px solid ${visibility === v ? "#F0FE00" : "#333333"}`,
-                          color: visibility === v ? "#F0FE00" : "#888888",
+                          backgroundColor: visibility === v ? "#F0FE0015" : "var(--app-border-strong)",
+                          border: `1px solid ${visibility === v ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                          color: visibility === v ? "#F0FE00" : "var(--app-text-muted)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       >
@@ -257,9 +257,9 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         onClick={() => setCategory(cat)}
                         className="px-3 py-2 rounded-lg text-xs transition-colors"
                         style={{
-                          backgroundColor: category === cat ? "#F0FE00" : "#252525",
-                          border: `1px solid ${category === cat ? "#F0FE00" : "#333333"}`,
-                          color: category === cat ? "#0a0a0a" : "#888888",
+                          backgroundColor: category === cat ? "#F0FE00" : "var(--app-border-strong)",
+                          border: `1px solid ${category === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                          color: category === cat ? "var(--app-bg)" : "var(--app-text-muted)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       >
@@ -278,9 +278,9 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   </label>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {tags.map(tag => (
-                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "#252525", border: "1px solid #333", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
                         {tag}
-                        <button type="button" onClick={() => setTags(prev => prev.filter(t => t !== tag))} className="hover:text-white">
+                        <button type="button" onClick={() => setTags(prev => prev.filter(t => t !== tag))} className="hover:text-foreground">
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                         </button>
                       </span>
@@ -294,18 +294,18 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
                       placeholder="Add a tag..."
                       disabled={tags.length >= 5}
-                      className="flex-1 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40 disabled:opacity-40"
-                      style={{ backgroundColor: "#252525", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="flex-1 px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40 disabled:opacity-40"
+                      style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     />
-                    <button type="button" onClick={handleAddTag} disabled={!tagInput.trim() || tags.length >= 5} className="px-3 py-2 rounded-lg text-xs text-[#F0FE00] disabled:opacity-40" style={{ backgroundColor: "#252525", border: "1px solid #333333" }}>Add</button>
+                    <button type="button" onClick={handleAddTag} disabled={!tagInput.trim() || tags.length >= 5} className="px-3 py-2 rounded-lg text-xs text-[#F0FE00] disabled:opacity-40" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>Add</button>
                   </div>
                 </div>
               )}
 
               {/* Detected parameters preview */}
-              <div className="p-3 rounded-lg" style={{ backgroundColor: "#252525", border: "1px solid #333333" }}>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#888" strokeWidth="1.2"/><path d="M7 5V7.5" stroke="#888" strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="9.5" r="0.6" fill="#888"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="var(--app-text-muted)" strokeWidth="1.2"/><path d="M7 5V7.5" stroke="var(--app-text-muted)" strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="9.5" r="0.6" fill="var(--app-text-muted)"/></svg>
                   <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     {parameters.length > 0
                       ? `${parameters.length} parameter${parameters.length !== 1 ? "s" : ""} detected from canvas nodes`
@@ -315,7 +315,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                 {parameters.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {parameters.map(p => (
-                      <span key={p.id} className="px-2 py-0.5 rounded text-[11px] font-mono" style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", color: "#F0FE00" }}>{`{{${p.id}}}`}</span>
+                      <span key={p.id} className="px-2 py-0.5 rounded text-[11px] font-mono" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "#F0FE00" }}>{`{{${p.id}}}`}</span>
                     ))}
                   </div>
                 )}
@@ -331,15 +331,15 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
 
               {parameters.length === 0 && (
                 <div className="py-8 flex flex-col items-center gap-3 text-center">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#252525", border: "1px solid #333" }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4V16M4 10H16" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4V16M4 10H16" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </div>
                   <p className="text-sm text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No parameters yet</p>
                 </div>
               )}
 
               {parameters.map((param, idx) => (
-                <div key={param.id} className="rounded-lg p-3 space-y-3" style={{ backgroundColor: "#252525", border: "1px solid #333333" }}>
+                <div key={param.id} className="rounded-lg p-3 space-y-3" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
                   <div className="flex items-center gap-2">
                     {/* Reorder */}
                     <div className="flex flex-col gap-0.5">
@@ -351,7 +351,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       </button>
                     </div>
                     {/* Placeholder badge */}
-                    <span className="font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", color: "#F0FE00" }}>{`{{${param.id}}}`}</span>
+                    <span className="font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "#F0FE00" }}>{`{{${param.id}}}`}</span>
                     <div className="flex-1" />
                     {/* Required toggle */}
                     <button
@@ -360,8 +360,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       className="text-[10px] px-2 py-0.5 rounded transition-colors"
                       style={{
                         backgroundColor: param.required ? "#F0FE0020" : "transparent",
-                        border: `1px solid ${param.required ? "#F0FE0050" : "#444"}`,
-                        color: param.required ? "#F0FE00" : "#666",
+                        border: `1px solid ${param.required ? "#F0FE0050" : "var(--app-text-faint)"}`,
+                        color: param.required ? "#F0FE00" : "var(--app-text-faint)",
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}
                     >
@@ -380,8 +380,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         type="text"
                         value={param.label}
                         onChange={e => updateParam(idx, { label: e.target.value })}
-                        className="w-full px-2.5 py-1.5 rounded text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", fontFamily: "system-ui, Inter, sans-serif" }}
+                        className="w-full px-2.5 py-1.5 rounded text-xs text-foreground placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       />
                     </div>
                     <div>
@@ -389,8 +389,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       <select
                         value={param.type}
                         onChange={e => updateParam(idx, { type: e.target.value as FrameworkParamType })}
-                        className="w-full px-2 py-1.5 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", fontFamily: "system-ui, Inter, sans-serif" }}
+                        className="w-full px-2 py-1.5 rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {(Object.keys(PARAM_TYPE_LABELS) as FrameworkParamType[]).map(t => (
                           <option key={t} value={t}>{PARAM_TYPE_LABELS[t]}</option>
@@ -407,8 +407,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         value={param.options?.join(", ") ?? ""}
                         onChange={e => updateParam(idx, { options: e.target.value.split(",").map(o => o.trim()).filter(Boolean) })}
                         placeholder="Option A, Option B, Option C"
-                        className="w-full px-2.5 py-1.5 rounded text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", fontFamily: "system-ui, Inter, sans-serif" }}
+                        className="w-full px-2.5 py-1.5 rounded text-xs text-foreground placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       />
                     </div>
                   )}
@@ -420,8 +420,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       value={param.placeholder ?? ""}
                       onChange={e => updateParam(idx, { placeholder: e.target.value })}
                       placeholder="e.g. Enter client name..."
-                      className="w-full px-2.5 py-1.5 rounded text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #444", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-2.5 py-1.5 rounded text-xs text-foreground placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                     />
                   </div>
                 </div>
@@ -430,8 +430,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
               <button
                 type="button"
                 onClick={handleAddParameter}
-                className="w-full py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#252525", border: "1px dashed #444", fontFamily: "system-ui, Inter, sans-serif" }}
+                className="w-full py-2 rounded-lg text-xs text-gray-400 hover:text-foreground transition-colors flex items-center justify-center gap-2"
+                style={{ backgroundColor: "var(--app-border-strong)", border: "1px dashed var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 Add Parameter
@@ -441,13 +441,13 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: "1px solid #333333" }}>
+        <div className="px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: "1px solid var(--app-canvas-dot)" }}>
           {step === 1 ? (
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
               Cancel
             </button>
           ) : (
-            <button type="button" onClick={() => setStep(1)} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            <button type="button" onClick={() => setStep(1)} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors flex items-center gap-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Back
             </button>
@@ -460,7 +460,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                 onClick={() => setStep(2)}
                 disabled={!name.trim()}
                 className="px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                style={{ backgroundColor: "#F0FE00", color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Next: Parameters
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2L10 7L5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -472,7 +472,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   onClick={() => handleSave(false)}
                   disabled={isSaving}
                   className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-                  style={{ backgroundColor: "#252525", border: "1px solid #444", color: "#ccc", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", color: "#ccc", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {isSaving ? "Saving..." : "Save as Draft"}
                 </button>
@@ -481,7 +481,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   onClick={() => handleSave(true)}
                   disabled={isSaving}
                   className="px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                  style={{ backgroundColor: "#F0FE00", color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {isSaving ? (
                     <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Publishing...</>

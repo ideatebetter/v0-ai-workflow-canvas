@@ -101,8 +101,8 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
       <DialogContent
         className="p-0 gap-0 overflow-hidden"
         style={{
-          backgroundColor: "#111111",
-          border: "1px solid #222222",
+          backgroundColor: "var(--app-bg-elevated)",
+          border: "1px solid var(--app-border)",
           borderRadius: "16px",
           maxWidth: "420px",
           width: "90vw",
@@ -111,7 +111,7 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
         <div className="p-6">
           {/* Header */}
           <h2
-            className="text-white font-semibold text-base mb-1"
+            className="text-foreground font-semibold text-base mb-1"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Invite to {settings.name}
@@ -133,8 +133,8 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
               placeholder="Email address"
               disabled={loading}
               autoFocus
-              className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+              className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
             />
 
             <div className="flex gap-2">
@@ -142,8 +142,8 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
                 value={role}
                 onChange={(e) => setRole(e.target.value as MemberRole)}
                 disabled={loading}
-                className="flex-1 px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none disabled:opacity-50"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                className="flex-1 px-3 py-2.5 rounded-lg text-sm text-foreground focus:outline-none disabled:opacity-50"
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <option value="viewer">Viewer — can view canvases</option>
                 <option value="editor">Editor — can edit canvases</option>
@@ -168,7 +168,7 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
               onClick={handleInvite}
               disabled={loading || !email.trim() || !user}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
-              style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               {loading ? "Sending…" : "Send Invite"}
             </button>
@@ -189,7 +189,7 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
                   value={inviteLink}
                   readOnly
                   className="flex-1 px-2 py-1.5 rounded-lg text-xs text-gray-300 focus:outline-none select-all"
-                  style={{ backgroundColor: "#0a0a0a", border: "1px solid #2a2a2a", fontFamily: "monospace" }}
+                  style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border-strong)", fontFamily: "monospace" }}
                 />
                 <button
                   type="button"

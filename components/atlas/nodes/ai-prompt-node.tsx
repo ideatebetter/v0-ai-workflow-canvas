@@ -180,8 +180,8 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: "1px solid #333",
+        backgroundColor: "var(--app-card-elevated)",
+        border: "1px solid var(--app-canvas-dot)",
         width: 380,
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
       }}
@@ -191,7 +191,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
       {/* Header Toolbar */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: "1px solid #333" }}
+        style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}
       >
         <div className="flex items-center gap-2">
           {/* Aspect Ratio Selector */}
@@ -202,7 +202,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
                 setShowVariationsDropdown(false);
               }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
-              style={{ backgroundColor: "#2a2a2a", color: "#fff" }}
+              style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-primary)" }}
             >
               <span>{aspectRatio}</span>
               <ChevronDown className="w-3 h-3 opacity-60" />
@@ -211,14 +211,14 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
             {showRatioDropdown && (
               <div
                 className="absolute top-full left-0 mt-1 py-1 rounded-lg z-50"
-                style={{ backgroundColor: "#2a2a2a", border: "1px solid #444", minWidth: 80 }}
+                style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", minWidth: 80 }}
               >
                 {ASPECT_RATIOS.map((ratio) => (
                   <button
                     key={ratio.value}
                     onClick={() => { setAspectRatio(ratio.value); setShowRatioDropdown(false); }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/10 transition-colors"
-                    style={{ color: ratio.value === aspectRatio ? "#F0FE00" : "#fff" }}
+                    style={{ color: ratio.value === aspectRatio ? "#F0FE00" : "var(--app-text-primary)" }}
                   >
                     {ratio.label}
                   </button>
@@ -235,7 +235,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
                 setShowRatioDropdown(false);
               }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
-              style={{ backgroundColor: "#2a2a2a", color: "#fff" }}
+              style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-primary)" }}
             >
               <Image className="w-3.5 h-3.5" />
               <span>{variations}</span>
@@ -245,14 +245,14 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
             {showVariationsDropdown && (
               <div
                 className="absolute top-full left-0 mt-1 py-1 rounded-lg z-50"
-                style={{ backgroundColor: "#2a2a2a", border: "1px solid #444", minWidth: 100 }}
+                style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", minWidth: 100 }}
               >
                 {VARIATION_OPTIONS.map((num) => (
                   <button
                     key={num}
                     onClick={() => { setVariations(num); setShowVariationsDropdown(false); }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/10 transition-colors"
-                    style={{ color: num === variations ? "#F0FE00" : "#fff" }}
+                    style={{ color: num === variations ? "#F0FE00" : "var(--app-text-primary)" }}
                   >
                     {num} {num === 1 ? "image" : "images"}
                   </button>
@@ -270,7 +270,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
             }));
           }}
           className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-          style={{ color: "#888" }}
+          style={{ color: "var(--app-text-muted)" }}
         >
           <X className="w-4 h-4" />
         </button>
@@ -279,14 +279,14 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
       {/* Label */}
       <div
         className="flex items-center gap-2 px-3 py-2"
-        style={{ borderBottom: "1px solid #2a2a2a" }}
+        style={{ borderBottom: "1px solid var(--app-border-strong)" }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-muted)" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <circle cx="8.5" cy="8.5" r="1.5" />
           <polyline points="21 15 16 10 5 21" />
         </svg>
-        <span className="text-sm" style={{ color: "#888" }}>
+        <span className="text-sm" style={{ color: "var(--app-text-muted)" }}>
           {isGenerating ? "Generating…" : isEnhancing ? "Sage is enhancing…" : `Generate from ${nodeData.sourceFileName}`}
         </span>
         {(isGenerating || isEnhancing) && (
@@ -304,7 +304,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           className="w-full resize-none text-sm focus:outline-none"
           style={{
             backgroundColor: "transparent",
-            color: "#fff",
+            color: "var(--app-text-primary)",
             minHeight: 120,
             fontFamily: "system-ui, Inter, sans-serif",
           }}
@@ -321,16 +321,16 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
       {/* Bottom Bar */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderTop: "1px solid #2a2a2a" }}
+        style={{ borderTop: "1px solid var(--app-border-strong)" }}
       >
         {/* Source thumbnail */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded overflow-hidden" style={{ backgroundColor: "#2a2a2a" }}>
+          <div className="w-8 h-8 rounded overflow-hidden" style={{ backgroundColor: "var(--app-border-strong)" }}>
             {nodeData.sourceImageUrl && (
               <img src={nodeData.sourceImageUrl} alt="Source" className="w-full h-full object-cover" />
             )}
           </div>
-          <span className="text-xs" style={{ color: "#666" }}>
+          <span className="text-xs" style={{ color: "var(--app-text-faint)" }}>
             {nodeData.sourceFileName}
           </span>
         </div>
@@ -343,9 +343,9 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           title="Enhance with Sage"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
           style={{
-            backgroundColor: enhanced ? "#F0FE00" : "#2a2a2a",
-            color: enhanced ? "#121212" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE00" : "#555",
-            border: `1px solid ${enhanced ? "#F0FE00" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE0044" : "#333"}`,
+            backgroundColor: enhanced ? "#F0FE00" : "var(--app-border-strong)",
+            color: enhanced ? "var(--app-bg-elevated)" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE00" : "var(--app-text-faint)",
+            border: `1px solid ${enhanced ? "#F0FE00" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE0044" : "var(--app-canvas-dot)"}`,
             cursor: prompt.trim() && !isEnhancing && !isGenerating ? "pointer" : "not-allowed",
           }}
         >
@@ -364,8 +364,8 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           disabled={!prompt.trim() || isGenerating || isEnhancing}
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
           style={{
-            backgroundColor: prompt.trim() && !isGenerating && !isEnhancing ? "#fff" : "#333",
-            color: prompt.trim() && !isGenerating && !isEnhancing ? "#000" : "#666",
+            backgroundColor: prompt.trim() && !isGenerating && !isEnhancing ? "var(--app-text-primary)" : "var(--app-canvas-dot)",
+            color: prompt.trim() && !isGenerating && !isEnhancing ? "#000" : "var(--app-text-faint)",
             cursor: prompt.trim() && !isGenerating && !isEnhancing ? "pointer" : "not-allowed",
           }}
         >

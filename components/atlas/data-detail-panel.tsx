@@ -85,15 +85,15 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
   const utilColor = avgUtil > 90 ? RED : avgUtil > 80 ? AMBER : GREEN;
   const statusColor = criticals.length > 0 ? RED : warnings.length > 0 ? AMBER : GREEN;
 
-  const CARD = { backgroundColor: "#1a1a1a", border: "1px solid #222" } as const;
-  const SEC_HEAD = { borderBottom: "1px solid #222" } as const;
+  const CARD = { backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" } as const;
+  const SEC_HEAD = { borderBottom: "1px solid var(--app-border)" } as const;
 
   return (
     <div className="flex flex-col gap-3 h-full">
 
       {/* ── Hero row ── */}
       <div className="rounded-xl overflow-hidden flex-shrink-0" style={CARD}>
-        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
             <span className="text-[10px] font-medium" style={{ color: statusColor }}>
@@ -102,12 +102,12 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
           </div>
           <span className="text-[9px] text-gray-600">{members.length} team members</span>
         </div>
-        <div className="grid grid-cols-4 divide-x divide-[#222]">
+        <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
           {[
             { label: "Avg Util",   value: `${avgUtil}%`,       color: utilColor },
-            { label: "Billable",   value: `${totalBill}h`,     color: "text-white" },
-            { label: "Available",  value: `${totalAvail}h`,    color: "text-white" },
-            { label: "Bench",      value: `${totalBench}h`,    color: totalBench > 0 ? GREEN : "#666" },
+            { label: "Billable",   value: `${totalBill}h`,     color: "text-foreground" },
+            { label: "Available",  value: `${totalAvail}h`,    color: "text-foreground" },
+            { label: "Bench",      value: `${totalBench}h`,    color: totalBench > 0 ? GREEN : "var(--app-text-faint)" },
           ].map(({ label, value, color }) => (
             <div key={label} className="px-3 py-3">
               <div className="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">{label}</div>
@@ -131,12 +131,12 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
             {members.map((tm, i) => {
               const col = tm.utilizationRate > 90 ? RED : tm.utilizationRate > 80 ? AMBER : GREEN;
               const riskBg = tm.overloadRisk === "critical" ? `${RED}12` : tm.overloadRisk === "warning" ? `${AMBER}10` : "transparent";
-              const riskBorder = tm.overloadRisk === "critical" ? `${RED}25` : tm.overloadRisk === "warning" ? `${AMBER}20` : "#222";
+              const riskBorder = tm.overloadRisk === "critical" ? `${RED}25` : tm.overloadRisk === "warning" ? `${AMBER}20` : "var(--app-border)";
               const over = tm.currentAllocation > tm.plannedAllocation;
 
               return (
                 <div key={i} className="rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-1"
-                  style={{ backgroundColor: "#111", border: `1px solid ${riskBorder}`, "--tw-ring-color": "#F0FE0040" } as React.CSSProperties}
+                  style={{ backgroundColor: "var(--app-bg-elevated)", border: `1px solid ${riskBorder}`, "--tw-ring-color": "#F0FE0040" } as React.CSSProperties}
                   onClick={() => setCalendarMember(tm)}
                   title="Click to open calendar view">
                   {/* Calendar hint */}
@@ -150,11 +150,11 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
                   </div>
                   <div className="flex items-center gap-2.5 px-3 py-2.5" style={{ backgroundColor: riskBg }}>
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                      style={{ backgroundColor: tm.member?.color || "#525252", color: "#fff" }}>
+                      style={{ backgroundColor: tm.member?.color || "#525252", color: "var(--app-text-primary)" }}>
                       {tm.member?.name?.charAt(0) || "?"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white font-medium truncate">{tm.member?.name || "Team Member"}</div>
+                      <div className="text-sm text-foreground font-medium truncate">{tm.member?.name || "Team Member"}</div>
                       <div className="flex gap-1 mt-0.5 flex-wrap">
                         {(tm.skills ?? []).map(s => (
                           <span key={s} className="text-[8px] px-1 py-0.5 rounded" style={{ backgroundColor: `${BLUE}14`, color: BLUE }}>{s}</span>
@@ -167,7 +167,7 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
                     </div>
                   </div>
                   <div className="px-3 pt-2">
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff0a" }}>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)0a" }}>
                       <div className="h-full rounded-full" style={{ width: `${Math.min(tm.utilizationRate, 100)}%`, backgroundColor: col }} />
                     </div>
                   </div>
@@ -178,17 +178,17 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
                     </div>
                     <div>
                       <div className="text-[8px] text-gray-600 uppercase tracking-wide">Planned</div>
-                      <div className="text-[11px] text-white">{tm.plannedAllocation}%</div>
+                      <div className="text-[11px] text-foreground">{tm.plannedAllocation}%</div>
                     </div>
                     <div>
                       <div className="text-[8px] text-gray-600 uppercase tracking-wide">Bench</div>
-                      <div className="text-[11px]" style={{ color: tm.benchTime > 0 ? GREEN : "#555" }}>{tm.benchTime}h</div>
+                      <div className="text-[11px]" style={{ color: tm.benchTime > 0 ? GREEN : "var(--app-text-faint)" }}>{tm.benchTime}h</div>
                     </div>
                   </div>
                   {(tm.projectAllocations?.length ?? 0) > 0 && (
-                    <div className="px-3 pb-2.5" style={{ borderTop: "1px solid #1e1e1e" }}>
+                    <div className="px-3 pb-2.5" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
                       <div className="text-[8px] text-gray-600 uppercase tracking-wide mt-2 mb-1.5">Project Allocation</div>
-                      <div className="flex h-1.5 rounded-full overflow-hidden gap-px mb-2" style={{ backgroundColor: "#ffffff06" }}>
+                      <div className="flex h-1.5 rounded-full overflow-hidden gap-px mb-2" style={{ backgroundColor: "var(--app-text-primary)06" }}>
                         {tm.projectAllocations.map((p, pi) => (
                           <div key={pi} className="h-full" style={{ width: `${p.allocationPct}%`, backgroundColor: p.color }} />
                         ))}
@@ -235,12 +235,12 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
             <div className="p-3 space-y-2">
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { label: "Overloaded",   value: criticals.length, color: criticals.length > 0 ? RED : "#555"  },
-                  { label: "At Risk",       value: warnings.length,  color: warnings.length > 0 ? AMBER : "#555" },
-                  { label: "Bench Hours",   value: `${totalBench}h`, color: totalBench > 0 ? GREEN : "#555"      },
+                  { label: "Overloaded",   value: criticals.length, color: criticals.length > 0 ? RED : "var(--app-text-faint)"  },
+                  { label: "At Risk",       value: warnings.length,  color: warnings.length > 0 ? AMBER : "var(--app-text-faint)" },
+                  { label: "Bench Hours",   value: `${totalBench}h`, color: totalBench > 0 ? GREEN : "var(--app-text-faint)"      },
                   { label: "Avg Util",      value: `${avgUtil}%`,    color: utilColor                            },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "#111" }}>
+                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                     <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                     <div className="text-sm font-bold" style={{ color }}>{value}</div>
                   </div>
@@ -326,15 +326,15 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
   const weeklyBurn = [28, 42, 38, 51, 44, 39, 34];
   const maxBurn    = Math.max(...weeklyBurn);
 
-  const CARD = { backgroundColor: "#1a1a1a", border: "1px solid #222" } as const;
-  const SEC_HEAD = { borderBottom: "1px solid #222" } as const;
+  const CARD = { backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" } as const;
+  const SEC_HEAD = { borderBottom: "1px solid var(--app-border)" } as const;
 
   return (
     <div className="flex flex-col gap-3 h-full">
 
       {/* ── Hero row ────────────────────────────────────────────────────────── */}
       <div className="rounded-xl overflow-hidden flex-shrink-0" style={CARD}>
-        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
             <span className="text-[10px] font-medium capitalize" style={{ color: statusColor }}>{data.status?.replace("-", " ")}</span>
@@ -346,10 +346,10 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
             <span className="text-[9px] text-gray-600">{data.viewRole === "owner" ? "Owner view" : "Manager view"}</span>
           </div>
         </div>
-        <div className="grid grid-cols-4 divide-x divide-[#222]">
+        <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
           {[
-            { label: "Revenue",      value: fmt(revenue), sub: data.billingType === "flat_fee" ? "contracted" : "hrs × bill rate", color: "text-white" },
-            { label: "Cost to Date", value: fmt(cost),    sub: "hrs × cost rate",   color: "text-white" },
+            { label: "Revenue",      value: fmt(revenue), sub: data.billingType === "flat_fee" ? "contracted" : "hrs × bill rate", color: "text-foreground" },
+            { label: "Cost to Date", value: fmt(cost),    sub: "hrs × cost rate",   color: "text-foreground" },
             { label: "Gross Margin", value: fmt(margin$), sub: `${grossPct}%`,       color: marginColor },
             { label: "Projected",    value: `${projPct}%`, sub: "at completion",    color: projPct >= grossPct ? GREEN : AMBER },
           ].map(({ label, value, sub, color }) => (
@@ -358,7 +358,7 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
               <div className="text-base font-bold" style={typeof color === "string" && color.startsWith("#") ? { color } : undefined}>
                 <span className={typeof color === "string" && !color.startsWith("#") ? color : ""}>{value}</span>
               </div>
-              <div className="text-[9px] mt-0.5" style={{ color: typeof color === "string" && color.startsWith("#") ? color : "#555" }}>{sub}</div>
+              <div className="text-[9px] mt-0.5" style={{ color: typeof color === "string" && color.startsWith("#") ? color : "var(--app-text-faint)" }}>{sub}</div>
             </div>
           ))}
         </div>
@@ -379,24 +379,24 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
                 <span className="text-gray-400">Gross margin to date</span>
                 <span className="font-semibold" style={{ color: marginColor }}>{grossPct}%</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.min(grossPct, 100)}%`, backgroundColor: marginColor }} />
               </div>
               <div className="flex justify-between text-[10px]">
                 <span className="text-gray-500">Projected at completion</span>
                 <span style={{ color: projPct >= grossPct ? GREEN : AMBER }}>{projPct}%</span>
               </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff08" }}>
+              <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)08" }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.min(projPct, 100)}%`, backgroundColor: projPct >= grossPct ? GREEN : AMBER, opacity: 0.55 }} />
               </div>
             </div>
             {/* Hours */}
-            <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid #222" }}>
+            <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid var(--app-border)" }}>
               <div className="flex justify-between text-[10px]">
                 <span className="text-gray-400">Hours consumed</span>
                 <span style={{ color: hoursColor }}>{hoursLog} / {hoursEst}h &nbsp;{hoursPct}%</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.min(hoursPct, 100)}%`, backgroundColor: hoursColor }} />
               </div>
               <div className="flex justify-between text-[9px] text-gray-600">
@@ -405,7 +405,7 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
               </div>
             </div>
             {/* Weekly burn */}
-            <div className="pt-2" style={{ borderTop: "1px solid #222" }}>
+            <div className="pt-2" style={{ borderTop: "1px solid var(--app-border)" }}>
               <div className="text-[9px] text-gray-500 uppercase tracking-wide mb-2">Weekly Hours Burn</div>
               <div className="flex items-end gap-1 h-10">
                 {weeklyBurn.map((h, i) => (
@@ -438,11 +438,11 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
             <div className="p-2.5 space-y-2">
               <div className="grid grid-cols-3 gap-1.5">
                 {[
-                  { label: "Bill Rate", value: `$${data.effectiveBillRate ?? 0}/hr`, color: "text-white" },
-                  { label: "Cost Rate", value: `$${data.effectiveCostRate ?? 0}/hr`, color: "text-white" },
+                  { label: "Bill Rate", value: `$${data.effectiveBillRate ?? 0}/hr`, color: "text-foreground" },
+                  { label: "Cost Rate", value: `$${data.effectiveCostRate ?? 0}/hr`, color: "text-foreground" },
                   { label: "Ratio",     value: `${ratio.toFixed(2)}×`,              color: ratioColor },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="rounded-lg p-1.5 text-center" style={{ backgroundColor: "#111" }}>
+                  <div key={label} className="rounded-lg p-1.5 text-center" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                     <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                     <div className="text-sm font-bold" style={color.startsWith("#") ? { color } : undefined}>
                       <span className={!color.startsWith("#") ? color : ""}>{value}</span>
@@ -456,27 +456,27 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
               </div>
               {/* Team table */}
               {(data.teamBreakdown?.length ?? 0) > 0 && (
-                <div className="rounded-lg overflow-hidden" style={{ border: "1px solid #222" }}>
-                  <div className="grid grid-cols-5 px-2.5 py-1" style={{ backgroundColor: "#0d0d0d" }}>
+                <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--app-border)" }}>
+                  <div className="grid grid-cols-5 px-2.5 py-1" style={{ backgroundColor: "var(--app-bg)" }}>
                     {["", "Role", "Hrs", "Bill", "Cost"].map(h => (
                       <span key={h} className="text-[8px] font-semibold text-gray-600 uppercase tracking-wide">{h}</span>
                     ))}
                   </div>
                   {data.teamBreakdown!.map((m, i) => (
-                    <div key={i} className="grid grid-cols-5 px-2.5 py-0.5 items-center" style={{ borderTop: "1px solid #1a1a1a", backgroundColor: "#141414" }}>
+                    <div key={i} className="grid grid-cols-5 px-2.5 py-0.5 items-center" style={{ borderTop: "1px solid var(--app-card-elevated)", backgroundColor: "var(--app-card)" }}>
                       <div className="flex items-center gap-1">
                         <div className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-semibold flex-shrink-0" style={{ backgroundColor: "#10b98118", color: "#10b981" }}>{m.initials}</div>
                       </div>
                       <span className="text-[9px] text-gray-500 truncate">{m.role}</span>
                       <span className="text-[9px] text-gray-400">{m.hoursLogged}h</span>
-                      <span className="text-[9px] text-white">${m.billRate}</span>
+                      <span className="text-[9px] text-foreground">${m.billRate}</span>
                       <span className="text-[9px]" style={{ color: m.billRate / m.costRate >= 1.3 ? GREEN : m.billRate / m.costRate >= 1.0 ? AMBER : RED }}>${m.costRate}</span>
                     </div>
                   ))}
-                  <div className="grid grid-cols-5 px-2.5 py-0.5 items-center" style={{ borderTop: "1px solid #222", backgroundColor: "#0d0d0d" }}>
+                  <div className="grid grid-cols-5 px-2.5 py-0.5 items-center" style={{ borderTop: "1px solid var(--app-border)", backgroundColor: "var(--app-bg)" }}>
                     <span className="text-[8px] font-semibold text-gray-400 col-span-2">Blended</span>
                     <span className="text-[9px] text-gray-500">{hoursLog}h</span>
-                    <span className="text-[9px] font-semibold text-white">${data.effectiveBillRate}</span>
+                    <span className="text-[9px] font-semibold text-foreground">${data.effectiveBillRate}</span>
                     <span className="text-[9px] font-semibold" style={{ color: ratioColor }}>${data.effectiveCostRate}</span>
                   </div>
                 </div>
@@ -495,14 +495,14 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
                   { label: "Scope Variance",    value: scopeV, sub: "hours vs. estimate" },
                   { label: "Staffing Variance",  value: staffV, sub: "seniority vs. plan"  },
                 ].map(({ label, value, sub }) => (
-                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "#111" }}>
+                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                     <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                     <div className="text-sm font-bold" style={{ color: vc(value) }}>{value >= 0 ? "+" : ""}{fmt(value)}</div>
                     <div className="text-[8px] text-gray-600 mt-0.5">{sub}</div>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ backgroundColor: "#111", border: `1px solid ${vc(totalV)}20` }}>
+              <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ backgroundColor: "var(--app-bg-elevated)", border: `1px solid ${vc(totalV)}20` }}>
                 <span className="text-[10px] text-gray-400">Total variance</span>
                 <span className="text-base font-bold" style={{ color: vc(totalV) }}>{totalV >= 0 ? "+" : ""}{fmt(totalV)}</span>
               </div>
@@ -510,7 +510,7 @@ function FinancialViz({ data, nodeId }: { data: FinancialNodeData; nodeId: strin
               {[{ label: "Scope", v: scopeV }, { label: "Staffing", v: staffV }].map(({ label, v }) => (
                 <div key={label} className="flex items-center gap-2">
                   <span className="text-[9px] text-gray-600 w-10 flex-shrink-0">{label}</span>
-                  <div className="flex-1 h-1.5 rounded overflow-hidden" style={{ backgroundColor: "#ffffff06" }}>
+                  <div className="flex-1 h-1.5 rounded overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)06" }}>
                     <div className="h-full rounded" style={{ width: `${Math.round((Math.abs(v) / ((Math.abs(scopeV) + Math.abs(staffV)) || 1)) * 100)}%`, backgroundColor: vc(v), opacity: 0.65 }} />
                   </div>
                   <span className="text-[9px] w-12 text-right flex-shrink-0" style={{ color: vc(v) }}>{v >= 0 ? "+" : ""}{fmt(v)}</span>
@@ -573,8 +573,8 @@ function SageAlignmentCard({
     .join("");
 
   return (
-    <div className="rounded-xl overflow-hidden flex flex-col flex-1" style={{ backgroundColor: "#1a1a1a", border: "1px solid #222" }}>
-      <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: "1px solid #222" }}>
+    <div className="rounded-xl overflow-hidden flex flex-col flex-1" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" }}>
+      <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
         <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-500">Alignment Overview</span>
         <div className="flex items-center gap-1">
           <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F0FE00" }}>
@@ -603,8 +603,8 @@ function SageAlignmentCard({
 
 function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeId: string }) {
   const GREEN = "#22c55e", AMBER = "#f59e0b", RED = "#ef4444", PURPLE = "#8b5cf6";
-  const CARD = { backgroundColor: "#1a1a1a", border: "1px solid #222" } as const;
-  const SEC_HEAD = { borderBottom: "1px solid #222" } as const;
+  const CARD = { backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" } as const;
+  const SEC_HEAD = { borderBottom: "1px solid var(--app-border)" } as const;
 
   const PHASE_ORDER = ["discovery", "concepting", "production", "delivery"];
   const phaseIdx = PHASE_ORDER.indexOf(data.projectPhase ?? "");
@@ -642,7 +642,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
       <div className="space-y-3">
         {/* Summary hero */}
         <div className="rounded-xl overflow-hidden" style={CARD}>
-          <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+          <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ovColor }} />
               <span className="text-[10px] font-medium" style={{ color: ovColor }}>
@@ -651,11 +651,11 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
             </div>
             <span className="text-[9px] text-gray-600">{data.viewRole === "owner" ? "Owner view" : "Manager view"}</span>
           </div>
-          <div className="grid grid-cols-4 divide-x divide-[#222]">
+          <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
             {[
               { label: "Projects",         value: `${onTrack}/${pp.length}`, sub: "on track",    color: ovColor },
-              { label: "Open Feedback",    value: `${totalFB}`,              sub: "cycles",       color: totalFB > 8 ? AMBER : "text-white" },
-              { label: "Total Revisions",  value: `${totalRev}`,             sub: "this cycle",   color: "text-white" },
+              { label: "Open Feedback",    value: `${totalFB}`,              sub: "cycles",       color: totalFB > 8 ? AMBER : "text-foreground" },
+              { label: "Total Revisions",  value: `${totalRev}`,             sub: "this cycle",   color: "text-foreground" },
               { label: "Stalest Touch",    value: `${stalest}d`,             sub: "ago",          color: stalest > 7 ? AMBER : GREEN },
             ].map(({ label, value, sub, color }) => (
               <div key={label} className="px-3 py-3">
@@ -674,10 +674,10 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
           {pp.map(p => {
             const hc = p.health === "on-track" ? GREEN : p.health === "needs-attention" ? AMBER : RED;
             return (
-              <div key={p.name} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "#1a1a1a", border: `1px solid ${hc}20` }}>
+              <div key={p.name} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ backgroundColor: "var(--app-card-elevated)", border: `1px solid ${hc}20` }}>
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-white truncate">{p.name}</div>
+                  <div className="text-xs font-medium text-foreground truncate">{p.name}</div>
                   <div className="text-[9px] text-gray-500 capitalize">{p.phase}</div>
                 </div>
                 <div className="text-[9px] text-gray-500">{p.daysSince}d ago</div>
@@ -705,14 +705,14 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
 
       {/* ── Hero row ── */}
       <div className="rounded-xl overflow-hidden flex-shrink-0" style={CARD}>
-        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
             <span className="text-[10px] font-medium capitalize" style={{ color: statusColor }}>{(data.healthStatus ?? "on-track").replace(/-/g, " ")}</span>
           </div>
           <span className="text-[9px] text-gray-600 capitalize">{data.viewRole === "owner" ? "Owner view" : "Manager view"}</span>
         </div>
-        <div className="grid grid-cols-4 divide-x divide-[#222]">
+        <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
           {[
             { label: "Status",       value: (data.healthStatus ?? "on-track").replace(/-/g, " "), sub: "overall health",         color: statusColor   },
             { label: "Touchpoint",   value: `${data.daysSinceClientTouchpoint}d`,                 sub: "since last contact",     color: touchColor    },
@@ -722,17 +722,17 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
             <div key={label} className="px-3 py-3">
               <div className="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">{label}</div>
               <div className="text-base font-bold capitalize" style={{ color }}>{value}</div>
-              <div className="text-[9px] mt-0.5" style={{ color: "#555" }}>{sub}</div>
+              <div className="text-[9px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>{sub}</div>
             </div>
           ))}
         </div>
         {/* Phase progress */}
-        <div className="px-4 pb-3 pt-2" style={{ borderTop: "1px solid #1e1e1e" }}>
+        <div className="px-4 pb-3 pt-2" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
           <div className="flex gap-1.5">
             {PHASE_ORDER.map((p, i) => (
               <div key={p} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full h-1 rounded-full" style={{ backgroundColor: i <= phaseIdx ? PURPLE : "#ffffff0a" }} />
-                <span className="text-[8px] capitalize" style={{ color: i === phaseIdx ? PURPLE : "#555" }}>{p}</span>
+                <div className="w-full h-1 rounded-full" style={{ backgroundColor: i <= phaseIdx ? PURPLE : "var(--app-text-primary)0a" }} />
+                <span className="text-[8px] capitalize" style={{ color: i === phaseIdx ? PURPLE : "var(--app-text-faint)" }}>{p}</span>
               </div>
             ))}
           </div>
@@ -755,7 +755,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
                 <span className="text-gray-400">Client touchpoint</span>
                 <span className="font-semibold" style={{ color: touchColor }}>{data.daysSinceClientTouchpoint}d ago</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff08" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)08" }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.min((data.daysSinceClientTouchpoint / 21) * 100, 100)}%`, backgroundColor: touchColor }} />
               </div>
               <div className="flex justify-between text-[8px]">
@@ -764,7 +764,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
                 ))}
               </div>
               {(data.touchpointLog?.length ?? 0) > 0 && (
-                <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid #1e1e1e" }}>
+                <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
                   {data.touchpointLog!.map((tp, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <span className="text-[7px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
@@ -785,7 +785,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
             </div>
 
             {/* Feedback cycles */}
-            <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid #222" }}>
+            <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid var(--app-border)" }}>
               <div className="flex items-center justify-between text-[10px]">
                 <span className="text-gray-400">Open feedback cycles</span>
                 <div className="flex items-center gap-1.5">
@@ -800,9 +800,9 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
               {(data.feedbackCycles?.length ?? 0) > 0 ? (
                 <div className="space-y-1">
                   {data.feedbackCycles!.map((fc) => (
-                    <div key={fc.id} className="flex items-center justify-between px-2.5 py-2 rounded-lg" style={{ backgroundColor: "#111" }}>
+                    <div key={fc.id} className="flex items-center justify-between px-2.5 py-2 rounded-lg" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-medium text-white truncate">{fc.nodeLabel}</div>
+                        <div className="text-[10px] font-medium text-foreground truncate">{fc.nodeLabel}</div>
                         <div className="text-[8px] text-gray-600">Open {fc.daysOpen}d · {fc.lastClientAction}</div>
                       </div>
                       <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded capitalize flex-shrink-0 ml-2"
@@ -835,7 +835,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
                   <span className="text-base font-bold" style={{ color: revColor }}>{data.revisionCount}</span>
                 </div>
               </div>
-              <div className="relative h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff08" }}>
+              <div className="relative h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)08" }}>
                 <div className="absolute inset-y-0 left-0 rounded-full" style={{
                   width: `${Math.min((data.revisionCount / Math.max(revMax + 2, data.revisionCount + 1)) * 100, 100)}%`,
                   backgroundColor: revColor,
@@ -896,26 +896,26 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
   const totalHours    = forecasts.reduce((a, f) => a + f.items.reduce((s, p) => s + p.estimatedHours, 0), 0);
   const highProb      = forecasts.flatMap(f => f.items).filter(p => p.probability >= 70).length;
 
-  const CARD     = { backgroundColor: "#1a1a1a", border: "1px solid #222" } as const;
-  const SEC_HEAD = { borderBottom: "1px solid #222" } as const;
+  const CARD     = { backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" } as const;
+  const SEC_HEAD = { borderBottom: "1px solid var(--app-border)" } as const;
 
   return (
     <div className="flex flex-col gap-3 h-full">
 
       {/* ── Hero row ── */}
       <div className="rounded-xl overflow-hidden flex-shrink-0" style={CARD}>
-        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: capColor }} />
             <span className="text-[10px] font-medium capitalize" style={{ color: capColor }}>{data.capacityStatus}</span>
           </div>
           <span className="text-[9px] text-gray-600">{totalProjects} projects in pipeline</span>
         </div>
-        <div className="grid grid-cols-4 divide-x divide-[#222]">
+        <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
           {[
             { label: "Capacity Load",  value: `${loadPct}%`,           sub: "of available",    color: capColor },
-            { label: "Load Hours",     value: `${data.projectedLoad}h`, sub: "projected",       color: "text-white" },
-            { label: "Capacity",       value: `${data.currentCapacity}h`, sub: "available",     color: "text-white" },
+            { label: "Load Hours",     value: `${data.projectedLoad}h`, sub: "projected",       color: "text-foreground" },
+            { label: "Capacity",       value: `${data.currentCapacity}h`, sub: "available",     color: "text-foreground" },
             { label: "High Prob",      value: `${highProb}`,            sub: "≥70% projects",   color: GREEN },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="px-3 py-3">
@@ -923,13 +923,13 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
               <div className="text-base font-bold" style={color.startsWith("#") ? { color } : undefined}>
                 <span className={!color.startsWith("#") ? color : ""}>{value}</span>
               </div>
-              <div className="text-[9px] mt-0.5" style={{ color: "#555" }}>{sub}</div>
+              <div className="text-[9px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>{sub}</div>
             </div>
           ))}
         </div>
         {/* Load bar */}
-        <div className="px-4 pb-3 pt-2" style={{ borderTop: "1px solid #1e1e1e" }}>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff08" }}>
+        <div className="px-4 pb-3 pt-2" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)08" }}>
             <div className="h-full rounded-full" style={{ width: `${Math.min(loadPct, 100)}%`, backgroundColor: capColor }} />
           </div>
           <div className="flex justify-between text-[9px] text-gray-600 mt-1">
@@ -950,13 +950,13 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
           <div className="overflow-y-auto flex flex-col gap-2 p-3">
             {forecasts.map(({ label, items, color }) => items.length > 0 && (
               <div key={label} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${color}20` }}>
-                <div className="px-3 py-2 flex justify-between" style={{ backgroundColor: "#111", borderBottom: `1px solid ${color}18` }}>
+                <div className="px-3 py-2 flex justify-between" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: `1px solid ${color}18` }}>
                   <span className="text-[10px] font-semibold" style={{ color }}>{label}</span>
                   <span className="text-[9px] text-gray-500">{items.length} projects · {items.reduce((a, p) => a + p.estimatedHours, 0)}h</span>
                 </div>
-                <div style={{ backgroundColor: "#0d0d0d" }}>
+                <div style={{ backgroundColor: "var(--app-bg)" }}>
                   {items.map((p, i) => (
-                    <div key={i} className="px-3 py-2 flex items-center justify-between" style={{ borderTop: i > 0 ? "1px solid #1a1a1a" : "none" }}>
+                    <div key={i} className="px-3 py-2 flex items-center justify-between" style={{ borderTop: i > 0 ? "1px solid var(--app-card-elevated)" : "none" }}>
                       <span className="text-[10px] text-gray-300 truncate max-w-[120px]">{p.projectName}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="text-[9px] text-gray-600">{p.estimatedHours}h</span>
@@ -984,12 +984,12 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
             <div className="p-3 space-y-2">
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { label: "Total Projects", value: totalProjects,    color: "text-white"  },
-                  { label: "Total Hours",    value: `${totalHours}h`, color: "text-white"  },
+                  { label: "Total Projects", value: totalProjects,    color: "text-foreground"  },
+                  { label: "Total Hours",    value: `${totalHours}h`, color: "text-foreground"  },
                   { label: "High Prob",      value: highProb,         color: GREEN         },
                   { label: "Load %",         value: `${loadPct}%`,    color: capColor      },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "#111" }}>
+                  <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                     <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                     <div className="text-sm font-bold" style={color.startsWith("#") ? { color } : undefined}>
                       <span className={!color.startsWith("#") ? color : ""}>{value}</span>
@@ -1019,9 +1019,9 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
                 {data.competingProjects.map((cp, i) => {
                   const impactColor = cp.impactLevel === "high" ? RED : cp.impactLevel === "medium" ? AMBER : BLUE;
                   return (
-                    <div key={i} className="rounded-lg p-2.5" style={{ backgroundColor: "#111", border: `1px solid ${impactColor}18` }}>
+                    <div key={i} className="rounded-lg p-2.5" style={{ backgroundColor: "var(--app-bg-elevated)", border: `1px solid ${impactColor}18` }}>
                       <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <span className="text-[10px] text-white font-medium leading-tight">{cp.projectName}</span>
+                        <span className="text-[10px] text-foreground font-medium leading-tight">{cp.projectName}</span>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <span className="text-[8px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide" style={{ backgroundColor: `${impactColor}20`, color: impactColor }}>
                             {cp.impactLevel}
@@ -1031,7 +1031,7 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {cp.teamOverlap.map(name => (
-                          <span key={name} className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#1e1e1e", color: "#888", border: "1px solid #2a2a2a" }}>
+                          <span key={name} className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--app-card-elevated)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-strong)" }}>
                             {name}
                           </span>
                         ))}
@@ -1082,22 +1082,22 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
   const blockColor   = blockers === 0 ? GREEN : blockers <= 2 ? AMBER : RED;
 
 
-  const CARD     = { backgroundColor: "#1a1a1a", border: "1px solid #222" } as const;
-  const SEC_HEAD = { borderBottom: "1px solid #222" } as const;
+  const CARD     = { backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" } as const;
+  const SEC_HEAD = { borderBottom: "1px solid var(--app-border)" } as const;
 
   return (
     <div className="flex flex-col gap-3 h-full">
 
       {/* ── Hero row ── */}
       <div className="rounded-xl overflow-hidden flex-shrink-0" style={CARD}>
-        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "#111", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: "var(--app-bg-elevated)", borderBottom: "1px solid var(--app-border)" }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: trendColor }} />
             <span className="text-[10px] font-medium" style={{ color: trendColor }}>{trendLabel}</span>
           </div>
           <span className="text-[9px] text-gray-600">Updated {data.lastUpdated}</span>
         </div>
-        <div className="grid grid-cols-4 divide-x divide-[#222]">
+        <div className="grid grid-cols-4 divide-x divide-[var(--app-border)]">
           {[
             { label: "Trend",          value: `${trendIcon} ${trendLabel}`, sub: "overall direction",   color: trendColor },
             { label: "Feedback Loop",  value: `${data.feedbackLoopVelocity}h`,    sub: "avg resolution",    color: fbColor    },
@@ -1107,7 +1107,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
             <div key={label} className="px-3 py-3">
               <div className="text-[9px] text-gray-500 uppercase tracking-wide mb-0.5">{label}</div>
               <div className="text-base font-bold" style={{ color }}>{value}</div>
-              <div className="text-[9px] mt-0.5" style={{ color: "#555" }}>{sub}</div>
+              <div className="text-[9px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>{sub}</div>
             </div>
           ))}
         </div>
@@ -1129,7 +1129,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                 <span className="text-gray-400">Feedback loop velocity</span>
                 <span className="font-semibold" style={{ color: fbColor }}>{data.feedbackLoopVelocity}h avg</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                 <div className="h-full rounded-full" style={{ width: `${fbPct}%`, backgroundColor: fbColor }} />
               </div>
               <div className="flex justify-between text-[8px] text-gray-600">
@@ -1140,12 +1140,12 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
             </div>
 
             {/* Revision ratio bar */}
-            <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid #222" }}>
+            <div className="space-y-1.5 pt-1" style={{ borderTop: "1px solid var(--app-border)" }}>
               <div className="flex justify-between text-[10px]">
                 <span className="text-gray-400">Revision to approval</span>
                 <span className="font-semibold" style={{ color: rvColor }}>{data.revisionToApprovalRatio}× ratio</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                 <div className="h-full rounded-full" style={{ width: `${rvPct}%`, backgroundColor: rvColor }} />
               </div>
               <div className="flex justify-between text-[8px] text-gray-600">
@@ -1155,7 +1155,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
             </div>
 
             {/* Weekly velocity chart */}
-            <div className="pt-1" style={{ borderTop: "1px solid #222" }}>
+            <div className="pt-1" style={{ borderTop: "1px solid var(--app-border)" }}>
               <div className="text-[9px] text-gray-500 uppercase tracking-wide mb-2">Weekly Cycles Resolved</div>
               <div className="flex items-end gap-1 h-10">
                 {weeklyVel.map((v, i) => (
@@ -1195,7 +1195,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                   { label: "On-Time %",    value: `${onTime}%`,     unit: "",      color: onTimeColor  },
                   { label: "Blockers",     value: `${blockers}`,    unit: " open", color: blockColor   },
                 ].map(({ label, value, unit, color }) => (
-                  <div key={label} className="rounded-lg p-2 text-center" style={{ backgroundColor: "#111" }}>
+                  <div key={label} className="rounded-lg p-2 text-center" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                     <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                     <div className="text-sm font-bold" style={{ color }}>
                       {value}<span className="text-[8px] font-normal text-gray-600">{unit}</span>
@@ -1203,7 +1203,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                   </div>
                 ))}
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                 <div className="h-full rounded-full" style={{ width: `${healthScore}%`, backgroundColor: healthColor }} />
               </div>
               <div className="flex items-center gap-2 rounded px-2 py-1.5" style={{ backgroundColor: `${healthColor}10`, border: `1px solid ${healthColor}20` }}>
@@ -1226,13 +1226,13 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                   const mHealthColor = m.healthScore >= 80 ? GREEN : m.healthScore >= 60 ? AMBER : RED;
                   const mOnTimeColor = m.onTimeRate >= 85 ? GREEN : m.onTimeRate >= 70 ? AMBER : RED;
                   return (
-                    <div key={m.initials} className="rounded-lg p-2.5" style={{ backgroundColor: "#111", border: "1px solid #1e1e1e" }}>
+                    <div key={m.initials} className="rounded-lg p-2.5" style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-card-elevated)" }}>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: "#2a2a2a", color: "#aaa" }}>
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-secondary)" }}>
                           {m.initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-[10px] text-white font-medium truncate">{m.name}</div>
+                          <div className="text-[10px] text-foreground font-medium truncate">{m.name}</div>
                           <div className="text-[8px] text-gray-500">{m.role}</div>
                         </div>
                         {m.blockers > 0 && (
@@ -1244,14 +1244,14 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                       <div className="grid grid-cols-2 gap-1.5">
                         <div>
                           <div className="text-[8px] text-gray-600 mb-0.5">Health</div>
-                          <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+                          <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                             <div className="h-full rounded-full" style={{ width: `${m.healthScore}%`, backgroundColor: mHealthColor }} />
                           </div>
                           <div className="text-[8px] mt-0.5 font-semibold" style={{ color: mHealthColor }}>{m.healthScore}/100</div>
                         </div>
                         <div>
                           <div className="text-[8px] text-gray-600 mb-0.5">On-Time</div>
-                          <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+                          <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
                             <div className="h-full rounded-full" style={{ width: `${m.onTimeRate}%`, backgroundColor: mOnTimeColor }} />
                           </div>
                           <div className="text-[8px] mt-0.5 font-semibold" style={{ color: mOnTimeColor }}>{m.onTimeRate}%</div>
@@ -1299,7 +1299,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                     { label: "Trend Direction",  value: `${trendIcon} ${trendLabel}`, color: trendColor },
                     { label: "Cycle Efficiency", value: `${Math.round(rvPct)}%`,      color: rvColor    },
                   ].map(({ label, value, color }) => (
-                    <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "#111" }}>
+                    <div key={label} className="rounded-lg p-2" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                       <div className="text-[9px] text-gray-500 mb-0.5">{label}</div>
                       <div className="text-sm font-bold" style={{ color }}>{value}</div>
                     </div>
@@ -1329,7 +1329,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
 
 // ─── sage icon ────────────────────────────────────────────────────────────────
 
-function SageStar({ size = 12, color = "#121212" }: { size?: number; color?: string }) {
+function SageStar({ size = 12, color = "var(--app-bg-elevated)" }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 647.22 647.22" fill="none">
       <rect fill={color} x="0"      y="265.27" width="113.94" height="113.94" rx="31.65"/>
@@ -1387,7 +1387,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
               <SageStar size={16} />
             </div>
             <div>
-              <p className="text-sm font-medium text-white" style={font}>Ask Sage about this data</p>
+              <p className="text-sm font-medium text-foreground" style={font}>Ask Sage about this data</p>
               <p className="text-xs text-gray-500 mt-1 max-w-[200px]" style={font}>
                 "What's the biggest risk?" · "How can we improve?"
               </p>
@@ -1406,7 +1406,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
                 </div>
               )}
               <div className="max-w-[90%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
-                style={{ backgroundColor: isUser ? "#ffffff" : "#1e1e1e", color: isUser ? "#000" : "#e5e5e5", border: isUser ? "none" : "1px solid #2a2a2a", ...font }}>
+                style={{ backgroundColor: isUser ? "var(--app-text-primary)" : "var(--app-card-elevated)", color: isUser ? "#000" : "#e5e5e5", border: isUser ? "none" : "1px solid var(--app-border-strong)", ...font }}>
                 {text}
               </div>
             </div>
@@ -1417,7 +1417,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
             <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0" style={{ backgroundColor: "#F0FE00" }}>
               <SageStar size={10} />
             </div>
-            <div className="flex items-center gap-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center gap-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
               {[0, 1, 2].map(i => (
                 <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "#F0FE00", animationDelay: `${i * 0.15}s` }} />
               ))}
@@ -1427,8 +1427,8 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-3 pb-3 pt-2" style={{ borderTop: "1px solid #2a2a2a" }}>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+      <div className="px-3 pb-3 pt-2" style={{ borderTop: "1px solid var(--app-border-strong)" }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
           <input
             type="text"
             value={input}
@@ -1436,7 +1436,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder="Ask Sage…"
             disabled={isStreaming}
-            className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder-gray-500 outline-none"
             style={font}
           />
           <button
@@ -1444,7 +1444,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
             onClick={handleSend}
             disabled={!input.trim() || isStreaming}
             className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
-            style={{ backgroundColor: input.trim() && !isStreaming ? "#F0FE00" : "#2a2a2a", color: input.trim() && !isStreaming ? "#000" : "#555" }}
+            style={{ backgroundColor: input.trim() && !isStreaming ? "#F0FE00" : "var(--app-border-strong)", color: input.trim() && !isStreaming ? "#000" : "var(--app-text-faint)" }}
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M22 2L11 13" /><path d="M22 2L15 22l-4-9-9-4 20-7z" />
@@ -1502,20 +1502,20 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
       <div
         className="relative flex flex-col overflow-hidden rounded-2xl shadow-2xl"
         style={{
-          backgroundColor: "#141414",
-          border: "1px solid #2a2a2a",
+          backgroundColor: "var(--app-card)",
+          border: "1px solid var(--app-border-strong)",
           width: nodeType === "pipeline" || nodeType === "capacity" || nodeType === "financial" || nodeType === "teamHealth" || nodeType === "projectHealth" ? 820 : 580,
           maxWidth: "calc(100vw - 48px)",
           maxHeight: "94vh",
         }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${meta.accent}20` }}>
             {meta.icon}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-white font-semibold text-sm truncate" style={font}>{label}</div>
+            <div className="text-foreground font-semibold text-sm truncate" style={font}>{label}</div>
             <div className="text-xs" style={{ color: meta.accent, ...font }}>{meta.label}</div>
           </div>
 
@@ -1528,14 +1528,14 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/10"
                 style={{
                   backgroundColor: projectPickerOpen ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
-                  border: "1px solid #333",
-                  color: activeProject ? "#e5e5e5" : "#888",
+                  border: "1px solid var(--app-canvas-dot)",
+                  color: activeProject ? "#e5e5e5" : "var(--app-text-muted)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
                 {activeProject ? (
                   <>
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: PROJECTS.find(p => p.id === activeProjectId)?.color ?? "#666" }} />
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: PROJECTS.find(p => p.id === activeProjectId)?.color ?? "var(--app-text-faint)" }} />
                     {activeProject.name}
                   </>
                 ) : (
@@ -1552,10 +1552,10 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
               {projectPickerOpen && (
                 <div
                   className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden shadow-2xl"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", minWidth: 200, zIndex: 20 }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", minWidth: 200, zIndex: 20 }}
                 >
-                  <div className="px-3 py-2" style={{ borderBottom: "1px solid #2a2a2a" }}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#555", fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}>
                       Switch project view
                     </span>
                   </div>
@@ -1566,7 +1566,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
                       onClick={() => switchProject(p.id)}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-xs transition-colors hover:bg-white/5"
                       style={{
-                        color: activeProjectId === p.id ? "#fff" : "#aaa",
+                        color: activeProjectId === p.id ? "var(--app-text-primary)" : "var(--app-text-secondary)",
                         backgroundColor: activeProjectId === p.id ? "rgba(255,255,255,0.06)" : "transparent",
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}
@@ -1588,7 +1588,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
             type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -1611,20 +1611,20 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
         className="absolute top-0 right-0 h-full flex flex-col"
         style={{
           width: 340,
-          backgroundColor: "#141414",
-          borderLeft: "1px solid #2a2a2a",
+          backgroundColor: "var(--app-card)",
+          borderLeft: "1px solid var(--app-border-strong)",
           transform: sageOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)",
           zIndex: 10,
         }}
       >
         {/* Sage panel header */}
-        <div className="flex items-center gap-2.5 px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-2.5 px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
           <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
             <SageStar size={13} />
           </div>
           <div className="flex-1">
-            <div className="text-white font-semibold text-sm" style={font}>Sage</div>
+            <div className="text-foreground font-semibold text-sm" style={font}>Sage</div>
             <div className="text-xs text-gray-500" style={font}>Ask questions about this data</div>
           </div>
           {/* Collapse */}
@@ -1632,7 +1632,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
             type="button"
             onClick={() => setSageOpen(false)}
             className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M9 18l6-6-6-6" />
@@ -1653,7 +1653,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
         className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-xl transition-all duration-200"
         style={{
           backgroundColor: "#F0FE00",
-          color: "#121212",
+          color: "var(--app-bg-elevated)",
           fontFamily: "system-ui, Inter, sans-serif",
           fontSize: 13,
           fontWeight: 600,

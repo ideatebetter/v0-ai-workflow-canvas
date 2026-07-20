@@ -26,14 +26,14 @@ const FileTypeIcon = ({ extension }: { extension: string }) => {
     ".m4a": "#00BCD4",
     ".wma": "#00A4EF",
     ".aiff": "#A855F7",
-  }[extension] || "#666666";
+  }[extension] || "var(--app-text-muted)";
 
   return (
     <div
       className="w-8 h-8 rounded-lg flex items-center justify-center"
       style={{ backgroundColor: iconColor }}
     >
-      <span className="text-white text-xs font-bold">
+      <span className="text-foreground text-xs font-bold">
         {extension.replace(".", "").toUpperCase().slice(0, 2)}
       </span>
     </div>
@@ -99,13 +99,13 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
     }
   }, [fileData.fileExtension, fileData.uploadedFile?.url]);
 
-  const fileColor = FILE_TYPE_COLORS[fileData.fileExtension] || "#666";
+  const fileColor = FILE_TYPE_COLORS[fileData.fileExtension] || "var(--app-text-faint)";
   
   // AI files are PDF-based, try rendering as iframe
   if (fileData.fileExtension === ".ai" && fileData.uploadedFile?.url) {
     return (
-      <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-        <div className="relative" style={{ backgroundColor: "#0d0d0d" }}>
+      <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+        <div className="relative" style={{ backgroundColor: "var(--app-bg)" }}>
           <iframe
             src={fileData.uploadedFile.url}
             title={fileData.label}
@@ -113,7 +113,7 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
             style={{ height: "50vh", minHeight: "300px" }}
           />
         </div>
-        <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+        <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "var(--app-border-strong)" }}>
           <div className="flex items-center gap-2">
             <FileTypeIcon extension={fileData.fileExtension} />
             <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -138,8 +138,8 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
   // PSD files with psd.js preview
   if (fileData.fileExtension === ".psd") {
     return (
-      <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-        <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "#0d0d0d", minHeight: "200px" }}>
+      <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+        <div className="relative flex items-center justify-center p-4" style={{ backgroundColor: "var(--app-bg)", minHeight: "200px" }}>
           {loading ? (
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-t-[#31A8FF] border-r-[#31A8FF] border-b-transparent border-l-transparent rounded-full animate-spin" />
@@ -168,7 +168,7 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
             </div>
           ) : null}
         </div>
-        <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+        <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "var(--app-border-strong)" }}>
           <div className="flex items-center gap-2">
             <FileTypeIcon extension={fileData.fileExtension} />
             <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -194,10 +194,10 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
 
   // Default placeholder for other Adobe files (INDD, XD, Sketch, Figma)
   return (
-    <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
       <div 
         className="relative flex flex-col items-center justify-center py-12 px-8"
-        style={{ backgroundColor: "#0d0d0d" }}
+        style={{ backgroundColor: "var(--app-bg)" }}
       >
         <div 
           className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
@@ -205,7 +205,7 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
         >
           <FileTypeIcon extension={fileData.fileExtension} />
         </div>
-        <p className="text-lg font-medium text-white mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+        <p className="text-lg font-medium text-foreground mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           {fileData.fileName}
         </p>
         <p className="text-sm text-gray-500 text-center max-w-xs mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -222,7 +222,7 @@ function AdobeFilePreview({ fileData }: { fileData: FileNodeData }) {
           </a>
         )}
       </div>
-      <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+      <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "var(--app-border-strong)" }}>
         <div className="flex items-center gap-2">
           <FileTypeIcon extension={fileData.fileExtension} />
           <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -316,7 +316,7 @@ function VideoPlayerWithComments({
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="mb-8 rounded-xl overflow-visible" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <div className="mb-8 rounded-xl overflow-visible" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
       {/* Video */}
       <div className="relative rounded-t-xl overflow-hidden bg-black" style={{ aspectRatio: "16/9" }}>
         <video
@@ -335,14 +335,14 @@ function VideoPlayerWithComments({
       </div>
 
       {/* Controls */}
-      <div className="px-3 pt-3 pb-3 border-t" style={{ borderColor: "#2a2a2a" }}>
+      <div className="px-3 pt-3 pb-3 border-t" style={{ borderColor: "var(--app-border-strong)" }}>
         {/* Timeline with comment ticks */}
         <div className="relative mb-3" style={{ paddingBottom: 4 }}>
           <div
             ref={timelineRef}
             className="relative h-2 rounded-full"
             style={{
-              backgroundColor: "#333",
+              backgroundColor: "var(--app-canvas-dot)",
               cursor: isCommentMode ? "crosshair" : "pointer",
             }}
             onClick={handleTimelineClick}
@@ -368,7 +368,7 @@ function VideoPlayerWithComments({
                     height: 12,
                     borderRadius: "50%",
                     backgroundColor: "#7C3AED",
-                    border: "2px solid #1a1a1a",
+                    border: "2px solid var(--app-card-elevated)",
                     zIndex: 5,
                     cursor: "pointer",
                   }}
@@ -391,8 +391,8 @@ function VideoPlayerWithComments({
                         right: pct > 65 ? "50%" : "auto",
                         transform: pct > 65 ? "none" : "translateX(-50%)",
                         width: 200,
-                        backgroundColor: "#1a1a1a",
-                        border: "1px solid #3a3a3a",
+                        backgroundColor: "var(--app-card-elevated)",
+                        border: "1px solid var(--app-border-strong)",
                         borderRadius: 8,
                         padding: "8px 10px",
                         zIndex: 30,
@@ -405,15 +405,15 @@ function VideoPlayerWithComments({
                         <div
                           style={{
                             width: 18, height: 18, borderRadius: "50%",
-                            backgroundColor: comment.author.avatarColor || "#666",
-                            color: "#fff", fontSize: 9, fontWeight: 700,
+                            backgroundColor: comment.author.avatarColor || "var(--app-text-faint)",
+                            color: "var(--app-text-primary)", fontSize: 9, fontWeight: 700,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}
                         >
                           {comment.author.name.split(" ").map((n) => n[0]).join("")}
                         </div>
-                        <span style={{ fontSize: 10, color: "#888" }}>{comment.author.name.split(" ")[0]}</span>
-                        <span style={{ fontSize: 10, color: "#555", marginLeft: "auto" }}>{formatTime(comment.timestamp)}</span>
+                        <span style={{ fontSize: 10, color: "var(--app-text-muted)" }}>{comment.author.name.split(" ")[0]}</span>
+                        <span style={{ fontSize: 10, color: "var(--app-text-faint)", marginLeft: "auto" }}>{formatTime(comment.timestamp)}</span>
                       </div>
                       <p style={{ fontSize: 12, color: "#e0e0e0", margin: 0 }}>{comment.text}</p>
                     </div>
@@ -434,7 +434,7 @@ function VideoPlayerWithComments({
                   height: 12,
                   borderRadius: "50%",
                   backgroundColor: "#F0FE00",
-                  border: "2px solid #1a1a1a",
+                  border: "2px solid var(--app-card-elevated)",
                   zIndex: 10,
                   pointerEvents: "none",
                 }}
@@ -451,8 +451,8 @@ function VideoPlayerWithComments({
                 left: pendingPos > 55 ? "auto" : `${Math.max(pendingPos, 2)}%`,
                 right: pendingPos > 55 ? `${Math.max(100 - pendingPos, 2)}%` : "auto",
                 width: 230,
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #3a3a3a",
+                backgroundColor: "var(--app-card-elevated)",
+                border: "1px solid var(--app-border-strong)",
                 borderRadius: 8,
                 padding: 10,
                 zIndex: 40,
@@ -461,7 +461,7 @@ function VideoPlayerWithComments({
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+              <div style={{ fontSize: 11, color: "var(--app-text-muted)", marginBottom: 6 }}>
                 Comment at {formatTime(pendingTimestamp)}
               </div>
               <input
@@ -488,7 +488,7 @@ function VideoPlayerWithComments({
                 <button
                   type="button"
                   onClick={() => setPendingTimestamp(null)}
-                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #3a3a3a", backgroundColor: "transparent", color: "#888", fontSize: 12, cursor: "pointer" }}
+                  style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--app-border-strong)", backgroundColor: "transparent", color: "var(--app-text-muted)", fontSize: 12, cursor: "pointer" }}
                 >
                   Cancel
                 </button>
@@ -498,8 +498,8 @@ function VideoPlayerWithComments({
                   disabled={!pendingText.trim()}
                   style={{
                     padding: "4px 10px", borderRadius: 6, border: "none",
-                    backgroundColor: pendingText.trim() ? "#F0FE00" : "#2a2a2a",
-                    color: pendingText.trim() ? "#000" : "#666",
+                    backgroundColor: pendingText.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                    color: pendingText.trim() ? "#000" : "var(--app-text-faint)",
                     fontSize: 12, fontWeight: 600,
                     cursor: pendingText.trim() ? "pointer" : "default",
                   }}
@@ -521,7 +521,7 @@ function VideoPlayerWithComments({
                 if (!videoRef.current) return;
                 if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
               }}
-              className="text-white hover:text-gray-300 transition-colors"
+              className="text-foreground hover:text-gray-300 transition-colors"
             >
               {isPlaying ? (
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -557,8 +557,8 @@ function VideoPlayerWithComments({
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
               style={{
                 backgroundColor: isCommentMode ? "#F0FE00" : "rgba(255,255,255,0.08)",
-                color: isCommentMode ? "#000" : "#aaa",
-                border: isCommentMode ? "none" : "1px solid #3a3a3a",
+                color: isCommentMode ? "#000" : "var(--app-text-secondary)",
+                border: isCommentMode ? "none" : "1px solid var(--app-border-strong)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
@@ -848,7 +848,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
     if (d.getTime() === today.getTime()) return { label: "Today", color: "#F0FE00" };
     if (d.getTime() === tomorrow.getTime()) return { label: "Tomorrow", color: "#FB923C" };
     if (d < today) return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "#F87171" };
-    return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "#888" };
+    return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "var(--app-text-muted)" };
   };
 
   const handleStatusChange = (newStatus: FileNodeData["status"]) => {
@@ -1006,7 +1006,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
       {/* Modal */}
       <div
         className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl shadow-2xl"
-        style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
+        style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}
       >
         {/* Header buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -1024,9 +1024,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               </svg>
             ) : (
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M6 9L9 6" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M8.5 3.5L9.75 2.25C10.5784 1.42157 11.9216 1.42157 12.75 2.25C13.5784 3.07843 13.5784 4.42157 12.75 5.25L11.5 6.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M6.5 11.5L5.25 12.75C4.42157 13.5784 3.07843 13.5784 2.25 12.75C1.42157 11.9216 1.42157 10.5784 2.25 9.75L3.5 8.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M6 9L9 6" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8.5 3.5L9.75 2.25C10.5784 1.42157 11.9216 1.42157 12.75 2.25C13.5784 3.07843 13.5784 4.42157 12.75 5.25L11.5 6.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M6.5 11.5L5.25 12.75C4.42157 13.5784 3.07843 13.5784 2.25 12.75C1.42157 11.9216 1.42157 10.5784 2.25 9.75L3.5 8.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             )}
           </button>
@@ -1051,8 +1051,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             title="Download file"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
           
@@ -1064,7 +1064,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -1079,12 +1079,12 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               onChange={(e) => setEditedTitle(e.target.value)}
               onBlur={handleTitleSave}
               onKeyDown={handleTitleKeyDown}
-              className="text-2xl font-semibold text-white mb-6 bg-transparent border-b-2 border-blue-500 outline-none w-full"
+              className="text-2xl font-semibold text-foreground mb-6 bg-transparent border-b-2 border-blue-500 outline-none w-full"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             />
           ) : (
             <h2
-              className="text-2xl font-semibold text-white mb-6 cursor-pointer hover:text-gray-300 transition-colors group flex items-center gap-2"
+              className="text-2xl font-semibold text-foreground mb-6 cursor-pointer hover:text-gray-300 transition-colors group flex items-center gap-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               onClick={() => setIsEditingTitle(true)}
               title="Click to rename"
@@ -1104,10 +1104,10 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
           {/* Image Preview - show for image files or any node with a previewImage (e.g. Figma sync) */}
           {([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(fileData.fileExtension) || (fileData.previewImages && fileData.previewImages.length > 0)) && (fileData.uploadedFile?.url || (fileData.previewImages && fileData.previewImages.length > 0)) && (
-            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
               <div
                 className="relative flex items-center justify-center p-4"
-                style={{ backgroundColor: "#0d0d0d", cursor: isAnnotating ? "crosshair" : "default" }}
+                style={{ backgroundColor: "var(--app-bg)", cursor: isAnnotating ? "crosshair" : "default" }}
                 onClick={handleImageAreaClick}
               >
                 {/* Annotate mode toggle */}
@@ -1121,8 +1121,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors z-10"
                   style={{
                     backgroundColor: isAnnotating ? "#F0FE00" : "rgba(255,255,255,0.08)",
-                    color: isAnnotating ? "#000" : "#aaa",
-                    border: isAnnotating ? "none" : "1px solid #3a3a3a",
+                    color: isAnnotating ? "#000" : "var(--app-text-secondary)",
+                    border: isAnnotating ? "none" : "1px solid var(--app-border-strong)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                   title={isAnnotating ? "Exit comment mode" : "Add a comment"}
@@ -1188,8 +1188,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             top: comment.y > 70 ? "auto" : 0,
                             bottom: comment.y > 70 ? 0 : "auto",
                             width: 200,
-                            backgroundColor: "#1a1a1a",
-                            border: "1px solid #3a3a3a",
+                            backgroundColor: "var(--app-card-elevated)",
+                            border: "1px solid var(--app-border-strong)",
                             borderRadius: 8,
                             padding: "8px 10px",
                             zIndex: 30,
@@ -1202,8 +1202,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                                 width: 18,
                                 height: 18,
                                 borderRadius: "50%",
-                                backgroundColor: comment.author.avatarColor || "#666",
-                                color: "#fff",
+                                backgroundColor: comment.author.avatarColor || "var(--app-text-faint)",
+                                color: "var(--app-text-primary)",
                                 fontSize: 9,
                                 fontWeight: 700,
                                 display: "flex",
@@ -1214,7 +1214,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             >
                               {comment.author.name.split(" ").map((n) => n[0]).join("")}
                             </div>
-                            <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                            <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                               {comment.author.name.split(" ")[0]}
                             </span>
                           </div>
@@ -1267,8 +1267,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                           top: pendingPin.y > 70 ? "auto" : 0,
                           bottom: pendingPin.y > 70 ? 0 : "auto",
                           width: 220,
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #3a3a3a",
+                          backgroundColor: "var(--app-card-elevated)",
+                          border: "1px solid var(--app-border-strong)",
                           borderRadius: 8,
                           padding: 10,
                           zIndex: 30,
@@ -1303,9 +1303,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             style={{
                               padding: "4px 10px",
                               borderRadius: 6,
-                              border: "1px solid #3a3a3a",
+                              border: "1px solid var(--app-border-strong)",
                               backgroundColor: "transparent",
-                              color: "#888",
+                              color: "var(--app-text-muted)",
                               fontSize: 12,
                               cursor: "pointer",
                               fontFamily: "system-ui, Inter, sans-serif",
@@ -1321,8 +1321,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                               padding: "4px 10px",
                               borderRadius: 6,
                               border: "none",
-                              backgroundColor: newCommentText.trim() ? "#F0FE00" : "#2a2a2a",
-                              color: newCommentText.trim() ? "#000" : "#666",
+                              backgroundColor: newCommentText.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                              color: newCommentText.trim() ? "#000" : "var(--app-text-faint)",
                               fontSize: 12,
                               fontWeight: 600,
                               cursor: newCommentText.trim() ? "pointer" : "default",
@@ -1343,7 +1343,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   </div>
                 )}
               </div>
-              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "var(--app-border-strong)" }}>
                 <div className="flex items-center gap-2">
                   <FileTypeIcon extension={fileData.fileExtension} />
                   <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1376,8 +1376,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
           {/* PDF Preview - Only show for PDF files */}
           {fileData.fileExtension === ".pdf" && fileData.uploadedFile?.url && (
-            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-              <div className="relative" style={{ backgroundColor: "#0d0d0d" }}>
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+              <div className="relative" style={{ backgroundColor: "var(--app-bg)" }}>
                 <iframe
                   src={fileData.uploadedFile.url}
                   title={fileData.label}
@@ -1385,7 +1385,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   style={{ height: "60vh", minHeight: "400px" }}
                 />
               </div>
-              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "var(--app-border-strong)" }}>
                 <div className="flex items-center gap-2">
                   <FileTypeIcon extension={fileData.fileExtension} />
                   <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1415,11 +1415,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             <AdobeFilePreview fileData={fileData} />
           )}
           {[".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
-            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
               {/* Waveform visualization */}
               <div 
                 className="p-6 flex items-center justify-center"
-                style={{ backgroundColor: "#0d0d0d" }}
+                style={{ backgroundColor: "var(--app-bg)" }}
               >
                 <div className="flex items-end justify-center gap-0.5 h-20 w-full max-w-md">
                   {[...Array(48)].map((_, i) => {
@@ -1440,7 +1440,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               </div>
               
               {/* Audio controls */}
-              <div className="p-4 border-t" style={{ borderColor: "#2a2a2a" }}>
+              <div className="p-4 border-t" style={{ borderColor: "var(--app-border-strong)" }}>
                 <audio
                   src={fileData.uploadedFile.url}
                   controls
@@ -1480,7 +1480,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
           {/* Link Preview - YouTube, Google Docs, Figma, Generic */}
           {fileData.linkUrl && fileData.linkType && (
-            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
               {fileData.linkType === "youtube" && (() => {
                 const embedUrl = getYouTubeEmbedUrl(fileData.linkUrl!);
                 return embedUrl ? (
@@ -1509,7 +1509,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     style={{ width: "100%", height: 480, border: "none", display: "block" }}
                     sandbox="allow-scripts allow-same-origin allow-popups"
                   />
-                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid #2a2a2a" }}>
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--app-border-strong)" }}>
                     <div className="flex items-center gap-2">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                         <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#4285F4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1565,8 +1565,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 <div className="p-5 flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="#888" strokeWidth="1.2"/>
-                      <path d="M5 8H11M8 5V11" stroke="#888" strokeWidth="1.2" strokeLinecap="round"/>
+                      <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
+                      <path d="M5 8H11M8 5V11" stroke="var(--app-text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
                     <a
                       href={fileData.linkUrl}
@@ -1583,7 +1583,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     target="_blank"
                     rel="noopener noreferrer"
                     className="self-start flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10"
-                    style={{ color: "#d1d5db", border: "1px solid #333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ color: "#d1d5db", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Open Link
                     <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
@@ -1605,7 +1605,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               <button
                 type="button"
                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white cursor-pointer transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-foreground cursor-pointer transition-opacity hover:opacity-80"
                 style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
               >
                 {STATUS_LABELS[fileData.status]}
@@ -1632,7 +1632,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: STATUS_COLORS[status] }}
                       />
-                      <span className="text-white">{STATUS_LABELS[status]}</span>
+                      <span className="text-foreground">{STATUS_LABELS[status]}</span>
                       {fileData.status === status && (
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
                           <path d="M3 7L6 10L11 4" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1652,7 +1652,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               <button
                 type="button"
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-gray-300 hover:text-foreground transition-colors cursor-pointer"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -1677,14 +1677,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     type="date"
                     defaultValue={dueDate ? new Date(dueDate).toISOString().split("T")[0] : ""}
                     onChange={(e) => handleDueDateChange(e.target.value)}
-                    className="bg-transparent text-white text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
+                    className="bg-transparent text-foreground text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
                     style={{ colorScheme: "dark" }}
                   />
                   {dueDate && (
                     <button
                       type="button"
                       onClick={() => handleDueDateChange("")}
-                      className="mt-2 w-full text-xs text-gray-400 hover:text-white transition-colors"
+                      className="mt-2 w-full text-xs text-gray-400 hover:text-foreground transition-colors"
                     >
                       Clear date
                     </button>
@@ -1703,8 +1703,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   {assignees.slice(0, 3).map((member) => (
                     <div key={member.id} className="flex items-center gap-2">
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                        style={{ backgroundColor: member.avatarColor || "#666666" }}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-foreground"
+                        style={{ backgroundColor: member.avatarColor || "var(--app-text-muted)" }}
                       >
                         {member.name.split(" ").map(n => n[0]).join("")}
                       </div>
@@ -1728,7 +1728,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+          <div className="flex gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
             {(["overview", "todos", "history"] as const).map((tab) => (
               <button
                 key={tab}
@@ -1736,7 +1736,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? "bg-[#2a2a2a] text-white"
+                    ? "bg-[var(--app-border-strong)] text-foreground"
                     : "text-gray-500 hover:text-gray-300"
                 }`}
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
@@ -1801,10 +1801,10 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     type="button"
                     onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
                     className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a" }}
+                    style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)" }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M10 4L6 8L10 12" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 4L6 8L10 12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 )}
@@ -1813,10 +1813,10 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     type="button"
                     onClick={() => setCarouselIndex(Math.min(versions.length - 3, carouselIndex + 1))}
                     className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a" }}
+                    style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)" }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 4L10 8L6 12" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M6 4L10 8L6 12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 )}
@@ -1830,7 +1830,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       key={version.id}
                       onClick={() => setSelectedVersionId(prev => prev === version.id ? null : version.id)}
                       className="rounded-xl overflow-hidden transition-transform hover:scale-[1.02] cursor-pointer"
-                      style={{ backgroundColor: "#1a1a1a", border: isSelected ? "1px solid #6b7280" : "1px solid #2a2a2a", outline: isSelected ? "2px solid #4b5563" : "none", outlineOffset: "1px" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: isSelected ? "1px solid var(--app-text-muted)" : "1px solid var(--app-border-strong)", outline: isSelected ? "2px solid #4b5563" : "none", outlineOffset: "1px" }}
                     >
                       {/* Preview Image */}
                       <div className="aspect-[4/3] relative overflow-hidden">
@@ -1846,7 +1846,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       <div className="p-3 flex items-center gap-2">
                         <FileTypeIcon extension={fileData.fileExtension} />
                         <div>
-                          <div className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <div className="text-sm font-medium text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {version.versionName}
                           </div>
                           <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1885,8 +1885,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   key={task.id}
                   className="flex items-center gap-3 p-3 rounded-lg transition-colors"
                   style={{ 
-                    backgroundColor: task.completed ? "#1a1a1a" : "#1f1f1f", 
-                    border: "1px solid #2a2a2a" 
+                    backgroundColor: task.completed ? "var(--app-card-elevated)" : "#1f1f1f", 
+                    border: "1px solid var(--app-border-strong)" 
                   }}
                 >
                   <Checkbox
@@ -1907,7 +1907,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       type="button"
                       onClick={() => setShowDueDateInput(showDueDateInput === task.id ? null : task.id)}
                       className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-white/5"
-                      style={{ color: task.dueDate ? formatDueDate(task.dueDate).color : "#555", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ color: task.dueDate ? formatDueDate(task.dueDate).color : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       title={task.dueDate ? "Change due date" : "Set due date"}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
@@ -1917,7 +1917,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       {task.dueDate ? formatDueDate(task.dueDate).label : ""}
                     </button>
                     {showDueDateInput === task.id && (
-                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                         <input
                           type="date"
                           defaultValue={task.dueDate || ""}
@@ -1947,8 +1947,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       onClick={() => setShowAssigneeDropdown(showAssigneeDropdown === task.id ? null : task.id)}
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors"
                       style={{ 
-                        backgroundColor: task.assignee?.avatarColor || "#2a2a2a",
-                        color: task.assignee ? "white" : "#666666",
+                        backgroundColor: task.assignee?.avatarColor || "var(--app-border-strong)",
+                        color: task.assignee ? "white" : "var(--app-text-muted)",
                         border: task.assignee ? "none" : "1px dashed #444444"
                       }}
                       title={task.assignee ? task.assignee.name : "Assign"}
@@ -1967,7 +1967,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     {showAssigneeDropdown === task.id && (
                       <div
                         className="absolute right-0 top-full mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[160px]"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                       >
                         {task.assignee && (
                           <button
@@ -1988,8 +1988,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                              style={{ backgroundColor: member.avatarColor || "#666666" }}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-foreground"
+                              style={{ backgroundColor: member.avatarColor || "var(--app-text-muted)" }}
                             >
                               {member.name.split(" ").map(n => n[0]).join("")}
                             </div>
@@ -2006,7 +2006,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               {isAddingTodo ? (
                 <div
                   className="flex items-center gap-3 p-3 rounded-lg"
-                  style={{ backgroundColor: "#1f1f1f", border: "1px solid #2a2a2a" }}
+                  style={{ backgroundColor: "#1f1f1f", border: "1px solid var(--app-border-strong)" }}
                 >
                   <Checkbox disabled className="border-gray-600 opacity-50" />
                   <input
@@ -2033,7 +2033,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       type="button"
                       onClick={() => setShowDueDateInput(showDueDateInput === "new" ? null : "new")}
                       className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors hover:bg-white/5"
-                      style={{ color: newTodoDueDate ? formatDueDate(newTodoDueDate).color : "#555", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ color: newTodoDueDate ? formatDueDate(newTodoDueDate).color : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       title="Set due date"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
@@ -2043,7 +2043,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       {newTodoDueDate ? formatDueDate(newTodoDueDate).label : "Due"}
                     </button>
                     {showDueDateInput === "new" && (
-                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                      <div className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                         <input
                           type="date"
                           value={newTodoDueDate}
@@ -2063,8 +2063,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       onClick={() => setShowAssigneeDropdown(showAssigneeDropdown === "new" ? null : "new")}
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors"
                       style={{ 
-                        backgroundColor: newTodoAssignee?.avatarColor || "#2a2a2a",
-                        color: newTodoAssignee ? "white" : "#666666",
+                        backgroundColor: newTodoAssignee?.avatarColor || "var(--app-border-strong)",
+                        color: newTodoAssignee ? "white" : "var(--app-text-muted)",
                         border: newTodoAssignee ? "none" : "1px dashed #444444"
                       }}
                       title={newTodoAssignee ? newTodoAssignee.name : "Assign"}
@@ -2082,7 +2082,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     {showAssigneeDropdown === "new" && (
                       <div
                         className="absolute right-0 top-full mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[160px]"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                       >
                         {WORKSPACE_MEMBERS.map((member) => (
                           <button
@@ -2096,8 +2096,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                              style={{ backgroundColor: member.avatarColor || "#666666" }}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-foreground"
+                              style={{ backgroundColor: member.avatarColor || "var(--app-text-muted)" }}
                             >
                               {member.name.split(" ").map(n => n[0]).join("")}
                             </div>
@@ -2114,8 +2114,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     disabled={!newTodoTitle.trim()}
                     className="px-3 py-1 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                     style={{ 
-                      backgroundColor: newTodoTitle.trim() ? "#F0FE00" : "#2a2a2a",
-                      color: newTodoTitle.trim() ? "#000000" : "#666666",
+                      backgroundColor: newTodoTitle.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                      color: newTodoTitle.trim() ? "#000000" : "var(--app-text-muted)",
                       fontFamily: "system-ui, Inter, sans-serif"
                     }}
                   >
@@ -2140,7 +2140,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   type="button"
                   onClick={() => setIsAddingTodo(true)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-white/5 text-gray-500 hover:text-gray-300"
-                  style={{ border: "1px dashed #2a2a2a" }}
+                  style={{ border: "1px dashed var(--app-border-strong)" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -2168,12 +2168,12 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   <div className="flex flex-col items-center">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400"
-                      style={{ backgroundColor: "#1a1a1a" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)" }}
                     >
                       {getActivityIcon(activity.type)}
                     </div>
                     {index < activities.length - 1 && (
-                      <div className="w-0.5 flex-1 mt-2" style={{ backgroundColor: "#2a2a2a" }} />
+                      <div className="w-0.5 flex-1 mt-2" style={{ backgroundColor: "var(--app-border-strong)" }} />
                     )}
                   </div>
 
@@ -2181,8 +2181,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   <div className="flex-1 pb-4">
                     <div className="flex items-center gap-2 mb-1">
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                        style={{ backgroundColor: activity.user.avatarColor || "#666666" }}
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-foreground"
+                        style={{ backgroundColor: activity.user.avatarColor || "var(--app-text-muted)" }}
                       >
                         {activity.user.name.split(" ").map(n => n[0]).join("")}
                       </div>

@@ -204,19 +204,19 @@ export function CanvasToFrameworkPanel({
       style={{
         width: 340,
         height: "100%",
-        backgroundColor: "#121212",
-        borderLeft: "1px solid #222",
+        backgroundColor: "var(--app-bg-elevated)",
+        borderLeft: "1px solid var(--app-border)",
         fontFamily: "system-ui, Inter, sans-serif",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid #222" }}
+        style={{ borderBottom: "1px solid var(--app-border)" }}
       >
         <div>
-          <p className="text-sm font-semibold text-white">Turn into Framework</p>
-          <p className="text-[11px] mt-0.5" style={{ color: "#555" }}>
+          <p className="text-sm font-semibold text-foreground">Turn into Framework</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>
             Step {step} of 3 —{" "}
             {step === 1 ? "Select inputs" : step === 2 ? "Select outputs" : "Publish"}
           </p>
@@ -224,7 +224,7 @@ export function CanvasToFrameworkPanel({
         <button
           onClick={onClose}
           className="p-1.5 rounded-md hover:bg-white/8 transition-colors"
-          style={{ color: "#555" }}
+          style={{ color: "var(--app-text-faint)" }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -233,7 +233,7 @@ export function CanvasToFrameworkPanel({
       </div>
 
       {/* Progress bar — 3 segments */}
-      <div className="h-0.5 flex flex-shrink-0" style={{ backgroundColor: "#1e1e1e" }}>
+      <div className="h-0.5 flex flex-shrink-0" style={{ backgroundColor: "var(--app-card-elevated)" }}>
         {[1, 2, 3].map(s => (
           <div
             key={s}
@@ -257,7 +257,7 @@ export function CanvasToFrameworkPanel({
               <p className="text-xs font-medium" style={{ color: stepColor }}>
                 {step === 1 ? "Select input nodes" : "Select output nodes"}
               </p>
-              <p className="text-[11px] leading-relaxed" style={{ color: "#666" }}>
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--app-text-faint)" }}>
                 {step === 1
                   ? "Click nodes on the canvas to mark what users will provide — files, text, references."
                   : "Click nodes on the canvas to mark the deliverables this framework produces."}
@@ -284,7 +284,7 @@ export function CanvasToFrameworkPanel({
             {/* Added nodes */}
             {currentList.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "#444" }}>
+                <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "var(--app-text-faint)" }}>
                   Added {stepLabel}
                 </p>
                 {currentList.map(entry => (
@@ -300,7 +300,7 @@ export function CanvasToFrameworkPanel({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-1.5 min-w-0">
                         <NodeTypeDot type={entry.nodeType} color={stepColor} />
-                        <span className="text-[11px] truncate" style={{ color: "#666" }}>
+                        <span className="text-[11px] truncate" style={{ color: "var(--app-text-faint)" }}>
                           {entry.nodeName}
                         </span>
                       </div>
@@ -308,7 +308,7 @@ export function CanvasToFrameworkPanel({
                         type="button"
                         onClick={() => removeEntry(step === 1 ? "inputs" : "outputs", entry.nodeId)}
                         className="p-0.5 flex-shrink-0 hover:opacity-80 transition-opacity"
-                        style={{ color: "#444" }}
+                        style={{ color: "var(--app-text-faint)" }}
                       >
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                           <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
@@ -321,8 +321,8 @@ export function CanvasToFrameworkPanel({
                       value={entry.label}
                       onChange={e => updateEntry(step === 1 ? "inputs" : "outputs", entry.nodeId, "label", e.target.value)}
                       placeholder={step === 1 ? "Input label (e.g. Logo File)" : "Output label (e.g. Brand Mockups)"}
-                      className="w-full px-2.5 py-1.5 rounded-lg text-xs text-white placeholder-gray-700 focus:outline-none"
-                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #222" }}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs text-foreground placeholder-gray-700 focus:outline-none"
+                      style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border)" }}
                     />
                     {/* Description */}
                     <input
@@ -330,8 +330,8 @@ export function CanvasToFrameworkPanel({
                       value={entry.description}
                       onChange={e => updateEntry(step === 1 ? "inputs" : "outputs", entry.nodeId, "description", e.target.value)}
                       placeholder={step === 1 ? "What should users provide?" : "What does this output represent?"}
-                      className="w-full px-2.5 py-1.5 rounded-lg text-xs text-white placeholder-gray-700 focus:outline-none"
-                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #222" }}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs text-foreground placeholder-gray-700 focus:outline-none"
+                      style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border)" }}
                     />
                   </div>
                 ))}
@@ -339,7 +339,7 @@ export function CanvasToFrameworkPanel({
             ) : pendingNodes.length === 0 ? (
               <div
                 className="py-8 flex flex-col items-center gap-2 rounded-xl"
-                style={{ backgroundColor: "#0e0e0e", border: "1px dashed #222" }}
+                style={{ backgroundColor: "#0e0e0e", border: "1px dashed var(--app-border)" }}
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -349,7 +349,7 @@ export function CanvasToFrameworkPanel({
                     <path d="M8 3V13M3 8H13" stroke={stepColor} strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <p className="text-[11px]" style={{ color: "#444" }}>
+                <p className="text-[11px]" style={{ color: "var(--app-text-faint)" }}>
                   Click nodes on the canvas to add {stepLabel}
                 </p>
               </div>
@@ -357,12 +357,12 @@ export function CanvasToFrameworkPanel({
 
             {/* Skip hint */}
             {step === 1 && (
-              <p className="text-[10px] text-center" style={{ color: "#333" }}>
+              <p className="text-[10px] text-center" style={{ color: "var(--app-canvas-dot)" }}>
                 No inputs? Hit Continue to skip
               </p>
             )}
             {step === 2 && (
-              <p className="text-[10px] text-center" style={{ color: "#333" }}>
+              <p className="text-[10px] text-center" style={{ color: "var(--app-canvas-dot)" }}>
                 No outputs? Hit Continue to skip
               </p>
             )}
@@ -378,13 +378,13 @@ export function CanvasToFrameworkPanel({
                 {inputs.length > 0 && (
                   <div className="flex-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "#0f2018", border: "1px solid #1a3026" }}>
                     <p className="text-[10px] font-medium" style={{ color: "#4ade80" }}>{inputs.length} input{inputs.length !== 1 ? "s" : ""}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#444" }}>what users provide</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>what users provide</p>
                   </div>
                 )}
                 {outputs.length > 0 && (
                   <div className="flex-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "#13101f", border: "1px solid #1e1a36" }}>
                     <p className="text-[10px] font-medium" style={{ color: "#818cf8" }}>{outputs.length} output{outputs.length !== 1 ? "s" : ""}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#444" }}>deliverables</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>deliverables</p>
                   </div>
                 )}
               </div>
@@ -392,7 +392,7 @@ export function CanvasToFrameworkPanel({
 
             {/* Framework name */}
             <div>
-              <label className="block text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "#555" }}>
+              <label className="block text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "var(--app-text-faint)" }}>
                 Framework name
               </label>
               <input
@@ -400,14 +400,14 @@ export function CanvasToFrameworkPanel({
                 value={frameworkName}
                 onChange={e => setFrameworkName(e.target.value)}
                 placeholder="e.g. Brand Identity Workflow"
-                className="w-full px-3 py-2 rounded-xl text-sm text-white placeholder-gray-700 focus:outline-none"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #252525" }}
+                className="w-full px-3 py-2 rounded-xl text-sm text-foreground placeholder-gray-700 focus:outline-none"
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "#555" }}>
+              <label className="block text-[10px] font-medium uppercase tracking-wide mb-1.5" style={{ color: "var(--app-text-faint)" }}>
                 Description
               </label>
               <textarea
@@ -415,8 +415,8 @@ export function CanvasToFrameworkPanel({
                 onChange={e => setFrameworkDescription(e.target.value)}
                 placeholder="What does this framework do? What's the end result?"
                 rows={3}
-                className="w-full px-3 py-2 rounded-xl text-sm text-white placeholder-gray-700 focus:outline-none resize-none"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #252525" }}
+                className="w-full px-3 py-2 rounded-xl text-sm text-foreground placeholder-gray-700 focus:outline-none resize-none"
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
               />
             </div>
 
@@ -427,25 +427,25 @@ export function CanvasToFrameworkPanel({
                 onClick={() => setCapturePresentationFlow(v => !v)}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all"
                 style={{
-                  backgroundColor: capturePresentationFlow ? "#1a1200" : "#1a1a1a",
-                  border: `1px solid ${capturePresentationFlow ? "#F0FE0050" : "#252525"}`,
+                  backgroundColor: capturePresentationFlow ? "#1a1200" : "var(--app-card-elevated)",
+                  border: `1px solid ${capturePresentationFlow ? "#F0FE0050" : "var(--app-border-strong)"}`,
                 }}
               >
                 <div
                   className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: capturePresentationFlow ? "#F0FE00" : "#252525", border: capturePresentationFlow ? "none" : "1px solid #444" }}
+                  style={{ backgroundColor: capturePresentationFlow ? "#F0FE00" : "var(--app-border-strong)", border: capturePresentationFlow ? "none" : "1px solid var(--app-text-faint)" }}
                 >
                   {capturePresentationFlow && (
                     <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-                      <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="var(--app-bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium" style={{ color: capturePresentationFlow ? "#fff" : "#666" }}>
+                  <p className="text-xs font-medium" style={{ color: capturePresentationFlow ? "var(--app-text-primary)" : "var(--app-text-faint)" }}>
                     Capture presentation flow
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#444" }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>
                     {canvas.presentationFlows!.length} flow{canvas.presentationFlows!.length !== 1 ? "s" : ""} — users run this canvas with the same slide order
                   </p>
                 </div>
@@ -454,7 +454,7 @@ export function CanvasToFrameworkPanel({
 
             {/* Visibility */}
             <div>
-              <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "#555" }}>
+              <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "var(--app-text-faint)" }}>
                 Who can use this?
               </label>
               <div className="space-y-1.5">
@@ -465,13 +465,13 @@ export function CanvasToFrameworkPanel({
                     onClick={() => setVisibility(opt.id)}
                     className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all"
                     style={{
-                      backgroundColor: visibility === opt.id ? "#F0FE0010" : "#1a1a1a",
-                      border: `1px solid ${visibility === opt.id ? "#F0FE0050" : "#252525"}`,
+                      backgroundColor: visibility === opt.id ? "#F0FE0010" : "var(--app-card-elevated)",
+                      border: `1px solid ${visibility === opt.id ? "#F0FE0050" : "var(--app-border-strong)"}`,
                     }}
                   >
                     <div className="flex-1">
-                      <p className="text-xs font-medium" style={{ color: visibility === opt.id ? "#fff" : "#666" }}>{opt.label}</p>
-                      <p className="text-[10px] mt-0.5" style={{ color: "#444" }}>{opt.sub}</p>
+                      <p className="text-xs font-medium" style={{ color: visibility === opt.id ? "var(--app-text-primary)" : "var(--app-text-faint)" }}>{opt.label}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "var(--app-text-faint)" }}>{opt.sub}</p>
                     </div>
                     {visibility === opt.id && (
                       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ color: "#F0FE00", flexShrink: 0 }}>
@@ -487,7 +487,7 @@ export function CanvasToFrameworkPanel({
             {visibility === "community" && (
               <>
                 <div>
-                  <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "#555" }}>Category</label>
+                  <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "var(--app-text-faint)" }}>Category</label>
                   <div className="grid grid-cols-3 gap-1.5">
                     {(Object.keys(FRAMEWORK_CATEGORIES) as FrameworkCategory[]).map(cat => (
                       <button
@@ -496,9 +496,9 @@ export function CanvasToFrameworkPanel({
                         onClick={() => setCategory(cat)}
                         className="px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all"
                         style={{
-                          backgroundColor: category === cat ? "#F0FE00" : "#1a1a1a",
-                          border: `1px solid ${category === cat ? "#F0FE00" : "#252525"}`,
-                          color: category === cat ? "#0a0a0a" : "#555",
+                          backgroundColor: category === cat ? "#F0FE00" : "var(--app-card-elevated)",
+                          border: `1px solid ${category === cat ? "#F0FE00" : "var(--app-border-strong)"}`,
+                          color: category === cat ? "var(--app-bg)" : "var(--app-text-faint)",
                         }}
                       >
                         {FRAMEWORK_CATEGORIES[cat].label}
@@ -508,15 +508,15 @@ export function CanvasToFrameworkPanel({
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "#555" }}>
-                    Tags <span className="normal-case font-normal" style={{ color: "#333" }}>(up to 5)</span>
+                  <label className="block text-[10px] font-medium uppercase tracking-wide mb-2" style={{ color: "var(--app-text-faint)" }}>
+                    Tags <span className="normal-case font-normal" style={{ color: "var(--app-canvas-dot)" }}>(up to 5)</span>
                   </label>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {tags.map(tag => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333", color: "#F0FE00" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "#F0FE00" }}
                       >
                         {tag}
                         <button type="button" onClick={() => setTags(prev => prev.filter(t => t !== tag))}>
@@ -533,15 +533,15 @@ export function CanvasToFrameworkPanel({
                       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
                       placeholder="Add a tag..."
                       disabled={tags.length >= 5}
-                      className="flex-1 px-2.5 py-1.5 rounded-lg text-xs text-white placeholder-gray-700 focus:outline-none disabled:opacity-40"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #252525" }}
+                      className="flex-1 px-2.5 py-1.5 rounded-lg text-xs text-foreground placeholder-gray-700 focus:outline-none disabled:opacity-40"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                     />
                     <button
                       type="button"
                       onClick={handleAddTag}
                       disabled={!tagInput.trim() || tags.length >= 5}
                       className="px-2.5 py-1.5 rounded-lg text-[10px] font-medium disabled:opacity-40"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #252525", color: "#F0FE00" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", color: "#F0FE00" }}
                     >
                       Add
                     </button>
@@ -556,7 +556,7 @@ export function CanvasToFrameworkPanel({
       {/* Footer */}
       <div
         className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderTop: "1px solid #1e1e1e" }}
+        style={{ borderTop: "1px solid var(--app-card-elevated)" }}
       >
         <button
           type="button"
@@ -564,8 +564,8 @@ export function CanvasToFrameworkPanel({
             if (step === 1) onClose();
             else setStep(s => (s - 1) as 1 | 2 | 3);
           }}
-          className="px-3.5 py-2 rounded-xl text-xs transition-colors hover:text-white"
-          style={{ color: "#444" }}
+          className="px-3.5 py-2 rounded-xl text-xs transition-colors hover:text-foreground"
+          style={{ color: "var(--app-text-faint)" }}
         >
           {step === 1 ? "Cancel" : "Back"}
         </button>
@@ -578,7 +578,7 @@ export function CanvasToFrameworkPanel({
               setStep(s => (s + 1) as 2 | 3);
             }}
             className="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
-            style={{ backgroundColor: stepColor, color: step === 3 ? "#0a0a0a" : step === 1 ? "#0a1a0e" : "#0a0a18" }}
+            style={{ backgroundColor: stepColor, color: step === 3 ? "var(--app-bg)" : step === 1 ? "#0a1a0e" : "#0a0a18" }}
           >
             Continue
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -591,7 +591,7 @@ export function CanvasToFrameworkPanel({
             onClick={handleSave}
             disabled={!frameworkName.trim() || isSaving}
             className="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-all"
-            style={{ backgroundColor: "#F0FE00", color: "#0a0a0a" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)" }}
           >
             {isSaving ? (
               <><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Saving…</>

@@ -27,9 +27,9 @@ function MockupImageNodeComponent({
     <div
       style={{
         width: 240,
-        backgroundColor: "#141414",
+        backgroundColor: "var(--app-card)",
         borderRadius: 12,
-        border: selected ? "2px solid #F0FE00" : "1px solid #2a2a2a",
+        border: selected ? "2px solid #F0FE00" : "1px solid var(--app-border-strong)",
         overflow: "hidden",
         boxShadow: selected
           ? "0 0 0 2px rgba(240, 254, 0, 0.2)"
@@ -46,7 +46,7 @@ function MockupImageNodeComponent({
         style={{
           width: "100%",
           minHeight: imageLoaded ? undefined : 160,
-          backgroundColor: "#0d0d0d",
+          backgroundColor: "var(--app-bg)",
           position: "relative",
         }}
       >
@@ -64,7 +64,7 @@ function MockupImageNodeComponent({
               style={{
                 width: 24,
                 height: 24,
-                border: "2px solid #333",
+                border: "2px solid var(--app-canvas-dot)",
                 borderTopColor: "#F0FE00",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
@@ -92,7 +92,7 @@ function MockupImageNodeComponent({
           style={{
             fontSize: 13,
             fontWeight: 500,
-            color: "#fff",
+            color: "var(--app-text-primary)",
             margin: 0,
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -105,7 +105,7 @@ function MockupImageNodeComponent({
         <p
           style={{
             fontSize: 11,
-            color: "#666",
+            color: "var(--app-text-faint)",
             margin: "4px 0 0 0",
             ...fontStyle,
           }}
@@ -153,7 +153,7 @@ function MockupImageNodeComponent({
               height="14"
               viewBox="0 0 14 14"
               fill="none"
-              stroke="#fff"
+              stroke="var(--app-text-primary)"
               strokeWidth="1.5"
             >
               <path d="M7 2v8M4 7l3 3 3-3M2 12h10" strokeLinecap="round" />

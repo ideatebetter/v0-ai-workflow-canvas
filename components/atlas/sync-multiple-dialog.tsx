@@ -303,7 +303,7 @@ export function SyncMultipleDialog({
               placeholder="Search canvases or nodes..."
               value={pickerSearches[sourceNode.id] || ""}
               onChange={e => setPickerSearch(sourceNode.id, e.target.value)}
-              className="w-full pl-7 pr-3 py-1.5 rounded-md text-xs text-white placeholder-gray-600 outline-none"
+              className="w-full pl-7 pr-3 py-1.5 rounded-md text-xs text-foreground placeholder-gray-600 outline-none"
               style={{
                 backgroundColor: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.08)",
@@ -315,7 +315,7 @@ export function SyncMultipleDialog({
         </div>
 
         {sorted.length === 0 ? (
-          <p className="px-3 py-2.5 text-xs" style={{ color: "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+          <p className="px-3 py-2.5 text-xs" style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
             {search ? `No results for "${search}"` : "No compatible nodes found."}
           </p>
         ) : (
@@ -337,10 +337,10 @@ export function SyncMultipleDialog({
                       <NodeIcon node={c.node} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-xs text-white truncate block" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                      <span className="text-xs text-foreground truncate block" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                         {getNodeLabel(c.node)}
                       </span>
-                      <span className="text-[10px] truncate block flex items-center gap-1" style={{ color: isCurrentCanvas ? "#60a5fa" : "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                      <span className="text-[10px] truncate block flex items-center gap-1" style={{ color: isCurrentCanvas ? "#60a5fa" : "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                         {isCurrentCanvas ? "This canvas" : c.canvas.name}
                       </span>
                     </div>
@@ -391,7 +391,7 @@ export function SyncMultipleDialog({
         >
           <div>
             <h2
-              className="text-base font-semibold text-white"
+              className="text-base font-semibold text-foreground"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
             >
               Sync Multiple Items
@@ -409,7 +409,7 @@ export function SyncMultipleDialog({
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M11 3L3 11M3 3L11 11" stroke="#888" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M11 3L3 11M3 3L11 11" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -500,7 +500,7 @@ export function SyncMultipleDialog({
                           <div className="w-6 h-6 rounded flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
                             <NodeIcon node={match.sourceNode} />
                           </div>
-                          <span className="text-sm text-white truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                          <span className="text-sm text-foreground truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                             {getNodeLabel(match.sourceNode)}
                           </span>
                         </div>
@@ -516,10 +516,10 @@ export function SyncMultipleDialog({
                             <NodeIcon node={effectiveTargetNode} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <span className="text-sm text-white truncate block" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                            <span className="text-sm text-foreground truncate block" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                               {getNodeLabel(effectiveTargetNode)}
                             </span>
-                            <span className="text-[10px] truncate block" style={{ color: isCurrentCanvasTarget ? "#60a5fa" : "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                            <span className="text-[10px] truncate block" style={{ color: isCurrentCanvasTarget ? "#60a5fa" : "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                               {isCurrentCanvasTarget ? `This canvas · ${effectiveReason}` : `${effectiveTargetCanvas.name} · ${effectiveReason}`}
                             </span>
                           </div>
@@ -531,7 +531,7 @@ export function SyncMultipleDialog({
                           onClick={(e) => { e.stopPropagation(); togglePicker(match.sourceNode.id); }}
                           className="text-[10px] px-2 py-1 rounded-md transition-colors hover:bg-white/10 shrink-0"
                           style={{
-                            color: isPickerOpen ? "#60a5fa" : "#555",
+                            color: isPickerOpen ? "#60a5fa" : "var(--app-text-faint)",
                             border: `1px solid ${isPickerOpen ? "rgba(96,165,250,0.3)" : "rgba(255,255,255,0.08)"}`,
                             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                           }}
@@ -594,7 +594,7 @@ export function SyncMultipleDialog({
                         <div className="w-6 h-6 rounded flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
                           <NodeIcon node={nm.node} />
                         </div>
-                        <span className="text-sm text-white truncate flex-1" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                        <span className="text-sm text-foreground truncate flex-1" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                           {getNodeLabel(nm.node)}
                         </span>
 
@@ -608,10 +608,10 @@ export function SyncMultipleDialog({
                                 <NodeIcon node={pickedNode} />
                               </div>
                               <div>
-                                <span className="text-sm text-white truncate block max-w-[100px]" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                                <span className="text-sm text-foreground truncate block max-w-[100px]" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                                   {getNodeLabel(pickedNode)}
                                 </span>
-                                <span className="text-[10px] block" style={{ color: "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                                <span className="text-[10px] block" style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                                   {pickedCanvas?.name}
                                 </span>
                               </div>
@@ -623,7 +623,7 @@ export function SyncMultipleDialog({
                               title="Remove"
                             >
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                <path d="M8 2L2 8M2 2L8 8" stroke="#888" strokeWidth="1.5" strokeLinecap="round"/>
+                                <path d="M8 2L2 8M2 2L8 8" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
                               </svg>
                             </button>
                           </div>
@@ -634,7 +634,7 @@ export function SyncMultipleDialog({
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors hover:bg-white/10"
                             style={{
                               backgroundColor: isOpen ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-                              color: "#888",
+                              color: "var(--app-text-muted)",
                               border: "1px solid rgba(255,255,255,0.08)",
                               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                             }}
@@ -661,7 +661,7 @@ export function SyncMultipleDialog({
             <div className="px-5 py-3">
               <p
                 className="text-[11px] uppercase tracking-wider mb-2"
-                style={{ color: "#444", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+                style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
               >
                 Already Synced
               </p>
@@ -670,7 +670,7 @@ export function SyncMultipleDialog({
                   <div className="w-6 h-6 rounded flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
                     <NodeIcon node={nm.node} />
                   </div>
-                  <span className="text-sm truncate" style={{ color: "#444", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                  <span className="text-sm truncate" style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                     {getNodeLabel(nm.node)}
                   </span>
                   <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#22c55e" }}>Synced</span>
@@ -699,7 +699,7 @@ export function SyncMultipleDialog({
         >
           <p
             className="text-xs"
-            style={{ color: "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
           >
             {totalCount > 0 ? `${totalCount} item${totalCount !== 1 ? "s" : ""} will be synced` : "Select items to sync"}
           </p>

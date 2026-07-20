@@ -159,7 +159,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
   const header = (
     <g>
       <rect x={cx} y={cy} width={Math.min(innerW * 0.55, 100)} height={6} rx={2} fill="#f0fe00" fillOpacity={0.85} />
-      <rect x={cx} y={cy + 12} width={Math.min(innerW * 0.3, 60)} height={4} rx={1.5} fill="#666" />
+      <rect x={cx} y={cy + 12} width={Math.min(innerW * 0.3, 60)} height={4} rx={1.5} fill="var(--app-text-faint)" />
     </g>
   );
 
@@ -183,7 +183,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
             return (
               <g key={i}>
                 <circle cx={cx + dot / 2} cy={ry + rowH / 2} r={dot / 2} fill={["#3B82F6", "#F59E0B", "#10B981", "#EC4899"][i % 4]} />
-                <rect x={cx + dot + 6} y={ry + rowH / 2 - 2} width={innerW - dot - 6} height={4} rx={2} fill="#222" />
+                <rect x={cx + dot + 6} y={ry + rowH / 2 - 2} width={innerW - dot - 6} height={4} rx={2} fill="var(--app-border)" />
                 <rect x={cx + dot + 6} y={ry + rowH / 2 - 2} width={(innerW - dot - 6) * pct} height={4} rx={2} fill="#4ADE80" fillOpacity={0.7} />
               </g>
             );
@@ -245,7 +245,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
       return (
         <g>
           {header}
-          <line x1={cx} y1={midY} x2={cx + innerW} y2={midY} stroke="#333" strokeWidth={1.5} />
+          <line x1={cx} y1={midY} x2={cx + innerW} y2={midY} stroke="var(--app-canvas-dot)" strokeWidth={1.5} />
           {Array.from({ length: stages }).map((_, i) => {
             const cX = cx + i * gap;
             const done = i < 2;
@@ -256,8 +256,8 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
                 cx={cX}
                 cy={midY}
                 r={5}
-                fill={done ? "#4ADE80" : active ? "#FCD34D" : "#2a2a2a"}
-                stroke={done || active ? "none" : "#444"}
+                fill={done ? "#4ADE80" : active ? "#FCD34D" : "var(--app-border-strong)"}
+                stroke={done || active ? "none" : "var(--app-text-faint)"}
                 strokeWidth={1}
               />
             );
@@ -273,9 +273,9 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
       return (
         <g>
           {header}
-          <rect x={cx} y={b1Y} width={innerW * 0.55} height={10} rx={5} fill="#2a2a2a" />
+          <rect x={cx} y={b1Y} width={innerW * 0.55} height={10} rx={5} fill="var(--app-border-strong)" />
           <rect x={cx + innerW * 0.35} y={b1Y + 16} width={innerW * 0.55} height={10} rx={5} fill="#3B82F6" fillOpacity={0.5} />
-          <rect x={cx} y={b1Y + 32} width={innerW * 0.4} height={10} rx={5} fill="#2a2a2a" />
+          <rect x={cx} y={b1Y + 32} width={innerW * 0.4} height={10} rx={5} fill="var(--app-border-strong)" />
         </g>
       );
     }
@@ -326,7 +326,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
               width={cellW}
               height={cellH}
               rx={2}
-              fill="#2a2a2a"
+              fill="var(--app-border-strong)"
             />
           ))}
         </g>
@@ -339,8 +339,8 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
         <g>
           {header}
           <rect x={cx} y={cy + 24} width={innerW * 0.9} height={4} rx={1} fill="#EC4899" fillOpacity={0.5} />
-          <rect x={cx} y={cy + 32} width={innerW * 0.7} height={4} rx={1} fill="#444" />
-          <rect x={cx} y={cy + 40} width={innerW * 0.5} height={4} rx={1} fill="#444" />
+          <rect x={cx} y={cy + 32} width={innerW * 0.7} height={4} rx={1} fill="var(--app-text-faint)" />
+          <rect x={cx} y={cy + 40} width={innerW * 0.5} height={4} rx={1} fill="var(--app-text-faint)" />
           <path
             d="M12 2v6M12 16v6M2 12h6M16 12h6"
             transform={`translate(${cx + innerW - 28}, ${cy + 22})`}
@@ -365,7 +365,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
               width={innerW * (i === 0 ? 0.8 : i % 2 === 0 ? 0.9 : 0.6)}
               height={3}
               rx={1}
-              fill="#333"
+              fill="var(--app-canvas-dot)"
             />
           ))}
         </g>
@@ -399,8 +399,8 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
       return (
         <g>
           {header}
-          <rect x={cx} y={cy + 26} width={innerW * 0.7} height={3} rx={1} fill="#333" />
-          <rect x={cx} y={cy + 34} width={innerW * 0.5} height={3} rx={1} fill="#333" />
+          <rect x={cx} y={cy + 26} width={innerW * 0.7} height={3} rx={1} fill="var(--app-canvas-dot)" />
+          <rect x={cx} y={cy + 34} width={innerW * 0.5} height={3} rx={1} fill="var(--app-canvas-dot)" />
           {iconPath && (
             <g
               transform={`translate(${x + w - iconSize - pad}, ${y + h - iconSize - pad})`}
@@ -409,7 +409,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
               <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
                 <path
                   d={iconPath}
-                  stroke="#888"
+                  stroke="var(--app-text-muted)"
                   strokeWidth={1.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -494,14 +494,14 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
     return (
       <div
         className={`w-full h-full relative overflow-hidden ${className}`}
-        style={{ backgroundColor: "#0a0a0a" }}
+        style={{ backgroundColor: "var(--app-bg)" }}
       >
         <div
           className="absolute inset-0 opacity-30"
           style={{
             backgroundImage: `
-              linear-gradient(to right, #222222 1px, transparent 1px),
-              linear-gradient(to bottom, #222222 1px, transparent 1px)
+              linear-gradient(to right, var(--app-border) 1px, transparent 1px),
+              linear-gradient(to bottom, var(--app-border) 1px, transparent 1px)
             `,
             backgroundSize: "16px 16px",
           }}
@@ -521,14 +521,14 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
   return (
     <div
       className={`w-full h-full relative overflow-hidden ${className}`}
-      style={{ backgroundColor: "#0a0a0a" }}
+      style={{ backgroundColor: "var(--app-bg)" }}
     >
       <div
         className="absolute inset-0 opacity-20"
         style={{
           backgroundImage: `
-            linear-gradient(to right, #222222 1px, transparent 1px),
-            linear-gradient(to bottom, #222222 1px, transparent 1px)
+            linear-gradient(to right, var(--app-border) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--app-border) 1px, transparent 1px)
           `,
           backgroundSize: "20px 20px",
         }}
@@ -546,7 +546,7 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
             y1={edge.y1}
             x2={edge.x2}
             y2={edge.y2}
-            stroke="#333333"
+            stroke="var(--app-canvas-dot)"
             strokeWidth={2}
             strokeDasharray="6 4"
             strokeLinecap="round"
@@ -592,7 +592,7 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
                   height={node.height}
                   rx={rx}
                   fill="none"
-                  stroke="#2a2a2a"
+                  stroke="var(--app-border-strong)"
                   strokeWidth={1.5}
                 />
               </g>
@@ -609,8 +609,8 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
                   width={node.width}
                   height={node.height}
                   rx={rx}
-                  fill="#111111"
-                  stroke="#2a2a2a"
+                  fill="var(--app-bg-elevated)"
+                  stroke="var(--app-border-strong)"
                   strokeWidth={1.5}
                 />
                 <foreignObject
@@ -649,8 +649,8 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
                 width={node.width}
                 height={node.height}
                 rx={rx}
-                fill="#111111"
-                stroke="#2a2a2a"
+                fill="var(--app-bg-elevated)"
+                stroke="var(--app-border-strong)"
                 strokeWidth={1.5}
               />
               {renderNodeMock(node.type, node.x, node.y, node.width, node.height)}

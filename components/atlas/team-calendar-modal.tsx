@@ -73,26 +73,26 @@ function DayColumn({ date, member, isOff, onToggleOff, isToday }: DayColumnProps
   const weekend = isWeekend(date);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 relative" style={{ borderLeft: "1px solid #222" }}>
+    <div className="flex-1 flex flex-col min-w-0 relative" style={{ borderLeft: "1px solid var(--app-border)" }}>
       {/* Day header */}
       <button
         type="button"
         onClick={!weekend ? onToggleOff : undefined}
         className="flex flex-col items-center py-2 gap-0.5 flex-shrink-0 transition-colors"
         style={{
-          borderBottom: "1px solid #222",
+          borderBottom: "1px solid var(--app-border)",
           cursor: weekend ? "default" : "pointer",
           backgroundColor: isOff ? "#ef444412" : isToday ? "#F0FE0008" : "transparent",
         }}
         title={weekend ? undefined : isOff ? "Click to remove day off" : "Click to mark as day off"}
       >
-        <span className="text-[9px] uppercase tracking-widest" style={{ color: weekend ? "#444" : "#666" }}>
+        <span className="text-[9px] uppercase tracking-widest" style={{ color: weekend ? "var(--app-text-faint)" : "var(--app-text-faint)" }}>
           {DAY_SHORT[date.getDay()]}
         </span>
         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold`}
           style={{
             backgroundColor: isToday ? "#F0FE00" : "transparent",
-            color: isToday ? "#121212" : weekend ? "#444" : "#ccc",
+            color: isToday ? "var(--app-bg-elevated)" : weekend ? "var(--app-text-faint)" : "#ccc",
           }}>
           {date.getDate()}
         </div>
@@ -105,7 +105,7 @@ function DayColumn({ date, member, isOff, onToggleOff, isToday }: DayColumnProps
       <div className="relative flex-1" style={{ height: HOUR_COUNT * ROW_H }}>
         {/* Hour lines */}
         {Array.from({ length: HOUR_COUNT }, (_, i) => (
-          <div key={i} className="absolute left-0 right-0" style={{ top: i * ROW_H, borderTop: "1px solid #1e1e1e" }} />
+          <div key={i} className="absolute left-0 right-0" style={{ top: i * ROW_H, borderTop: "1px solid var(--app-card-elevated)" }} />
         ))}
 
         {/* Half-hour lines */}
@@ -116,7 +116,7 @@ function DayColumn({ date, member, isOff, onToggleOff, isToday }: DayColumnProps
         {/* Weekend / off overlay */}
         {(weekend || isOff) && (
           <div className="absolute inset-0 flex items-center justify-center"
-            style={{ backgroundColor: isOff ? "#ef444408" : "#ffffff03", zIndex: 1 }}>
+            style={{ backgroundColor: isOff ? "#ef444408" : "var(--app-text-primary)03", zIndex: 1 }}>
             {isOff && (
               <span className="text-[9px] font-medium rotate-90 whitespace-nowrap" style={{ color: "#ef444440" }}>
                 Day Off
@@ -130,7 +130,7 @@ function DayColumn({ date, member, isOff, onToggleOff, isToday }: DayColumnProps
           <div className="absolute left-0 right-0" style={{
             top: (9 - HOUR_START) * ROW_H,
             height: 8 * ROW_H,
-            backgroundColor: "#ffffff03",
+            backgroundColor: "var(--app-text-primary)03",
           }} />
         )}
 
@@ -181,7 +181,7 @@ function TeamPlanningView({ members, weekDates, daysOff, onToggleOff }:
   return (
     <div className="flex flex-col h-full overflow-auto">
       {/* Header row */}
-      <div className="flex flex-shrink-0" style={{ borderBottom: "1px solid #222" }}>
+      <div className="flex flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
         {/* Name column spacer */}
         <div className="flex-shrink-0" style={{ width: 140 }} />
         {workDays.map(d => {
@@ -190,10 +190,10 @@ function TeamPlanningView({ members, weekDates, daysOff, onToggleOff }:
           const isToday = iso === today;
           return (
             <div key={iso} className="flex-1 flex flex-col items-center py-2 gap-0.5"
-              style={{ borderLeft: "1px solid #222", backgroundColor: isOff ? "#ef444412" : isToday ? "#F0FE0008" : "transparent" }}>
+              style={{ borderLeft: "1px solid var(--app-border)", backgroundColor: isOff ? "#ef444412" : isToday ? "#F0FE0008" : "transparent" }}>
               <span className="text-[9px] uppercase tracking-widest text-gray-600">{DAY_SHORT[d.getDay()]}</span>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold`}
-                style={{ backgroundColor: isToday ? "#F0FE00" : "transparent", color: isToday ? "#121212" : "#ccc" }}>
+                style={{ backgroundColor: isToday ? "#F0FE00" : "transparent", color: isToday ? "var(--app-bg-elevated)" : "#ccc" }}>
                 {d.getDate()}
               </div>
               {isOff && <span className="text-[8px] font-medium" style={{ color: "#ef4444" }}>Team Off</span>}
@@ -208,15 +208,15 @@ function TeamPlanningView({ members, weekDates, daysOff, onToggleOff }:
           const allocs = tm.projectAllocations ?? [];
           const col = tm.utilizationRate > 90 ? "#ef4444" : tm.utilizationRate > 80 ? "#f59e0b" : "#22c55e";
           return (
-            <div key={mi} className="flex items-stretch" style={{ borderBottom: "1px solid #1e1e1e", minHeight: 64 }}>
+            <div key={mi} className="flex items-stretch" style={{ borderBottom: "1px solid var(--app-card-elevated)", minHeight: 64 }}>
               {/* Name cell */}
-              <div className="flex items-center gap-2 px-3 flex-shrink-0" style={{ width: 140, borderRight: "1px solid #222" }}>
+              <div className="flex items-center gap-2 px-3 flex-shrink-0" style={{ width: 140, borderRight: "1px solid var(--app-border)" }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                  style={{ backgroundColor: tm.member?.color || "#525252", color: "#fff" }}>
+                  style={{ backgroundColor: tm.member?.color || "#525252", color: "var(--app-text-primary)" }}>
                   {tm.member?.name?.charAt(0) ?? "?"}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-medium text-white truncate">{tm.member?.name}</div>
+                  <div className="text-[10px] font-medium text-foreground truncate">{tm.member?.name}</div>
                   <div className="text-[8px]" style={{ color: col }}>{tm.utilizationRate}%</div>
                 </div>
               </div>
@@ -226,7 +226,7 @@ function TeamPlanningView({ members, weekDates, daysOff, onToggleOff }:
                 const iso = isoDate(d);
                 const isOff = daysOff.has(iso);
                 return (
-                  <div key={iso} className="flex-1 p-1 relative" style={{ borderLeft: "1px solid #1e1e1e", backgroundColor: isOff ? "#ef444408" : "transparent" }}>
+                  <div key={iso} className="flex-1 p-1 relative" style={{ borderLeft: "1px solid var(--app-card-elevated)", backgroundColor: isOff ? "#ef444408" : "transparent" }}>
                     {!isOff && allocs.length > 0 && (
                       <div className="flex flex-col gap-0.5 h-full">
                         {allocs.map((p, pi) => (
@@ -304,18 +304,18 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
 
       {/* Modal */}
       <div className="relative flex flex-col overflow-hidden rounded-2xl shadow-2xl"
-        style={{ backgroundColor: "#111", border: "1px solid #2a2a2a", width: 900, maxWidth: "calc(100vw - 48px)", height: "88vh" }}>
+        style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border-strong)", width: 900, maxWidth: "calc(100vw - 48px)", height: "88vh" }}>
 
         {/* ── Modal header ── */}
-        <div className="flex items-center gap-4 px-5 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-4 px-5 py-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
           {/* Member picker */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{ backgroundColor: focusMember.member?.color || "#525252", color: "#fff" }}>
+              style={{ backgroundColor: focusMember.member?.color || "#525252", color: "var(--app-text-primary)" }}>
               {focusMember.member?.name?.charAt(0) ?? "?"}
             </div>
             <div>
-              <div className="text-white font-semibold text-sm">{focusMember.member?.name}</div>
+              <div className="text-foreground font-semibold text-sm">{focusMember.member?.name}</div>
               <div className="text-[9px]" style={{ color: utilColor }}>{focusMember.utilizationRate}% utilized</div>
             </div>
           </div>
@@ -327,12 +327,12 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
                 <button key={i} type="button" onClick={() => setFocusMember(m)}
                   className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-medium transition-colors flex-shrink-0"
                   style={{
-                    backgroundColor: focusMember === m ? (m.member?.color || "#525252") : "#1e1e1e",
-                    color: focusMember === m ? "#fff" : "#777",
-                    border: `1px solid ${focusMember === m ? "transparent" : "#2a2a2a"}`,
+                    backgroundColor: focusMember === m ? (m.member?.color || "#525252") : "var(--app-card-elevated)",
+                    color: focusMember === m ? "var(--app-text-primary)" : "#777",
+                    border: `1px solid ${focusMember === m ? "transparent" : "var(--app-border-strong)"}`,
                   }}>
                   <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                    style={{ backgroundColor: focusMember === m ? "rgba(255,255,255,0.3)" : (m.member?.color || "#525252"), color: "#fff" }}>
+                    style={{ backgroundColor: focusMember === m ? "rgba(255,255,255,0.3)" : (m.member?.color || "#525252"), color: "var(--app-text-primary)" }}>
                     {m.member?.name?.charAt(0)}
                   </div>
                   {m.member?.name?.split(" ")[0]}
@@ -344,11 +344,11 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
           <div className="flex-1" />
 
           {/* View toggle */}
-          <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ backgroundColor: "#1e1e1e" }}>
+          <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ backgroundColor: "var(--app-card-elevated)" }}>
             {([["individual", "Week View"], ["team", "Team View"]] as const).map(([v, label]) => (
               <button key={v} type="button" onClick={() => setView(v)}
                 className="px-3 py-1.5 rounded-md text-[10px] font-medium transition-colors"
-                style={{ backgroundColor: view === v ? "#F0FE00" : "transparent", color: view === v ? "#121212" : "#777" }}>
+                style={{ backgroundColor: view === v ? "#F0FE00" : "transparent", color: view === v ? "var(--app-bg-elevated)" : "#777" }}>
                 {label}
               </button>
             ))}
@@ -358,7 +358,7 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setWeekOffset(0)}
               className="px-2 py-1 rounded text-[9px] font-medium transition-colors hover:bg-white/10"
-              style={{ color: "#888", border: "1px solid #2a2a2a" }}>Today</button>
+              style={{ color: "var(--app-text-muted)", border: "1px solid var(--app-border-strong)" }}>Today</button>
             <button type="button" onClick={() => setWeekOffset(p => p - 1)}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/10 transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -372,7 +372,7 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
 
           <button type="button" onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}>
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -380,7 +380,7 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
         </div>
 
         {/* ── Legend + hints ── */}
-        <div className="flex items-center gap-4 px-5 py-2 flex-shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid #1e1e1e", backgroundColor: "#0d0d0d" }}>
+        <div className="flex items-center gap-4 px-5 py-2 flex-shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid var(--app-card-elevated)", backgroundColor: "var(--app-bg)" }}>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#ef444418", border: "1px solid #ef444430" }} />
             <span className="text-[9px] text-gray-600">Day off</span>

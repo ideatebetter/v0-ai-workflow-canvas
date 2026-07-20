@@ -394,7 +394,7 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
         {view === "masonry" && (
           <div style={{ columns: Math.min(images.length, 4), columnGap: "10px" }}>
             {images.map((img) => (
-              <div key={img.id} className="break-inside-avoid mb-2.5 rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
+              <div key={img.id} className="break-inside-avoid mb-2.5 rounded-lg overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                 {img.fileType === "video" ? (
                   <video src={img.url} className="w-full object-cover" muted loop autoPlay playsInline />
                 ) : (
@@ -416,7 +416,7 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
             }}
           >
             {images.map((img) => (
-              <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a", aspectRatio: "4/3" }}>
+              <div key={img.id} className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)", aspectRatio: "4/3" }}>
                 {img.fileType === "video" ? (
                   <video src={img.url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
                 ) : (
@@ -453,7 +453,7 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
                       width: w,
                       zIndex: pos.zIndex ?? 1,
                       transform: `rotate(${pos.rotation ?? 0}deg)`,
-                      backgroundColor: "#1a1a1a",
+                      backgroundColor: "var(--app-card-elevated)",
                       cursor: "grab",
                       touchAction: "none",
                     }}
@@ -530,7 +530,7 @@ function BentoCellMedia({ node, focal }: { node: Node; focal: FocalPoint }) {
   }
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <span style={{ fontSize: 24, color: "#6b7280" }}>{fileData.fileExtension?.toUpperCase()}</span>
+      <span style={{ fontSize: 24, color: "var(--app-text-muted)" }}>{fileData.fileExtension?.toUpperCase()}</span>
     </div>
   );
 }
@@ -602,7 +602,7 @@ function BentoGridCell({
     <div
       className={`relative overflow-hidden rounded-lg group/cell ${itemClass}`}
       style={{
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "var(--app-card-elevated)",
         opacity: isDragSource ? 0.35 : 1,
         outline: isDragOver ? "2px solid #F0FE00" : "none",
         outlineOffset: -2,
@@ -870,9 +870,9 @@ export function PresentationViewer({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.95)" }}>
         <div className="text-center">
-          <p className="text-white text-lg mb-4">No presentation slides found.</p>
+          <p className="text-foreground text-lg mb-4">No presentation slides found.</p>
           <p className="text-gray-400 text-sm mb-6">Connect nodes with presentation edges or group images to create a presentation.</p>
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-white" style={{ backgroundColor: "#333333" }}>Close</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-foreground" style={{ backgroundColor: "var(--app-canvas-dot)" }}>Close</button>
         </div>
       </div>
     );
@@ -938,7 +938,7 @@ export function PresentationViewer({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={mediaUrl} alt={fileData.fileName || "Slide"} style={{ flex: "1 1 0", minHeight: 0, maxWidth: "100%", objectFit: "contain", borderRadius: 12 }} draggable={false} />
               ) : (
-                <div className="flex-1 flex items-center justify-center rounded-lg" style={{ backgroundColor: "#1a1a1a", minWidth: 120 }}>
+                <div className="flex-1 flex items-center justify-center rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)", minWidth: 120 }}>
                   <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
                 </div>
               )}
@@ -973,7 +973,7 @@ export function PresentationViewer({
         <div className={`flex flex-col justify-center h-full w-full px-16 ${alignMap[formatting?.align || "left"]}`} style={{ maxWidth }}>
           <div
             className={`leading-tight ${formatting?.bold ? "font-semibold" : "font-normal"}`}
-            style={{ color: formatting?.color || "#ffffff", fontFamily: fontMap[formatting?.font || "sans"], fontSize: `${fontSize}px`, lineHeight, letterSpacing: fontSize > 40 ? "-0.02em" : "-0.01em", textWrap: "balance" }}
+            style={{ color: formatting?.color || "var(--app-text-primary)", fontFamily: fontMap[formatting?.font || "sans"], fontSize: `${fontSize}px`, lineHeight, letterSpacing: fontSize > 40 ? "-0.02em" : "-0.01em", textWrap: "balance" }}
           >
             {plainText}
           </div>
@@ -993,10 +993,10 @@ export function PresentationViewer({
 
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="w-64 h-64 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+        <div className="w-64 h-64 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <span className="text-xl text-gray-400">{currentNode.type}</span>
         </div>
-        <h2 className="text-2xl font-medium text-white mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+        <h2 className="text-2xl font-medium text-foreground mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           {String(currentNode.data.label ?? "Untitled")}
         </h2>
       </div>
@@ -1004,20 +1004,20 @@ export function PresentationViewer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "var(--app-bg)" }}>
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-1">
           <button type="button" onClick={goPrev} disabled={currentIndex === 0} className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
           <div className="px-2 py-1 rounded text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{currentIndex + 1} / {slides.length}</div>
           <button type="button" onClick={goNext} disabled={currentIndex === slides.length - 1} className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18L15 12L9 6" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
         <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/></svg>
         </button>
       </div>
 

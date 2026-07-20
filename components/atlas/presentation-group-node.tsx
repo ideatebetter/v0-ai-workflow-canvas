@@ -19,7 +19,7 @@ function ThumbCell({ url, index }: { url: string; index: number }) {
   }, [url]);
 
   return (
-    <div className="relative aspect-square rounded overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="relative aspect-square rounded overflow-hidden" style={{ backgroundColor: "var(--app-bg)" }}>
       {url ? (
         <img
           src={url}
@@ -99,7 +99,7 @@ export function PresentationGroupNode({
       style={{
         width: 220,
         minHeight: 160,
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "var(--app-card-elevated)",
         borderRadius: 12,
         outline: selected ? "2px solid #F0FE00" : "none",
         outlineOffset: 2,
@@ -111,7 +111,7 @@ export function PresentationGroupNode({
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2"
-        style={{ borderBottom: "1px solid #333" }}
+        style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" className="flex-shrink-0">
           <rect x="2" y="2" width="9" height="9" rx="1" />

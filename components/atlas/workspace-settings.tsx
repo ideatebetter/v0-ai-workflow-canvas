@@ -479,8 +479,8 @@ export function WorkspaceSettingsDialog({
       <DialogContent
         className="p-0 gap-0 overflow-hidden"
         style={{
-          backgroundColor: "#111111",
-          border: "1px solid #222222",
+          backgroundColor: "var(--app-bg-elevated)",
+          border: "1px solid var(--app-border)",
           borderRadius: "16px",
           maxWidth: "720px",
           width: "90vw",
@@ -492,10 +492,10 @@ export function WorkspaceSettingsDialog({
           {/* Header */}
           <div
             className="flex-shrink-0 px-6 py-4 flex items-center justify-between"
-            style={{ borderBottom: "1px solid #222222" }}
+            style={{ borderBottom: "1px solid var(--app-border)" }}
           >
             <h2
-              className="text-white font-semibold text-lg"
+              className="text-foreground font-semibold text-lg"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               Settings
@@ -508,7 +508,7 @@ export function WorkspaceSettingsDialog({
             {/* Figma Sync */}
             <div>
               <h3
-                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-blue-400">
@@ -522,7 +522,7 @@ export function WorkspaceSettingsDialog({
               </h3>
               <div
                 className="rounded-xl p-4"
-                style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
               >
                 <p className="text-xs text-gray-500 mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Copy this token and paste it into the <strong className="text-gray-400">Sync with Ideate</strong> Figma plugin to enable live frame syncing.
@@ -536,10 +536,10 @@ export function WorkspaceSettingsDialog({
                     <code
                       className="flex-1 text-xs px-3 py-2 rounded-lg select-all overflow-hidden"
                       style={{
-                        background: "#0d0d0d",
+                        background: "var(--app-bg)",
                         color: "#60a5fa",
                         fontFamily: "monospace",
-                        border: "1px solid #2a2a2a",
+                        border: "1px solid var(--app-border-strong)",
                         wordBreak: "break-all",
                         display: "block",
                         lineHeight: 1.6,
@@ -580,12 +580,12 @@ export function WorkspaceSettingsDialog({
               </div>
 
               {/* Figma Personal Access Token — always visible */}
-              <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+              <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                 <div className="flex items-center gap-2">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
-                  <p className="text-xs font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <p className="text-xs font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Figma Personal Access Token
                   </p>
                 </div>
@@ -603,7 +603,7 @@ export function WorkspaceSettingsDialog({
                   }}
                   placeholder="figd_…"
                   className="w-full text-xs px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: "#0d0d0d", border: "1px solid #2a2a2a", color: "#e5e5e5", fontFamily: "monospace" }}
+                  style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border-strong)", color: "#e5e5e5", fontFamily: "monospace" }}
                 />
                 {figmaPatInput.trim() && (
                   <div className="flex items-center gap-1.5 text-xs" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -615,12 +615,12 @@ export function WorkspaceSettingsDialog({
 
               {/* Canvas sync from Figma — only when opened from a canvas */}
               {canvas && (
-                <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a" }}>
+                <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                   <div className="flex items-center gap-2">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    <p className="text-xs font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <p className="text-xs font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       Sync Canvas from Figma
                     </p>
                   </div>
@@ -629,7 +629,7 @@ export function WorkspaceSettingsDialog({
                   </p>
 
                   {canvas.figmaUrl ? (
-                    <div className="text-xs rounded px-2 py-1.5 truncate" style={{ backgroundColor: "#0d0d0d", border: "1px solid #2a2a2a", color: "#60a5fa", fontFamily: "monospace" }}>
+                    <div className="text-xs rounded px-2 py-1.5 truncate" style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border-strong)", color: "#60a5fa", fontFamily: "monospace" }}>
                       {canvas.figmaUrl}
                     </div>
                   ) : (
@@ -644,8 +644,8 @@ export function WorkspaceSettingsDialog({
                     disabled={!canvas.figmaUrl || !figmaPatInput.trim() || figmaImportStatus === "loading"}
                     className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-all"
                     style={{
-                      backgroundColor: !canvas.figmaUrl || !figmaPatInput.trim() ? "#1e1e1e" : "#F0FE00",
-                      color: !canvas.figmaUrl || !figmaPatInput.trim() ? "#555" : "#000",
+                      backgroundColor: !canvas.figmaUrl || !figmaPatInput.trim() ? "var(--app-card-elevated)" : "#F0FE00",
+                      color: !canvas.figmaUrl || !figmaPatInput.trim() ? "var(--app-text-faint)" : "#000",
                       border: "none",
                       minWidth: 80,
                     }}
@@ -684,7 +684,7 @@ export function WorkspaceSettingsDialog({
             {/* Workspace Details Section */}
             <div>
               <h3
-                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -706,10 +706,10 @@ export function WorkspaceSettingsDialog({
                     onChange={(e) =>
                       onSettingsChange({ ...settings, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                    className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30"
                     style={{
-                      backgroundColor: "#1a1a1a",
-                      border: "1px solid #333333",
+                      backgroundColor: "var(--app-card-elevated)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   />
@@ -724,8 +724,8 @@ export function WorkspaceSettingsDialog({
                   <div
                     className="px-3 py-2 rounded-lg text-sm text-gray-500"
                     style={{
-                      backgroundColor: "#1a1a1a",
-                      border: "1px solid #333333",
+                      backgroundColor: "var(--app-card-elevated)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "monospace",
                     }}
                   >
@@ -745,10 +745,10 @@ export function WorkspaceSettingsDialog({
                       onSettingsChange({ ...settings, description: e.target.value })
                     }
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
+                    className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
                     style={{
-                      backgroundColor: "#1a1a1a",
-                      border: "1px solid #333333",
+                      backgroundColor: "var(--app-card-elevated)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   />
@@ -757,12 +757,12 @@ export function WorkspaceSettingsDialog({
             </div>
 
             {/* Divider */}
-            <div style={{ borderTop: "1px solid #222222" }} />
+            <div style={{ borderTop: "1px solid var(--app-border)" }} />
 
             {/* Team Members Section */}
             <div>
               <h3
-                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -803,21 +803,21 @@ export function WorkspaceSettingsDialog({
                     <div key={member.userId} className="space-y-0">
                       <div
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                        style={{ backgroundColor: "#1a1a1a" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)" }}
                       >
                         <div
-                          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white"
-                          style={{ backgroundColor: "#333333" }}
+                          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-foreground"
+                          style={{ backgroundColor: "var(--app-canvas-dot)" }}
                         >
                           {member.initials}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            <span className="text-sm text-foreground font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                               {member.name}
                             </span>
                             {isCurrentUser && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                                 You
                               </span>
                             )}
@@ -834,8 +834,8 @@ export function WorkspaceSettingsDialog({
                           <select
                             value={member.role}
                             onChange={(e) => handleRoleChange(member.userId, e.target.value as MemberRole)}
-                            className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-                            style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
+                            className="text-xs rounded-md px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-white/20"
+                            style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <option value="viewer">Viewer</option>
                             <option value="editor">Editor</option>
@@ -854,7 +854,7 @@ export function WorkspaceSettingsDialog({
                             onClick={() => setTransferConfirmUserId(confirmingTransfer ? null : member.userId)}
                             title="Transfer ownership"
                             className="flex-shrink-0 p-1.5 rounded transition-colors"
-                            style={{ color: confirmingTransfer ? "#F0FE00" : "#555", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                            style={{ color: confirmingTransfer ? "#F0FE00" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
                           >
                             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                               <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -889,7 +889,7 @@ export function WorkspaceSettingsDialog({
                               type="button"
                               onClick={() => setTransferConfirmUserId(null)}
                               className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-                              style={{ backgroundColor: "#2a2a2a", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               Cancel
                             </button>
@@ -897,7 +897,7 @@ export function WorkspaceSettingsDialog({
                               type="button"
                               onClick={() => handleTransferOwnership(member.userId)}
                               className="text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors"
-                              style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               Confirm
                             </button>
@@ -910,7 +910,7 @@ export function WorkspaceSettingsDialog({
               </div>
 
               {/* Invite New Member */}
-              <div className="pt-4" style={{ borderTop: "1px solid #222222" }}>
+              <div className="pt-4" style={{ borderTop: "1px solid var(--app-border)" }}>
                 <p className="text-xs text-gray-500 mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Invite someone new
                 </p>
@@ -922,15 +922,15 @@ export function WorkspaceSettingsDialog({
                     placeholder="Email address"
                     onKeyDown={(e) => e.key === "Enter" && handleInvite()}
                     disabled={inviteLoading}
-                    className="flex-1 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="flex-1 px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   />
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as MemberRole)}
                     disabled={inviteLoading}
-                    className="px-3 py-2 rounded-lg text-sm text-white focus:outline-none disabled:opacity-50"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none disabled:opacity-50"
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <option value="viewer">Viewer</option>
                     <option value="editor">Editor</option>
@@ -941,7 +941,7 @@ export function WorkspaceSettingsDialog({
                     onClick={handleInvite}
                     disabled={inviteLoading || !inviteEmail.trim() || !user}
                     className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     {inviteLoading ? "..." : "Invite"}
                   </button>
@@ -960,8 +960,8 @@ export function WorkspaceSettingsDialog({
                   <div className="p-2 rounded-lg mt-2" style={{ backgroundColor: "rgba(240, 254, 0, 0.05)", border: "1px solid rgba(240, 254, 0, 0.2)" }}>
                     <p className="text-xs text-gray-400 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Share this invite link:</p>
                     <div className="flex items-center gap-2">
-                      <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }} />
-                      <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "#2a2a2a", color: "#F0FE00" }}>Copy</button>
+                      <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "monospace" }} />
+                      <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--app-border-strong)", color: "#F0FE00" }}>Copy</button>
                     </div>
                   </div>
                 )}
@@ -969,14 +969,14 @@ export function WorkspaceSettingsDialog({
             </div>
 
             {/* Divider */}
-            <div style={{ borderTop: "1px solid #222222" }} />
+            <div style={{ borderTop: "1px solid var(--app-border)" }} />
 
             {/* Canvas Settings Section — shown only when opened from a specific canvas */}
             {canvas && onCanvasChange && (
               <>
                 <div>
                   <h3
-                    className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                    className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -987,9 +987,9 @@ export function WorkspaceSettingsDialog({
                     <span className="text-xs text-gray-500 font-normal ml-1 truncate max-w-[180px]">{canvas.name}</span>
                   </h3>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                       <div>
-                        <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>AI Features</div>
+                        <div className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>AI Features</div>
                         <div className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                           Mockup generation and AI prompts for this canvas
                         </div>
@@ -1001,14 +1001,14 @@ export function WorkspaceSettingsDialog({
                     </div>
                   </div>
                 </div>
-                <div style={{ borderTop: "1px solid #222222" }} />
+                <div style={{ borderTop: "1px solid var(--app-border)" }} />
               </>
             )}
 
             {/* Preferences Section */}
             <div>
               <h3
-                className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -1026,8 +1026,8 @@ export function WorkspaceSettingsDialog({
                   <select
                     value={settings.preferences.defaultProduct}
                     onChange={(e) => handlePreferenceChange("defaultProduct", e.target.value as ProductConfig["id"])}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none"
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     {settings.products.filter(p => p.enabled).map((product) => (
                       <option key={product.id} value={product.id}>{product.name}</option>
@@ -1041,33 +1041,33 @@ export function WorkspaceSettingsDialog({
                   <select
                     value={settings.preferences.defaultStatus}
                     onChange={(e) => handlePreferenceChange("defaultStatus", e.target.value as "draft" | "in-review" | "approved")}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none"
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <option value="draft">Draft</option>
                     <option value="in-review">In Review</option>
                     <option value="approved">Approved</option>
                   </select>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                  <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Auto-save</div>
+                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                  <div className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Auto-save</div>
                   <Switch checked={settings.preferences.autoSave} onCheckedChange={(checked) => handlePreferenceChange("autoSave", checked)} />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                  <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Show Grid</div>
+                <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                  <div className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Show Grid</div>
                   <Switch checked={settings.preferences.showGrid} onCheckedChange={(checked) => handlePreferenceChange("showGrid", checked)} />
                 </div>
               </div>
             </div>
 
             {/* Divider */}
-            <div style={{ borderTop: "1px solid #222222" }} />
+            <div style={{ borderTop: "1px solid var(--app-border)" }} />
 
             {/* Naming Conventions Section */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3
-                  className="text-white font-semibold text-base flex items-center gap-2"
+                  className="text-foreground font-semibold text-base flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -1087,7 +1087,7 @@ export function WorkspaceSettingsDialog({
                 {/* Token Builder - Compact */}
                 <div
                   className="p-3 rounded-lg min-h-[40px] flex flex-wrap gap-2 items-center"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
                 >
                   {namingConventions.defaultRule.tokens.map((token, index) => (
                     <div key={`${token}-${index}`} className="flex items-center">
@@ -1096,7 +1096,7 @@ export function WorkspaceSettingsDialog({
                       )}
                       <span
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+                        style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {NAMING_TOKENS.find((t) => t.id === token)?.label || token}
                         <button type="button" onClick={() => removeToken(index)} className="hover:opacity-70">
@@ -1120,7 +1120,7 @@ export function WorkspaceSettingsDialog({
                       type="button"
                       onClick={() => addToken(token.id)}
                       className="px-2 py-1 rounded text-xs transition-colors hover:bg-white/10"
-                      style={{ backgroundColor: "#2a2a2a", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       + {token.label}
                     </button>
@@ -1134,8 +1134,8 @@ export function WorkspaceSettingsDialog({
                     <select
                       value={namingConventions.defaultRule.separator}
                       onChange={(e) => handleDefaultRuleChange({ separator: e.target.value })}
-                      className="w-full px-2 py-1.5 rounded text-sm text-white focus:outline-none"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-2 py-1.5 rounded text-sm text-foreground focus:outline-none"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {SEPARATORS.map((sep) => (
                         <option key={sep.value} value={sep.value}>{sep.label}</option>
@@ -1147,8 +1147,8 @@ export function WorkspaceSettingsDialog({
                     <select
                       value={namingConventions.defaultRule.caseStyle}
                       onChange={(e) => handleDefaultRuleChange({ caseStyle: e.target.value as "lowercase" | "uppercase" | "titlecase" | "kebab-case" | "snake_case" })}
-                      className="w-full px-2 py-1.5 rounded text-sm text-white focus:outline-none"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-2 py-1.5 rounded text-sm text-foreground focus:outline-none"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {CASE_STYLES.map((style) => (
                         <option key={style.value} value={style.value}>{style.label}</option>
@@ -1161,8 +1161,8 @@ export function WorkspaceSettingsDialog({
                       <select
                         value={namingConventions.defaultRule.dateFormat}
                         onChange={(e) => handleDefaultRuleChange({ dateFormat: e.target.value as "YYYY-MM-DD" | "YYYYMMDD" | "MM-DD-YYYY" | "DD-MM-YYYY" })}
-                        className="w-full px-2 py-1.5 rounded text-sm text-white focus:outline-none"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                        className="w-full px-2 py-1.5 rounded text-sm text-foreground focus:outline-none"
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {DATE_FORMATS.map((format) => (
                           <option key={format.value} value={format.value}>{format.label}</option>
@@ -1173,9 +1173,9 @@ export function WorkspaceSettingsDialog({
                 </div>
 
                 {/* Preview */}
-                <div className="p-3 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid #222222" }}>
+                <div className="p-3 rounded-lg" style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
                   <span className="text-xs text-gray-500 mr-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Preview:</span>
-                  <span className="text-sm text-white font-mono">{generateExample() || "filename"}<span className="text-gray-500">.fig</span></span>
+                  <span className="text-sm text-foreground font-mono">{generateExample() || "filename"}<span className="text-gray-500">.fig</span></span>
                 </div>
               </div>
             </div>
@@ -1183,10 +1183,10 @@ export function WorkspaceSettingsDialog({
             {/* Canvas Actions - At the end */}
             {isAdmin && (
               <>
-                <div style={{ borderTop: "1px solid #222222" }} />
+                <div style={{ borderTop: "1px solid var(--app-border)" }} />
                 <div>
                   <h3
-                    className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                    className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
@@ -1211,10 +1211,10 @@ export function WorkspaceSettingsDialog({
                         }}
                         placeholder="Full Name"
                         disabled={createUserLoading}
-                        className="px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
+                        className="px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
                         style={{
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #333333",
+                          backgroundColor: "var(--app-card-elevated)",
+                          border: "1px solid var(--app-canvas-dot)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       />
@@ -1228,10 +1228,10 @@ export function WorkspaceSettingsDialog({
                         }}
                         placeholder="Email address"
                         disabled={createUserLoading}
-                        className="px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
+                        className="px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/50 disabled:opacity-50"
                         style={{
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #333333",
+                          backgroundColor: "var(--app-card-elevated)",
+                          border: "1px solid var(--app-canvas-dot)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       />
@@ -1243,7 +1243,7 @@ export function WorkspaceSettingsDialog({
                       className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                       style={{
                         backgroundColor: "#F0FE00",
-                        color: "#121212",
+                        color: "var(--app-bg-elevated)",
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}
                     >
@@ -1298,17 +1298,17 @@ export function WorkspaceSettingsDialog({
                           <div
                             key={u.id}
                             className="flex items-center justify-between px-3 py-2 rounded-lg"
-                            style={{ backgroundColor: "#1a1a1a" }}
+                            style={{ backgroundColor: "var(--app-card-elevated)" }}
                           >
                             <div className="flex items-center gap-2">
                               <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white"
-                                style={{ backgroundColor: "#333333" }}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-foreground"
+                                style={{ backgroundColor: "var(--app-canvas-dot)" }}
                               >
                                 {u.name?.slice(0, 2).toUpperCase() || u.email?.slice(0, 2).toUpperCase()}
                               </div>
                               <div>
-                                <div className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                <div className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                                   {u.name}
                                 </div>
                                 <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1331,10 +1331,10 @@ export function WorkspaceSettingsDialog({
             {/* Canvas Actions */}
             {onMakeFramework && (
               <>
-                <div style={{ borderTop: "1px solid #222222" }} />
+                <div style={{ borderTop: "1px solid var(--app-border)" }} />
                 <div>
                   <h3
-                    className="text-white font-semibold text-base mb-4 flex items-center gap-2"
+                    className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Canvas Actions
@@ -1343,7 +1343,7 @@ export function WorkspaceSettingsDialog({
                   type="button"
                     onClick={onMakeFramework}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-white/5 text-left"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
                   >
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -1355,7 +1355,7 @@ export function WorkspaceSettingsDialog({
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Make Framework</div>
+                      <div className="text-sm font-medium text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Make Framework</div>
                       <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Save this canvas as a reusable framework</div>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-gray-500">
@@ -1431,7 +1431,7 @@ export function WorkspaceSettingsDialog({
                         This will permanently delete <span className="font-bold">{settings.name}</span> and all its canvases. This cannot be undone.
                       </p>
                       <p className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                        Type <span className="font-mono font-semibold text-white">delete {settings.name}</span> to confirm
+                        Type <span className="font-mono font-semibold text-foreground">delete {settings.name}</span> to confirm
                       </p>
                       <input
                         type="text"
@@ -1439,10 +1439,10 @@ export function WorkspaceSettingsDialog({
                         onChange={e => setDeleteConfirmText(e.target.value)}
                         placeholder={`delete ${settings.name}`}
                         autoFocus
-                        className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                        className="w-full px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-600 outline-none"
                         style={{
-                          backgroundColor: "#0d0d0d",
-                          border: `1px solid ${deleteConfirmText === `delete ${settings.name}` ? "#ef4444" : "#2a2a2a"}`,
+                          backgroundColor: "var(--app-bg)",
+                          border: `1px solid ${deleteConfirmText === `delete ${settings.name}` ? "#ef4444" : "var(--app-border-strong)"}`,
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       />
@@ -1452,9 +1452,9 @@ export function WorkspaceSettingsDialog({
                           onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
                           className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                           style={{
-                            backgroundColor: "#1e1e1e",
-                            border: "1px solid #333",
-                            color: "#aaa",
+                            backgroundColor: "var(--app-card-elevated)",
+                            border: "1px solid var(--app-canvas-dot)",
+                            color: "var(--app-text-secondary)",
                             fontFamily: "system-ui, Inter, sans-serif",
                           }}
                         >
@@ -1470,7 +1470,7 @@ export function WorkspaceSettingsDialog({
                           className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all"
                           style={{
                             backgroundColor: deleteConfirmText === `delete ${settings.name}` ? "#ef4444" : "#2a1a1a",
-                            color: deleteConfirmText === `delete ${settings.name}` ? "#fff" : "#555",
+                            color: deleteConfirmText === `delete ${settings.name}` ? "var(--app-text-primary)" : "var(--app-text-faint)",
                             border: "none",
                             cursor: deleteConfirmText === `delete ${settings.name}` ? "pointer" : "not-allowed",
                             fontFamily: "system-ui, Inter, sans-serif",

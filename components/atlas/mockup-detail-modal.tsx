@@ -37,7 +37,7 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
         {/* Image panel */}
         <div
           className="flex-1 rounded-2xl overflow-hidden flex items-center justify-center"
-          style={{ backgroundColor: "#0d0d0d", maxHeight: "85vh" }}
+          style={{ backgroundColor: "var(--app-bg)", maxHeight: "85vh" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -50,12 +50,12 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
         {/* Sidebar */}
         <div
           className="flex flex-col gap-4 w-72 flex-shrink-0 rounded-2xl p-5"
-          style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
+          style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}
         >
           {/* Close */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1e1e1e" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="1.5">
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
                   <circle cx="8.5" cy="8.5" r="1.5" fill="#F0FE00" stroke="none"/>
@@ -70,7 +70,7 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
               type="button"
               onClick={onClose}
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
-              style={{ color: "#666" }}
+              style={{ color: "var(--app-text-faint)" }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M11 3L3 11M3 3L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -82,22 +82,22 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
           <div>
             <p
               className="text-sm font-semibold leading-snug"
-              style={{ color: "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               {data.label}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#555", fontFamily: "system-ui, Inter, sans-serif" }}>
+            <p className="text-xs mt-1" style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}>
               {data.generatedAt}
             </p>
           </div>
 
           {/* Divider */}
-          <div className="h-px" style={{ backgroundColor: "#222" }} />
+          <div className="h-px" style={{ backgroundColor: "var(--app-border)" }} />
 
           {/* Prompt */}
           {data.prompt && (
             <div>
-              <p className="text-xs font-medium mb-2" style={{ color: "#666", fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-xs font-medium mb-2" style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 PROMPT
               </p>
               <p
@@ -112,14 +112,14 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
           {/* Source */}
           {data.sourceFileName && (
             <div>
-              <p className="text-xs font-medium mb-1.5" style={{ color: "#666", fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-xs font-medium mb-1.5" style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 SOURCE
               </p>
               <div
                 className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                style={{ backgroundColor: "#1e1e1e" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#888" strokeWidth="1.3">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--app-text-muted)" strokeWidth="1.3">
                   <rect x="2" y="1" width="8" height="10" rx="1"/>
                   <path d="M8 1L10 3" strokeLinejoin="round"/>
                   <path d="M4 6H8M4 8H7" strokeLinecap="round"/>
@@ -139,7 +139,7 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
             type="button"
             onClick={handleDownload}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all hover:opacity-90"
-            style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M7 2v8M4 7l3 3 3-3M2 12h10" strokeLinecap="round"/>

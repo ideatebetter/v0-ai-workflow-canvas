@@ -91,7 +91,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
         }`}
         style={{
           backgroundColor: isSelected ? "#F0FE00" : comment.author.avatar ? "transparent" : "#F0FE00",
-          border: isSelected ? "2px solid #F0FE00" : "2px solid #2a2a2a",
+          border: isSelected ? "2px solid #F0FE00" : "2px solid var(--app-border-strong)",
           boxShadow: isSelected ? "0 0 0 4px rgba(240, 254, 0, 0.3)" : "0 2px 8px rgba(0,0,0,0.4)",
         }}
       >
@@ -104,7 +104,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
         ) : (
           <span
             className="text-xs font-semibold"
-            style={{ color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             {comment.author.initials}
           </span>
@@ -114,7 +114,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
         {comment.replies.length > 0 && !isSelected && (
           <div
             className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-medium"
-            style={{ backgroundColor: "#333333", color: "#ffffff" }}
+            style={{ backgroundColor: "var(--app-canvas-dot)", color: "var(--app-text-primary)" }}
           >
             {comment.replies.length}
           </div>
@@ -139,15 +139,15 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
           ref={panelRef}
           className="absolute top-full left-0 mt-2 w-72 rounded-xl overflow-hidden shadow-2xl"
           style={{
-            backgroundColor: "#141414",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--app-card)",
+            border: "1px solid var(--app-border-strong)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div
             className="px-3 py-2 flex items-center justify-between"
-            style={{ borderBottom: "1px solid #2a2a2a" }}
+            style={{ borderBottom: "1px solid var(--app-border-strong)" }}
           >
             <div className="flex items-center gap-2">
               <button
@@ -156,7 +156,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
                 className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                   comment.resolved
                     ? "bg-green-500/20 text-green-400"
-                    : "bg-white/10 text-gray-400 hover:text-white"
+                    : "bg-white/10 text-gray-400 hover:text-foreground"
                 }`}
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
@@ -180,14 +180,14 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
             <div className="flex gap-2">
               <div
                 className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-medium"
-                style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
               >
                 {comment.author.initials}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span
-                    className="text-xs font-medium text-white"
+                    className="text-xs font-medium text-foreground"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     {comment.author.name}
@@ -213,14 +213,14 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
               <div key={reply.id} className="flex gap-2 pl-4">
                 <div
                   className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-medium"
-                  style={{ backgroundColor: "#333333", color: "#ffffff" }}
+                  style={{ backgroundColor: "var(--app-canvas-dot)", color: "var(--app-text-primary)" }}
                 >
                   {reply.author.initials}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span
-                      className="text-xs font-medium text-white"
+                      className="text-xs font-medium text-foreground"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {reply.author.name}
@@ -246,11 +246,11 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
           {/* Reply input */}
           <div
             className="p-2"
-            style={{ borderTop: "1px solid #2a2a2a" }}
+            style={{ borderTop: "1px solid var(--app-border-strong)" }}
           >
             <div
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
             >
               <input
                 type="text"
@@ -258,7 +258,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
                 onChange={(e) => setReplyText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleReply()}
                 placeholder="Reply..."
-                className="flex-1 bg-transparent text-xs text-white placeholder-gray-500 focus:outline-none"
+                className="flex-1 bg-transparent text-xs text-foreground placeholder-gray-500 focus:outline-none"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               />
               <button
@@ -266,7 +266,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
                 onClick={handleReply}
                 disabled={!replyText.trim()}
                 className="p-1 rounded transition-colors disabled:opacity-30"
-                style={{ color: replyText.trim() ? "#F0FE00" : "#666666" }}
+                style={{ color: replyText.trim() ? "#F0FE00" : "var(--app-text-muted)" }}
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12.25 1.75L6.125 7.875M12.25 1.75L8.75 12.25L6.125 7.875M12.25 1.75L1.75 5.25L6.125 7.875" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
@@ -318,7 +318,7 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
         }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M7 3V11M3 7H11" stroke="#121212" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M7 3V11M3 7H11" stroke="var(--app-bg-elevated)" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       </div>
 
@@ -326,8 +326,8 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
       <div
         className="w-64 rounded-xl overflow-hidden shadow-2xl"
         style={{
-          backgroundColor: "#141414",
-          border: "1px solid #2a2a2a",
+          backgroundColor: "var(--app-card)",
+          border: "1px solid var(--app-border-strong)",
         }}
       >
         <div className="p-3">
@@ -341,18 +341,18 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
               if (e.key === "Escape") onCancel();
             }}
             placeholder="Add a comment..."
-            className="w-full bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-foreground placeholder-gray-500 focus:outline-none"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           />
         </div>
         <div
           className="px-3 py-2 flex items-center justify-between"
-          style={{ borderTop: "1px solid #2a2a2a" }}
+          style={{ borderTop: "1px solid var(--app-border-strong)" }}
         >
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-gray-500 hover:text-white transition-colors"
+            className="text-xs text-gray-500 hover:text-foreground transition-colors"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Cancel
@@ -363,8 +363,8 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
             disabled={!content.trim()}
             className="px-3 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-30"
             style={{
-              backgroundColor: content.trim() ? "#F0FE00" : "#333333",
-              color: content.trim() ? "#121212" : "#666666",
+              backgroundColor: content.trim() ? "#F0FE00" : "var(--app-canvas-dot)",
+              color: content.trim() ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
           >

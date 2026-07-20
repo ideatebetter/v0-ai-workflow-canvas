@@ -26,7 +26,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
     <div
       className="group rounded-xl transition-all duration-200"
       style={{
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "var(--app-card-elevated)",
         border: selected ? "2px solid #F0FE00" : "1px solid #F0FE0030",
         width: 240,
       }}
@@ -43,7 +43,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
           {nodeData.stakeholder?.initials || "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <div className="text-sm font-medium text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             {nodeData.stakeholder?.name || "Stakeholder"}
           </div>
           <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>

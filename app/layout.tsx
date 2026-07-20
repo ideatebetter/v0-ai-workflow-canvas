@@ -27,9 +27,8 @@ export default function RootLayout({
         <ResizeObserverErrorSuppressor />
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
-          enableSystem={false}
+          defaultTheme="system"
+          enableSystem
           storageKey="atlas-theme"
         >
           <AuthProvider>

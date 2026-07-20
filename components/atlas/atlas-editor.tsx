@@ -303,7 +303,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       id: `edge-${sourceNodeId}-${promptNodeId}`,
       source: sourceNodeId,
       target: promptNodeId,
-      style: { stroke: "#666", strokeWidth: 2 },
+      style: { stroke: "var(--app-text-faint)", strokeWidth: 2 },
     };
     
     setNodes(nds => [...nds, promptNode]);
@@ -416,7 +416,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           source: sourceNodeId,
           target: mockupId,
           type: "default",
-          style: { stroke: "#888", strokeWidth: 1.5, strokeDasharray: "6 4" },
+          style: { stroke: "var(--app-text-muted)", strokeWidth: 1.5, strokeDasharray: "6 4" },
           animated: false,
         }));
         setEdges(currentEdges => [...currentEdges, ...newEdges]);
@@ -656,7 +656,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             content: action.content || "",
             lastModified: new Date().toISOString(),
             formatting: {
-              color: "#ffffff",
+              color: "var(--app-text-primary)",
               font: "sans",
               size: "medium",
               bold: false,
@@ -682,7 +682,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             ...params,
             type: "default",
             animated: true,
-            style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
+            style: { strokeWidth: 2, stroke: "var(--app-canvas-dot)", strokeDasharray: "5 5" },
           },
           eds
         )
@@ -959,7 +959,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           content: "",
           lastModified: formattedDate,
           formatting: {
-            color: "#ffffff",
+            color: "var(--app-text-primary)",
             font: "sans",
             size: "medium",
             bold: false,
@@ -2404,7 +2404,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 
   return (
     <CanvasNodeActionsProvider value={{ onCopyNodeLink: handleCopyNodeLink }}>
-    <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
+    <div className="h-screen flex flex-col" style={{ backgroundColor: "var(--app-bg)" }}>
       <AtlasToolbar
         canvasName={canvas.name}
         onBack={onBack}
@@ -2487,7 +2487,7 @@ onAddOperationalNode={handleAddOperationalNode}
           label: "Collateral Generation",
           content: "Collateral generation coming soon. Use this node to plan your collateral needs.",
           lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          formatting: { color: "#ffffff", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
+          formatting: { color: "var(--app-text-primary)", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
         },
       }]);
       if (sourceNodeId) {
@@ -2537,7 +2537,7 @@ presentationMode={presentationMode}
           label: "Collateral Generation",
           content: "Collateral generation coming soon. Use this node to plan your collateral needs.",
           lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          formatting: { color: "#ffffff", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
+          formatting: { color: "var(--app-text-primary)", font: "sans", size: "medium", bold: false, strikethrough: false, align: "left" },
         },
       }]);
     }
@@ -2602,7 +2602,7 @@ presentationMode={presentationMode}
                 className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium transition-all"
                 style={{
                   backgroundColor: selectedFlowId === flow.id ? "#F0FE00" : "rgba(255,255,255,0.08)",
-                  color: selectedFlowId === flow.id ? "#121212" : "rgba(255,255,255,0.7)",
+                  color: selectedFlowId === flow.id ? "var(--app-bg-elevated)" : "rgba(255,255,255,0.7)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -3073,7 +3073,7 @@ presentationMode={presentationMode}
             <polyline points="16 6 12 2 8 6"/>
             <line x1="12" y1="2" x2="12" y2="15"/>
           </svg>
-          <span className="text-sm text-white">
+          <span className="text-sm text-foreground">
             Found matching nodes for {pastedSyncSuggestion.count} pasted item{pastedSyncSuggestion.count !== 1 ? "s" : ""}
           </span>
           <button
@@ -3084,7 +3084,7 @@ presentationMode={presentationMode}
               setPastedSyncSuggestion(null);
             }}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
-            style={{ backgroundColor: "#3b82f6", color: "#fff" }}
+            style={{ backgroundColor: "#3b82f6", color: "var(--app-text-primary)" }}
           >
             Sync Now
           </button>
@@ -3094,7 +3094,7 @@ presentationMode={presentationMode}
             className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#666" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -3187,7 +3187,7 @@ presentationMode={presentationMode}
               className="text-sm mb-6"
               style={{ color: "#8E8E93", fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              A file named <span className="font-medium text-white">{versionConflict.newFile.fileName}</span> already exists on this canvas. Would you like to add this as a new version or create a separate file?
+              A file named <span className="font-medium text-foreground">{versionConflict.newFile.fileName}</span> already exists on this canvas. Would you like to add this as a new version or create a separate file?
             </p>
             
             <div className="flex flex-col gap-3">
@@ -3291,7 +3291,7 @@ presentationMode={presentationMode}
       {!isPresenting && (
         <div
           className="flex items-center gap-0 px-2 select-none flex-shrink-0 overflow-x-auto"
-          style={{ backgroundColor: "#111111", borderTop: "1px solid #1e1e1e", height: 36, fontFamily: "system-ui, Inter, sans-serif" }}
+          style={{ backgroundColor: "var(--app-bg-elevated)", borderTop: "1px solid var(--app-card-elevated)", height: 36, fontFamily: "system-ui, Inter, sans-serif" }}
         >
           {pages.map((page, idx) => {
             const isActive = page.id === activePageId;
@@ -3313,7 +3313,7 @@ presentationMode={presentationMode}
                     }}
                     onClick={e => e.stopPropagation()}
                     className="px-2 py-0.5 text-xs rounded outline-none"
-                    style={{ backgroundColor: "#2a2a2a", color: "#fff", border: "1px solid #3a82f6", width: 90, fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-primary)", border: "1px solid #3a82f6", width: 90, fontFamily: "system-ui, Inter, sans-serif" }}
                   />
                 ) : (
                   <button
@@ -3322,22 +3322,22 @@ presentationMode={presentationMode}
                     onDoubleClick={() => setRenamingPageId(page.id)}
                     className="flex items-center gap-1.5 px-3 py-1 text-xs transition-colors"
                     style={{
-                      color: isActive ? "#fff" : "#666",
+                      color: isActive ? "var(--app-text-primary)" : "var(--app-text-faint)",
                       borderBottom: isActive ? "2px solid #3a82f6" : "2px solid transparent",
-                      backgroundColor: isActive ? "#1a1a1a" : "transparent",
+                      backgroundColor: isActive ? "var(--app-card-elevated)" : "transparent",
                       height: 35,
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
                     {idx + 1 <= 9 && (
-                      <span style={{ color: isActive ? "#3a82f6" : "#444", fontSize: 9, fontWeight: 600 }}>{idx + 1}</span>
+                      <span style={{ color: isActive ? "#3a82f6" : "var(--app-text-faint)", fontSize: 9, fontWeight: 600 }}>{idx + 1}</span>
                     )}
                     <span>{page.name}</span>
                     {pages.length > 1 && (
                       <span
                         onClick={e => { e.stopPropagation(); handleDeletePage(page.id); }}
                         className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:text-red-400"
-                        style={{ fontSize: 10, color: "#555", cursor: "pointer", lineHeight: 1 }}
+                        style={{ fontSize: 10, color: "var(--app-text-faint)", cursor: "pointer", lineHeight: 1 }}
                         role="button"
                         aria-label="Delete page"
                       >
@@ -3353,8 +3353,8 @@ presentationMode={presentationMode}
           <button
             type="button"
             onClick={handleAddPage}
-            className="flex items-center justify-center px-2 transition-colors hover:text-white"
-            style={{ color: "#555", height: 35, flexShrink: 0 }}
+            className="flex items-center justify-center px-2 transition-colors hover:text-foreground"
+            style={{ color: "var(--app-text-faint)", height: 35, flexShrink: 0 }}
             title="Add page"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -3373,8 +3373,8 @@ presentationMode={presentationMode}
             right: 28,
             zIndex: 300,
             width: 320,
-            backgroundColor: "#141414",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--app-card)",
+            border: "1px solid var(--app-border-strong)",
             borderRadius: 14,
             boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
             fontFamily: "system-ui, Inter, sans-serif",
@@ -3390,11 +3390,11 @@ presentationMode={presentationMode}
               </svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0 }}>Naming convention mismatch</p>
-              <p style={{ fontSize: 12, color: "#888", margin: "3px 0 0", lineHeight: 1.4 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--app-text-primary)", margin: 0 }}>Naming convention mismatch</p>
+              <p style={{ fontSize: 12, color: "var(--app-text-muted)", margin: "3px 0 0", lineHeight: 1.4 }}>
                 <span style={{ color: "#ddd" }}>"{namingMismatchAlert.fetchedTitle}"</span> doesn&apos;t follow the workspace convention
                 {workspaceSettings.namingConventions?.defaultRule?.example && (
-                  <span style={{ color: "#666" }}> ({workspaceSettings.namingConventions.defaultRule.example})</span>
+                  <span style={{ color: "var(--app-text-faint)" }}> ({workspaceSettings.namingConventions.defaultRule.example})</span>
                 )}.
               </p>
             </div>
@@ -3424,10 +3424,10 @@ presentationMode={presentationMode}
                   boxSizing: "border-box",
                   padding: "7px 10px",
                   fontSize: 13,
-                  backgroundColor: "#1e1e1e",
-                  border: "1px solid #3a3a3a",
+                  backgroundColor: "var(--app-card-elevated)",
+                  border: "1px solid var(--app-border-strong)",
                   borderRadius: 8,
-                  color: "#fff",
+                  color: "var(--app-text-primary)",
                   outline: "none",
                 }}
               />
@@ -3439,7 +3439,7 @@ presentationMode={presentationMode}
             <button
               type="button"
               onClick={() => setNamingMismatchAlert(null)}
-              style={{ padding: "6px 14px", fontSize: 12, fontWeight: 500, backgroundColor: "transparent", border: "1px solid #333", borderRadius: 8, color: "#888", cursor: "pointer" }}
+              style={{ padding: "6px 14px", fontSize: 12, fontWeight: 500, backgroundColor: "transparent", border: "1px solid var(--app-canvas-dot)", borderRadius: 8, color: "var(--app-text-muted)", cursor: "pointer" }}
             >
               Ignore
             </button>
@@ -3454,7 +3454,7 @@ presentationMode={presentationMode}
                   setSelectedNode((prev) => prev?.id === namingMismatchAlert.nodeId ? { ...prev, data: { ...prev.data, label, fileName: label } } : prev);
                   setNamingMismatchAlert(null);
                 }}
-                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: namingMismatchAlert.renameValue.trim() ? "#F0FE00" : "#333", border: "none", borderRadius: 8, color: namingMismatchAlert.renameValue.trim() ? "#000" : "#555", cursor: namingMismatchAlert.renameValue.trim() ? "pointer" : "default" }}
+                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: namingMismatchAlert.renameValue.trim() ? "#F0FE00" : "var(--app-canvas-dot)", border: "none", borderRadius: 8, color: namingMismatchAlert.renameValue.trim() ? "#000" : "var(--app-text-faint)", cursor: namingMismatchAlert.renameValue.trim() ? "pointer" : "default" }}
               >
                 Save
               </button>
@@ -3476,7 +3476,7 @@ presentationMode={presentationMode}
         <div
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium pointer-events-none"
           style={{
-            backgroundColor: "#1a1a1a",
+            backgroundColor: "var(--app-card-elevated)",
             border: "1px solid #F0FE0040",
             color: "#F0FE00",
             fontFamily: "system-ui, Inter, sans-serif",

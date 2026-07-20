@@ -37,10 +37,10 @@ interface ShareCanvasDialogProps {
 }
 
 const INPUT_STYLE: React.CSSProperties = {
-  backgroundColor: "#252525",
-  border: "1px solid #333333",
+  backgroundColor: "var(--app-border-strong)",
+  border: "1px solid var(--app-canvas-dot)",
   fontFamily: "system-ui, Inter, sans-serif",
-  color: "#ffffff",
+  color: "var(--app-text-primary)",
 };
 
 const LABEL_STYLE: React.CSSProperties = {
@@ -114,7 +114,7 @@ export function ShareCanvasDialog({
 
   const ChevronDown = () => (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
-      <path d="M2 4L6 8L10 4" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 4L6 8L10 4" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 
@@ -124,8 +124,8 @@ export function ShareCanvasDialog({
     <div
       className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20 py-1"
       style={{
-        backgroundColor: "#252525",
-        border: "1px solid #333333",
+        backgroundColor: "var(--app-border-strong)",
+        border: "1px solid var(--app-canvas-dot)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
         ...style,
       }}
@@ -141,15 +141,15 @@ export function ShareCanvasDialog({
       <div
         className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden flex flex-col"
         style={{
-          backgroundColor: "#1a1a1a",
-          border: "1px solid #333333",
+          backgroundColor: "var(--app-card-elevated)",
+          border: "1px solid var(--app-canvas-dot)",
           maxHeight: "90vh",
         }}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+        <div className="px-6 pt-6 pb-5 flex items-start justify-between flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
           <div className="flex-1 min-w-0 pr-4">
-            <h2 className="text-lg font-semibold text-white" style={LABEL_STYLE}>
+            <h2 className="text-lg font-semibold text-foreground" style={LABEL_STYLE}>
               {shareTitle}
             </h2>
             <p className="text-xs text-gray-500 mt-1 leading-relaxed" style={LABEL_STYLE}>
@@ -160,7 +160,7 @@ export function ShareCanvasDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:text-foreground hover:bg-white/10 transition-colors"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M1.5 1.5L11.5 11.5M11.5 1.5L1.5 11.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
@@ -218,7 +218,7 @@ export function ShareCanvasDialog({
                             <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
-                        <span className={`${accessType === opt.value ? "text-white" : "text-gray-400"} ${accessType === opt.value ? "" : "ml-4"}`}>
+                        <span className={`${accessType === opt.value ? "text-foreground" : "text-gray-400"} ${accessType === opt.value ? "" : "ml-4"}`}>
                           {opt.label}
                         </span>
                       </button>
@@ -263,7 +263,7 @@ export function ShareCanvasDialog({
                           )}
                         </div>
                         <div>
-                          <div className={`text-sm ${permission === p.value ? "text-white" : "text-gray-300"}`}>{p.label}</div>
+                          <div className={`text-sm ${permission === p.value ? "text-foreground" : "text-gray-300"}`}>{p.label}</div>
                           <div className="text-[11px] text-gray-600 mt-0.5">{p.description}</div>
                         </div>
                       </button>
@@ -282,7 +282,7 @@ export function ShareCanvasDialog({
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-sm font-medium"
-                style={{ backgroundColor: "#333333", color: "#ffffff" }}
+                style={{ backgroundColor: "var(--app-canvas-dot)", color: "var(--app-text-primary)" }}
               >
                 {avatar ? (
                   <img src={avatar} alt={ownerName} className="w-full h-full object-cover" />
@@ -291,14 +291,14 @@ export function ShareCanvasDialog({
                 )}
               </div>
               <div>
-                <div className="text-sm text-white" style={LABEL_STYLE}>{ownerName}</div>
+                <div className="text-sm text-foreground" style={LABEL_STYLE}>{ownerName}</div>
                 <div className="text-xs text-gray-500" style={LABEL_STYLE}>Owner</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <rect x="2.5" y="6" width="8" height="5.5" rx="1" stroke="#555" strokeWidth="1.2"/>
-                <path d="M4.5 6V4.5C4.5 3.4 5.4 2.5 6.5 2.5C7.6 2.5 8.5 3.4 8.5 4.5V6" stroke="#555" strokeWidth="1.2" strokeLinecap="round"/>
+                <rect x="2.5" y="6" width="8" height="5.5" rx="1" stroke="var(--app-text-faint)" strokeWidth="1.2"/>
+                <path d="M4.5 6V4.5C4.5 3.4 5.4 2.5 6.5 2.5C7.6 2.5 8.5 3.4 8.5 4.5V6" stroke="var(--app-text-faint)" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
               <span className="text-xs text-gray-600" style={LABEL_STYLE}>Only you have access</span>
             </div>
@@ -334,7 +334,7 @@ export function ShareCanvasDialog({
                           <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
-                      <span className={`${expiry === opt.value ? "text-white" : "text-gray-400"} ${expiry === opt.value ? "" : "ml-4"}`}>
+                      <span className={`${expiry === opt.value ? "text-foreground" : "text-gray-400"} ${expiry === opt.value ? "" : "ml-4"}`}>
                         {opt.label}
                       </span>
                     </button>
@@ -348,7 +348,7 @@ export function ShareCanvasDialog({
           {linkGenerated && generatedUrl && (
             <div
               className="flex items-center gap-2 p-3 rounded-xl"
-              style={{ backgroundColor: "#252525", border: "1px solid #333333" }}
+              style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}
             >
               <span className="text-xs text-gray-500 flex-1 truncate" style={LABEL_STYLE}>{generatedUrl}</span>
               <button
@@ -356,8 +356,8 @@ export function ShareCanvasDialog({
                 onClick={handleCopyLink}
                 className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
                 style={{
-                  backgroundColor: linkCopied ? "rgba(240,254,0,0.15)" : "#333333",
-                  color: linkCopied ? "#F0FE00" : "#ffffff",
+                  backgroundColor: linkCopied ? "rgba(240,254,0,0.15)" : "var(--app-canvas-dot)",
+                  color: linkCopied ? "#F0FE00" : "var(--app-text-primary)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -378,7 +378,7 @@ export function ShareCanvasDialog({
               onClick={canGenerate ? handleGenerateLink : undefined}
               disabled={!canGenerate}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-colors"
-              style={{ color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               {linkGenerated ? (
                 <>
@@ -409,12 +409,12 @@ export function ShareCanvasDialog({
                 >
                   {linkCopied ? (
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <path d="M2 7.5L5.5 11L13 4" stroke="#0a0a0a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 7.5L5.5 11L13 4" stroke="var(--app-bg)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   ) : (
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <rect x="1.5" y="4.5" width="8" height="9" rx="1.5" stroke="#0a0a0a" strokeWidth="1.3"/>
-                      <path d="M5.5 4.5V3C5.5 2.17 6.17 1.5 7 1.5H12C12.83 1.5 13.5 2.17 13.5 3V9C13.5 9.83 12.83 10.5 12 10.5H10.5" stroke="#0a0a0a" strokeWidth="1.3" strokeLinecap="round"/>
+                      <rect x="1.5" y="4.5" width="8" height="9" rx="1.5" stroke="var(--app-bg)" strokeWidth="1.3"/>
+                      <path d="M5.5 4.5V3C5.5 2.17 6.17 1.5 7 1.5H12C12.83 1.5 13.5 2.17 13.5 3V9C13.5 9.83 12.83 10.5 12 10.5H10.5" stroke="var(--app-bg)" strokeWidth="1.3" strokeLinecap="round"/>
                     </svg>
                   )}
                 </button>

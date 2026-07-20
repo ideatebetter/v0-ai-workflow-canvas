@@ -97,7 +97,7 @@ export function CanvasSideToolbar({
           type="button"
           onClick={() => onCommentModeChange(!commentMode)}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            commentMode ? "text-[#121212]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            commentMode ? "text-[var(--app-bg-elevated)]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={{
             backgroundColor: commentMode ? "#F0FE00" : "transparent",
@@ -113,7 +113,7 @@ export function CanvasSideToolbar({
         {commentCount > 0 && !commentMode && (
           <div
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-medium px-1"
-            style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
           >
             {commentCount}
           </div>
@@ -126,7 +126,7 @@ export function CanvasSideToolbar({
           type="button"
           onClick={onActivityClick}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            activityOpen ? "text-[#121212]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            activityOpen ? "text-[var(--app-bg-elevated)]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={{ backgroundColor: activityOpen ? "#F0FE00" : "transparent" }}
           title="Canvas activity & to-dos"
@@ -142,7 +142,7 @@ export function CanvasSideToolbar({
         {(todoCount + activityCount > 0) && !activityOpen && (
           <div
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-medium px-1"
-            style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
           >
             {todoCount + activityCount}
           </div>
@@ -166,7 +166,7 @@ export function CanvasSideToolbar({
             }
           }}
           className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
-            presentationMode ? "text-[#121212]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            presentationMode ? "text-[var(--app-bg-elevated)]" : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
           style={{
             backgroundColor: presentationMode ? "#F0FE00" : "transparent",
@@ -186,7 +186,7 @@ export function CanvasSideToolbar({
           <button
             type="button"
             onClick={() => onPresentationModeChange(false)}
-            className="absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[#121212] hover:scale-110 transition-transform"
+            className="absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[var(--app-bg-elevated)] hover:scale-110 transition-transform"
             style={{ backgroundColor: "#F0FE00" }}
             title="Exit presentation builder"
           >
@@ -200,7 +200,7 @@ export function CanvasSideToolbar({
         {presentationEdgeCount > 0 && presentationMode && (
           <div
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-medium px-1"
-            style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
           >
             {presentationEdgeCount}
           </div>
@@ -324,7 +324,7 @@ export function CanvasSideToolbar({
       {commentMode && (
         <div
           className="absolute -left-36 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap"
-          style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+          style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
         >
           <span className="text-xs font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Click to comment

@@ -94,10 +94,10 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
               className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-card border border-border"
             >
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                <rect x="18" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                <rect x="4" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                <rect x="18" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                <rect x="4" y="4" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                <rect x="18" y="4" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                <rect x="4" y="18" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                <rect x="18" y="18" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
               </svg>
             </div>
             <p
@@ -119,7 +119,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
 
   if (loading) {
     return (
-      <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+      <div className="p-3 border-t" style={{ borderColor: "var(--app-border)" }}>
         <div className="animate-pulse h-10 bg-white/5 rounded-lg" />
       </div>
     );
@@ -127,11 +127,11 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
 
   if (!user) {
     return (
-      <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+      <div className="p-3 border-t" style={{ borderColor: "var(--app-border)" }}>
         <Link
           href="/auth/login"
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+          style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
         >
           Sign in
         </Link>
@@ -140,11 +140,11 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
   }
 
   return (
-    <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+    <div className="p-3 border-t" style={{ borderColor: "var(--app-border)" }}>
       <div className="flex items-center gap-3">
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden"
-          style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+          style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
         >
           {profilePicture ? (
             <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
@@ -153,7 +153,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <div className="text-sm text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             {user.user_metadata?.display_name || user.email?.split("@")[0]}
           </div>
           <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -162,7 +162,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
         </div>
         <Link
           href="/auth/change-password"
-          className="p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          className="p-1.5 text-gray-500 hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
           title="Change password"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -176,7 +176,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
             await signOut();
             router.push("/auth/login");
           }}
-          className="p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          className="p-1.5 text-gray-500 hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
           title="Sign out"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1343,14 +1343,14 @@ const [showSageChat, setShowSageChat] = useState(false);
   };
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: "#0A0A0A" }}>
+    <div className="flex h-screen" style={{ backgroundColor: "var(--app-bg)" }}>
       {/* Sidebar */}
       <div
         className="w-64 flex flex-col border-r"
-        style={{ backgroundColor: "#111111", borderColor: "#222222" }}
+        style={{ backgroundColor: "var(--app-bg-elevated)", borderColor: "var(--app-border)" }}
       >
         {/* Workspace Header */}
-        <div className="p-4 border-b relative" style={{ borderColor: "#222222" }}>
+        <div className="p-4 border-b relative" style={{ borderColor: "var(--app-border)" }}>
           <button
             type="button"
             onClick={() => setShowWorkspaceSwitcher(prev => !prev)}
@@ -1358,7 +1358,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           >
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden flex-shrink-0"
-              style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
+              style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "var(--app-bg-elevated)" }}
               suppressHydrationWarning
             >
               {workspaceSettings.branding?.workspaceIcon ? (
@@ -1372,7 +1372,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <div className="text-sm font-medium text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="text-sm font-medium text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {isWorkspaceSynced ? workspaceSettings.name : <span className="inline-block w-24 h-3 bg-white/10 rounded animate-pulse" />}
               </div>
               <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1391,7 +1391,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           {showWorkspaceSwitcher && (
             <div
               className="absolute left-2 right-2 top-full mt-1 rounded-xl border z-50 py-1 shadow-xl"
-              style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+              style={{ backgroundColor: "var(--app-card-elevated)", borderColor: "var(--app-border-strong)" }}
             >
               <div className="px-3 py-1.5">
                 <span className="text-[11px] text-gray-600 uppercase tracking-wide">Workspaces</span>
@@ -1408,7 +1408,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                 >
                   <div
                     className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: ws.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
+                    style={{ backgroundColor: ws.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "var(--app-bg-elevated)" }}
                   >
                     {ws.branding?.workspaceIcon ? (
                       <img src={ws.branding.workspaceIcon} alt={ws.name} className="w-full h-full object-contain" />
@@ -1417,7 +1417,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{ws.name}</div>
+                    <div className="text-sm text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{ws.name}</div>
                     <div className="text-xs text-gray-500">{ws.members.length} member{ws.members.length !== 1 ? "s" : ""}</div>
                   </div>
                   {ws.id === activeWorkspaceId && (
@@ -1427,7 +1427,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                   )}
                 </button>
               ))}
-              <div className="border-t my-1" style={{ borderColor: "#2a2a2a" }} />
+              <div className="border-t my-1" style={{ borderColor: "var(--app-border-strong)" }} />
               <button
                 type="button"
                 onClick={() => {
@@ -1436,9 +1436,9 @@ const [showSageChat, setShowSageChat] = useState(false);
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
               >
-                <div className="w-7 h-7 rounded-md flex items-center justify-center border border-dashed flex-shrink-0" style={{ borderColor: "#444" }}>
+                <div className="w-7 h-7 rounded-md flex items-center justify-center border border-dashed flex-shrink-0" style={{ borderColor: "var(--app-text-faint)" }}>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M6 2.5V9.5M2.5 6H9.5" stroke="#888" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M6 2.5V9.5M2.5 6H9.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </div>
                 <span className="text-sm text-gray-400">Create workspace</span>
@@ -1455,7 +1455,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("home")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "home" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "home" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1469,7 +1469,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => { setSidebarFilter("all"); setActiveView("canvases"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "canvases" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1485,7 +1485,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("all-files")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "all-files" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "all-files" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1499,7 +1499,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("todos")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "todos" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "todos" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1510,7 +1510,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               </svg>
               All To-Dos
               {allTodosFlat.filter(d => !d.task.completed).length > 0 && (
-                <span className="ml-auto text-xs rounded-full px-1.5 py-0.5" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                <span className="ml-auto text-xs rounded-full px-1.5 py-0.5" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                   {allTodosFlat.filter(d => !d.task.completed).length}
                 </span>
               )}
@@ -1519,7 +1519,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("time-tracking")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "time-tracking" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "time-tracking" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1533,7 +1533,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("frameworks")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "frameworks" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "frameworks" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1549,7 +1549,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("community")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "community" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "community" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1566,7 +1566,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setActiveView("settings")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "settings" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "settings" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1590,7 +1590,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => { setSidebarFilter("workspace"); setActiveView("workspace-canvas"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "workspace-canvas" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "workspace-canvas" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1616,7 +1616,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               type="button"
               onClick={() => setSidebarFilter("private")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "private" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                sidebarFilter === "private" ? "bg-white/10 text-foreground" : "text-gray-400 hover:text-foreground hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -1639,10 +1639,10 @@ const [showSageChat, setShowSageChat] = useState(false);
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4 border-b"
-          style={{ borderColor: "#222222" }}
+          style={{ borderColor: "var(--app-border)" }}
         >
           <div
-            className="text-lg font-medium text-white"
+            className="text-lg font-medium text-foreground"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             {activeView === "home" && "Home"}
@@ -1674,10 +1674,10 @@ const [showSageChat, setShowSageChat] = useState(false);
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-9 pr-4 py-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+                className="w-64 pl-9 pr-4 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
                 style={{
-                  backgroundColor: "#1a1a1a",
-                  border: "1px solid #333333",
+                  backgroundColor: "var(--app-card-elevated)",
+                  border: "1px solid var(--app-canvas-dot)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               />
@@ -1687,8 +1687,8 @@ const [showSageChat, setShowSageChat] = useState(false);
             <button
               type="button"
               onClick={() => setShowSettingsDialog(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/>
@@ -1701,10 +1701,10 @@ const [showSageChat, setShowSageChat] = useState(false);
             <button
               type="button"
               onClick={() => setShowInviteDialog(true)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:bg-white/10"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-white/10"
               style={{
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #333333",
+                backgroundColor: "var(--app-card-elevated)",
+                border: "1px solid var(--app-canvas-dot)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
@@ -1716,7 +1716,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               <button
                 type="button"
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-[#121212] transition-colors hover:opacity-90"
+                className="w-10 h-10 rounded-lg flex items-center justify-center text-[var(--app-bg-elevated)] transition-colors hover:opacity-90"
                 style={{ backgroundColor: "#F0FE00" }}
                 title="Create new"
               >
@@ -1734,7 +1734,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                   />
                   <div
                     className="absolute right-0 top-full mt-2 py-2 rounded-xl shadow-xl z-50 min-w-[220px]"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
                   >
                     <button
                       type="button"
@@ -1742,12 +1742,12 @@ const [showSageChat, setShowSageChat] = useState(false);
                         setShowCreateMenu(false);
                         setShowProjectCreationModal(true);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-3"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#252525" }}
+                        style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <rect x="2" y="2" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
@@ -1755,12 +1755,12 @@ const [showSageChat, setShowSageChat] = useState(false);
                         </svg>
                       </div>
                       <div>
-                        <div className="font-medium text-white">New Project</div>
+                        <div className="font-medium text-foreground">New Project</div>
                         <div className="text-xs text-gray-500">Brief, team, timeline &amp; estimate</div>
                       </div>
                     </button>
 
-                    <div style={{ height: 1, margin: "4px 12px", backgroundColor: "#2a2a2a" }} />
+                    <div style={{ height: 1, margin: "4px 12px", backgroundColor: "var(--app-border-strong)" }} />
 
                     <button
                       type="button"
@@ -1768,12 +1768,12 @@ const [showSageChat, setShowSageChat] = useState(false);
                         setShowCreateMenu(false);
                         setShowNewCanvasDialog(true);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-3"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#252525" }}
+                        style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <rect x="2" y="2" width="12" height="12" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
@@ -1792,12 +1792,12 @@ const [showSageChat, setShowSageChat] = useState(false);
                         setShowCreateMenu(false);
                         setShowNewProjectDialog(true);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-3"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#252525" }}
+                        style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" stroke="#10B981" strokeWidth="1.5"/>
@@ -1837,14 +1837,14 @@ const [showSageChat, setShowSageChat] = useState(false);
             return (
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-4" style={{ borderBottom: "1px solid #222222" }}>
+                <div className="px-6 py-4" style={{ borderBottom: "1px solid var(--app-border)" }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>All To-Dos</h2>
+                    <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>All To-Dos</h2>
                     <button
                       type="button"
                       onClick={() => { setShowNewGlobalTodo(v => !v); setNewGlobalTodoTitle(""); setNewGlobalTodoNodeId(""); setNewGlobalTodoCanvasId(""); setNewGlobalTodoDueDate(""); setNewGlobalTodoAssigneeId(""); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                      style={{ backgroundColor: showNewGlobalTodo ? "#F0FE00" : "#1a1a1a", color: showNewGlobalTodo ? "#000" : "#aaa", fontFamily: "system-ui, Inter, sans-serif", border: "1px solid " + (showNewGlobalTodo ? "transparent" : "#2a2a2a") }}
+                      style={{ backgroundColor: showNewGlobalTodo ? "#F0FE00" : "var(--app-card-elevated)", color: showNewGlobalTodo ? "#000" : "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif", border: "1px solid " + (showNewGlobalTodo ? "transparent" : "var(--app-border-strong)") }}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                       New To-Do
@@ -1853,7 +1853,7 @@ const [showSageChat, setShowSageChat] = useState(false);
 
                   {/* New To-Do Form */}
                   {showNewGlobalTodo && (
-                    <div className="mb-4 p-4 rounded-xl" style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}>
+                    <div className="mb-4 p-4 rounded-xl" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}>
                       <div className="flex flex-col gap-3">
                         {/* Title */}
                         <input
@@ -1865,8 +1865,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                           onKeyDown={e => {
                             if (e.key === "Escape") setShowNewGlobalTodo(false);
                           }}
-                          className="w-full bg-transparent text-sm text-white placeholder-gray-600 outline-none"
-                          style={{ fontFamily: "system-ui, Inter, sans-serif", borderBottom: "1px solid #2a2a2a", paddingBottom: "8px" }}
+                          className="w-full bg-transparent text-sm text-foreground placeholder-gray-600 outline-none"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif", borderBottom: "1px solid var(--app-border-strong)", paddingBottom: "8px" }}
                         />
                         <div className="flex flex-wrap items-center gap-3">
                           {/* File picker */}
@@ -1879,7 +1879,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                                 setNewGlobalTodoNodeId(nId || "");
                               }}
                               className="w-full px-3 py-2 rounded-lg text-xs border-0 outline-none"
-                              style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoNodeId ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "var(--app-card-elevated)", color: newGlobalTodoNodeId ? "var(--app-text-primary)" : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               <option value="">Assign to a file…</option>
                               {allFileNodes.map(f => (
@@ -1895,7 +1895,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             value={newGlobalTodoDueDate}
                             onChange={e => setNewGlobalTodoDueDate(e.target.value)}
                             className="px-3 py-2 rounded-lg text-xs border-0 outline-none"
-                            style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoDueDate ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif", colorScheme: "dark" }}
+                            style={{ backgroundColor: "var(--app-card-elevated)", color: newGlobalTodoDueDate ? "var(--app-text-primary)" : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif", colorScheme: "dark" }}
                           />
                           {/* Assignee */}
                           {workspaceSettings.members?.length > 0 && (
@@ -1903,7 +1903,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               value={newGlobalTodoAssigneeId}
                               onChange={e => setNewGlobalTodoAssigneeId(e.target.value)}
                               className="px-3 py-2 rounded-lg text-xs border-0 outline-none"
-                              style={{ backgroundColor: "#1a1a1a", color: newGlobalTodoAssigneeId ? "#fff" : "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "var(--app-card-elevated)", color: newGlobalTodoAssigneeId ? "var(--app-text-primary)" : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               <option value="">Assignee</option>
                               {workspaceSettings.members.map(m => (
@@ -1943,7 +1943,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             type="button"
                             onClick={() => setShowNewGlobalTodo(false)}
                             className="px-4 py-1.5 rounded-lg text-xs transition-colors"
-                            style={{ color: "#666", fontFamily: "system-ui, Inter, sans-serif" }}
+                            style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             Cancel
                           </button>
@@ -1955,11 +1955,11 @@ const [showSageChat, setShowSageChat] = useState(false);
                   {/* Filter Bar */}
                   <div className="flex flex-wrap gap-2">
                     {/* Status filter */}
-                    <div className="flex gap-1 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <div className="flex gap-1 p-1 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                       {(["all", "incomplete", "completed"] as const).map(s => (
                         <button key={s} type="button" onClick={() => setTodoFilterStatus(s)}
                           className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
-                          style={{ backgroundColor: todoFilterStatus === s ? "#2a2a2a" : "transparent", color: todoFilterStatus === s ? "#fff" : "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                          style={{ backgroundColor: todoFilterStatus === s ? "var(--app-border-strong)" : "transparent", color: todoFilterStatus === s ? "var(--app-text-primary)" : "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                         >
                           {s === "all" ? "All" : s === "incomplete" ? "Open" : "Done"}
                         </button>
@@ -1969,7 +1969,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     {uniqueProjects.length > 0 && (
                       <select value={todoFilterProject} onChange={e => setTodoFilterProject(e.target.value)}
                         className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
-                        style={{ backgroundColor: "#1a1a1a", color: todoFilterProject === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", color: todoFilterProject === "all" ? "var(--app-text-muted)" : "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         <option value="all">All Collections</option>
                         {uniqueProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1979,7 +1979,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     {/* Canvas filter */}
                     <select value={todoFilterCanvas} onChange={e => setTodoFilterCanvas(e.target.value)}
                       className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
-                      style={{ backgroundColor: "#1a1a1a", color: todoFilterCanvas === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)", color: todoFilterCanvas === "all" ? "var(--app-text-muted)" : "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <option value="all">All Canvases</option>
                       {uniqueCanvases.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1988,7 +1988,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     {members.length > 0 && (
                       <select value={todoFilterUser} onChange={e => setTodoFilterUser(e.target.value)}
                         className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
-                        style={{ backgroundColor: "#1a1a1a", color: todoFilterUser === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", color: todoFilterUser === "all" ? "var(--app-text-muted)" : "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         <option value="all">All Users</option>
                         {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -1997,7 +1997,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     {/* Date filter */}
                     <select value={todoFilterDate} onChange={e => setTodoFilterDate(e.target.value)}
                       className="px-3 py-1 rounded-lg text-xs border-0 outline-none"
-                      style={{ backgroundColor: "#1a1a1a", color: todoFilterDate === "all" ? "#888" : "#fff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)", color: todoFilterDate === "all" ? "var(--app-text-muted)" : "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <option value="all">Any Date</option>
                       <option value="today">Today</option>
@@ -2009,7 +2009,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     {(todoFilterStatus !== "all" || todoFilterCanvas !== "all" || todoFilterProject !== "all" || todoFilterUser !== "all" || todoFilterDate !== "all") && (
                       <button type="button" onClick={() => { setTodoFilterStatus("all"); setTodoFilterCanvas("all"); setTodoFilterProject("all"); setTodoFilterUser("all"); setTodoFilterDate("all"); }}
                         className="px-3 py-1 rounded-lg text-xs transition-colors"
-                        style={{ color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                        style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         Clear filters
                       </button>
@@ -2020,21 +2020,21 @@ const [showSageChat, setShowSageChat] = useState(false);
                 <div className="flex-1 overflow-y-auto">
                   {displayed.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="#444" strokeWidth="2"/><path d="M9 14l3 3 7-7" stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-faint)" strokeWidth="2"/><path d="M9 14l3 3 7-7" stroke="var(--app-text-faint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No to-dos found</div>
+                      <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No to-dos found</div>
                       <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Add to-dos on files in your canvases</div>
                     </div>
                   ) : (
-                    <div className="divide-y" style={{ borderColor: "#1a1a1a" }}>
+                    <div className="divide-y" style={{ borderColor: "var(--app-card-elevated)" }}>
                       {displayed.map(({ task, fileName, canvasName, canvasId, nodeId, projectName }) => {
                         const dueDateColor = task.dueDate
                           ? task.dueDate < today && !task.completed ? "#F87171"
                           : task.dueDate === today ? "#F0FE00"
                           : task.dueDate === new Date(Date.now() + 86400000).toISOString().slice(0, 10) ? "#FB923C"
-                          : "#888"
-                          : "#888";
+                          : "var(--app-text-muted)"
+                          : "var(--app-text-muted)";
                         const dueDateLabel = task.dueDate
                           ? task.dueDate === today ? "Today"
                           : task.dueDate === new Date(Date.now() + 86400000).toISOString().slice(0, 10) ? "Tomorrow"
@@ -2047,7 +2047,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               type="button"
                               onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
                               className="flex-shrink-0 w-4 h-4 rounded-sm border transition-colors"
-                              style={{ borderColor: task.completed ? "#4ADE80" : "#444", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
+                              style={{ borderColor: task.completed ? "#4ADE80" : "var(--app-text-faint)", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
                             >
                               {task.completed && (
                                 <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
@@ -2057,7 +2057,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             </button>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif", color: task.completed ? "#555" : "#fff", textDecoration: task.completed ? "line-through" : "none" }}>
+                                <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif", color: task.completed ? "var(--app-text-faint)" : "var(--app-text-primary)", textDecoration: task.completed ? "line-through" : "none" }}>
                                   {task.title}
                                 </span>
                                 {dueDateLabel && (
@@ -2075,7 +2075,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               </div>
                             </div>
                             {task.assignee && (
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                                 {task.assignee.initials}
                               </div>
                             )}
@@ -2094,7 +2094,7 @@ const [showSageChat, setShowSageChat] = useState(false);
             {/* Column Headers */}
             <div
               className="flex items-center gap-0 px-6 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider select-none"
-              style={{ borderBottom: "1px solid #222222", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               <div className="flex-1 min-w-0">Name</div>
               <div className="w-36 flex-shrink-0">Owner</div>
@@ -2117,7 +2117,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                         return next;
                       })}
                       className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-200 hover:bg-white/5 transition-colors"
-                      style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <svg
@@ -2155,8 +2155,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                                 onOpenCanvas(canvas.id);
                               }
                             }}
-                            className="w-full flex items-center gap-0 pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
-                            style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-foreground transition-colors"
+                            style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               {fileNodes.length > 0 ? (
@@ -2184,8 +2184,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                               key={`${node.id}-${idx}`}
                               type="button"
                               onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
-                              className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
-                              style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                              className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-foreground transition-colors"
+                              style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2">
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
@@ -2211,7 +2211,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                   {projects.length > 0 && (
                     <div
                       className="px-6 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider"
-                      style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                      style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       Uncollected
                     </div>
@@ -2234,8 +2234,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                               onOpenCanvas(canvas.id);
                             }
                           }}
-                          className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
-                          style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                          className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-foreground transition-colors"
+                          style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                         >
                           <div className="flex-1 min-w-0 flex items-center gap-2">
                             {fileNodes.length > 0 ? (
@@ -2262,8 +2262,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                             key={`${node.id}-${idx}`}
                             type="button"
                             onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
-                            className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-white transition-colors"
-                            style={{ borderBottom: "1px solid #1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-foreground transition-colors"
+                            style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
@@ -2285,10 +2285,10 @@ const [showSageChat, setShowSageChat] = useState(false);
               {/* Empty state */}
               {projects.length === 0 && canvases.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H22C23.6569 10 25 11.3431 25 13V22C25 23.6569 23.6569 25 22 25H7C5.34315 25 4 23.6569 4 22V9Z" stroke="#444" strokeWidth="2"/></svg>
+                  <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H22C23.6569 10 25 11.3431 25 13V22C25 23.6569 23.6569 25 22 25H7C5.34315 25 4 23.6569 4 22V9Z" stroke="var(--app-text-faint)" strokeWidth="2"/></svg>
                   </div>
-                  <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No files yet</div>
+                  <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No files yet</div>
                   <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create a canvas and add files to see them here</div>
                 </div>
               )}
@@ -2298,7 +2298,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           /* My Frameworks View */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Filter Tabs */}
-            <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #222222" }}>
+            <div className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid var(--app-border)" }}>
               {(["all", "mine", "team", "drafts"] as FrameworksFilter[]).map((f) => {
                 const labels: Record<FrameworksFilter, string> = { all: "All", mine: "Created by me", team: "Team", drafts: "Drafts" };
                 return (
@@ -2307,11 +2307,11 @@ const [showSageChat, setShowSageChat] = useState(false);
                     type="button"
                     onClick={() => setFrameworksFilter(f)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                      frameworksFilter === f ? "text-[#0a0a0a]" : "text-gray-400 hover:text-white hover:bg-white/5"
+                      frameworksFilter === f ? "text-[var(--app-bg)]" : "text-gray-400 hover:text-foreground hover:bg-white/5"
                     }`}
                     style={{
-                      backgroundColor: frameworksFilter === f ? "#F0FE00" : "#1a1a1a",
-                      border: `1px solid ${frameworksFilter === f ? "#F0FE00" : "#333333"}`,
+                      backgroundColor: frameworksFilter === f ? "#F0FE00" : "var(--app-card-elevated)",
+                      border: `1px solid ${frameworksFilter === f ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
@@ -2327,16 +2327,16 @@ const [showSageChat, setShowSageChat] = useState(false);
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div
                     className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                   >
                     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                      <rect x="3" y="3" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
-                      <rect x="16" y="3" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
-                      <rect x="3" y="16" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
-                      <rect x="16" y="16" width="9" height="9" rx="2" stroke="#666" strokeWidth="2"/>
+                      <rect x="3" y="3" width="9" height="9" rx="2" stroke="var(--app-text-faint)" strokeWidth="2"/>
+                      <rect x="16" y="3" width="9" height="9" rx="2" stroke="var(--app-text-faint)" strokeWidth="2"/>
+                      <rect x="3" y="16" width="9" height="9" rx="2" stroke="var(--app-text-faint)" strokeWidth="2"/>
+                      <rect x="16" y="16" width="9" height="9" rx="2" stroke="var(--app-text-faint)" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <p className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No frameworks yet</p>
+                  <p className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No frameworks yet</p>
                   <p className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Open a canvas and use "Save as Framework" to create one
                   </p>
@@ -2347,7 +2347,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     <div
                       key={framework.id}
                       className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
-                      style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                      style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                     >
                       {/* Preview */}
                       <div className="relative aspect-[16/10] overflow-hidden">
@@ -2357,7 +2357,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                           className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
                           style={{
                             backgroundColor: "rgba(0,0,0,0.7)",
-                            color: framework.visibility === "private" ? "#888" : framework.visibility === "workspace" ? "#60a5fa" : "#F0FE00",
+                            color: framework.visibility === "private" ? "var(--app-text-muted)" : framework.visibility === "workspace" ? "#60a5fa" : "#F0FE00",
                             fontFamily: "system-ui, Inter, sans-serif",
                           }}
                         >
@@ -2366,7 +2366,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                         {framework.isPublished === false && (
                           <div
                             className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}
+                            style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             Draft
                           </div>
@@ -2376,7 +2376,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                       {/* Content */}
                       <div className="p-4">
                         <h3
-                          className="text-white font-semibold text-base mb-1 truncate"
+                          className="text-foreground font-semibold text-base mb-1 truncate"
                           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                         >
                           {framework.name}
@@ -2412,7 +2412,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             <button
                               type="button"
                               onClick={() => handleOpenFramework(framework)}
-                              className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
+                              className="px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors hover:opacity-90"
                               style={{ backgroundColor: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               Run
@@ -2430,18 +2430,18 @@ const [showSageChat, setShowSageChat] = useState(false);
           /* Community Frameworks View */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Category Filter Bar */}
-            <div className="px-6 py-4 flex items-center gap-3 overflow-x-auto" style={{ borderBottom: "1px solid #222222" }}>
+            <div className="px-6 py-4 flex items-center gap-3 overflow-x-auto" style={{ borderBottom: "1px solid var(--app-border)" }}>
               <button
                 type="button"
                 onClick={() => setSelectedCategory("all")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   selectedCategory === "all" 
-                    ? "text-[#0a0a0a]" 
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "text-[var(--app-bg)]" 
+                    : "text-gray-400 hover:text-foreground hover:bg-white/5"
                 }`}
                 style={{
-                  backgroundColor: selectedCategory === "all" ? "#F0FE00" : "#1a1a1a",
-                  border: `1px solid ${selectedCategory === "all" ? "#F0FE00" : "#333333"}`,
+                  backgroundColor: selectedCategory === "all" ? "#F0FE00" : "var(--app-card-elevated)",
+                  border: `1px solid ${selectedCategory === "all" ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -2454,12 +2454,12 @@ All Frameworks
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                     selectedCategory === cat 
-                      ? "text-[#0a0a0a]" 
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      ? "text-[var(--app-bg)]" 
+                      : "text-gray-400 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{
-                    backgroundColor: selectedCategory === cat ? "#F0FE00" : "#1a1a1a",
-                    border: `1px solid ${selectedCategory === cat ? "#F0FE00" : "#333333"}`,
+                    backgroundColor: selectedCategory === cat ? "#F0FE00" : "var(--app-card-elevated)",
+                    border: `1px solid ${selectedCategory === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
@@ -2474,11 +2474,11 @@ All Frameworks
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div
                     className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                   >
                     <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="4" width="20" height="20" rx="3" stroke="#666666" strokeWidth="2"/>
-                      <path d="M10 14H18M14 10V18" stroke="#666666" strokeWidth="2" strokeLinecap="round"/>
+                      <rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                      <path d="M10 14H18M14 10V18" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                   </div>
                   <p className="text-gray-400 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -2493,7 +2493,7 @@ All Frameworks
                       <div
                         key={framework.id}
                         className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
-                        style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                        style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                       >
                         {/* Preview */}
                         <div className="relative aspect-[16/10] overflow-hidden">
@@ -2514,7 +2514,7 @@ All Frameworks
                         {/* Content */}
                         <div className="p-4">
                           <h3
-                            className="text-white font-semibold text-base mb-1 truncate"
+                            className="text-foreground font-semibold text-base mb-1 truncate"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
 {framework.name}
@@ -2539,7 +2539,7 @@ All Frameworks
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <span className="text-xs font-medium" style={{ color: "#121212" }}>
+                                <span className="text-xs font-medium" style={{ color: "var(--app-bg-elevated)" }}>
                                   {framework.createdBy.initials}
                                 </span>
                               )}
@@ -2557,8 +2557,8 @@ All Frameworks
                                 key={tag}
                                 className="px-2 py-0.5 rounded text-xs"
                                 style={{
-                                  backgroundColor: "#252525",
-                                  color: "#888888",
+                                  backgroundColor: "var(--app-border-strong)",
+                                  color: "var(--app-text-muted)",
                                   fontFamily: "system-ui, Inter, sans-serif",
                                 }}
                               >
@@ -2577,7 +2577,7 @@ All Frameworks
                                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
                                   hasUpvoted 
                                     ? "text-[#F0FE00]" 
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    : "text-gray-400 hover:text-foreground hover:bg-white/5"
                                 }`}
                                 style={{
                                   backgroundColor: hasUpvoted ? "rgba(240, 254, 0, 0.1)" : "transparent",
@@ -2629,7 +2629,7 @@ All Frameworks
                               <button
                                 type="button"
                                 onClick={() => handleOpenFramework(framework)}
-                                className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
+                                className="px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors hover:opacity-90"
                                 style={{
                                   backgroundColor: "#F0FE00",
                                   fontFamily: "system-ui, Inter, sans-serif",
@@ -2666,7 +2666,7 @@ All Frameworks
             <div className="max-w-3xl space-y-8">
               {/* Page Header */}
               <div>
-                <h2 className="text-white font-semibold text-xl" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <h2 className="text-foreground font-semibold text-xl" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Workspace Settings
                 </h2>
                 <p className="text-gray-500 text-sm mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -2675,8 +2675,8 @@ All Frameworks
               </div>
 
               {/* Workspace Details */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
+                <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5"/>
                   </svg>
@@ -2690,13 +2690,13 @@ All Frameworks
                       value={workspaceSettings.name}
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, name: e.target.value })}
                       onBlur={(e) => onSaveWorkspaceDetails?.({ ...workspaceSettings, name: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>ID</label>
-                    <div className="px-3 py-2 rounded-lg text-sm text-gray-500" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }}>
+                    <div className="px-3 py-2 rounded-lg text-sm text-gray-500" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "monospace" }}>
                       {workspaceSettings.id}
                     </div>
                   </div>
@@ -2707,16 +2707,16 @@ All Frameworks
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, description: e.target.value })}
                       onBlur={(e) => onSaveWorkspaceDetails?.({ ...workspaceSettings, description: e.target.value })}
                       rows={2}
-                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Branding */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
+                <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                     <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
@@ -2727,14 +2727,14 @@ All Frameworks
                 <div className="grid grid-cols-3 gap-6">
                   {/* Workspace Icon */}
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                    <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px dashed var(--app-canvas-dot)" }}>
                       {workspaceSettings.branding?.workspaceIcon ? (
                         <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="max-w-full max-h-full object-contain p-1" />
                       ) : (
                         <span className="text-xl font-bold" style={{ color: "#F0FE00" }}>{workspaceSettings.name.charAt(0)}</span>
                       )}
                     </div>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Icon
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
@@ -2743,14 +2743,14 @@ All Frameworks
                   </div>
                   {/* Wordmark */}
                   <div className="text-center">
-                    <div className="w-32 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                    <div className="w-32 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px dashed var(--app-canvas-dot)" }}>
                       {workspaceSettings.branding?.wordmark ? (
                         <img src={workspaceSettings.branding.wordmark} alt="Wordmark" className="max-w-full max-h-full object-contain" />
                       ) : (
                         <span className="text-xs text-gray-500">No wordmark</span>
                       )}
                     </div>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Wordmark
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
@@ -2759,14 +2759,14 @@ All Frameworks
                   </div>
                   {/* Profile */}
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                    <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px dashed var(--app-canvas-dot)" }}>
                       {workspaceSettings.branding?.profilePicture ? (
                         <img src={workspaceSettings.branding.profilePicture} alt="Profile" className="max-w-full max-h-full object-contain p-1" />
                       ) : (
-                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="5" stroke="#666666" strokeWidth="2"/><path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="#666666" strokeWidth="2" strokeLinecap="round"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="5" stroke="var(--app-text-muted)" strokeWidth="2"/><path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round"/></svg>
                       )}
                     </div>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       Photo
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
@@ -2777,8 +2777,8 @@ All Frameworks
               </div>
 
               {/* Figma Integration */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
+                <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-blue-400">
                     <path d="M6 1.5H4.5C3.4 1.5 2.5 2.4 2.5 3.5C2.5 4.6 3.4 5.5 4.5 5.5H6V1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M6 5.5H7.5C8.6 5.5 9.5 4.6 9.5 3.5C9.5 2.4 8.6 1.5 7.5 1.5H6V5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2799,7 +2799,7 @@ All Frameworks
                     </p>
                     {figmaPluginToken ? (
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs px-3 py-2 rounded-lg select-all overflow-hidden" style={{ background: "#0d0d0d", color: "#60a5fa", fontFamily: "monospace", border: "1px solid #2a2a2a", wordBreak: "break-all", display: "block", lineHeight: 1.6 }}>
+                        <code className="flex-1 text-xs px-3 py-2 rounded-lg select-all overflow-hidden" style={{ background: "var(--app-bg)", color: "#60a5fa", fontFamily: "monospace", border: "1px solid var(--app-border-strong)", wordBreak: "break-all", display: "block", lineHeight: 1.6 }}>
                           {figmaPluginToken}
                         </code>
                         <button
@@ -2840,7 +2840,7 @@ All Frameworks
                         }}
                         placeholder="figd_…"
                         className="flex-1 text-sm px-3 py-2 rounded-lg outline-none"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#e5e5e5", fontFamily: "monospace" }}
+                        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "#e5e5e5", fontFamily: "monospace" }}
                       />
                       {figmaPatInput.trim() && (
                         <div className="flex items-center gap-1.5 text-xs flex-shrink-0" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -2854,9 +2854,9 @@ All Frameworks
               </div>
 
               {/* Team Members */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <h3 className="text-foreground font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                       <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <circle cx="5.83333" cy="4.66667" r="2.66667" stroke="currentColor" strokeWidth="1.5"/>
@@ -2870,7 +2870,7 @@ All Frameworks
                     type="button"
                     onClick={() => setShowInviteDialog(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
-                    style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     Invite
@@ -2887,11 +2887,11 @@ All Frameworks
                   {settingsMembersLoading ? (
                     <div className="space-y-1">
                       {[1, 2].map(i => (
-                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse" style={{ backgroundColor: "#1a1a1a" }}>
-                          <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: "#2a2a2a" }} />
+                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                          <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)" }} />
                           <div className="flex-1 space-y-1.5">
-                            <div className="h-3 rounded" style={{ backgroundColor: "#2a2a2a", width: "40%" }} />
-                            <div className="h-2.5 rounded" style={{ backgroundColor: "#222", width: "60%" }} />
+                            <div className="h-3 rounded" style={{ backgroundColor: "var(--app-border-strong)", width: "40%" }} />
+                            <div className="h-2.5 rounded" style={{ backgroundColor: "var(--app-border)", width: "60%" }} />
                           </div>
                         </div>
                       ))}
@@ -2920,14 +2920,14 @@ All Frameworks
 
                       return (
                         <div key={member.userId}>
-                          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
+                          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-foreground" style={{ backgroundColor: "var(--app-canvas-dot)" }}>
                               {member.initials}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
-                                {isCurrentUser && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#2a2a2a", color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>You</span>}
+                                <span className="text-sm text-foreground font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
+                                {isCurrentUser && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>You</span>}
                               </div>
                               {member.email && <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.email}</div>}
                             </div>
@@ -2949,8 +2949,8 @@ All Frameworks
                                     loadSettingsMembers(settingsSupabaseWorkspaceId);
                                   }
                                 }}
-                                className="text-xs rounded-md px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-white/20"
-                                style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", fontFamily: "system-ui, Inter, sans-serif" }}
+                                className="text-xs rounded-md px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-white/20"
+                                style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)", fontFamily: "system-ui, Inter, sans-serif" }}
                               >
                                 <option value="viewer">Viewer</option>
                                 <option value="editor">Editor</option>
@@ -2968,7 +2968,7 @@ All Frameworks
                                 title="Transfer ownership"
                                 onClick={() => setSettingsTransferConfirmId(confirmingTransfer ? null : member.userId)}
                                 className="flex-shrink-0 p-1.5 rounded transition-colors"
-                                style={{ color: confirmingTransfer ? "#F0FE00" : "#555", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                                style={{ color: confirmingTransfer ? "#F0FE00" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
                               >
                                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                                   <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -3005,7 +3005,7 @@ All Frameworks
                                 Transfer ownership to <strong>{member.name}</strong>? You&apos;ll become an Admin.
                               </p>
                               <div className="flex gap-2 flex-shrink-0">
-                                <button type="button" onClick={() => setSettingsTransferConfirmId(null)} className="text-xs px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#2a2a2a", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}>Cancel</button>
+                                <button type="button" onClick={() => setSettingsTransferConfirmId(null)} className="text-xs px-2.5 py-1 rounded-lg" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif" }}>Cancel</button>
                                 <button
                                   type="button"
                                   onClick={async () => {
@@ -3020,7 +3020,7 @@ All Frameworks
                                     else loadSettingsMembers(settingsSupabaseWorkspaceId);
                                   }}
                                   className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                                  style={{ backgroundColor: "#F0FE00", color: "#111", fontFamily: "system-ui, Inter, sans-serif" }}
+                                  style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                                 >Confirm</button>
                               </div>
                             </div>
@@ -3029,12 +3029,12 @@ All Frameworks
                       );
                     })}
                     {fakeMembers.map(member => (
-                      <div key={member.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
+                      <div key={member.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-foreground" style={{ backgroundColor: "var(--app-canvas-dot)" }}>
                           {member.initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm text-white font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
+                          <span className="text-sm text-foreground font-medium truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
                           {member.email && <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.email}</div>}
                         </div>
                         <span className="text-xs text-gray-500 px-2 flex-shrink-0 capitalize" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.role}</span>
@@ -3047,8 +3047,8 @@ All Frameworks
 
                 {/* Pending Invitations */}
                 {settingsPendingInvitations.length > 0 && (
-                  <div className="mt-4 pt-4" style={{ borderTop: "1px solid #222222" }}>
-                    <p className="text-xs font-medium mb-2" style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--app-border)" }}>
+                    <p className="text-xs font-medium mb-2" style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                       Pending Invitations
                     </p>
                     <div className="space-y-1">
@@ -3057,13 +3057,13 @@ All Frameworks
                         const didResend = settingsResendSuccessId === inv.id;
                         const ROLE_LABELS: Record<string, string> = { owner: "Owner", admin: "Admin", editor: "Editor", viewer: "Viewer" };
                         return (
-                          <div key={inv.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: "#222222", color: "#666666" }}>
+                          <div key={inv.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: "var(--app-border)", color: "var(--app-text-muted)" }}>
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate" style={{ color: "#aaaaaa", fontFamily: "system-ui, Inter, sans-serif" }}>{inv.email}</div>
-                              <div className="text-xs" style={{ color: "#555555", fontFamily: "system-ui, Inter, sans-serif" }}>{ROLE_LABELS[inv.role] ?? inv.role} · Expires {new Date(inv.expiresAt).toLocaleDateString()}</div>
+                              <div className="text-sm font-medium truncate" style={{ color: "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif" }}>{inv.email}</div>
+                              <div className="text-xs" style={{ color: "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}>{ROLE_LABELS[inv.role] ?? inv.role} · Expires {new Date(inv.expiresAt).toLocaleDateString()}</div>
                             </div>
                             <button
                               type="button"
@@ -3089,9 +3089,9 @@ All Frameworks
                               }}
                               className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
                               style={{
-                                backgroundColor: didResend ? "#0f2a0f" : "#222222",
-                                color: didResend ? "#4ade80" : isResending ? "#555555" : "#aaaaaa",
-                                border: `1px solid ${didResend ? "#166534" : "#333333"}`,
+                                backgroundColor: didResend ? "#0f2a0f" : "var(--app-border)",
+                                color: didResend ? "#4ade80" : isResending ? "var(--app-text-faint)" : "var(--app-text-secondary)",
+                                border: `1px solid ${didResend ? "#166534" : "var(--app-canvas-dot)"}`,
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                             >
@@ -3123,8 +3123,8 @@ All Frameworks
               </div>
 
               {/* Preferences */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
+                <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M2.66667 4H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M2.66667 8H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -3138,8 +3138,8 @@ All Frameworks
                     <select
                       value={workspaceSettings.preferences.defaultProduct}
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, defaultProduct: e.target.value as any } })}
-                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {workspaceSettings.products.filter(p => p.enabled).map((product) => (
                         <option key={product.id} value={product.id}>{product.name}</option>
@@ -3151,16 +3151,16 @@ All Frameworks
                     <select
                       value={workspaceSettings.preferences.defaultStatus}
                       onChange={(e) => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, defaultStatus: e.target.value as any } })}
-                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-foreground focus:outline-none"
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <option value="draft">Draft</option>
                       <option value="in-review">In Review</option>
                       <option value="approved">Approved</option>
                     </select>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                    <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Auto-save</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                    <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Auto-save</span>
                     <button
                       type="button"
                       onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, autoSave: !workspaceSettings.preferences.autoSave } })}
@@ -3169,8 +3169,8 @@ All Frameworks
                       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${workspaceSettings.preferences.autoSave ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                    <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Show Grid</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+                    <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Show Grid</span>
                     <button
                       type="button"
                       onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, showGrid: !workspaceSettings.preferences.showGrid } })}
@@ -3183,9 +3183,9 @@ All Frameworks
               </div>
 
               {/* Naming Conventions - Link to Dialog for full editor */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+              <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-white font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <h3 className="text-foreground font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                       <path d="M2 4H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M2 8H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -3196,22 +3196,22 @@ All Frameworks
                   <button
                     type="button"
                     onClick={() => setShowSettingsDialog(true)}
-                    className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                    className="text-xs text-gray-400 hover:text-foreground transition-colors flex items-center gap-1"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Edit
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                 </div>
-                <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid #222222" }}>
+                <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
                   <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Preview: </span>
-                  <span className="text-sm text-white font-mono">project_logo_v1<span className="text-gray-500">.fig</span></span>
+                  <span className="text-sm text-foreground font-mono">project_logo_v1<span className="text-gray-500">.fig</span></span>
                 </div>
               </div>
 
               {/* Data & Sync Section — removed */}
-              {false && <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
-                <h3 className="text-white font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              {false && <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
+                <h3 className="text-foreground font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
                     <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -3220,9 +3220,9 @@ All Frameworks
                   Data & Sync
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     <div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Sync All Canvases to Cloud</span>
+                      <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Sync All Canvases to Cloud</span>
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         {isLoadingCanvases ? "Loading..." : `${canvases.length} canvas${canvases.length !== 1 ? "es" : ""} ready to sync`}
                       </p>
@@ -3243,9 +3243,9 @@ All Frameworks
                   </div>
                   
                   {/* Export Backup */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     <div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Export Local Backup</span>
+                      <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Export Local Backup</span>
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         Download your current data as a JSON file
                       </p>
@@ -3271,9 +3271,9 @@ All Frameworks
                       }}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       style={{ 
-                        backgroundColor: "#2a2a2a", 
-                        color: "#fff",
-                        border: "1px solid #333",
+                        backgroundColor: "var(--app-border-strong)", 
+                        color: "var(--app-text-primary)",
+                        border: "1px solid var(--app-canvas-dot)",
                         fontFamily: "system-ui, Inter, sans-serif" 
                       }}
                     >
@@ -3282,9 +3282,9 @@ All Frameworks
                   </div>
                   
                   {/* Import from Local Storage */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     <div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Restore from Local Storage</span>
+                      <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Restore from Local Storage</span>
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         Load canvases saved in this browser
                       </p>
@@ -3317,9 +3317,9 @@ All Frameworks
                       }}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       style={{ 
-                        backgroundColor: "#2a2a2a", 
-                        color: "#fff",
-                        border: "1px solid #333",
+                        backgroundColor: "var(--app-border-strong)", 
+                        color: "var(--app-text-primary)",
+                        border: "1px solid var(--app-canvas-dot)",
                         fontFamily: "system-ui, Inter, sans-serif" 
                       }}
                     >
@@ -3328,19 +3328,19 @@ All Frameworks
                   </div>
                   
                   {/* Import from File */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     <div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Import from File</span>
+                      <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Import from File</span>
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         Load canvases from a JSON backup file
                       </p>
                     </div>
                     <label
-                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer hover:bg-[#333]"
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer hover:bg-[var(--app-canvas-dot)]"
                       style={{ 
-                        backgroundColor: "#2a2a2a", 
-                        color: "#fff",
-                        border: "1px solid #333",
+                        backgroundColor: "var(--app-border-strong)", 
+                        color: "var(--app-text-primary)",
+                        border: "1px solid var(--app-canvas-dot)",
                         fontFamily: "system-ui, Inter, sans-serif" 
                       }}
                     >
@@ -3390,9 +3390,9 @@ All Frameworks
                   </div>
                   
                   {/* Paste JSON directly */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     <div>
-                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Paste JSON Data</span>
+                      <span className="text-sm text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Paste JSON Data</span>
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         Paste canvas data directly from clipboard
                       </p>
@@ -3429,9 +3429,9 @@ All Frameworks
                       }}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       style={{ 
-                        backgroundColor: "#2a2a2a", 
-                        color: "#fff",
-                        border: "1px solid #333",
+                        backgroundColor: "var(--app-border-strong)", 
+                        color: "var(--app-text-primary)",
+                        border: "1px solid var(--app-canvas-dot)",
                         fontFamily: "system-ui, Inter, sans-serif" 
                       }}
                     >
@@ -3447,7 +3447,7 @@ All Frameworks
 
               {/* Danger Zone */}
               {onDeleteWorkspace && (workspaces?.length ?? 1) > 1 && (
-                <div className="rounded-xl p-6" style={{ backgroundColor: "#141414", border: "1px solid #2a1515" }}>
+                <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid #2a1515" }}>
                   <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
                     <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                       <path d="M8 2L14 13H2L8 2Z" stroke="#ef4444" strokeWidth="1.3" strokeLinejoin="round"/>
@@ -3483,7 +3483,7 @@ All Frameworks
                         This will permanently delete <span className="font-bold">{workspaceSettings.name}</span> and all its canvases. This cannot be undone.
                       </p>
                       <p className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                        Type <span className="font-mono font-semibold text-white">delete {workspaceSettings.name}</span> to confirm
+                        Type <span className="font-mono font-semibold text-foreground">delete {workspaceSettings.name}</span> to confirm
                       </p>
                       <input
                         type="text"
@@ -3491,10 +3491,10 @@ All Frameworks
                         onChange={e => setDeleteConfirmTextInline(e.target.value)}
                         placeholder={`delete ${workspaceSettings.name}`}
                         autoFocus
-                        className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                        className="w-full px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-600 outline-none"
                         style={{
-                          backgroundColor: "#0d0d0d",
-                          border: `1px solid ${deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#ef4444" : "#2a2a2a"}`,
+                          backgroundColor: "var(--app-bg)",
+                          border: `1px solid ${deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#ef4444" : "var(--app-border-strong)"}`,
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       />
@@ -3503,7 +3503,7 @@ All Frameworks
                           type="button"
                           onClick={() => { setShowDeleteConfirmInline(false); setDeleteConfirmTextInline(""); }}
                           className="flex-1 px-3 py-2 rounded-lg text-sm font-medium"
-                          style={{ backgroundColor: "#1e1e1e", border: "1px solid #333", color: "#aaa", fontFamily: "system-ui, Inter, sans-serif" }}
+                          style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif" }}
                         >
                           Cancel
                         </button>
@@ -3514,7 +3514,7 @@ All Frameworks
                           className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all"
                           style={{
                             backgroundColor: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#ef4444" : "#2a1a1a",
-                            color: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "#fff" : "#555",
+                            color: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "var(--app-text-primary)" : "var(--app-text-faint)",
                             border: "none",
                             cursor: deleteConfirmTextInline === `delete ${workspaceSettings.name}` ? "pointer" : "not-allowed",
                             fontFamily: "system-ui, Inter, sans-serif",
@@ -3673,7 +3673,7 @@ All Frameworks
                         {/* Today status card */}
                         <div
                           className="rounded-xl p-6 relative overflow-hidden"
-                          style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                          style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                         >
                           <div
                             className="absolute inset-0 pointer-events-none"
@@ -3683,13 +3683,13 @@ All Frameworks
                           />
                           <div className="relative flex items-center justify-between gap-6">
                             <div className="min-w-0">
-                              <h4 className="text-white font-semibold text-base mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>{focusedHeader}</h4>
+                              <h4 className="text-foreground font-semibold text-base mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>{focusedHeader}</h4>
                               <p className="text-sm text-gray-400 max-w-xs mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
                                 {cfg.description}
                               </p>
                               <div>
                                 <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Projects</div>
-                                <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.projects}</div>
+                                <div className="text-sm text-foreground font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{cfg.projects}</div>
                               </div>
                             </div>
                             <div
@@ -3705,14 +3705,14 @@ All Frameworks
                         {/* To-Dos card */}
                         <div
                           className="rounded-xl p-6 flex-1"
-                          style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                          style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                         >
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-white font-semibold text-base" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>To-Dos</h4>
+                            <h4 className="text-foreground font-semibold text-base" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>To-Dos</h4>
                             <button
                               type="button"
                               onClick={() => setActiveView("todos")}
-                              className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#1a1a1a] transition-colors"
+                              className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-foreground hover:bg-[var(--app-card-elevated)] transition-colors"
                               title="Add task"
                             >
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -3742,13 +3742,13 @@ All Frameworks
                                   } else if (dayDiff === 0) {
                                     dueLabel = { text: "Due Today", color: "#FCD34D" };
                                   } else if (dayDiff === 1) {
-                                    dueLabel = { text: "Due Tomorrow", color: "#888888" };
+                                    dueLabel = { text: "Due Tomorrow", color: "var(--app-text-muted)" };
                                   } else if (dayDiff <= 7) {
-                                    dueLabel = { text: `Due in ${dayDiff} days`, color: "#888888" };
+                                    dueLabel = { text: `Due in ${dayDiff} days`, color: "var(--app-text-muted)" };
                                   } else {
                                     dueLabel = {
                                       text: `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-                                      color: "#888888",
+                                      color: "var(--app-text-muted)",
                                     };
                                   }
                                 }
@@ -3760,7 +3760,7 @@ All Frameworks
                                         onClick={() => handleToggleTask(canvasId, nodeId, task.id)}
                                         className="flex-shrink-0 w-4 h-4 rounded border transition-colors flex items-center justify-center"
                                         style={{
-                                          borderColor: task.completed ? "#4ADE80" : "#444",
+                                          borderColor: task.completed ? "#4ADE80" : "var(--app-text-faint)",
                                           backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent",
                                         }}
                                       >
@@ -3775,7 +3775,7 @@ All Frameworks
                                         style={{
                                           fontFamily: "system-ui, Inter, sans-serif",
                                           textDecoration: task.completed ? "line-through" : "none",
-                                          color: task.completed ? "#666" : "#fff",
+                                          color: task.completed ? "var(--app-text-faint)" : "var(--app-text-primary)",
                                         }}
                                       >
                                         {task.title || "Untitled task"}
@@ -3811,7 +3811,7 @@ All Frameworks
                       {/* Right column - vertical calendar (Figma spec) */}
                       <div
                         className="rounded-xl p-5 h-full flex flex-col"
-                        style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                        style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                       >
                         <div className="flex items-center justify-between mb-4 flex-shrink-0">
                           <div className="flex items-center gap-4">
@@ -3820,14 +3820,14 @@ All Frameworks
                               onClick={() => ribbonView === "calendar"
                                 ? setCalendarMonthOffset(o => o - 1)
                                 : setSelectedRibbonDay(d => Math.max(0, d - 7))}
-                              className="text-gray-500 hover:text-white transition-colors"
+                              className="text-gray-500 hover:text-foreground transition-colors"
                               aria-label={ribbonView === "calendar" ? "Previous month" : "Previous week"}
                             >
                               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
                                 <path d="M6.5 1L1.5 6L6.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
-                            <h4 className="text-white font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>
+                            <h4 className="text-foreground font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>
                               {ribbonView === "calendar" ? calendarHeader : rangeLabel}
                             </h4>
                             <button
@@ -3835,7 +3835,7 @@ All Frameworks
                               onClick={() => ribbonView === "calendar"
                                 ? setCalendarMonthOffset(o => o + 1)
                                 : setSelectedRibbonDay(d => Math.min(ribbonDays.length - 1, d + 7))}
-                              className="text-gray-500 hover:text-white transition-colors"
+                              className="text-gray-500 hover:text-foreground transition-colors"
                               aria-label={ribbonView === "calendar" ? "Next month" : "Next week"}
                             >
                               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
@@ -3843,14 +3843,14 @@ All Frameworks
                               </svg>
                             </button>
                           </div>
-                          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                             <button
                               type="button"
                               onClick={() => setRibbonView("calendar")}
                               className="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
                               style={{
-                                backgroundColor: ribbonView === "calendar" ? "#2a2a2a" : "transparent",
-                                color: ribbonView === "calendar" ? "#ffffff" : "#6b7280",
+                                backgroundColor: ribbonView === "calendar" ? "var(--app-border-strong)" : "transparent",
+                                color: ribbonView === "calendar" ? "var(--app-text-primary)" : "var(--app-text-muted)",
                               }}
                               title="Calendar view"
                             >
@@ -3866,8 +3866,8 @@ All Frameworks
                               onClick={() => setRibbonView("list")}
                               className="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
                               style={{
-                                backgroundColor: ribbonView === "list" ? "#2a2a2a" : "transparent",
-                                color: ribbonView === "list" ? "#ffffff" : "#6b7280",
+                                backgroundColor: ribbonView === "list" ? "var(--app-border-strong)" : "transparent",
+                                color: ribbonView === "list" ? "var(--app-text-primary)" : "var(--app-text-muted)",
                               }}
                               title="List view"
                             >
@@ -3889,7 +3889,7 @@ All Frameworks
                             const baseColor = barColorMap[day.status] || "#00db75";
                             const borderColor = todayBorderMap[day.status] || "#00b963";
                             const labelColor = isFocused
-                              ? "#ffffff"
+                              ? "var(--app-text-primary)"
                               : isPast
                               ? "rgba(164,164,164,0.4)"
                               : "#a4a4a4";
@@ -3942,15 +3942,15 @@ All Frameworks
                                 if (!cell) return <div key={`e-${i}`} />;
                                 const isPast = !cell.isToday && !cell.isFuture;
                                 const bg = isPast
-                                  ? "#3a3a3a"
+                                  ? "var(--app-border-strong)"
                                   : cell.status === "smooth"
                                   ? "#00db75"
                                   : cell.status === "high"
                                   ? "#e52a05"
                                   : cell.status === "minor" || cell.status === "moderate"
                                   ? "#fdd33b"
-                                  : "#3a3a3a";
-                                const textColor = isPast ? "#7a7a7a" : "#0a0a0a";
+                                  : "var(--app-border-strong)";
+                                const textColor = isPast ? "#7a7a7a" : "var(--app-bg)";
                                 return (
                                   <button
                                     key={`d-${cell.day}`}
@@ -3961,7 +3961,7 @@ All Frameworks
                                       backgroundColor: bg,
                                       color: textColor,
                                       fontFamily: "Inter, system-ui, sans-serif",
-                                      outline: cell.isToday ? "2px solid #ffffff" : "none",
+                                      outline: cell.isToday ? "2px solid var(--app-text-primary)" : "none",
                                       outlineOffset: cell.isToday ? "2px" : undefined,
                                     }}
                                   >
@@ -3987,7 +3987,7 @@ All Frameworks
                     <button
                       type="button"
                       onClick={() => setSelectedCollectionId(null)}
-                      className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors text-sm"
+                      className="flex items-center gap-1.5 text-gray-500 hover:text-foreground transition-colors text-sm"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -3996,7 +3996,7 @@ All Frameworks
                       All Collections
                     </button>
                     <span className="text-gray-700">/</span>
-                    <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       {projects.find(p => p.id === selectedCollectionId)!.name}
                     </h2>
                     <span className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -4006,7 +4006,7 @@ All Frameworks
                   {/* Collection canvases grid */}
                   {getProjectCanvases(selectedCollectionId).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases in this collection</div>
+                      <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases in this collection</div>
                       <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Add canvases using the folder icon on any canvas card</div>
                     </div>
                   ) : (
@@ -4015,7 +4015,7 @@ All Frameworks
                 <div
                   key={canvas.id}
                   className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
-                  style={{ backgroundColor: "#1a1a1a" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)" }}
                   onClick={() => onOpenCanvas(canvas.id)}
                 >
                   {/* Canvas Preview */}
@@ -4034,7 +4034,7 @@ All Frameworks
                         title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
                         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
+                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </button>
                       <button
@@ -4056,7 +4056,7 @@ All Frameworks
                   {/* Info */}
                   <div className="p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <div className="text-foreground font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         {canvas.name}
                       </div>
                       {/* Collaborator Avatars */}
@@ -4065,10 +4065,10 @@ All Frameworks
                           {canvas.collaborators.slice(0, 3).map((collaborator) => (
                             <div
                               key={collaborator.id}
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]"
                               style={{
-                                backgroundColor: collaborator.avatar ? "transparent" : "#333333",
-                                color: "#ffffff",
+                                backgroundColor: collaborator.avatar ? "transparent" : "var(--app-canvas-dot)",
+                                color: "var(--app-text-primary)",
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                               title={collaborator.name}
@@ -4082,10 +4082,10 @@ All Frameworks
                           ))}
                           {canvas.collaborators.length > 3 && (
                             <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]"
                               style={{
-                                backgroundColor: "#252525",
-                                color: "#888888",
+                                backgroundColor: "var(--app-border-strong)",
+                                color: "var(--app-text-muted)",
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                             >
@@ -4106,7 +4106,7 @@ All Frameworks
                             onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }}
                             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10"
                             style={{
-                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666",
+                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "var(--app-text-muted)" : "var(--app-text-faint)",
                               fontFamily: "system-ui, Inter, sans-serif",
                             }}
                             title="Set collection"
@@ -4123,12 +4123,12 @@ All Frameworks
                               <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
                               <div
                                 className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]"
-                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
                               >
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }}
-                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
                                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
@@ -4139,7 +4139,7 @@ All Frameworks
                                     key={p.id}
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }}
-                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                   >
                                     <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
@@ -4167,7 +4167,7 @@ All Frameworks
                   {projects.length > 0 && (
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Collections</h2>
+                        <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Collections</h2>
                         <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{projects.length} {projects.length === 1 ? "collection" : "collections"}</span>
                       </div>
                       <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
@@ -4181,7 +4181,7 @@ All Frameworks
                             >
                               <div
                                 className="relative w-44 h-32 rounded-xl overflow-hidden"
-                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                               >
                                 {projectCanvases.length === 0 ? (
                                   <div className="w-full h-full flex items-center justify-center">
@@ -4196,7 +4196,7 @@ All Frameworks
                                 ) : (
                                   <div className="grid grid-cols-2 grid-rows-2 gap-px w-full h-full">
                                     {projectCanvases.slice(0, 4).map((c, i) => (
-                                      <div key={i} className="overflow-hidden" style={{ backgroundColor: "#111111" }}>
+                                      <div key={i} className="overflow-hidden" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
                                         <CanvasPreview nodes={c.nodes} />
                                       </div>
                                     ))}
@@ -4214,7 +4214,7 @@ All Frameworks
                                 </button>
                               </div>
                               <div className="mt-2">
-                                <div className="text-sm font-bold text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{project.name}</div>
+                                <div className="text-sm font-bold text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{project.name}</div>
                                 <div className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{projectCanvases.length} {projectCanvases.length === 1 ? "canvas" : "canvases"} • {timeAgo(project.updatedAt)}</div>
                               </div>
                             </div>
@@ -4228,7 +4228,7 @@ All Frameworks
                     <>
                       {projects.length > 0 && (
                         <div className="flex items-center justify-between mb-4">
-                          <h2 className="text-base font-bold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Canvases</h2>
+                          <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Canvases</h2>
                           <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{filteredCanvases.filter(c => !c.projectId).length} {filteredCanvases.filter(c => !c.projectId).length === 1 ? "canvas" : "canvases"}</span>
                         </div>
                       )}
@@ -4237,7 +4237,7 @@ All Frameworks
                           <div
                             key={canvas.id}
                             className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
-                            style={{ backgroundColor: "#1a1a1a" }}
+                            style={{ backgroundColor: "var(--app-card-elevated)" }}
                             onClick={() => onOpenCanvas(canvas.id)}
                           >
                             <div className="aspect-[16/10] overflow-hidden relative">
@@ -4251,7 +4251,7 @@ All Frameworks
                                 </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); toggleFavorite(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
                                   <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
+                                    <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
                                   </svg>
                                 </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setCanvasToDelete(canvas.id); }} className="p-1.5 rounded-lg hover:bg-red-500/20" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
@@ -4261,16 +4261,16 @@ All Frameworks
                             </div>
                             <div className="p-3">
                               <div className="flex items-center justify-between">
-                                <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{canvas.name}</div>
+                                <div className="text-foreground font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{canvas.name}</div>
                                 {canvas.collaborators && canvas.collaborators.length > 0 && (
                                   <div className="flex -space-x-1.5 ml-2 flex-shrink-0">
                                     {canvas.collaborators.slice(0, 3).map((collaborator) => (
-                                      <div key={collaborator.id} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]" style={{ backgroundColor: collaborator.avatar ? "transparent" : "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }} title={collaborator.name}>
+                                      <div key={collaborator.id} className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]" style={{ backgroundColor: collaborator.avatar ? "transparent" : "var(--app-canvas-dot)", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }} title={collaborator.name}>
                                         {collaborator.avatar ? <img src={collaborator.avatar} alt={collaborator.name} className="w-full h-full rounded-full object-cover" /> : collaborator.initials}
                                       </div>
                                     ))}
                                     {canvas.collaborators.length > 3 && (
-                                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]" style={{ backgroundColor: "#252525", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}>+{canvas.collaborators.length - 3}</div>
+                                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>+{canvas.collaborators.length - 3}</div>
                                     )}
                                   </div>
                                 )}
@@ -4279,20 +4279,20 @@ All Frameworks
                                 <div className="text-gray-500 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{formatDate(canvas.updatedAt)}</div>
                                 {projects.length > 0 && (
                                   <div className="relative">
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10" style={{ color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666", fontFamily: "system-ui, Inter, sans-serif" }} title="Set collection">
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10" style={{ color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "var(--app-text-muted)" : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }} title="Set collection">
                                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/></svg>
                                       <span className="max-w-[70px] truncate">{canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}</span>
                                     </button>
                                     {collectionMenuCanvasId === canvas.id && (
                                       <>
                                         <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
-                                        <div className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}>
-                                          <button type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }} className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                        <div className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}>
+                                          <button type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }} className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                                             No collection
                                           </button>
                                           {projects.map(p => (
-                                            <button key={p.id} type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }} className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                            <button key={p.id} type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }} className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                                               <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
                                               <span className="truncate">{p.name}</span>
                                               {canvas.projectId === p.id && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -4311,10 +4311,10 @@ All Frameworks
                     </>
                   ) : isWorkspaceSynced && filteredCanvases.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="#444" strokeWidth="2"/><path d="M10 14H18M14 10V18" stroke="#444" strokeWidth="2" strokeLinecap="round"/></svg>
+                      <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-faint)" strokeWidth="2"/><path d="M10 14H18M14 10V18" stroke="var(--app-text-faint)" strokeWidth="2" strokeLinecap="round"/></svg>
                       </div>
-                      <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases yet</div>
+                      <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases yet</div>
                       <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create your first canvas to get started</div>
                     </div>
                   ) : null}
@@ -4327,14 +4327,14 @@ All Frameworks
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Tab Switcher - Only show on canvases view, not favorites */}
             {activeView === "canvases" && (
-              <div className="px-6 py-3 flex items-center gap-1" style={{ borderBottom: "1px solid #222222" }}>
+              <div className="px-6 py-3 flex items-center gap-1" style={{ borderBottom: "1px solid var(--app-border)" }}>
                 <button
                   type="button"
                   onClick={() => setCanvasSubView("canvases")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     canvasSubView === "canvases" 
-                      ? "bg-white/10 text-white" 
-                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                      ? "bg-white/10 text-foreground" 
+                      : "text-gray-500 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
@@ -4345,8 +4345,8 @@ All Frameworks
                   onClick={() => setCanvasSubView("files")}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     canvasSubView === "files" 
-                      ? "bg-white/10 text-white" 
-                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                      ? "bg-white/10 text-foreground" 
+                      : "text-gray-500 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
@@ -4365,7 +4365,7 @@ All Frameworks
                   key={canvas.id}
                   onClick={() => onOpenCanvas(canvas.id)}
                   className="group cursor-pointer rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
-                  style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                  style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
                 >
                   {/* Preview */}
                   <div className="aspect-video relative overflow-hidden">
@@ -4383,7 +4383,7 @@ All Frameworks
                         title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
                         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round"/>
+                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
                       </button>
                       <button
@@ -4405,7 +4405,7 @@ All Frameworks
                   {/* Info */}
                   <div className="p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <div className="text-foreground font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         {canvas.name}
                       </div>
                       {/* Collaborator Avatars */}
@@ -4414,10 +4414,10 @@ All Frameworks
                           {canvas.collaborators.slice(0, 3).map((collaborator) => (
                             <div
                               key={collaborator.id}
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]"
                               style={{
-                                backgroundColor: collaborator.avatar ? "transparent" : "#333333",
-                                color: "#ffffff",
+                                backgroundColor: collaborator.avatar ? "transparent" : "var(--app-canvas-dot)",
+                                color: "var(--app-text-primary)",
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                               title={collaborator.name}
@@ -4431,10 +4431,10 @@ All Frameworks
                           ))}
                           {canvas.collaborators.length > 3 && (
                             <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[var(--app-card-elevated)]"
                               style={{
-                                backgroundColor: "#252525",
-                                color: "#888888",
+                                backgroundColor: "var(--app-border-strong)",
+                                color: "var(--app-text-muted)",
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                             >
@@ -4455,7 +4455,7 @@ All Frameworks
                             onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }}
                             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10"
                             style={{
-                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "#888" : "#666",
+                              color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "var(--app-text-muted)" : "var(--app-text-faint)",
                               fontFamily: "system-ui, Inter, sans-serif",
                             }}
                             title="Set collection"
@@ -4472,12 +4472,12 @@ All Frameworks
                               <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
                               <div
                                 className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]"
-                                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
                               >
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }}
-                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                  className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
                                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
@@ -4488,7 +4488,7 @@ All Frameworks
                                     key={p.id}
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }}
-                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                   >
                                     <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
@@ -4512,13 +4512,13 @@ All Frameworks
             <div className="flex-1 flex flex-col items-center justify-center py-20">
               <div
                 className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
               >
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                  <rect x="18" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                  <rect x="4" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
-                  <rect x="18" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                  <rect x="4" y="4" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                  <rect x="18" y="4" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                  <rect x="4" y="18" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
+                  <rect x="18" y="18" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="2"/>
                 </svg>
               </div>
               <p
@@ -4533,7 +4533,7 @@ All Frameworks
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: "#F0FE00",
-                  color: "#121212",
+                  color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -4606,7 +4606,7 @@ All Frameworks
                                       key={`${node.id}-${nodeIndex}`}
                                       type="button"
                                       onClick={() => onOpenCanvas(canvas.id)}
-                                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-foreground hover:bg-white/5 transition-colors"
                                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                     >
                                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
@@ -4675,7 +4675,7 @@ All Frameworks
                                   key={`${node.id}-${nodeIndex}`}
                                   type="button"
                                   onClick={() => onOpenCanvas(canvas.id)}
-                                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
+                                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-foreground hover:bg-white/5 transition-colors"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
                                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
@@ -4698,10 +4698,10 @@ All Frameworks
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div
                       className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                     >
                       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 8C4 6.34315 5.34315 5 7 5H11L14 8H21C22.6569 8 24 9.34315 24 11V20C24 21.6569 22.6569 23 21 23H7C5.34315 23 4 21.6569 4 20V8Z" stroke="#666666" strokeWidth="2"/>
+                        <path d="M4 8C4 6.34315 5.34315 5 7 5H11L14 8H21C22.6569 8 24 9.34315 24 11V20C24 21.6569 22.6569 23 21 23H7C5.34315 23 4 21.6569 4 20V8Z" stroke="var(--app-text-muted)" strokeWidth="2"/>
                       </svg>
                     </div>
                     <p className="text-gray-400 text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -4727,11 +4727,11 @@ All Frameworks
           />
           <div
             className="relative w-full max-w-md rounded-xl p-6"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
           >
             <div className="flex items-center justify-between mb-6">
               <h2
-                className="text-lg font-semibold text-white"
+                className="text-lg font-semibold text-foreground"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 New Canvas
@@ -4739,7 +4739,7 @@ All Frameworks
               <button
                 type="button"
                 onClick={() => { setShowNewCanvasDialog(false); setNewCanvasProjectId(undefined); setNewCanvasName(""); }}
-                className="text-gray-500 hover:text-white transition-colors"
+                className="text-gray-500 hover:text-foreground transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -4761,10 +4761,10 @@ All Frameworks
                   value={newCanvasName}
                   onChange={(e) => setNewCanvasName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateCanvas()}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+                  className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
                   style={{
-                    backgroundColor: "#0a0a0a",
-                    border: "1px solid #333333",
+                    backgroundColor: "var(--app-bg)",
+                    border: "1px solid var(--app-canvas-dot)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                   autoFocus
@@ -4783,10 +4783,10 @@ All Frameworks
                   <select
                     value={newCanvasProjectId || ""}
                     onChange={(e) => setNewCanvasProjectId(e.target.value || undefined)}
-                    className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none cursor-pointer"
+                    className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none cursor-pointer"
                     style={{
-                      backgroundColor: "#0a0a0a",
-                      border: "1px solid #333333",
+                      backgroundColor: "var(--app-bg)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
@@ -4813,12 +4813,12 @@ All Frameworks
                     onClick={() => setNewCanvasVisibility("workspace")}
                     className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       newCanvasVisibility === "workspace"
-                        ? "text-white"
+                        ? "text-foreground"
                         : "text-gray-500"
                     }`}
                     style={{
-                      backgroundColor: newCanvasVisibility === "workspace" ? "#333333" : "#0a0a0a",
-                      border: "1px solid #333333",
+                      backgroundColor: newCanvasVisibility === "workspace" ? "var(--app-canvas-dot)" : "var(--app-bg)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
@@ -4829,12 +4829,12 @@ All Frameworks
                     onClick={() => setNewCanvasVisibility("private")}
                     className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       newCanvasVisibility === "private"
-                        ? "text-white"
+                        ? "text-foreground"
                         : "text-gray-500"
                     }`}
                     style={{
-                      backgroundColor: newCanvasVisibility === "private" ? "#333333" : "#0a0a0a",
-                      border: "1px solid #333333",
+                      backgroundColor: newCanvasVisibility === "private" ? "var(--app-canvas-dot)" : "var(--app-bg)",
+                      border: "1px solid var(--app-canvas-dot)",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
@@ -4848,7 +4848,7 @@ All Frameworks
               <button
                 type="button"
                 onClick={() => { setShowNewCanvasDialog(false); setNewCanvasProjectId(undefined); setNewCanvasName(""); }}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground transition-colors"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Cancel
@@ -4859,7 +4859,7 @@ All Frameworks
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: "#F0FE00",
-                  color: "#121212",
+                  color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -4879,11 +4879,11 @@ All Frameworks
           />
           <div
             className="relative w-full max-w-md rounded-xl p-6"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
           >
             <div className="flex items-center justify-between mb-6">
               <h2
-                className="text-lg font-semibold text-white"
+                className="text-lg font-semibold text-foreground"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 New Collection
@@ -4891,7 +4891,7 @@ All Frameworks
               <button
                 type="button"
                 onClick={() => setShowNewProjectDialog(false)}
-                className="text-gray-500 hover:text-white transition-colors"
+                className="text-gray-500 hover:text-foreground transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -4913,10 +4913,10 @@ All Frameworks
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateProject()}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+                  className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
                   style={{
-                    backgroundColor: "#0a0a0a",
-                    border: "1px solid #333333",
+                    backgroundColor: "var(--app-bg)",
+                    border: "1px solid var(--app-canvas-dot)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                   autoFocus
@@ -4952,7 +4952,7 @@ All Frameworks
               <button
                 type="button"
                 onClick={() => setShowNewProjectDialog(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground transition-colors"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Cancel
@@ -4963,7 +4963,7 @@ All Frameworks
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: "#F0FE00",
-                  color: "#121212",
+                  color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -4983,7 +4983,7 @@ All Frameworks
           />
           <div
             className="relative w-full max-w-sm rounded-xl p-6"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
           >
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
@@ -4992,7 +4992,7 @@ All Frameworks
                 </svg>
               </div>
             </div>
-            <h2 className="text-lg font-semibold text-white text-center mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            <h2 className="text-lg font-semibold text-foreground text-center mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
               Delete Canvas
             </h2>
             <p className="text-gray-400 text-sm text-center mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -5002,15 +5002,15 @@ All Frameworks
               <button
                 type="button"
                 onClick={() => setCanvasToDelete(null)}
-                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
-                style={{ backgroundColor: "#252525", fontFamily: "system-ui, Inter, sans-serif" }}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground transition-colors"
+                style={{ backgroundColor: "var(--app-border-strong)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => deleteCanvas(canvasToDelete)}
-                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors hover:bg-red-600"
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-red-600"
                 style={{ backgroundColor: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Delete
@@ -5055,9 +5055,9 @@ All Frameworks
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div
             className="rounded-2xl border p-6 w-full max-w-sm mx-4 shadow-2xl"
-            style={{ backgroundColor: "#161616", borderColor: "#2a2a2a" }}
+            style={{ backgroundColor: "var(--app-card-elevated)", borderColor: "var(--app-border-strong)" }}
           >
-            <h2 className="text-base font-semibold text-white mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            <h2 className="text-base font-semibold text-foreground mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
               Create workspace
             </h2>
             <p className="text-sm text-gray-500 mb-5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -5083,14 +5083,14 @@ All Frameworks
                   setShowCreateWorkspaceDialog(false);
                 }
               }}
-              className="w-full rounded-lg px-3 py-2.5 text-sm text-white outline-none mb-5"
-              style={{ backgroundColor: "#1e1e1e", border: "1px solid #333", fontFamily: "system-ui, Inter, sans-serif" }}
+              className="w-full rounded-lg px-3 py-2.5 text-sm text-foreground outline-none mb-5"
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
             />
             <div className="flex gap-2 justify-end">
               <button
                 type="button"
                 onClick={() => { setNewWorkspaceName(""); setShowCreateWorkspaceDialog(false); }}
-                className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/5 transition-colors"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Cancel
@@ -5105,7 +5105,7 @@ All Frameworks
                   setShowCreateWorkspaceDialog(false);
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-                style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Create
               </button>
@@ -5130,8 +5130,8 @@ All Frameworks
         onClick={() => setShowSageChat(!showSageChat)}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 z-50"
         style={{
-          backgroundColor: "#141414",
-          border: "1px solid #2a2a2a",
+          backgroundColor: "var(--app-card)",
+          border: "1px solid var(--app-border-strong)",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
         }}
       >
@@ -5149,8 +5149,8 @@ All Frameworks
         <div
           className="fixed bottom-24 right-6 rounded-2xl overflow-hidden shadow-2xl z-50 flex"
           style={{
-            backgroundColor: "#141414",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--app-card)",
+            border: "1px solid var(--app-border-strong)",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
             width: showChatHistory ? "600px" : "384px",
             transition: "width 0.2s ease-in-out",
@@ -5160,9 +5160,9 @@ All Frameworks
           {showChatHistory && (
             <div
               className="w-52 flex-shrink-0 flex flex-col"
-              style={{ borderRight: "1px solid #2a2a2a" }}
+              style={{ borderRight: "1px solid var(--app-border-strong)" }}
             >
-              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid #2a2a2a" }}>
+              <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
                 <span className="text-xs font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Chat History
                 </span>
@@ -5189,7 +5189,7 @@ All Frameworks
                       onClick={() => handleSelectConversation(conv.id)}
                     >
                       <p
-                        className="text-xs text-white truncate"
+                        className="text-xs text-foreground truncate"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {conv.title}
@@ -5222,14 +5222,14 @@ All Frameworks
           {/* Chat Header */}
           <div
             className="px-6 py-4 flex items-center gap-3"
-            style={{ borderBottom: "1px solid #2a2a2a" }}
+            style={{ borderBottom: "1px solid var(--app-border-strong)" }}
           >
             <button
               onClick={() => setShowChatHistory(!showChatHistory)}
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               title="Chat History"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "#F0FE00" : "#888"} strokeWidth="1.5">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "#F0FE00" : "var(--app-text-muted)"} strokeWidth="1.5">
                 <path d="M2 4h12M2 8h12M2 12h8" />
               </svg>
             </button>
@@ -5250,7 +5250,7 @@ All Frameworks
             </div>
             <div className="flex-1">
               <h4
-                className="text-white font-semibold text-sm"
+                className="text-foreground font-semibold text-sm"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Sage
@@ -5267,7 +5267,7 @@ All Frameworks
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               title="New Chat"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#888" strokeWidth="1.5">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--app-text-muted)" strokeWidth="1.5">
                 <path d="M8 3v10M3 8h10" />
               </svg>
             </button>
@@ -5294,7 +5294,7 @@ All Frameworks
               </div>
               <div
                 className="flex-1 px-4 py-3 rounded-xl rounded-tl-sm"
-                style={{ backgroundColor: "#1e1e1e" }}
+                style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
                 <p
                   className="text-sm text-gray-300 leading-relaxed"
@@ -5359,7 +5359,7 @@ All Frameworks
                     </div>
                     <div
                       className="flex-1 p-3 rounded-xl rounded-tl-sm"
-                      style={{ backgroundColor: "#1e1e1e" }}
+                      style={{ backgroundColor: "var(--app-card-elevated)" }}
                     >
                       <p
                         className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
@@ -5380,7 +5380,7 @@ All Frameworks
                       style={{ backgroundColor: "#F0FE0020", border: "1px solid #F0FE0040" }}
                     >
                       <p
-                        className="text-sm text-white leading-relaxed"
+                        className="text-sm text-foreground leading-relaxed"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {typeof message.content === "string" ? message.content : ""}
@@ -5411,7 +5411,7 @@ All Frameworks
                 </div>
                 <div
                   className="flex-1 p-3 rounded-xl rounded-tl-sm"
-                  style={{ backgroundColor: "#1e1e1e" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)" }}
                 >
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -5427,11 +5427,11 @@ All Frameworks
           <form
             onSubmit={handleSageSubmit}
             className="px-4 py-4"
-            style={{ borderTop: "1px solid #2a2a2a" }}
+            style={{ borderTop: "1px solid var(--app-border-strong)" }}
           >
             <div
               className="flex items-center gap-2 px-4 py-3 rounded-xl"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
             >
               <input
                 type="text"
@@ -5444,7 +5444,7 @@ All Frameworks
                   }
                 }}
                 placeholder="Ask Sage anything..."
-                className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-foreground placeholder-gray-500 focus:outline-none"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 disabled={sageStatus === "streaming"}
               />
@@ -5452,12 +5452,12 @@ All Frameworks
                 type="submit"
                 disabled={!sageInput.trim() || sageStatus === "streaming"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed"
-                style={{ backgroundColor: sageInput.trim() ? "#F0FE00" : "#333333" }}
+                style={{ backgroundColor: sageInput.trim() ? "#F0FE00" : "var(--app-canvas-dot)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M14 2L7 9M14 2L10 14L7 9M14 2L2 6L7 9"
-                    stroke={sageInput.trim() ? "#121212" : "#666666"}
+                    stroke={sageInput.trim() ? "var(--app-bg-elevated)" : "var(--app-text-muted)"}
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

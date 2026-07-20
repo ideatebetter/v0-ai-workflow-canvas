@@ -635,9 +635,9 @@ const reactFlowInstance = useReactFlow();
         };
       }
       if (isMockup) {
-        return { ...edge, type: "default", style: { strokeWidth: 1.5, stroke: "#888", strokeDasharray: "6 4" }, animated: false };
+        return { ...edge, type: "default", style: { strokeWidth: 1.5, stroke: "var(--app-text-muted)", strokeDasharray: "6 4" }, animated: false };
       }
-      return { ...edge, type: "default", style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" }, animated: true };
+      return { ...edge, type: "default", style: { strokeWidth: 2, stroke: "var(--app-canvas-dot)", strokeDasharray: "5 5" }, animated: true };
     });
   }, [allEdges, presentationEdges]);
 
@@ -777,12 +777,12 @@ onClick={(event) => {
         connectionRadius={80}
         defaultEdgeOptions={{
           type: "default",
-          style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
+          style: { strokeWidth: 2, stroke: "var(--app-canvas-dot)", strokeDasharray: "5 5" },
           animated: true,
         }}
         connectionLineStyle={{
           strokeWidth: presentationMode ? 3 : 2,
-          stroke: presentationMode ? "#F0FE00" : "#52525b",
+          stroke: presentationMode ? "#F0FE00" : "var(--app-canvas-dot)",
           strokeDasharray: presentationMode ? "8 4" : "5 5",
         }}
         className="bg-background"
@@ -795,15 +795,15 @@ onClick={(event) => {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1.5}
-          color="#404040"
+          color="var(--app-canvas-dot)"
         />
         <Controls
-          style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8 }}
+          style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", borderRadius: 8 }}
         />
         <MiniMap
           nodeColor="#444444"
           maskColor="rgba(10,10,10,0.7)"
-          style={{ backgroundColor: "#111111", border: "1px solid #222222", borderRadius: 8 }}
+          style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border)", borderRadius: 8 }}
         />
       </ReactFlow>
       </PresentationNodesContext.Provider>
@@ -880,12 +880,11 @@ onClick={(event) => {
       {commentMode && !newCommentPosition && (
         <div
           className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none shadow-lg"
-          style={{ backgroundColor: "#111111", border: "1px solid #222222" }}
+          style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border)" }}
         >
           <span
             className="text-sm"
-            style={{ color: "#888888" }}
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Click anywhere to add a comment
           </span>
@@ -900,22 +899,22 @@ onClick={(event) => {
         >
           <div
             className="flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-dashed"
-            style={{ backgroundColor: "#111111", borderColor: "#333333" }}
+            style={{ backgroundColor: "var(--app-bg-elevated)", borderColor: "var(--app-canvas-dot)" }}
           >
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#1a1a1a" }}
+              style={{ backgroundColor: "var(--app-card-elevated)" }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="1.5">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-muted)" strokeWidth="1.5">
                 <path d="M12 16V4M12 4L8 8M12 4L16 8" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" strokeLinecap="round"/>
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-lg font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-lg font-medium text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Drop files to upload
               </p>
-              <p className="text-sm mt-1" style={{ color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}>
+              <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 Images, documents, and media files
               </p>
             </div>
@@ -1013,7 +1012,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
             className="px-4 py-2 rounded-full flex items-center gap-2"
             style={{
               backgroundColor: "#F0FE00",
-              color: "#121212",
+              color: "var(--app-bg-elevated)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
           >
@@ -1051,7 +1050,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
         <div
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full flex items-center gap-2 pointer-events-none"
           style={{
-            backgroundColor: "#1a1a1a",
+            backgroundColor: "var(--app-card-elevated)",
             border: "1px solid #F0FE00",
             color: "#F0FE00",
             fontFamily: "system-ui, Inter, sans-serif",

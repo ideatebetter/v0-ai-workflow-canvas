@@ -197,7 +197,7 @@ const FileIcons: Record<string, React.ReactNode> = {
   ),
   default: (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 2C3 1.44772 3.44772 1 4 1H9L13 5V14C13 14.5523 12.5523 15 12 15H4C3.44772 15 3 14.5523 3 14V2Z" fill="#52525b"/>
+      <path d="M3 2C3 1.44772 3.44772 1 4 1H9L13 5V14C13 14.5523 12.5523 15 12 15H4C3.44772 15 3 14.5523 3 14V2Z" fill="var(--app-canvas-dot)"/>
       <path d="M9 1L13 5H10C9.44772 5 9 4.55228 9 4V1Z" fill="#71717a"/>
     </svg>
   ),
@@ -252,7 +252,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const presentationIndex = presentationNodeIds.get(id) ?? null;
   const fileData = data as FileNodeData;
   
-  const productColor = PRODUCT_COLORS[fileData.product] || "#666666";
+  const productColor = PRODUCT_COLORS[fileData.product] || "var(--app-text-muted)";
   const fileIcon = FileIcons[fileData.fileExtension] || FileIcons.default;
   const statusStyle = STATUS_BADGE_STYLES[fileData.status] || STATUS_BADGE_STYLES.draft;
   const statusLabel = STATUS_LABELS[fileData.status] || "Draft";
@@ -320,7 +320,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               height: 22,
               borderRadius: "50%",
               backgroundColor: "#F0FE00",
-              color: "#121212",
+              color: "var(--app-bg-elevated)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -328,7 +328,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               fontWeight: 700,
               fontFamily: "system-ui, Inter, sans-serif",
               cursor: "pointer",
-              boxShadow: "0 0 0 2px #0a0a0a",
+              boxShadow: "0 0 0 2px var(--app-bg)",
             }}
             title={`Slide ${presentationIndex} — click to focus`}
           >
@@ -349,7 +349,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 width: 14,
                 height: 14,
                 borderRadius: "50%",
-                backgroundColor: "#1a1a1a",
+                backgroundColor: "var(--app-card-elevated)",
                 border: "1px solid #F0FE00",
                 color: "#F0FE00",
                 display: "flex",
@@ -471,12 +471,12 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 />
               </div>
             ) : (
-              <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0d0d0d", borderRadius: 12 }}>
+              <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "var(--app-bg)", borderRadius: 12 }}>
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#FF0000"/><path d="M13 11L22 16L13 21V11Z" fill="white"/></svg>
               </div>
             );
           })() : fileData.linkType === "googledoc" ? (
-            <div style={{ position: "relative", width: "100%", height: 160, borderRadius: 12, overflow: "hidden", backgroundColor: "#1a1a1a" }}>
+            <div style={{ position: "relative", width: "100%", height: 160, borderRadius: 12, overflow: "hidden", backgroundColor: "var(--app-card-elevated)" }}>
               <iframe
                 src={getGoogleDocsEmbedUrl(fileData.linkUrl || "")}
                 title="Google Doc preview"
@@ -486,7 +486,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               />
             </div>
           ) : fileData.linkType === "figma" ? (
-            <div style={{ height: 120, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#1a1a1a", borderRadius: 12 }}>
+            <div style={{ height: 120, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "var(--app-card-elevated)", borderRadius: 12 }}>
               <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
                 <path d="M8 36C10.7614 36 13 33.7614 13 31V26H8C5.23858 26 3 28.2386 3 31C3 33.7614 5.23858 36 8 36Z" fill="#0ACF83"/>
                 <path d="M3 20C3 17.2386 5.23858 15 8 15H13V25H8C5.23858 25 3 22.7614 3 20Z" fill="#A259FF"/>
@@ -494,12 +494,12 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 <path d="M13 4H18C20.7614 4 23 6.23858 23 9C23 11.7614 20.7614 14 18 14H13V4Z" fill="#FF7262"/>
                 <path d="M23 20C23 22.7614 20.7614 25 18 25C15.2386 25 13 22.7614 13 20C13 17.2386 15.2386 15 18 15C20.7614 15 23 17.2386 23 20Z" fill="#1ABCFE"/>
               </svg>
-              <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif" }}>Figma Design</span>
+              <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>Figma Design</span>
             </div>
           ) : fileData.linkType === "generic" ? (
-            <div style={{ height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#1a1a1a", borderRadius: 12, padding: "0 16px" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span style={{ fontSize: 11, color: "#888", fontFamily: "system-ui, Inter, sans-serif", textAlign: "center", wordBreak: "break-all", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "var(--app-card-elevated)", borderRadius: 12, padding: "0 16px" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif", textAlign: "center", wordBreak: "break-all", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {(() => { try { return new URL(fileData.linkUrl || "").hostname; } catch { return fileData.linkUrl; } })()}
               </span>
             </div>
@@ -584,7 +584,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
             <div className="flex items-center justify-between">
               <span 
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Status
               </span>
@@ -604,14 +604,14 @@ export function FileNode({ id, data, selected }: NodeProps) {
             <div className="flex items-center justify-between">
               <span 
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Tasks
               </span>
               <div className="flex items-center gap-1.5">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="#666666" strokeWidth="1.25"/>
-                  <path d="M5 7L6.5 8.5L9 5.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="1.25"/>
+                  <path d="M5 7L6.5 8.5L9 5.5" stroke="var(--app-text-muted)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span 
                   className="text-xs"
@@ -626,7 +626,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
             <div className="flex items-center justify-between">
               <span 
                 className="text-xs"
-                style={{ color: "#666666", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Modified
               </span>

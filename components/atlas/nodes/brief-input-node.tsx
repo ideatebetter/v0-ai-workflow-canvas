@@ -222,11 +222,11 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
             <path d="M3 4H13M3 8H10M3 12H7" stroke={accent} strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#fff", flex: 1, letterSpacing: "-0.01em" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--app-text-primary)", flex: 1, letterSpacing: "-0.01em" }}>
           {nodeData.label}
         </span>
         {mode === "manual" && totalFields > 0 && (
-          <span style={{ fontSize: 10, color: filledFieldCount === totalFields ? "#22c55e" : "#555", fontWeight: 500 }}>
+          <span style={{ fontSize: 10, color: filledFieldCount === totalFields ? "#22c55e" : "var(--app-text-faint)", fontWeight: 500 }}>
             {filledFieldCount}/{totalFields}
           </span>
         )}
@@ -241,7 +241,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
               padding: "2px 6px",
               borderRadius: 6,
               fontSize: 10,
-              color: "#555",
+              color: "var(--app-text-faint)",
               fontFamily: FONT,
             }}
             title="Change input method"
@@ -375,7 +375,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                   <polyline points="14 2 14 8 20 8" stroke="#22c55e" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#fff", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 12, color: "var(--app-text-primary)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {nodeData.uploadedFileName}
                   </div>
                   <div style={{ fontSize: 10, color: "#22c55e", marginTop: 1 }}>File attached</div>
@@ -383,7 +383,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                 <button
                   type="button"
                   onClick={() => update({ uploadedFileName: undefined, mode: "idle" })}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2 }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--app-text-faint)", padding: 2 }}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                     <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -442,7 +442,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                   background: "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 8,
-                  color: "#fff",
+                  color: "var(--app-text-primary)",
                   fontSize: 12,
                   fontFamily: FONT,
                   outline: "none",
@@ -478,7 +478,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
               <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="6" fill="#22c55e"/>
-                  <path d="M5 8L7 10L11 6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5 8L7 10L11 6" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <a
                   href={nodeData.url}
@@ -514,7 +514,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.08)",
                       borderRadius: 8,
-                      color: "#fff",
+                      color: "var(--app-text-primary)",
                       fontSize: 12,
                       fontFamily: FONT,
                       resize: "vertical",
@@ -538,7 +538,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.08)",
                       borderRadius: 8,
-                      color: "#fff",
+                      color: "var(--app-text-primary)",
                       fontSize: 12,
                       fontFamily: FONT,
                       outline: "none",

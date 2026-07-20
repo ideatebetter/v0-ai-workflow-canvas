@@ -35,7 +35,7 @@ export function FinancialNode({ id, data, selected }: NodeProps) {
     <div
       style={{
         width: 220,
-        backgroundColor: "#111",
+        backgroundColor: "var(--app-bg-elevated)",
         borderRadius: 14,
         border: selected ? `2px solid ${GREEN}` : `1px solid ${GREEN}22`,
         overflow: "hidden",
@@ -63,18 +63,18 @@ export function FinancialNode({ id, data, selected }: NodeProps) {
         <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: marginColor }}>
           {grossPct}<span style={{ fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>%</span>
         </div>
-        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>gross margin</div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "var(--app-text-faint)" }}>gross margin</div>
       </div>
 
       {/* Revenue / Cost */}
-      <div className="grid grid-cols-2 gap-1.5 px-3 pb-2" style={{ borderTop: "1px solid #1e1e1e", paddingTop: 10 }}>
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+      <div className="grid grid-cols-2 gap-1.5 px-3 pb-2" style={{ borderTop: "1px solid var(--app-card-elevated)", paddingTop: 10 }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Revenue</div>
-          <div className="text-sm font-bold text-white leading-none">{fmt(revenue, currency)}</div>
+          <div className="text-sm font-bold text-foreground leading-none">{fmt(revenue, currency)}</div>
         </div>
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Cost</div>
-          <div className="text-sm font-bold text-white leading-none">{fmt(cost, currency)}</div>
+          <div className="text-sm font-bold text-foreground leading-none">{fmt(cost, currency)}</div>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export function FinancialNode({ id, data, selected }: NodeProps) {
             var {totalV >= 0 ? "+" : ""}{fmt(totalV, currency)}
           </span>
         </div>
-        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff10" }}>
+        <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)10" }}>
           <div className="h-full rounded-full" style={{ width: `${Math.min(hoursPct, 100)}%`, backgroundColor: hoursColor }} />
         </div>
       </div>

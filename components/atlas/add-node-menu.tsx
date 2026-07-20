@@ -104,9 +104,9 @@ export function AddNodeMenu({
 
   const backButtonStyle: React.CSSProperties = {
     ...menuItemStyle,
-    color: "#888",
+    color: "var(--app-text-muted)",
     fontSize: 12,
-    borderBottom: "1px solid #222",
+    borderBottom: "1px solid var(--app-border)",
     marginBottom: 2,
   };
 
@@ -134,8 +134,8 @@ export function AddNodeMenu({
           maxHeight: "80vh",
           overflowY: "auto",
           zIndex: 9999,
-          backgroundColor: "#111111",
-          border: "1px solid #222222",
+          backgroundColor: "var(--app-bg-elevated)",
+          border: "1px solid var(--app-border)",
           borderRadius: 8,
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
         }}
@@ -149,27 +149,27 @@ export function AddNodeMenu({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #222",
+            borderBottom: "1px solid var(--app-border)",
             cursor: isDragging ? "grabbing" : "grab",
           }}
           onMouseDown={handleMouseDown}
         >
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#888888", ...fontStyle }}>Add Node</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "var(--app-text-muted)", ...fontStyle }}>Add Node</span>
           <div style={{ display: "flex", gap: 2 }}>
-            {[0, 1, 2].map(i => <div key={i} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#666" }} />)}
+            {[0, 1, 2].map(i => <div key={i} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "var(--app-text-faint)" }} />)}
           </div>
         </div>
 
         <div className="menu-content" style={{ padding: "4px 0" }}>
           {/* Text */}
           <button type="button" onClick={() => { onAddTextNode(); onClose(); }} style={{ ...menuItemStyle, fontSize: 14 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#ffffff20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 4H13M5 8H11M4 12H12" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-text-primary)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 4H13M5 8H11M4 12H12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </div>
             Text
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* Status Pill */}
           <button type="button" onClick={() => { onAddStatusPill(); onClose(); }} style={{ ...menuItemStyle, fontSize: 14 }}>
@@ -177,7 +177,7 @@ export function AddNodeMenu({
             Status Pill
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* Sage */}
           <button
@@ -190,11 +190,11 @@ export function AddNodeMenu({
               Sage
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "sage" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* Ops Data */}
           <button
@@ -211,11 +211,11 @@ export function AddNodeMenu({
               Ops Data
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ops" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* AI Generate */}
           <button
@@ -232,24 +232,24 @@ export function AddNodeMenu({
               Generate
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ai" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* Upload File */}
           <input ref={fileInputRef} type="file" multiple style={{ display: "none" }}
             onChange={(e) => { if (e.target.files?.length) { onUploadFile(e.target.files); onClose(); } }}
           />
           <button type="button" onClick={() => fileInputRef.current?.click()} style={{ ...menuItemStyle, fontSize: 14 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#52525b20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M7 2V12M2 7H12" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </div>
             Upload File
           </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#222" }} />
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
           {/* Add Link */}
           <button
@@ -257,7 +257,7 @@ export function AddNodeMenu({
             onClick={() => { setShowLinkInput(v => !v); setLinkInputValue(""); setTimeout(() => linkInputRef.current?.focus(), 50); }}
             style={{ ...menuItemStyle, fontSize: 14, backgroundColor: showLinkInput ? "rgba(255,255,255,0.06)" : "transparent" }}
           >
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#52525b20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M9 4l3 3-3 3" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             Add Link
@@ -275,13 +275,13 @@ export function AddNodeMenu({
                   else if (e.key === "Escape") setShowLinkInput(false);
                 }}
                 placeholder="Paste a URL…"
-                style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: 6, color: "#d1d5db", outline: "none", ...fontStyle }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", borderRadius: 6, color: "#d1d5db", outline: "none", ...fontStyle }}
               />
               <button
                 type="button"
                 disabled={!linkInputValue.trim()}
                 onClick={() => { if (linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); } }}
-                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "#F0FE00" : "#222", color: linkInputValue.trim() ? "#000" : "#555", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
+                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "#F0FE00" : "var(--app-border)", color: linkInputValue.trim() ? "#000" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
               >
                 Add
               </button>
@@ -299,8 +299,8 @@ export function AddNodeMenu({
             left: menuPosition.x + (sourceHandlePosition === "left" ? -188 : 188),
             top: menuPosition.y + (activeSubmenu === "sage" ? 90 : activeSubmenu === "ops" ? 145 : 200),
             zIndex: 51,
-            backgroundColor: "#111111",
-            border: "1px solid #222222",
+            backgroundColor: "var(--app-bg-elevated)",
+            border: "1px solid var(--app-border)",
             borderRadius: 8,
             boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
             padding: "4px 0",
@@ -323,7 +323,7 @@ export function AddNodeMenu({
               {/* Level 1: choose scope */}
               {opsLevel === "root" && (
                 <>
-                  <div style={{ padding: "6px 12px 4px", fontSize: 11, color: "#555", ...fontStyle, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                  <div style={{ padding: "6px 12px 4px", fontSize: 11, color: "var(--app-text-faint)", ...fontStyle, letterSpacing: "0.04em", textTransform: "uppercase" }}>
                     Data scope
                   </div>
                   <button
@@ -337,7 +337,7 @@ export function AddNodeMenu({
                       </svg>
                       Organizational
                     </span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                   <button
                     type="button"
@@ -350,7 +350,7 @@ export function AddNodeMenu({
                       </svg>
                       Project
                     </span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
                 </>
               )}
@@ -359,7 +359,7 @@ export function AddNodeMenu({
               {opsLevel === "org" && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("root")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Organizational
                   </button>
                   {OP_NODES.map(({ key, label }) => (
@@ -374,7 +374,7 @@ export function AddNodeMenu({
               {opsLevel === "project-list" && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("root")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Select project
                   </button>
                   {PROJECTS.map(p => (
@@ -388,7 +388,7 @@ export function AddNodeMenu({
                         <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: p.color, flexShrink: 0 }} />
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                       </span>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   ))}
                 </>
@@ -398,7 +398,7 @@ export function AddNodeMenu({
               {opsLevel === "project-nodes" && selectedProject && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("project-list")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: selectedProject.color }} />
                     {selectedProject.name}
                   </button>

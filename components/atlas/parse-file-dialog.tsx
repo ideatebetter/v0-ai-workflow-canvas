@@ -28,10 +28,10 @@ export function ParseFileDialog({ fileName, fileType, onParseAsSingle, onParseAs
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onSkip} />
       <div
         className="relative z-10 rounded-2xl shadow-2xl p-6 w-[380px] border border-border"
-        style={{ background: "#1a1a1a" }}
+        style={{ background: "var(--app-card-elevated)" }}
       >
         {/* Icon */}
-        <div className="flex items-center justify-center w-12 h-12 rounded-xl mb-4 mx-auto" style={{ background: "#2a2a2a" }}>
+        <div className="flex items-center justify-center w-12 h-12 rounded-xl mb-4 mx-auto" style={{ background: "var(--app-border-strong)" }}>
           {fileType === "pdf" ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="24" height="24" rx="6" fill="#FF0000" fillOpacity="0.15"/>
@@ -48,7 +48,7 @@ export function ParseFileDialog({ fileName, fileType, onParseAsSingle, onParseAs
           )}
         </div>
 
-        <h2 className="text-center text-white font-semibold text-base mb-1">Parse into text nodes?</h2>
+        <h2 className="text-center text-foreground font-semibold text-base mb-1">Parse into text nodes?</h2>
         <p className="text-center text-muted-foreground text-sm mb-5">
           <span className="text-white/70 font-medium">{fileName}</span> can be extracted into editable text nodes on your canvas.
         </p>
@@ -60,11 +60,11 @@ export function ParseFileDialog({ fileName, fileType, onParseAsSingle, onParseAs
             disabled={!!loading}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-white/30 hover:bg-white/5 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#2a2a2a" }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--app-border-strong)" }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="white" strokeWidth="1.3"/><path d="M4 6H12M4 9H10" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-white">
+              <div className="text-sm font-medium text-foreground">
                 {loading === "single" ? "Parsing…" : "Single text node"}
               </div>
               <div className="text-xs text-muted-foreground">All content in one editable node</div>
@@ -77,11 +77,11 @@ export function ParseFileDialog({ fileName, fileType, onParseAsSingle, onParseAs
             disabled={!!loading}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-white/30 hover:bg-white/5 transition-all text-left disabled:opacity-50"
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#2a2a2a" }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--app-border-strong)" }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="white" strokeWidth="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="white" strokeWidth="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="white" strokeWidth="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="white" strokeWidth="1.3"/></svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-white">
+              <div className="text-sm font-medium text-foreground">
                 {loading === "multiple" ? "Parsing…" : "Multiple text nodes"}
               </div>
               <div className="text-xs text-muted-foreground">One node per section or page</div>
@@ -92,7 +92,7 @@ export function ParseFileDialog({ fileName, fileType, onParseAsSingle, onParseAs
             type="button"
             onClick={onSkip}
             disabled={!!loading}
-            className="w-full px-4 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-white hover:bg-white/5 transition-all disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all disabled:opacity-50"
           >
             Just add as file node
           </button>

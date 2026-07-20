@@ -160,10 +160,10 @@ export function MockupGeneratorDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
         className="max-w-3xl p-0 overflow-hidden"
-        style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
+        style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}
       >
-        <DialogHeader className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "#2a2a2a" }}>
-          <DialogTitle className="text-xl font-semibold text-white" style={font}>
+        <DialogHeader className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--app-border-strong)" }}>
+          <DialogTitle className="text-xl font-semibold text-foreground" style={font}>
             Generate Mockups with AI
           </DialogTitle>
         </DialogHeader>
@@ -174,7 +174,7 @@ export function MockupGeneratorDialog({
             {sourceImageUrl && (
               <div className="flex-shrink-0">
                 <p className="text-xs text-gray-500 mb-2" style={font}>Source</p>
-                <div className="w-20 h-20 rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+                <div className="w-20 h-20 rounded-lg overflow-hidden" style={{ border: "1px solid var(--app-border-strong)" }}>
                   <img src={sourceImageUrl} alt="Source" className="w-full h-full object-cover" />
                 </div>
               </div>
@@ -188,8 +188,8 @@ export function MockupGeneratorDialog({
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="e.g., Put this graphic on bus stop signs in Chicago, Los Angeles, and New York — long exposure shots with a figure in motion"
-                className="w-full h-28 px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-white/20"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", ...font }}
+                className="w-full h-28 px-3 py-2 rounded-lg text-sm text-foreground placeholder-gray-500 resize-none focus:outline-none focus:ring-1 focus:ring-white/20"
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", ...font }}
               />
 
               {/* Detected scenes hint */}
@@ -219,10 +219,10 @@ export function MockupGeneratorDialog({
           <div className="flex items-end gap-4 flex-wrap">
             {/* Aspect ratio — only useful when no source image (text-only mode) */}
             <div>
-              <label className="text-xs block mb-1" style={{ ...font, color: sourceIsRenderable ? "#444" : "#6b7280" }}>
+              <label className="text-xs block mb-1" style={{ ...font, color: sourceIsRenderable ? "var(--app-text-faint)" : "var(--app-text-muted)" }}>
                 Format
                 {sourceIsRenderable && (
-                  <span className="ml-1" style={{ color: "#555" }}>(set by source)</span>
+                  <span className="ml-1" style={{ color: "var(--app-text-faint)" }}>(set by source)</span>
                 )}
               </label>
               <div className="flex gap-1">
@@ -235,15 +235,15 @@ export function MockupGeneratorDialog({
                     className="px-3 py-1.5 rounded-lg text-xs transition-colors"
                     style={{
                       backgroundColor:
-                        !sourceIsRenderable && aspectRatio === ar.value ? "#ffffff" : "#1a1a1a",
+                        !sourceIsRenderable && aspectRatio === ar.value ? "var(--app-text-primary)" : "var(--app-card-elevated)",
                       color:
                         sourceIsRenderable
-                          ? "#333"
+                          ? "var(--app-canvas-dot)"
                           : aspectRatio === ar.value
                           ? "#000"
-                          : "#666",
+                          : "var(--app-text-faint)",
                       border: `1px solid ${
-                        !sourceIsRenderable && aspectRatio === ar.value ? "#ffffff" : "#222"
+                        !sourceIsRenderable && aspectRatio === ar.value ? "var(--app-text-primary)" : "var(--app-border)"
                       }`,
                       cursor: sourceIsRenderable ? "default" : "pointer",
                       ...font,
@@ -262,8 +262,8 @@ export function MockupGeneratorDialog({
                 <select
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", ...font }}
+                  className="px-3 py-1.5 rounded-lg text-sm text-foreground focus:outline-none"
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", ...font }}
                 >
                   <option value={1}>1 image</option>
                   <option value={2}>2 images</option>
@@ -278,8 +278,8 @@ export function MockupGeneratorDialog({
               disabled={!prompt.trim() || isGenerating}
               className="ml-auto"
               style={{
-                backgroundColor: isGenerating ? "#2a2a2a" : "#ffffff",
-                color: isGenerating ? "#666" : "#000",
+                backgroundColor: isGenerating ? "var(--app-border-strong)" : "var(--app-text-primary)",
+                color: isGenerating ? "var(--app-text-faint)" : "#000",
                 ...font,
               }}
             >
@@ -319,7 +319,7 @@ export function MockupGeneratorDialog({
                     onClick={() => toggleMockupSelection(index)}
                     className="relative rounded-lg overflow-hidden transition-all"
                     style={{
-                      border: selectedMockups.has(index) ? "2px solid white" : "1px solid #2a2a2a",
+                      border: selectedMockups.has(index) ? "2px solid white" : "1px solid var(--app-border-strong)",
                     }}
                   >
                     <img src={mockup.url} alt={`Mockup ${index + 1}`} className="w-full object-cover" />
@@ -336,7 +336,7 @@ export function MockupGeneratorDialog({
                     {hasMultipleScenes && detectedScenes[index] && (
                       <div
                         className="absolute bottom-2 left-2 px-2 py-1 rounded text-xs"
-                        style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "#fff", ...font }}
+                        style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "var(--app-text-primary)", ...font }}
                       >
                         {detectedScenes[index]}
                       </div>
@@ -350,7 +350,7 @@ export function MockupGeneratorDialog({
 
         {/* Footer */}
         {generatedMockups.length > 0 && (
-          <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: "1px solid #2a2a2a" }}>
+          <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: "1px solid var(--app-border-strong)" }}>
             <p className="text-sm text-gray-400" style={font}>
               {selectedMockups.size} of {generatedMockups.length} selected
             </p>
@@ -358,7 +358,7 @@ export function MockupGeneratorDialog({
               <Button
                 variant="outline"
                 onClick={handleClose}
-                style={{ backgroundColor: "transparent", borderColor: "#2a2a2a", color: "#888", ...font }}
+                style={{ backgroundColor: "transparent", borderColor: "var(--app-border-strong)", color: "var(--app-text-muted)", ...font }}
               >
                 Cancel
               </Button>
@@ -366,8 +366,8 @@ export function MockupGeneratorDialog({
                 onClick={handleAddToCanvas}
                 disabled={selectedMockups.size === 0}
                 style={{
-                  backgroundColor: selectedMockups.size > 0 ? "#ffffff" : "#2a2a2a",
-                  color: selectedMockups.size > 0 ? "#000" : "#666",
+                  backgroundColor: selectedMockups.size > 0 ? "var(--app-text-primary)" : "var(--app-border-strong)",
+                  color: selectedMockups.size > 0 ? "#000" : "var(--app-text-faint)",
                   ...font,
                 }}
               >

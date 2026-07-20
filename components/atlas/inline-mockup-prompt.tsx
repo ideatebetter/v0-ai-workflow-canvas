@@ -111,8 +111,8 @@ export function InlineMockupPrompt({
           left: position.x,
           top: position.y,
           zIndex: 9999,
-          backgroundColor: "#1a1a1a",
-          border: "1px solid #333",
+          backgroundColor: "var(--app-card-elevated)",
+          border: "1px solid var(--app-canvas-dot)",
           borderRadius: 12,
           padding: 12,
           width: 340,
@@ -135,13 +135,13 @@ export function InlineMockupPrompt({
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path
                 d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z"
-                stroke="#121212"
+                stroke="var(--app-bg-elevated)"
                 strokeWidth="1.2"
                 strokeLinejoin="round"
               />
             </svg>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 500, color: "#fff", ...fontStyle }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--app-text-primary)", ...fontStyle }}>
             Generate Mockup
           </span>
         </div>
@@ -154,7 +154,7 @@ export function InlineMockupPrompt({
               height: 48,
               borderRadius: 6,
               overflow: "hidden",
-              border: "1px solid #333",
+              border: "1px solid var(--app-canvas-dot)",
               flexShrink: 0,
             }}
           >
@@ -174,12 +174,12 @@ export function InlineMockupPrompt({
             disabled={isGenerating}
             style={{
               flex: 1,
-              backgroundColor: "#0d0d0d",
-              border: "1px solid #333",
+              backgroundColor: "var(--app-bg)",
+              border: "1px solid var(--app-canvas-dot)",
               borderRadius: 8,
               padding: "8px 12px",
               fontSize: 13,
-              color: "#fff",
+              color: "var(--app-text-primary)",
               outline: "none",
               ...fontStyle,
             }}
@@ -197,11 +197,11 @@ export function InlineMockupPrompt({
                 flex: 1,
                 padding: "5px 0",
                 borderRadius: 6,
-                backgroundColor: count === n ? "#F0FE00" : "#0d0d0d",
-                border: `1px solid ${count === n ? "#F0FE00" : "#333"}`,
+                backgroundColor: count === n ? "#F0FE00" : "var(--app-bg)",
+                border: `1px solid ${count === n ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                 fontSize: 12,
                 fontWeight: 500,
-                color: count === n ? "#121212" : "#888",
+                color: count === n ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
                 cursor: "pointer",
                 ...fontStyle,
               }}
@@ -239,9 +239,9 @@ export function InlineMockupPrompt({
               padding: "6px 12px",
               borderRadius: 6,
               backgroundColor: "transparent",
-              border: "1px solid #333",
+              border: "1px solid var(--app-canvas-dot)",
               fontSize: 12,
-              color: "#888",
+              color: "var(--app-text-muted)",
               cursor: "pointer",
               ...fontStyle,
             }}
@@ -255,11 +255,11 @@ export function InlineMockupPrompt({
             style={{
               padding: "6px 14px",
               borderRadius: 6,
-              backgroundColor: isGenerating || !prompt.trim() ? "#333" : "#F0FE00",
+              backgroundColor: isGenerating || !prompt.trim() ? "var(--app-canvas-dot)" : "#F0FE00",
               border: "none",
               fontSize: 12,
               fontWeight: 500,
-              color: isGenerating || !prompt.trim() ? "#666" : "#121212",
+              color: isGenerating || !prompt.trim() ? "var(--app-text-faint)" : "var(--app-bg-elevated)",
               cursor: isGenerating || !prompt.trim() ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",

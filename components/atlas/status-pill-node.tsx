@@ -137,7 +137,7 @@ export function StatusPillNode({ id, data, selected }: NodeProps) {
         {showColorPicker && (
           <div
             className="absolute right-0 top-full mt-2 p-2 rounded-lg shadow-lg grid grid-cols-4 gap-1.5 z-50"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
           >
             {PRESET_COLORS.map((color) => (
               <button
@@ -145,7 +145,7 @@ export function StatusPillNode({ id, data, selected }: NodeProps) {
                 type="button"
                 onClick={() => handleColorChange(color.value)}
                 className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                  pillData.color === color.value ? "ring-2 ring-white ring-offset-1 ring-offset-[#1a1a1a]" : ""
+                  pillData.color === color.value ? "ring-2 ring-white ring-offset-1 ring-offset-[var(--app-card-elevated)]" : ""
                 }`}
                 style={{ backgroundColor: color.value }}
                 title={color.name}
@@ -160,7 +160,7 @@ export function StatusPillNode({ id, data, selected }: NodeProps) {
         <div
           className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs whitespace-nowrap"
           style={{
-            backgroundColor: "#333333",
+            backgroundColor: "var(--app-canvas-dot)",
             color: "#999999",
             fontFamily: "system-ui, Inter, sans-serif",
           }}

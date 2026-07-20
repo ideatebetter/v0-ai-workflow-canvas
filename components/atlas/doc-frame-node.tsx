@@ -57,7 +57,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
     ));
   }, [collapsed, id, setNodes]);
 
-  const borderColor = selected ? "#F0FE00" : "#2a2a2a";
+  const borderColor = selected ? "#F0FE00" : "var(--app-border-strong)";
 
   return (
     <div style={{ width: 440, fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -67,7 +67,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
       <div
         onClick={toggleCollapse}
         style={{
-          background: "#1a1a1a",
+          background: "var(--app-card-elevated)",
           border: `1.5px solid ${borderColor}`,
           borderRadius: collapsed ? 12 : "12px 12px 0 0",
           padding: "10px 14px",
@@ -86,19 +86,19 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
         </svg>
 
         {/* Title */}
-        <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ color: "var(--app-text-primary)", fontSize: 13, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {title}
         </span>
 
         {/* Page count badge */}
-        <span style={{ background: "#222", color: "#777", fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
+        <span style={{ background: "var(--app-border)", color: "#777", fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
           {pageCount} {pageCount === 1 ? "page" : "pages"}
         </span>
 
         {/* Chevron */}
         <svg
           width="14" height="14" viewBox="0 0 14 14" fill="none"
-          style={{ color: "#555", transition: "transform 0.18s", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0 }}
+          style={{ color: "var(--app-text-faint)", transition: "transform 0.18s", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", flexShrink: 0 }}
         >
           <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -111,7 +111,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
             border: `1.5px solid ${borderColor}`,
             borderTop: "none",
             borderRadius: "0 0 12px 12px",
-            background: "#111",
+            background: "var(--app-bg-elevated)",
             overflow: "hidden",
           }}
         >
@@ -129,7 +129,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                   borderBottom: idx < sections.length - 1 ? "1px solid #1c1c1c" : "none",
                   padding: "11px 14px",
                   position: "relative",
-                  background: isEditing ? "#161616" : "transparent",
+                  background: isEditing ? "var(--app-card-elevated)" : "transparent",
                   cursor: isEditing ? "text" : "default",
                   transition: "background 0.1s",
                 }}
@@ -139,7 +139,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                   position: "absolute",
                   top: 10,
                   right: 12,
-                  background: "#1e1e1e",
+                  background: "var(--app-card-elevated)",
                   color: "#4a4a4a",
                   fontSize: 10,
                   fontWeight: 600,
@@ -182,12 +182,12 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                       {section.label || `Page ${section.pageNum}`}
                     </div>
                     {previewBody && (
-                      <div style={{ color: "#555", fontSize: 12, lineHeight: 1.55 }}>
+                      <div style={{ color: "var(--app-text-faint)", fontSize: 12, lineHeight: 1.55 }}>
                         {previewBody.slice(0, 130)}
                         {previewBody.length > 130 && <span style={{ opacity: 0.5 }}> …</span>}
                       </div>
                     )}
-                    <div style={{ marginTop: 5, fontSize: 10, color: "#333" }}>
+                    <div style={{ marginTop: 5, fontSize: 10, color: "var(--app-canvas-dot)" }}>
                       Double-click to edit
                     </div>
                   </div>

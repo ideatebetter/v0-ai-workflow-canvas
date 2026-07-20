@@ -10,7 +10,7 @@ import { usePresentationNodes } from "./atlas-canvas";
 
 // Color options
 const TEXT_COLORS = [
-  { value: "#ffffff", label: "White" },
+  { value: "var(--app-text-primary)", label: "White" },
   { value: "#F0FE00", label: "Yellow" },
   { value: "#3B82F6", label: "Blue" },
   { value: "#10B981", label: "Green" },
@@ -93,7 +93,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const { setNodes } = useReactFlow();
 
   const [formatting, setFormatting] = useState<TextFormatting>({
-    color: (textData as any).formatting?.color || "#ffffff",
+    color: (textData as any).formatting?.color || "var(--app-text-primary)",
     font: (textData as any).formatting?.font || "sans",
     bold: (textData as any).formatting?.bold || false,
     align: (textData as any).formatting?.align || "left",
@@ -312,7 +312,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
               height: 22,
               borderRadius: "50%",
               backgroundColor: "#F0FE00",
-              color: "#121212",
+              color: "var(--app-bg-elevated)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -320,7 +320,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
               fontWeight: 700,
               fontFamily: "system-ui, Inter, sans-serif",
               cursor: "pointer",
-              boxShadow: "0 0 0 2px #0a0a0a",
+              boxShadow: "0 0 0 2px var(--app-bg)",
             }}
             title={`Slide ${presentationIndex} — click to focus`}
           >
@@ -341,7 +341,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 width: 14,
                 height: 14,
                 borderRadius: "50%",
-                backgroundColor: "#1a1a1a",
+                backgroundColor: "var(--app-card-elevated)",
                 border: "1px solid #F0FE00",
                 color: "#F0FE00",
                 display: "flex",
@@ -374,7 +374,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
               onClick={() => { setShowColorPicker(!showColorPicker); setShowFontPicker(false); }}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
-              <div className="w-4 h-4 rounded-full border-2" style={{ backgroundColor: formatting.color, borderColor: formatting.color === "#ffffff" ? "#666" : formatting.color }} />
+              <div className="w-4 h-4 rounded-full border-2" style={{ backgroundColor: formatting.color, borderColor: formatting.color === "var(--app-text-primary)" ? "var(--app-text-faint)" : formatting.color }} />
               <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className="text-gray-400"><path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
             {showColorPicker && (
@@ -386,7 +386,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
                       type="button"
                       onClick={() => { updateFormatting({ color: color.value }); setShowColorPicker(false); }}
                       className="w-7 h-7 rounded-full hover:scale-110 transition-transform"
-                      style={{ backgroundColor: color.value, border: formatting.color === color.value ? "2px solid white" : "2px solid transparent", boxShadow: color.value === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.1)" : "none" }}
+                      style={{ backgroundColor: color.value, border: formatting.color === color.value ? "2px solid white" : "2px solid transparent", boxShadow: color.value === "var(--app-text-primary)" ? "inset 0 0 0 1px rgba(0,0,0,0.1)" : "none" }}
                       title={color.label}
                     />
                   ))}
@@ -400,7 +400,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
             <button
               type="button"
               onClick={() => { setShowFontPicker(!showFontPicker); setShowColorPicker(false); }}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-foreground"
               style={{ fontFamily: currentFont.fontFamily }}
             >
               <span className="text-xs font-medium">Aa</span>
@@ -431,7 +431,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
               key={h}
               type="button"
               onClick={() => applyPrefix(h === "H1" ? "# " : h === "H2" ? "## " : "### ")}
-              className="px-2 py-1.5 rounded-lg text-xs font-bold hover:bg-white/10 transition-colors text-muted-foreground hover:text-white"
+              className="px-2 py-1.5 rounded-lg text-xs font-bold hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
               title={`${h} heading`}
             >
               {h}

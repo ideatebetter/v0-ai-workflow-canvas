@@ -29,7 +29,7 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
     <div
       style={{
         width: 220,
-        backgroundColor: "#111",
+        backgroundColor: "var(--app-bg-elevated)",
         borderRadius: 14,
         border: selected ? `2px solid ${PURPLE}` : `1px solid ${PURPLE}22`,
         overflow: "hidden",
@@ -58,25 +58,25 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
         <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: touchColor }}>
           {d.daysSinceClientTouchpoint}<span style={{ fontSize: 28, fontWeight: 700, letterSpacing: -1 }}>d</span>
         </div>
-        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>since last touchpoint</div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "var(--app-text-faint)" }}>since last touchpoint</div>
       </div>
 
       {/* Phase bar */}
-      <div className="px-3 pb-2" style={{ borderTop: "1px solid #1e1e1e", paddingTop: 8 }}>
+      <div className="px-3 pb-2" style={{ borderTop: "1px solid var(--app-card-elevated)", paddingTop: 8 }}>
         <div className="flex gap-0.5 mb-1">
           {PHASES.map((p, i) => (
             <div key={p} className="flex-1 h-1 rounded-full"
-              style={{ backgroundColor: i <= phaseIdx ? PURPLE : "#ffffff0a" }} />
+              style={{ backgroundColor: i <= phaseIdx ? PURPLE : "var(--app-text-primary)0a" }} />
           ))}
         </div>
-        <span className="text-[9px] capitalize" style={{ color: "#555" }}>
+        <span className="text-[9px] capitalize" style={{ color: "var(--app-text-faint)" }}>
           {d.projectPhase ?? "discovery"} phase
         </span>
       </div>
 
       {/* Feedback + Revisions */}
       <div className="grid grid-cols-2 gap-1.5 px-3 pb-3">
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Feedback</div>
           <div className="text-xl font-bold leading-none" style={{ color: feedbackColor }}>
             {d.openFeedbackCycles}
@@ -85,7 +85,7 @@ export function ProjectHealthNode({ id, data, selected }: NodeProps) {
             )}
           </div>
         </div>
-        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "#1a1a1a" }}>
+        <div className="rounded-lg px-2.5 py-2" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="text-[8px] uppercase tracking-wide text-gray-600 mb-0.5">Revisions</div>
           <div className="text-xl font-bold leading-none" style={{ color: revColor }}>
             {d.revisionCount}

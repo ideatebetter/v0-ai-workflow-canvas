@@ -43,7 +43,7 @@ function WorkflowCanvas({
     const styledBase = (edges as AnyEdge[]).map((e) => ({
       ...e,
       type: "default",
-      style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5", opacity: activeFlow ? 0.2 : 1 },
+      style: { strokeWidth: 2, stroke: "var(--app-canvas-dot)", strokeDasharray: "5 5", opacity: activeFlow ? 0.2 : 1 },
       animated: false,
     }));
     if (!activeFlow) return styledBase as never[];
@@ -76,15 +76,15 @@ function WorkflowCanvas({
       panOnDrag
       zoomOnScroll
       proOptions={{ hideAttribution: true }}
-      style={{ backgroundColor: "#0a0a0a" }}
+      style={{ backgroundColor: "var(--app-bg)" }}
     >
-      <Background color="#1a1a1a" gap={24} />
+      <Background color="var(--app-card-elevated)" gap={24} />
 
       {flows.length > 0 && (
         <Panel position="top-right">
           <div
             className="flex flex-col gap-1.5 p-1.5 rounded-xl"
-            style={{ backgroundColor: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid #2a2a2a" }}
+            style={{ backgroundColor: "rgba(20,20,20,0.85)", backdropFilter: "blur(12px)", border: "1px solid var(--app-border-strong)" }}
           >
             <p className="text-[9px] uppercase tracking-widest text-gray-500 px-1.5 pb-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
               Presentation Flows
@@ -100,9 +100,9 @@ function WorkflowCanvas({
                   style={{
                     fontFamily: "system-ui, Inter, sans-serif",
                     fontSize: 11,
-                    backgroundColor: isActive ? "#F0FE00" : "#1e1e1e",
-                    color: isActive ? "#0a0a0a" : "#aaa",
-                    border: `1px solid ${isActive ? "#F0FE00" : "#333"}`,
+                    backgroundColor: isActive ? "#F0FE00" : "var(--app-card-elevated)",
+                    color: isActive ? "var(--app-bg)" : "var(--app-text-secondary)",
+                    border: `1px solid ${isActive ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                   }}
                 >
                   {/* Play icon */}
@@ -151,20 +151,20 @@ function FileDropZone({
           value={typeof value === "string" ? value : ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Type or paste your content here — it will become text nodes on the canvas…"
-          className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 resize-none"
+          className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 resize-none"
           style={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--app-card-elevated)",
+            border: "1px solid var(--app-border-strong)",
             fontFamily: "system-ui, Inter, sans-serif",
             outline: "none",
           }}
           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(240,254,0,0.4)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--app-border-strong)"; }}
         />
         <button
           type="button"
           onClick={() => { setManualMode(false); onChange(null); }}
-          className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-white transition-colors"
+          className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-foreground transition-colors"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M6 2L3 5L6 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -187,7 +187,7 @@ function FileDropZone({
       {value instanceof File ? (
         <div
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-          style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+          style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
         >
           <div
             className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
@@ -206,11 +206,11 @@ function FileDropZone({
               </svg>
             )}
           </div>
-          <span className="text-sm text-white truncate flex-1">{value.name}</span>
+          <span className="text-sm text-foreground truncate flex-1">{value.name}</span>
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="text-gray-500 hover:text-white transition-colors flex-shrink-0"
+            className="text-gray-500 hover:text-foreground transition-colors flex-shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -231,17 +231,17 @@ function FileDropZone({
             }}
             className={`w-full rounded-lg flex flex-col items-center justify-center gap-1.5 transition-all ${tall ? "flex-1" : "py-3"}`}
             style={{
-              border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
-              backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
+              border: `1.5px dashed ${dragging ? "#F0FE00" : "var(--app-border-strong)"}`,
+              backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "var(--app-bg-elevated)",
             }}
           >
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+              style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "var(--app-card-elevated)" }}
             >
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
             <span className="text-xs text-gray-500">
@@ -295,13 +295,13 @@ function MultiFileDropZone({
           value={manualText}
           onChange={(e) => setManualText(e.target.value)}
           placeholder="Paste or type your content here…"
-          className={`w-full rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none ${tall ? "flex-1" : "h-32"}`}
-          style={{ backgroundColor: "#111", border: "1.5px dashed #2a2a2a", padding: "12px", fontFamily: "system-ui, Inter, sans-serif" }}
+          className={`w-full rounded-lg text-sm text-foreground placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none ${tall ? "flex-1" : "h-32"}`}
+          style={{ backgroundColor: "var(--app-bg-elevated)", border: "1.5px dashed var(--app-border-strong)", padding: "12px", fontFamily: "system-ui, Inter, sans-serif" }}
         />
         <button
           type="button"
           onClick={() => setManualMode(false)}
-          className="text-[11px] text-gray-500 hover:text-white transition-colors"
+          className="text-[11px] text-gray-500 hover:text-foreground transition-colors"
         >
           ← back to file upload
         </button>
@@ -333,17 +333,17 @@ function MultiFileDropZone({
         }}
         className={`w-full rounded-lg flex flex-col items-center justify-center gap-1.5 transition-all ${tall ? "flex-1" : "py-3"}`}
         style={{
-          border: `1.5px dashed ${dragging ? "#F0FE00" : "#2a2a2a"}`,
-          backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "#111",
+          border: `1.5px dashed ${dragging ? "#F0FE00" : "var(--app-border-strong)"}`,
+          backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "var(--app-bg-elevated)",
         }}
       >
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "#1a1a1a" }}
+          style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "var(--app-card-elevated)" }}
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "#666"} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </div>
         <span className="text-xs text-gray-500">
@@ -366,7 +366,7 @@ function MultiFileDropZone({
             <div
               key={i}
               className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
             >
               <div
                 className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
@@ -392,7 +392,7 @@ function MultiFileDropZone({
               <button
                 type="button"
                 onClick={() => removeFile(i)}
-                className="text-gray-600 hover:text-white transition-colors flex-shrink-0 ml-1"
+                className="text-gray-600 hover:text-foreground transition-colors flex-shrink-0 ml-1"
               >
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                   <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -419,10 +419,10 @@ function ParamInput({
   tall?: boolean;
 }) {
   const base =
-    "w-full px-3 py-1.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none";
+    "w-full px-3 py-1.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F0FE00]/40 resize-none";
   const style = {
-    backgroundColor: "#1a1a1a",
-    border: "1px solid #2a2a2a",
+    backgroundColor: "var(--app-card-elevated)",
+    border: "1px solid var(--app-border-strong)",
     fontFamily: "system-ui, Inter, sans-serif",
   };
 
@@ -492,7 +492,7 @@ function ParamInput({
           value={strVal || "#F0FE00"}
           onChange={(e) => onChange(e.target.value)}
           className="w-9 h-9 rounded-lg cursor-pointer flex-shrink-0"
-          style={{ backgroundColor: "transparent", border: "1px solid #2a2a2a", padding: 2 }}
+          style={{ backgroundColor: "transparent", border: "1px solid var(--app-border-strong)", padding: 2 }}
         />
         <input
           type="text"
@@ -539,17 +539,17 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ backgroundColor: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+      style={{ backgroundColor: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
     >
       {/* Top Nav */}
       <div
         className="flex items-center justify-between px-5 h-14 flex-shrink-0"
-        style={{ borderBottom: "1px solid #1e1e1e" }}
+        style={{ borderBottom: "1px solid var(--app-card-elevated)" }}
       >
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-foreground transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -558,20 +558,20 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-600">
             <path d="M4 9L8 6L4 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-white font-medium">{framework.name}</span>
+          <span className="text-foreground font-medium">{framework.name}</span>
         </button>
 
         <div
           className="flex items-center rounded-lg p-1 gap-0.5"
-          style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+          style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
         >
           <button
             type="button"
             onClick={() => setTab("app")}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-              tab === "app" ? "text-[#0a0a0a]" : "text-gray-400 hover:text-white"
+              tab === "app" ? "text-[var(--app-bg)]" : "text-gray-400 hover:text-foreground"
             }`}
-            style={{ backgroundColor: tab === "app" ? "#ffffff" : "transparent" }}
+            style={{ backgroundColor: tab === "app" ? "var(--app-text-primary)" : "transparent" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
@@ -583,9 +583,9 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
             type="button"
             onClick={() => setTab("workflow")}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-              tab === "workflow" ? "text-[#0a0a0a]" : "text-gray-400 hover:text-white"
+              tab === "workflow" ? "text-[var(--app-bg)]" : "text-gray-400 hover:text-foreground"
             }`}
-            style={{ backgroundColor: tab === "workflow" ? "#ffffff" : "transparent" }}
+            style={{ backgroundColor: tab === "workflow" ? "var(--app-text-primary)" : "transparent" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <circle cx="2.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
@@ -602,7 +602,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           <span className="text-sm text-gray-500">{framework.createdBy.name}</span>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium overflow-hidden flex-shrink-0"
-            style={{ backgroundColor: "#F0FE00", color: "#0a0a0a" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)" }}
           >
             {framework.createdBy.avatar ? (
               <img src={framework.createdBy.avatar} alt="" className="w-full h-full object-cover" />
@@ -624,7 +624,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 {/* Canvas preview */}
                 <div
                   className="rounded-2xl overflow-hidden flex-shrink-0"
-                  style={{ width: "45%", aspectRatio: "4/3", border: "1px solid #1e1e1e" }}
+                  style={{ width: "45%", aspectRatio: "4/3", border: "1px solid var(--app-card-elevated)" }}
                 >
                   <CanvasPreview nodes={framework.nodes} edges={framework.edges} />
                 </div>
@@ -632,7 +632,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                 {/* Hero info */}
                 <div className="flex-1 flex flex-col">
                   <div>
-                    <h1 className="text-white font-bold mb-1.5" style={{ fontSize: 22, lineHeight: 1.2 }}>
+                    <h1 className="text-foreground font-bold mb-1.5" style={{ fontSize: 22, lineHeight: 1.2 }}>
                       {framework.name}
                     </h1>
                     <p className="text-gray-400 text-sm mb-3 leading-relaxed">
@@ -672,7 +672,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                           <span
                             key={tag}
                             className="px-2.5 py-0.5 rounded-full text-xs text-gray-400"
-                            style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                            style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                           >
                             {tag}
                           </span>
@@ -684,7 +684,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                     <button
                       type="button"
                       onClick={handleRun}
-                      className="px-5 py-2 rounded-xl text-sm font-semibold text-[#0a0a0a] transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 mb-4"
+                      className="px-5 py-2 rounded-xl text-sm font-semibold text-[var(--app-bg)] transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 mb-4"
                       style={{ backgroundColor: "#F0FE00" }}
                     >
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -704,9 +704,9 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                         <div
                           key={phase.title}
                           className="rounded-lg p-2.5"
-                          style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e" }}
+                          style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-card-elevated)" }}
                         >
-                          <div className="text-white text-[11px] font-medium mb-0.5">{phase.title}</div>
+                          <div className="text-foreground text-[11px] font-medium mb-0.5">{phase.title}</div>
                           <div className="text-gray-500 text-[10px] leading-relaxed">{phase.desc}</div>
                         </div>
                       ))}
@@ -715,9 +715,9 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                     {/* Presentation Flows */}
                     <div
                       className="rounded-lg p-2.5"
-                      style={{ backgroundColor: "#111111", border: "1px solid #1e1e1e" }}
+                      style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-card-elevated)" }}
                     >
-                      <div className="text-white text-[11px] font-medium mb-1.5">3 Presentation Flows Included</div>
+                      <div className="text-foreground text-[11px] font-medium mb-1.5">3 Presentation Flows Included</div>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                         {[
                           { label: "Strategy Deck", desc: "Walks through all 6 strategy pillars in sequence", color: "#60a5fa" },
@@ -727,7 +727,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                           <div key={pf.label} className="flex items-start gap-2">
                             <div className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: pf.color }} />
                             <div>
-                              <div className="text-white text-[10px] font-medium">{pf.label}</div>
+                              <div className="text-foreground text-[10px] font-medium">{pf.label}</div>
                               <div className="text-gray-500 text-[10px] leading-relaxed">{pf.desc}</div>
                             </div>
                           </div>
@@ -780,7 +780,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                                 </svg>
                                 <span
                                   className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 w-52 rounded-lg px-3 py-2 text-[11px] leading-relaxed text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                                  style={{ backgroundColor: "#1e1e1e", border: "1px solid #2a2a2a", boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
+                                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
                                 >
                                   {param.tooltip}
                                 </span>
@@ -802,12 +802,12 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
             </ReactFlowProvider>
             <div
               className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl flex items-center gap-2.5 pointer-events-none"
-              style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "1px solid #2a2a2a" }}
+              style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "1px solid var(--app-border-strong)" }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="7" r="5.5" stroke="#888" strokeWidth="1.3" />
-                <path d="M7 5V7.5" stroke="#888" strokeWidth="1.3" strokeLinecap="round" />
-                <circle cx="7" cy="9.5" r="0.6" fill="#888" />
+                <circle cx="7" cy="7" r="5.5" stroke="var(--app-text-muted)" strokeWidth="1.3" />
+                <path d="M7 5V7.5" stroke="var(--app-text-muted)" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="7" cy="9.5" r="0.6" fill="var(--app-text-muted)" />
               </svg>
               <span className="text-xs text-gray-400">Read-only view — run the framework to use it</span>
             </div>

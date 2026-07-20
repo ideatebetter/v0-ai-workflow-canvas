@@ -298,7 +298,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
       >
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle 
-            className="text-lg font-semibold text-white"
+            className="text-lg font-semibold text-foreground"
             style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
           >
             Upload Files
@@ -337,7 +337,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+                <p className="text-sm text-foreground font-medium" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
                   Drop files here or click to browse
                 </p>
                 <p className="text-xs mt-1" style={{ color: "#8E8E93", fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -413,7 +413,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
 
                     {/* File Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+                      <p className="text-sm text-foreground truncate" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
                         {fileInfo.file.name}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -492,14 +492,14 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
           <Button
             variant="ghost"
             onClick={handleClose}
-            className="text-gray-400 hover:text-white hover:bg-white/10"
+            className="text-gray-400 hover:text-foreground hover:bg-white/10"
           >
             Cancel
           </Button>
           <Button
             onClick={uploadFiles}
             disabled={files.length === 0 || isUploading || files.every(f => f.status === "complete")}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+            className="bg-indigo-600 hover:bg-indigo-700 text-foreground disabled:opacity-50"
           >
             {isUploading ? "Uploading..." : `Upload ${files.length} file${files.length !== 1 ? "s" : ""}`}
           </Button>

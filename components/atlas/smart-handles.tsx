@@ -100,7 +100,7 @@ export function SmartHandles({ nodeId }: SmartHandlesProps) {
   const isAltTarget = altConnectMode && altConnectSource !== null && altConnectSource !== nodeId;
 
   const dotColor = isInPresentation ? "#F0FE00" : "#525252";
-  const dotBg = isInPresentation ? "#F0FE00" : "#1a1a1a";
+  const dotBg = isInPresentation ? "#F0FE00" : "var(--app-card-elevated)";
 
   const dotStyle = (side: EdgeSide): React.CSSProperties => ({
     width: handleSize,

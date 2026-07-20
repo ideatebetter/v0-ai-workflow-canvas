@@ -50,18 +50,18 @@ export function ActivitySidePanel({ nodes, comments, onClose }: ActivitySidePane
   return (
     <div
       className="flex flex-col h-full"
-      style={{ ...FONT, backgroundColor: "#141414", borderLeft: "1px solid #2a2a2a" }}
+      style={{ ...FONT, backgroundColor: "var(--app-card)", borderLeft: "1px solid var(--app-border-strong)" }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #2a2a2a" }}>
+      <div className="flex items-center justify-between px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1e1e1e" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-muted)" strokeWidth="1.8">
               <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
             </svg>
           </div>
           <div>
-            <div className="text-white font-semibold text-sm">Canvas Activity</div>
+            <div className="text-foreground font-semibold text-sm">Canvas Activity</div>
             <div className="text-[10px] text-gray-500">To-dos &amp; feedback</div>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function ActivitySidePanel({ nodes, comments, onClose }: ActivitySidePane
           type="button"
           onClick={onClose}
           className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#888" }}
+          style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M18 6L6 18M6 6l12 12" />
@@ -87,7 +87,7 @@ export function ActivitySidePanel({ nodes, comments, onClose }: ActivitySidePane
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
             style={{
               backgroundColor: tab === t ? YELLOW : "transparent",
-              color: tab === t ? "#121212" : "#888",
+              color: tab === t ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
             }}
           >
             {t === "todos" ? (
@@ -98,7 +98,7 @@ export function ActivitySidePanel({ nodes, comments, onClose }: ActivitySidePane
                 To-Dos
                 {todos.length > 0 && (
                   <span className="min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-semibold px-1"
-                    style={{ backgroundColor: tab === t ? "#12121230" : "#ffffff18", color: tab === t ? "#121212" : "#aaa" }}>
+                    style={{ backgroundColor: tab === t ? "var(--app-bg-elevated)30" : "var(--app-text-primary)18", color: tab === t ? "var(--app-bg-elevated)" : "var(--app-text-secondary)" }}>
                     {todos.length}
                   </span>
                 )}
@@ -111,7 +111,7 @@ export function ActivitySidePanel({ nodes, comments, onClose }: ActivitySidePane
                 Activity
                 {unresolved.length > 0 && (
                   <span className="min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-semibold px-1"
-                    style={{ backgroundColor: tab === t ? "#12121230" : "#ffffff18", color: tab === t ? "#121212" : "#aaa" }}>
+                    style={{ backgroundColor: tab === t ? "var(--app-bg-elevated)30" : "var(--app-text-primary)18", color: tab === t ? "var(--app-bg-elevated)" : "var(--app-text-secondary)" }}>
                     {unresolved.length}
                   </span>
                 )}
@@ -139,8 +139,8 @@ function TodosTab({ todos }: { todos: TodoEntry[] }) {
   if (todos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-12 px-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#1e1e1e" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-faint)" strokeWidth="1.5">
             <polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
           </svg>
         </div>
@@ -170,22 +170,22 @@ function TodosTab({ todos }: { todos: TodoEntry[] }) {
           <div className="space-y-1.5">
             {group.todos.map(({ task }) => (
               <div key={task.id} className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #252525" }}>
-                <div className="w-4 h-4 rounded border flex-shrink-0 mt-0.5" style={{ borderColor: "#444", backgroundColor: "transparent" }} />
+                style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
+                <div className="w-4 h-4 rounded border flex-shrink-0 mt-0.5" style={{ borderColor: "var(--app-text-faint)", backgroundColor: "transparent" }} />
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] text-gray-200 leading-snug">{task.title}</div>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {task.assignee && (
                       <div className="flex items-center gap-1">
                         <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
-                          style={{ backgroundColor: task.assignee.color || "#555", color: "#fff" }}>
+                          style={{ backgroundColor: task.assignee.color || "var(--app-text-faint)", color: "var(--app-text-primary)" }}>
                           {task.assignee.name.charAt(0)}
                         </div>
                         <span className="text-[9px] text-gray-500">{task.assignee.name}</span>
                       </div>
                     )}
                     {task.dueDate && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#ffffff0a", color: "#888" }}>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--app-text-primary)0a", color: "var(--app-text-muted)" }}>
                         Due {task.dueDate}
                       </span>
                     )}
@@ -208,8 +208,8 @@ function ActivityTab({ comments }: { comments: CanvasComment[] }) {
   if (comments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-12 px-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#1e1e1e" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-faint)" strokeWidth="1.5">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </div>
@@ -231,12 +231,12 @@ function ActivityTab({ comments }: { comments: CanvasComment[] }) {
 
         return (
           <div key={comment.id} className="rounded-xl overflow-hidden"
-            style={{ backgroundColor: "#1a1a1a", border: `1px solid ${comment.resolved ? "#2a2a2a" : "#2e2e2e"}` }}>
+            style={{ backgroundColor: "var(--app-card-elevated)", border: `1px solid ${comment.resolved ? "var(--app-border-strong)" : "#2e2e2e"}` }}>
 
             {/* Comment header */}
             <div className="flex items-start gap-2.5 px-3 py-2.5">
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5"
-                style={{ backgroundColor: comment.author?.color || "#555", color: "#fff" }}>
+                style={{ backgroundColor: comment.author?.color || "var(--app-text-faint)", color: "var(--app-text-primary)" }}>
                 {comment.author?.name?.charAt(0) ?? "?"}
               </div>
               <div className="flex-1 min-w-0">
@@ -256,14 +256,14 @@ function ActivityTab({ comments }: { comments: CanvasComment[] }) {
 
             {/* Replies */}
             {totalReplies > 0 && (
-              <div style={{ borderTop: "1px solid #222" }}>
+              <div style={{ borderTop: "1px solid var(--app-border)" }}>
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : comment.id)}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-white/5"
                   style={{ ...FONT }}
                 >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-faint)" strokeWidth="2"
                     className="transition-transform" style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0)" }}>
                     <path d="M9 18l6-6-6-6" />
                   </svg>
@@ -271,11 +271,11 @@ function ActivityTab({ comments }: { comments: CanvasComment[] }) {
                 </button>
 
                 {isExpanded && (
-                  <div className="px-3 pb-2.5 space-y-2" style={{ borderTop: "1px solid #1e1e1e" }}>
+                  <div className="px-3 pb-2.5 space-y-2" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
                     {comment.replies.map(reply => (
                       <div key={reply.id} className="flex items-start gap-2 pt-2">
                         <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold flex-shrink-0 mt-0.5"
-                          style={{ backgroundColor: reply.author?.color || "#555", color: "#fff" }}>
+                          style={{ backgroundColor: reply.author?.color || "var(--app-text-faint)", color: "var(--app-text-primary)" }}>
                           {reply.author?.name?.charAt(0) ?? "?"}
                         </div>
                         <div className="flex-1 min-w-0">

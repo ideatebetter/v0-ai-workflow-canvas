@@ -102,7 +102,7 @@ export function MoveToCanvasDialog({
         >
           <div>
             <h2
-              className="text-lg font-semibold text-white"
+              className="text-lg font-semibold text-foreground"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
             >
               {actionLabel} to Canvas
@@ -117,7 +117,7 @@ export function MoveToCanvasDialog({
           <button
             type="button"
             onClick={handleClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -135,7 +135,7 @@ export function MoveToCanvasDialog({
               type="button"
               onClick={() => setMode("move")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "move" ? "text-black" : "text-gray-400 hover:text-white"
+                mode === "move" ? "text-black" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
                 backgroundColor: mode === "move" ? "#F0FE00" : "transparent",
@@ -155,7 +155,7 @@ export function MoveToCanvasDialog({
               type="button"
               onClick={() => setMode("copy")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "copy" ? "text-black" : "text-gray-400 hover:text-white"
+                mode === "copy" ? "text-black" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
                 backgroundColor: mode === "copy" ? "#F0FE00" : "transparent",
@@ -210,7 +210,7 @@ export function MoveToCanvasDialog({
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                <p className="text-sm font-medium text-foreground" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                   Create New Canvas
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -228,7 +228,7 @@ export function MoveToCanvasDialog({
                 onChange={(e) => setNewCanvasName(e.target.value)}
                 placeholder="Enter canvas name..."
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl text-sm text-foreground placeholder-gray-500 outline-none transition-all"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(240, 254, 0, 0.3)",
@@ -274,21 +274,21 @@ export function MoveToCanvasDialog({
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
-                          style={{ backgroundColor: "#1a1a1a" }}
+                          style={{ backgroundColor: "var(--app-card-elevated)" }}
                         >
                           {canvas.previewImage ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={canvas.previewImage} alt={canvas.name} className="w-full h-full object-cover" />
                           ) : (
-                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#666" strokeWidth="1.5">
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--app-text-faint)" strokeWidth="1.5">
                               <rect x="2" y="2" width="16" height="16" rx="2" />
                               <path d="M2 7h16" />
-                              <circle cx="5" cy="4.5" r="1" fill="#666" stroke="none" />
+                              <circle cx="5" cy="4.5" r="1" fill="var(--app-text-faint)" stroke="none" />
                             </svg>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                          <p className="text-sm font-medium text-foreground truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                             {canvas.name}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -330,7 +330,7 @@ export function MoveToCanvasDialog({
                       >
                         <p
                           className="px-3 pt-2.5 pb-1 text-[10px] uppercase tracking-wider"
-                          style={{ color: "#555", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+                          style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                         >
                           Choose a page
                         </p>
@@ -353,17 +353,17 @@ export function MoveToCanvasDialog({
                               {/* Page icon */}
                               <div
                                 className="w-7 h-7 rounded flex items-center justify-center shrink-0 text-[10px] font-medium"
-                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.06)", color: isPageSelected ? "#F0FE00" : "#666" }}
+                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.06)", color: isPageSelected ? "#F0FE00" : "var(--app-text-faint)" }}
                               >
                                 {idx + 1}
                               </div>
                               <span
                                 className="flex-1 text-sm text-left truncate"
-                                style={{ color: isPageSelected ? "#fff" : "rgba(255,255,255,0.6)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+                                style={{ color: isPageSelected ? "var(--app-text-primary)" : "rgba(255,255,255,0.6)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                               >
                                 {page.name}
                               </span>
-                              <span className="text-[10px] shrink-0" style={{ color: "#444", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+                              <span className="text-[10px] shrink-0" style={{ color: "var(--app-text-faint)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                                 {page.nodes.length} nodes
                               </span>
                               {isPageSelected && (
@@ -413,7 +413,7 @@ export function MoveToCanvasDialog({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
             >
               Cancel

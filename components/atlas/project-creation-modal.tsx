@@ -97,8 +97,8 @@ function TextInput({ value, onChange, placeholder, autoFocus }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       autoFocus={autoFocus}
-      className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
-      style={{ backgroundColor: "#0a0a0a", border: "1px solid #333333", ...FONT }}
+      className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+      style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-canvas-dot)", ...FONT }}
     />
   );
 }
@@ -110,8 +110,8 @@ function SelectInput({ value, onChange, children }: {
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none cursor-pointer"
-      style={{ backgroundColor: "#0a0a0a", border: "1px solid #333333", ...FONT }}
+      className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none cursor-pointer"
+      style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-canvas-dot)", ...FONT }}
     >
       {children}
     </select>
@@ -128,8 +128,8 @@ function DateInput({ value, onChange, min, placeholder }: {
       onChange={e => onChange(e.target.value)}
       min={min}
       placeholder={placeholder}
-      className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-      style={{ backgroundColor: "#0a0a0a", border: "1px solid #333333", colorScheme: "dark", ...FONT }}
+      className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-white/30"
+      style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-canvas-dot)", colorScheme: "dark", ...FONT }}
     />
   );
 }
@@ -175,9 +175,9 @@ function StepBasics({ data, onChange, errors }: {
               onClick={() => onChange("billingType", bt)}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
               style={{
-                backgroundColor: data.billingType === bt ? "#F0FE00" : "#0a0a0a",
-                color: data.billingType === bt ? "#121212" : "#888",
-                border: `1px solid ${data.billingType === bt ? "transparent" : "#333333"}`,
+                backgroundColor: data.billingType === bt ? "#F0FE00" : "var(--app-bg)",
+                color: data.billingType === bt ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
+                border: `1px solid ${data.billingType === bt ? "transparent" : "var(--app-canvas-dot)"}`,
                 ...FONT,
               }}
             >
@@ -246,8 +246,8 @@ function StepTimeline({ data, onChange, errors }: {
               onDragEnd={() => { setDragging(null); setDragOver(null); }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg"
               style={{
-                backgroundColor: dragOver === idx ? "#252525" : "#111111",
-                border: `1px solid ${dragOver === idx ? "#444" : "#2a2a2a"}`,
+                backgroundColor: dragOver === idx ? "var(--app-border-strong)" : "var(--app-bg-elevated)",
+                border: `1px solid ${dragOver === idx ? "var(--app-text-faint)" : "var(--app-border-strong)"}`,
                 opacity: dragging === idx ? 0.4 : 1,
               }}
             >
@@ -271,13 +271,13 @@ function StepTimeline({ data, onChange, errors }: {
                   onChange={e => updatePhase(idx, { name: e.target.value })}
                   onBlur={() => setEditingIdx(null)}
                   onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") setEditingIdx(null); }}
-                  className="flex-1 bg-transparent text-sm text-white focus:outline-none min-w-0"
+                  className="flex-1 bg-transparent text-sm text-foreground focus:outline-none min-w-0"
                   style={FONT}
                 />
               ) : (
                 <button
                   type="button"
-                  className="flex-1 text-left text-sm text-white hover:text-gray-200 truncate"
+                  className="flex-1 text-left text-sm text-foreground hover:text-gray-200 truncate"
                   style={FONT}
                   onClick={() => setEditingIdx(idx)}
                 >
@@ -292,7 +292,7 @@ function StepTimeline({ data, onChange, errors }: {
                 onChange={e => updatePhase(idx, { dueDate: e.target.value })}
                 min={data.startDate || undefined}
                 max={data.endDate || undefined}
-                className="text-xs text-gray-500 bg-transparent focus:outline-none focus:text-white flex-shrink-0 w-32 cursor-pointer"
+                className="text-xs text-gray-500 bg-transparent focus:outline-none focus:text-foreground flex-shrink-0 w-32 cursor-pointer"
                 style={{ colorScheme: "dark", ...FONT }}
                 title="Phase due date"
               />
@@ -365,13 +365,13 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
         <div className="space-y-2">
           {data.members.map(member => (
             <div key={member.userId} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-              style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a" }}>
+              style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border-strong)" }}>
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                style={{ backgroundColor: "#F0FE00", color: "#121212" }}>
+                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}>
                 {member.initials}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-white truncate" style={FONT}>
+                <div className="text-sm text-foreground truncate" style={FONT}>
                   {member.name}
                   {member.userId === currentUserId && <span className="ml-1.5 text-xs text-gray-600">(you)</span>}
                 </div>
@@ -384,7 +384,7 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
                 className="text-xs text-gray-300 bg-transparent focus:outline-none cursor-pointer disabled:cursor-default disabled:text-gray-600"
                 style={FONT}
               >
-                {MEMBER_ROLES.map(r => <option key={r} value={r} style={{ backgroundColor: "#1a1a1a" }}>{r}</option>)}
+                {MEMBER_ROLES.map(r => <option key={r} value={r} style={{ backgroundColor: "var(--app-card-elevated)" }}>{r}</option>)}
               </select>
               {member.userId !== currentUserId && (
                 <button type="button" onClick={() => removeMember(member.userId)}
@@ -407,9 +407,9 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
             {available.map(member => (
               <button key={member.id} type="button" onClick={() => addMember(member)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors hover:bg-white/5"
-                style={{ border: "1px solid #222222" }}>
+                style={{ border: "1px solid var(--app-border)" }}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                  style={{ backgroundColor: "#252525", color: "#888" }}>
+                  style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)" }}>
                   {member.initials}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -443,8 +443,8 @@ function StepEstimate({ data, onChange }: {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500" style={FONT}>$</span>
             <input type="number" min="0" step="100" value={data.totalFee}
               onChange={e => onChange("totalFee", e.target.value)} placeholder="0"
-              className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
-              style={{ backgroundColor: "#0a0a0a", border: "1px solid #333333", ...FONT }} />
+              className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+              style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-canvas-dot)", ...FONT }} />
           </div>
         </div>
         <p className="text-xs text-gray-600" style={FONT}>You can update this later.</p>
@@ -462,7 +462,7 @@ function StepEstimate({ data, onChange }: {
         {data.members.map(member => (
           <div key={member.userId} className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-              style={{ backgroundColor: "#F0FE00", color: "#121212" }}>
+              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}>
               {member.initials}
             </div>
             <span className="flex-1 text-sm text-gray-300 min-w-0 truncate" style={FONT}>{member.name}</span>
@@ -471,8 +471,8 @@ function StepEstimate({ data, onChange }: {
                 value={data.estimatedHours[member.userId] ?? ""}
                 onChange={e => onChange("estimatedHours", { ...data.estimatedHours, [member.userId]: e.target.value })}
                 placeholder="0"
-                className="w-20 px-3 py-2 rounded-lg text-sm text-white text-right placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/30"
-                style={{ backgroundColor: "#0a0a0a", border: "1px solid #333333", ...FONT }} />
+                className="w-20 px-3 py-2 rounded-lg text-sm text-foreground text-right placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/30"
+                style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-canvas-dot)", ...FONT }} />
               <span className="text-xs text-gray-600" style={FONT}>hrs</span>
             </div>
           </div>
@@ -543,8 +543,8 @@ function StepSetup({ data, onChange, frameworks }: {
       description: "Set up the canvas later",
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="7.5" stroke="#555" strokeWidth="1.5"/>
-          <path d="M10 6V10L13 12" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+          <circle cx="10" cy="10" r="7.5" stroke="var(--app-text-faint)" strokeWidth="1.5"/>
+          <path d="M10 6V10L13 12" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
     },
@@ -560,26 +560,26 @@ function StepSetup({ data, onChange, frameworks }: {
             onClick={() => onChange("setupChoice", choice.id)}
             className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all"
             style={{
-              backgroundColor: data.setupChoice === choice.id ? "#1a1a1a" : "#0d0d0d",
-              border: `1px solid ${data.setupChoice === choice.id ? "#444" : "#222"}`,
+              backgroundColor: data.setupChoice === choice.id ? "var(--app-card-elevated)" : "var(--app-bg)",
+              border: `1px solid ${data.setupChoice === choice.id ? "var(--app-text-faint)" : "var(--app-border)"}`,
               outline: data.setupChoice === choice.id ? "1px solid rgba(240,254,0,0.2)" : "none",
             }}
           >
             <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#1e1e1e" }}>
+              style={{ backgroundColor: "var(--app-card-elevated)" }}>
               {choice.icon}
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-white" style={FONT}>{choice.label}</div>
+              <div className="text-sm font-medium text-foreground" style={FONT}>{choice.label}</div>
               <div className="text-xs text-gray-500 mt-0.5" style={FONT}>{choice.description}</div>
             </div>
             <div className="flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center"
               style={{
-                borderColor: data.setupChoice === choice.id ? "#F0FE00" : "#444",
+                borderColor: data.setupChoice === choice.id ? "#F0FE00" : "var(--app-text-faint)",
                 backgroundColor: data.setupChoice === choice.id ? "#F0FE00" : "transparent",
               }}>
               {data.setupChoice === choice.id && (
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#121212" }} />
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "var(--app-bg-elevated)" }} />
               )}
             </div>
           </button>
@@ -593,10 +593,10 @@ function StepSetup({ data, onChange, frameworks }: {
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 flex-shrink-0">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="5" cy="3.5" r="2" stroke="#888" strokeWidth="1.2"/>
-                <circle cx="5" cy="7" r="2" stroke="#888" strokeWidth="1.2"/>
-                <circle cx="5" cy="10.5" r="2" stroke="#888" strokeWidth="1.2"/>
-                <circle cx="9" cy="3.5" r="2" stroke="#888" strokeWidth="1.2"/>
+                <circle cx="5" cy="3.5" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
+                <circle cx="5" cy="7" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
+                <circle cx="5" cy="10.5" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
+                <circle cx="9" cy="3.5" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
                 <circle cx="9" cy="7" r="2" stroke="#F0FE00" strokeWidth="1.2"/>
               </svg>
             </div>
@@ -605,15 +605,15 @@ function StepSetup({ data, onChange, frameworks }: {
               value={data.figmaUrl}
               onChange={e => onChange("figmaUrl", e.target.value)}
               placeholder="https://www.figma.com/design/…"
-              className="w-full pl-8 pr-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/20"
-              style={{ backgroundColor: "#0a0a0a", border: `1px solid ${data.figmaUrl && !isValidFigmaUrl(data.figmaUrl) ? "#EF4444" : "#333333"}`, ...FONT }}
+              className="w-full pl-8 pr-3 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/20"
+              style={{ backgroundColor: "var(--app-bg)", border: `1px solid ${data.figmaUrl && !isValidFigmaUrl(data.figmaUrl) ? "#EF4444" : "var(--app-canvas-dot)"}`, ...FONT }}
             />
           </div>
           {data.figmaUrl && !isValidFigmaUrl(data.figmaUrl) && (
             <p className="text-xs mt-1" style={{ color: "#EF4444", ...FONT }}>Must be a valid figma.com URL</p>
           )}
           {data.figmaUrl && isValidFigmaUrl(data.figmaUrl) && data.figmaUrl.trim() !== "" && (
-            <p className="text-xs mt-1" style={{ color: "#888", ...FONT }}>Figma link saved with this canvas.</p>
+            <p className="text-xs mt-1" style={{ color: "var(--app-text-muted)", ...FONT }}>Figma link saved with this canvas.</p>
           )}
         </div>
       )}
@@ -633,16 +633,16 @@ function StepSetup({ data, onChange, frameworks }: {
                   onClick={() => onChange("selectedFrameworkId", fw.id)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all"
                   style={{
-                    backgroundColor: selected ? "#1a1a1a" : "#111111",
-                    border: `1px solid ${selected ? accent : "#2a2a2a"}`,
+                    backgroundColor: selected ? "var(--app-card-elevated)" : "var(--app-bg-elevated)",
+                    border: `1px solid ${selected ? accent : "var(--app-border-strong)"}`,
                   }}
                 >
                   <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
-                    style={{ backgroundColor: "#1e1e1e", border: `1px solid ${accent}33` }}>
+                    style={{ backgroundColor: "var(--app-card-elevated)", border: `1px solid ${accent}33` }}>
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: accent }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate" style={FONT}>{fw.name}</div>
+                    <div className="text-sm text-foreground truncate" style={FONT}>{fw.name}</div>
                     <div className="text-xs text-gray-500 truncate" style={FONT}>{fw.description}</div>
                   </div>
                   {selected && (
@@ -661,7 +661,7 @@ function StepSetup({ data, onChange, frameworks }: {
       )}
 
       {data.setupChoice === "framework" && frameworks.length === 0 && (
-        <div className="mt-2 px-3 py-3 rounded-lg" style={{ backgroundColor: "#111", border: "1px solid #222" }}>
+        <div className="mt-2 px-3 py-3 rounded-lg" style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border)" }}>
           <p className="text-xs text-gray-500" style={FONT}>No frameworks available in your workspace yet.</p>
         </div>
       )}
@@ -684,23 +684,23 @@ function StepReview({ data, frameworks }: { data: FormData; frameworks: CanvasFr
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "#111111", border: "1px solid #222222" }}>
+      <div className="rounded-xl p-4 space-y-4" style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border)" }}>
         {/* Project basics */}
         <div>
           <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide" style={FONT}>Project</p>
-          <p className="text-base font-semibold text-white" style={FONT}>{data.name}</p>
+          <p className="text-base font-semibold text-foreground" style={FONT}>{data.name}</p>
           <p className="text-sm text-gray-400" style={FONT}>{data.clientName}</p>
           <div className="flex gap-2 mt-1.5 flex-wrap">
             {[data.projectType, data.billingType === "flat_fee" ? "Flat Fee" : "Hourly"].map(tag => (
               <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a", ...FONT }}>
+                style={{ backgroundColor: "var(--app-card-elevated)", color: "var(--app-text-muted)", border: "1px solid var(--app-border-strong)", ...FONT }}>
                 {tag}
               </span>
             ))}
           </div>
         </div>
 
-        <div style={{ height: 1, backgroundColor: "#222" }} />
+        <div style={{ height: 1, backgroundColor: "var(--app-border)" }} />
 
         {/* Timeline */}
         <div>
@@ -716,7 +716,7 @@ function StepReview({ data, frameworks }: { data: FormData; frameworks: CanvasFr
           </div>
         </div>
 
-        <div style={{ height: 1, backgroundColor: "#222" }} />
+        <div style={{ height: 1, backgroundColor: "var(--app-border)" }} />
 
         {/* Team */}
         <div>
@@ -734,7 +734,7 @@ function StepReview({ data, frameworks }: { data: FormData; frameworks: CanvasFr
         {/* Estimate */}
         {(data.totalFee || totalHours > 0) && (
           <>
-            <div style={{ height: 1, backgroundColor: "#222" }} />
+            <div style={{ height: 1, backgroundColor: "var(--app-border)" }} />
             <div>
               <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide" style={FONT}>Estimate</p>
               {data.billingType === "flat_fee" && data.totalFee ? (
@@ -747,7 +747,7 @@ function StepReview({ data, frameworks }: { data: FormData; frameworks: CanvasFr
         )}
 
         {/* Setup */}
-        <div style={{ height: 1, backgroundColor: "#222" }} />
+        <div style={{ height: 1, backgroundColor: "var(--app-border)" }} />
         <div>
           <p className="text-xs text-gray-600 mb-1.5 uppercase tracking-wide" style={FONT}>Starting with</p>
           <p className="text-sm text-gray-300" style={FONT}>{setupLabel}</p>
@@ -920,12 +920,12 @@ export function ProjectCreationModal({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
         className="relative w-full sm:max-w-[560px] sm:mx-4 rounded-t-2xl sm:rounded-2xl flex flex-col"
-        style={{ backgroundColor: "#111111", border: "1px solid #2a2a2a", maxHeight: "calc(100dvh - 48px)" }}
+        style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border-strong)", maxHeight: "calc(100dvh - 48px)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
+        <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: "1px solid var(--app-card-elevated)" }}>
           <div>
-            <h2 className="text-base font-semibold text-white" style={FONT}>New Project</h2>
+            <h2 className="text-base font-semibold text-foreground" style={FONT}>New Project</h2>
             <p className="text-xs text-gray-600 mt-0.5" style={FONT}>{STEP_LABELS[step]}</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-600 hover:text-gray-300 transition-colors">
@@ -949,12 +949,12 @@ export function ProjectCreationModal({
                   style={{
                     width: i === step ? 20 : 7,
                     height: 7,
-                    backgroundColor: i === step ? "#F0FE00" : i < step ? "#555" : "#2a2a2a",
+                    backgroundColor: i === step ? "#F0FE00" : i < step ? "var(--app-text-faint)" : "var(--app-border-strong)",
                   }}
                 />
                 {i === step && <span className="text-xs text-gray-400" style={FONT}>{label}</span>}
               </div>
-              {i < STEP_LABELS.length - 1 && <div className="w-2 h-px flex-shrink-0" style={{ backgroundColor: "#2a2a2a" }} />}
+              {i < STEP_LABELS.length - 1 && <div className="w-2 h-px flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)" }} />}
             </React.Fragment>
           ))}
         </div>
@@ -977,15 +977,15 @@ export function ProjectCreationModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: "1px solid #1e1e1e" }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
           {step > 0 ? (
             <button type="button" onClick={() => setStep(s => s - 1)} disabled={submitting}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={FONT}>
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground transition-colors" style={FONT}>
               Back
             </button>
           ) : (
             <button type="button" onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors" style={FONT}>
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground transition-colors" style={FONT}>
               Cancel
             </button>
           )}
@@ -1002,7 +1002,7 @@ export function ProjectCreationModal({
               onClick={isLastStep ? handleSubmit : handleContinue}
               disabled={submitting}
               className="px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-60"
-              style={{ backgroundColor: "#F0FE00", color: "#121212", ...FONT }}
+              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", ...FONT }}
             >
               {submitting ? "Creating…" : isLastStep ? "Create Project" : "Continue"}
             </button>

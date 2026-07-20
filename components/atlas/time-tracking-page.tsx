@@ -444,14 +444,14 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
 
   return (
     <div className="flex flex-col gap-5 p-6 rounded-2xl flex-shrink-0"
-      style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a", width: 300 }}>
+      style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)", width: 300 }}>
 
       {/* Client dot + name */}
       <div className="flex items-center gap-2.5">
         <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
         <div>
           <div className="text-[11px] text-gray-500 uppercase tracking-wider" style={font}>{p.client}</div>
-          <div className="text-base font-semibold text-white mt-0.5 leading-tight" style={font}>{p.name}</div>
+          <div className="text-base font-semibold text-foreground mt-0.5 leading-tight" style={font}>{p.name}</div>
         </div>
       </div>
 
@@ -463,7 +463,7 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
         </div>
         <div className="text-right">
           <div className="text-[11px] text-gray-500 mb-1" style={font}>Timeline</div>
-          <div className="text-2xl font-semibold text-white leading-none" style={font}>{timelinePct}%</div>
+          <div className="text-2xl font-semibold text-foreground leading-none" style={font}>{timelinePct}%</div>
           <div className="text-[11px] text-gray-600 mt-0.5" style={font}>through project</div>
         </div>
       </div>
@@ -474,7 +474,7 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
           <span>Hours logged</span>
           <span>{p.budgetHours}h budget</span>
         </div>
-        <div className="relative h-4 rounded-lg overflow-hidden" style={{ backgroundColor: "#1e1e1e" }}>
+        <div className="relative h-4 rounded-lg overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           <div className="absolute left-0 top-0 h-full rounded-lg transition-all"
             style={{ width: `${loggedPct}%`, backgroundColor: barColor }} />
           {expectedPct > 0 && (
@@ -489,7 +489,7 @@ function ProjectCard({ p }: { p: ProjectBudget }) {
       </div>
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid #2a2a2a" }} />
+      <div style={{ borderTop: "1px solid var(--app-border-strong)" }} />
 
       {/* Pace status */}
       <div className="flex items-center justify-between">
@@ -537,7 +537,7 @@ function ProjectCarousel() {
 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-white font-semibold text-sm" style={font}>Project Budget Overview</h2>
+          <h2 className="text-foreground font-semibold text-sm" style={font}>Project Budget Overview</h2>
           <div className="flex items-center gap-4 ml-4 text-[11px] text-gray-600" style={font}>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded inline-block" style={{ backgroundColor: "#22c55e" }} />under pace</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded inline-block" style={{ backgroundColor: "#f59e0b" }} />close</span>
@@ -548,12 +548,12 @@ function ProjectCarousel() {
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => scrollTo(Math.max(0, activeIdx - 1))} disabled={!canPrev}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{ backgroundColor: canPrev ? "#2a2a2a" : "#1a1a1a", color: canPrev ? "#fff" : "#444" }}>
+            style={{ backgroundColor: canPrev ? "var(--app-border-strong)" : "var(--app-card-elevated)", color: canPrev ? "var(--app-text-primary)" : "var(--app-text-faint)" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
           <button type="button" onClick={() => scrollTo(Math.min(MAX_IDX, activeIdx + 1))} disabled={!canNext}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{ backgroundColor: canNext ? "#2a2a2a" : "#1a1a1a", color: canNext ? "#fff" : "#444" }}>
+            style={{ backgroundColor: canNext ? "var(--app-border-strong)" : "var(--app-card-elevated)", color: canNext ? "var(--app-text-primary)" : "var(--app-text-faint)" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
           </button>
         </div>
@@ -584,7 +584,7 @@ function ProjectCarousel() {
         {Array.from({ length: MAX_IDX + 1 }).map((_, i) => (
           <button key={i} type="button" onClick={() => scrollTo(i)}
             className="rounded-full transition-all duration-200"
-            style={{ width: i === activeIdx ? 16 : 6, height: 6, backgroundColor: i === activeIdx ? "#fff" : "#333" }} />
+            style={{ width: i === activeIdx ? 16 : 6, height: 6, backgroundColor: i === activeIdx ? "var(--app-text-primary)" : "var(--app-canvas-dot)" }} />
         ))}
       </div>
     </div>
@@ -595,12 +595,12 @@ function ProjectCarousel() {
 
 function DayDetail({ log }: { log: DayLog }) {
   return (
-    <div className="mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
-      <div className="px-4 py-3" style={{ backgroundColor: "#111" }}>
+    <div className="mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--app-border-strong)" }}>
+      <div className="px-4 py-3" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
         <div className="flex justify-between text-[10px] text-gray-600 mb-1.5" style={font}>
           {["8am","10am","12pm","2pm","4pm","6pm"].map(l => <span key={l}>{l}</span>)}
         </div>
-        <div className="relative h-6 rounded overflow-hidden" style={{ backgroundColor: "#1e1e1e" }}>
+        <div className="relative h-6 rounded overflow-hidden" style={{ backgroundColor: "var(--app-card-elevated)" }}>
           {log.blocks.map((b, i) => {
             const left  = Math.max(0, (b.startMin - DAY_START) / DAY_SPAN) * 100;
             const width = Math.min(100 - left, (b.durationMin / DAY_SPAN) * 100);
@@ -609,27 +609,27 @@ function DayDetail({ log }: { log: DayLog }) {
                 style={{
                   position: "absolute", left: `${left}%`, width: `${Math.max(width, 0.5)}%`,
                   height: "100%",
-                  backgroundColor: PROJECTS[b.projectId]?.color ?? "#555",
+                  backgroundColor: PROJECTS[b.projectId]?.color ?? "var(--app-text-faint)",
                   borderRight: "1px solid rgba(0,0,0,0.3)",
                 }} />
             );
           })}
         </div>
       </div>
-      <div style={{ backgroundColor: "#0d0d0d" }}>
+      <div style={{ backgroundColor: "var(--app-bg)" }}>
         {log.blocks.map((b, i) => {
           const proj  = PROJECTS[b.projectId];
           const phase = PHASE_COLORS[b.phase];
           return (
             <div key={i} className="flex items-center gap-3 px-4 py-2.5"
-              style={{ borderTop: i === 0 ? "none" : "1px solid #1a1a1a" }}>
-              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: proj?.color ?? "#555" }} />
+              style={{ borderTop: i === 0 ? "none" : "1px solid var(--app-card-elevated)" }}>
+              <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: proj?.color ?? "var(--app-text-faint)" }} />
               <span className="text-xs text-gray-500 w-24 flex-shrink-0 tabular-nums" style={font}>
                 {b.start} – {b.end}
               </span>
-              <span className="text-xs text-white flex-1 truncate" style={font}>{proj?.name ?? b.projectId}</span>
+              <span className="text-xs text-foreground flex-1 truncate" style={font}>{proj?.name ?? b.projectId}</span>
               <span className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                style={{ backgroundColor: phase?.bg ?? "#2a2a2a", color: phase?.text ?? "#888", border: "1px solid #333", ...font }}>
+                style={{ backgroundColor: phase?.bg ?? "var(--app-border-strong)", color: phase?.text ?? "var(--app-text-muted)", border: "1px solid var(--app-canvas-dot)", ...font }}>
                 {b.phase}
               </span>
               <span className="text-xs text-gray-500 w-12 text-right flex-shrink-0 tabular-nums" style={font}>
@@ -669,8 +669,8 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
   return (
     <div className="rounded-2xl overflow-hidden"
       style={{
-        backgroundColor: "#141414",
-        border: burnoutRisk ? "1px solid #ef444440" : "1px solid #2a2a2a",
+        backgroundColor: "var(--app-card)",
+        border: burnoutRisk ? "1px solid #ef444440" : "1px solid var(--app-border-strong)",
       }}>
       {/* Burnout risk banner */}
       {burnoutRisk && (
@@ -687,19 +687,19 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
       )}
 
       {/* Header row */}
-      <div className="flex items-center gap-4 px-5 py-4" style={{ borderBottom: "1px solid #1e1e1e" }}>
+      <div className="flex items-center gap-4 px-5 py-4" style={{ borderBottom: "1px solid var(--app-card-elevated)" }}>
         <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-          style={{ backgroundColor: member.color, color: "#fff", ...font }}>
+          style={{ backgroundColor: member.color, color: "var(--app-text-primary)", ...font }}>
           {member.name.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-white font-semibold text-sm" style={font}>{member.name}</div>
+          <div className="text-foreground font-semibold text-sm" style={font}>{member.name}</div>
           <div className="text-xs text-gray-500 mt-0.5" style={font}>{member.role}</div>
         </div>
         <div className="flex items-center gap-6">
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-0.5" style={font}>Week total</div>
-            <div className="text-sm font-semibold" style={{ color: burnoutRisk ? "#ef4444" : "#fff", ...font }}>
+            <div className="text-sm font-semibold" style={{ color: burnoutRisk ? "#ef4444" : "var(--app-text-primary)", ...font }}>
               {fmtH(weeklyTotal)}
             </div>
           </div>
@@ -709,7 +709,7 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
           </div>
           <div className="text-right">
             <div className="text-xs text-gray-500 mb-0.5" style={font}>Submitted</div>
-            <div className="text-sm font-semibold text-white" style={font}>{submittedCount}/5 days</div>
+            <div className="text-sm font-semibold text-foreground" style={font}>{submittedCount}/5 days</div>
           </div>
         </div>
       </div>
@@ -726,12 +726,12 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
               onClick={() => setExpandedDay(isExpanded ? null : log.date)}
               className="flex flex-col gap-2 p-3 text-left transition-colors hover:bg-white/[0.02]"
               style={{
-                borderRight: i < 4 ? "1px solid #1e1e1e" : "none",
-                backgroundColor: isExpanded ? "#1a1a1a" : isToday ? "rgba(34,197,94,0.04)" : "transparent",
+                borderRight: i < 4 ? "1px solid var(--app-card-elevated)" : "none",
+                backgroundColor: isExpanded ? "var(--app-card-elevated)" : isToday ? "rgba(34,197,94,0.04)" : "transparent",
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium" style={{ color: isToday ? "#22c55e" : "#888", ...font }}>
+                <span className="text-xs font-medium" style={{ color: isToday ? "#22c55e" : "var(--app-text-muted)", ...font }}>
                   {DAY_LABELS[i]}{isToday && <span className="ml-1 opacity-70">· today</span>}
                 </span>
                 {log.submitted
@@ -742,9 +742,9 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
 
               {mins > 0 ? (
                 <>
-                  <div className="text-sm font-semibold text-white" style={font}>{fmtH(mins)}</div>
+                  <div className="text-sm font-semibold text-foreground" style={font}>{fmtH(mins)}</div>
                   {/* Project color timeline strip */}
-                  <div className="relative h-3 rounded overflow-hidden w-full" style={{ backgroundColor: "#1e1e1e" }}>
+                  <div className="relative h-3 rounded overflow-hidden w-full" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                     {log.blocks.map((b, bi) => {
                       const l = Math.max(0, (b.startMin - DAY_START) / DAY_SPAN) * 100;
                       const w = Math.min(100 - l, (b.durationMin / DAY_SPAN) * 100);
@@ -752,7 +752,7 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
                         <div key={bi} style={{
                           position: "absolute", left: `${l}%`, width: `${Math.max(w, 0.5)}%`,
                           height: "100%",
-                          backgroundColor: PROJECTS[b.projectId]?.color ?? "#555",
+                          backgroundColor: PROJECTS[b.projectId]?.color ?? "var(--app-text-faint)",
                           borderRight: "1px solid rgba(0,0,0,0.25)",
                         }} />
                       );
@@ -830,13 +830,13 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
   }).length;
 
   return (
-    <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: "#111111" }}>
+    <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: "var(--app-bg-elevated)" }}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-white font-semibold text-xl flex items-center gap-2.5" style={font}>
+            <h1 className="text-foreground font-semibold text-xl flex items-center gap-2.5" style={font}>
               Time Tracking
               <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 999, background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b55" }}>
                 COMING SOON
@@ -844,16 +844,16 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
             </h1>
             <p className="text-gray-500 text-sm mt-0.5" style={font}>Project budget burn · Manager view</p>
           </div>
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid #2a2a2a" }}>
+          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid var(--app-border-strong)" }}>
             <button type="button" onClick={() => setWeekOffset(o => o - 1)}
-              className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors" style={{ color: "#888" }}>
+              className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors" style={{ color: "var(--app-text-muted)" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
             </button>
-            <span className="text-sm text-gray-300 px-3 border-x" style={{ borderColor: "#2a2a2a", ...font }}>{weekLabel}</span>
+            <span className="text-sm text-gray-300 px-3 border-x" style={{ borderColor: "var(--app-border-strong)", ...font }}>{weekLabel}</span>
             <button type="button" onClick={() => setWeekOffset(o => Math.min(o + 1, 0))}
               disabled={weekOffset === 0}
               className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors"
-              style={{ color: weekOffset === 0 ? "#333" : "#888" }}>
+              style={{ color: weekOffset === 0 ? "var(--app-canvas-dot)" : "var(--app-text-muted)" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
             </button>
           </div>
@@ -862,11 +862,11 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
         {/* Quick-stats strip */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Hours This Week", value: fmtH(teamTotals.totalMins), sub: `${TEAM_DATA.length} team members`, color: "#fff" },
+            { label: "Hours This Week", value: fmtH(teamTotals.totalMins), sub: `${TEAM_DATA.length} team members`, color: "var(--app-text-primary)" },
             { label: "Projects Over Pace", value: `${projectsOverPace} / ${PROJECT_BUDGETS.length}`, sub: "burning budget faster than expected", color: projectsOverPace > 0 ? "#ef4444" : "#22c55e" },
-            { label: "Days Submitted", value: `${teamTotals.submittedDays} / ${teamTotals.totalDays}`, sub: "this week", color: "#fff" },
+            { label: "Days Submitted", value: `${teamTotals.submittedDays} / ${teamTotals.totalDays}`, sub: "this week", color: "var(--app-text-primary)" },
           ].map(c => (
-            <div key={c.label} className="p-4 rounded-xl" style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}>
+            <div key={c.label} className="p-4 rounded-xl" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}>
               <div className="text-xs text-gray-500 uppercase tracking-wider mb-2" style={font}>{c.label}</div>
               <div className="text-2xl font-bold" style={{ color: c.color, ...font }}>{c.value}</div>
               <div className="text-xs text-gray-600 mt-1" style={font}>{c.sub}</div>
@@ -879,7 +879,7 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
 
         {/* ── Team Hours ── */}
         <div>
-          <h2 className="text-white font-semibold text-sm mb-3" style={font}>Team Hours</h2>
+          <h2 className="text-foreground font-semibold text-sm mb-3" style={font}>Team Hours</h2>
           <div className="space-y-3">
             {TEAM_DATA.map(m => <MemberCard key={m.id} member={m} weekDates={weekDates} />)}
           </div>

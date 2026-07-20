@@ -134,7 +134,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
       {/* Expand Button */}
       <button
         onClick={() => setViewLayer("expanded")}
-        className="w-full py-1.5 text-[10px] text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+        className="w-full py-1.5 text-[10px] text-gray-500 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
       >
         View details
@@ -152,7 +152,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: healthColor }}
           />
-          <span className="text-xs font-medium text-white capitalize" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <span className="text-xs font-medium text-foreground capitalize" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             {healthStatus.replace("-", " ")}
           </span>
         </div>
@@ -182,7 +182,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
           <div className="text-[10px] text-gray-500 mb-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Unresolved
           </div>
-          <div className="text-sm font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <div className="text-sm font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             {nodeData.unresolvedFeedbackCount ?? 0}
           </div>
         </div>
@@ -204,7 +204,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
 
       {/* Last Decision */}
       {nodeData.decisions && nodeData.decisions.length > 0 && (
-        <div className="pt-2 border-t" style={{ borderColor: "#333333" }}>
+        <div className="pt-2 border-t" style={{ borderColor: "var(--app-canvas-dot)" }}>
           <div className="text-[10px] text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Last Decision
           </div>
@@ -221,7 +221,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
       <div className="flex items-center gap-2 pt-1">
         <button
           onClick={() => setViewLayer("ambient")}
-          className="flex-1 py-1.5 text-[10px] text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          className="flex-1 py-1.5 text-[10px] text-gray-500 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
         >
           Collapse
@@ -244,7 +244,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setViewLayer("expanded")}
-          className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-white transition-colors"
+          className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-foreground transition-colors"
           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -333,8 +333,8 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
                   <span 
                     className="px-1.5 py-0.5 rounded text-[9px] font-medium"
                     style={{ 
-                      backgroundColor: fb.conflictFlag ? "#fca5a520" : "#333",
-                      color: fb.conflictFlag ? "#fca5a5" : "#888",
+                      backgroundColor: fb.conflictFlag ? "#fca5a520" : "var(--app-canvas-dot)",
+                      color: fb.conflictFlag ? "#fca5a5" : "var(--app-text-muted)",
                       fontFamily: "system-ui, Inter, sans-serif"
                     }}
                   >
@@ -393,7 +393,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
     <div
       className="group rounded-2xl transition-all duration-300 overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #1c1c1c 0%, #141414 100%)",
+        background: "linear-gradient(180deg, #1c1c1c 0%, var(--app-card) 100%)",
         border: selected ? "1.5px solid #F0FE00" : `1px solid ${healthColor}30`,
         width: viewLayer === "deep" ? 320 : 280,
         boxShadow: selected 

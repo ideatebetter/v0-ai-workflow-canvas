@@ -211,7 +211,7 @@ export function SyncFileDialog({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-white font-medium truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+          <p className="text-sm text-foreground font-medium truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
             {nodeData.label || (isTargetFile ? (nodeData as FileNodeData).fileName : "Untitled")}
           </p>
           <p className="text-xs text-gray-500 truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -255,7 +255,7 @@ export function SyncFileDialog({
         >
           <div>
             <h2
-              className="text-lg font-semibold text-white"
+              className="text-lg font-semibold text-foreground"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
             >
               Sync {nodeTypeLabel}
@@ -273,7 +273,7 @@ export function SyncFileDialog({
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#888" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -302,7 +302,7 @@ export function SyncFileDialog({
               )}
             </div>
             <div>
-              <p className="text-sm text-white font-medium" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
+              <p className="text-sm text-foreground font-medium" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
                 {selectedData.label || (isFileNode ? (selectedData as FileNodeData).fileName : "Untitled")}
               </p>
               <p className="text-xs text-gray-500" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -423,7 +423,7 @@ export function SyncFileDialog({
                 placeholder="Search canvases..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 rounded-lg text-sm text-white placeholder-gray-600 outline-none transition-colors"
+                className="w-full pl-8 pr-4 py-2 rounded-lg text-sm text-foreground placeholder-gray-600 outline-none transition-colors"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.08)",

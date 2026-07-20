@@ -131,12 +131,12 @@ export function SaveFrameworkDialog({
       {/* Dialog */}
       <div
         className="relative w-full max-w-lg rounded-xl overflow-hidden flex flex-col max-h-[90vh]"
-        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
       >
         {/* Header */}
         <div
           className="px-6 py-4 flex items-center justify-between flex-shrink-0"
-          style={{ borderBottom: "1px solid #333333" }}
+          style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}
         >
           <div className="flex items-center gap-3">
             <div
@@ -150,7 +150,7 @@ export function SaveFrameworkDialog({
             </div>
             <div>
               <h2
-                className="text-lg font-semibold text-white"
+                className="text-lg font-semibold text-foreground"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Save as Framework
@@ -166,7 +166,7 @@ export function SaveFrameworkDialog({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -189,10 +189,10 @@ export function SaveFrameworkDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter framework name"
-              className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50"
+              className="w-full px-4 py-2.5 rounded-lg text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50"
               style={{
-                backgroundColor: "#252525",
-                border: "1px solid #333333",
+                backgroundColor: "var(--app-border-strong)",
+                border: "1px solid var(--app-canvas-dot)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             />
@@ -211,10 +211,10 @@ export function SaveFrameworkDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe what this framework is for..."
               rows={3}
-              className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50 resize-none"
               style={{
-                backgroundColor: "#252525",
-                border: "1px solid #333333",
+                backgroundColor: "var(--app-border-strong)",
+                border: "1px solid var(--app-canvas-dot)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             />
@@ -236,12 +236,12 @@ export function SaveFrameworkDialog({
                   onClick={() => setVisibility(option.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
                     visibility === option.id
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      ? "text-foreground"
+                      : "text-gray-400 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{
-                    backgroundColor: visibility === option.id ? "#F0FE0015" : "#252525",
-                    border: `1px solid ${visibility === option.id ? "#F0FE00" : "#333333"}`,
+                    backgroundColor: visibility === option.id ? "#F0FE0015" : "var(--app-border-strong)",
+                    border: `1px solid ${visibility === option.id ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                   }}
                 >
                   <div
@@ -292,12 +292,12 @@ export function SaveFrameworkDialog({
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                     category === cat
-                      ? "text-[#0a0a0a] font-medium"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      ? "text-[var(--app-bg)] font-medium"
+                      : "text-gray-400 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{
-                    backgroundColor: category === cat ? "#F0FE00" : "#252525",
-                    border: `1px solid ${category === cat ? "#F0FE00" : "#333333"}`,
+                    backgroundColor: category === cat ? "#F0FE00" : "var(--app-border-strong)",
+                    border: `1px solid ${category === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
@@ -323,8 +323,8 @@ export function SaveFrameworkDialog({
                   key={tag}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm"
                   style={{
-                    backgroundColor: "#252525",
-                    border: "1px solid #333333",
+                    backgroundColor: "var(--app-border-strong)",
+                    border: "1px solid var(--app-canvas-dot)",
                     color: "#F0FE00",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
@@ -333,7 +333,7 @@ export function SaveFrameworkDialog({
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-foreground transition-colors"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -350,10 +350,10 @@ export function SaveFrameworkDialog({
                 onKeyDown={handleKeyDown}
                 placeholder="Add a tag..."
                 disabled={tags.length >= 5}
-                className="flex-1 px-4 py-2 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50 disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-lg text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50 disabled:opacity-50"
                 style={{
-                  backgroundColor: "#252525",
-                  border: "1px solid #333333",
+                  backgroundColor: "var(--app-border-strong)",
+                  border: "1px solid var(--app-canvas-dot)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               />
@@ -363,8 +363,8 @@ export function SaveFrameworkDialog({
                 disabled={!tagInput.trim() || tags.length >= 5}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 style={{
-                  backgroundColor: "#252525",
-                  border: "1px solid #333333",
+                  backgroundColor: "var(--app-border-strong)",
+                  border: "1px solid var(--app-canvas-dot)",
                   color: "#F0FE00",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
@@ -378,12 +378,12 @@ export function SaveFrameworkDialog({
           {/* Preview info */}
           <div
             className="p-3 rounded-lg flex items-center gap-3"
-            style={{ backgroundColor: "#252525", border: "1px solid #333333" }}
+            style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="9" cy="9" r="7" stroke="#888888" strokeWidth="1.5"/>
-              <path d="M9 6V9.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="9" cy="12" r="0.75" fill="#888888"/>
+              <circle cx="9" cy="9" r="7" stroke="var(--app-text-muted)" strokeWidth="1.5"/>
+              <path d="M9 6V9.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="9" cy="12" r="0.75" fill="var(--app-text-muted)"/>
             </svg>
             <p
               className="text-sm text-gray-400"
@@ -402,12 +402,12 @@ export function SaveFrameworkDialog({
         {/* Footer */}
         <div
           className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0"
-          style={{ borderTop: "1px solid #333333" }}
+          style={{ borderTop: "1px solid var(--app-canvas-dot)" }}
         >
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Cancel
@@ -416,7 +416,7 @@ export function SaveFrameworkDialog({
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || isSaving}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors disabled:opacity-50 flex items-center gap-2"
             style={{
               backgroundColor: "#F0FE00",
               fontFamily: "system-ui, Inter, sans-serif",

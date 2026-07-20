@@ -73,6 +73,24 @@ body {
     --atlas-text-primary: 0 0% 9%;
     --atlas-text-secondary: 0 0% 45%;
     --atlas-text-muted: 0 0% 60%;
+
+    /* App-wide semantic hex tokens - Light mode
+       Consumed via inline style={{ backgroundColor: "var(--app-bg)" }} */
+    --app-bg: #f5f5f5;
+    --app-bg-elevated: #ffffff;
+    --app-card: #ffffff;
+    --app-card-elevated: #fafafa;
+    --app-hover: rgba(0,0,0,0.04);
+    --app-active: rgba(0,0,0,0.08);
+    --app-border-subtle: #eeeeee;
+    --app-border: #e5e5e5;
+    --app-border-strong: #d4d4d4;
+    --app-text-primary: #0a0a0a;
+    --app-text-secondary: #4a4a4a;
+    --app-text-muted: #888888;
+    --app-text-faint: #a4a4a4;
+    --app-shadow: rgba(0,0,0,0.08);
+    --app-canvas-dot: #cccccc;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -123,6 +141,23 @@ body {
     --workflow-edge: 0 0% 32%;
     --workflow-handle: 0 0% 38%;
     --workflow-handle-border: 0 0% 50%;
+
+    /* App-wide semantic hex tokens - Dark mode */
+    --app-bg: #0a0a0a;
+    --app-bg-elevated: #121212;
+    --app-card: #141414;
+    --app-card-elevated: #1a1a1a;
+    --app-hover: rgba(255,255,255,0.04);
+    --app-active: rgba(255,255,255,0.08);
+    --app-border-subtle: #1e1e1e;
+    --app-border: #222222;
+    --app-border-strong: #2a2a2a;
+    --app-text-primary: #ffffff;
+    --app-text-secondary: #a4a4a4;
+    --app-text-muted: #888888;
+    --app-text-faint: #666666;
+    --app-shadow: rgba(0,0,0,0.5);
+    --app-canvas-dot: #404040;
   }
 }
 

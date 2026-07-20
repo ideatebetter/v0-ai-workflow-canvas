@@ -85,8 +85,8 @@ export function DeletableEdge({
               width: 20,
               height: 20,
               borderRadius: "50%",
-              backgroundColor: "#1a1a1a",
-              border: "1.5px solid #52525b",
+              backgroundColor: "var(--app-card-elevated)",
+              border: "1.5px solid var(--app-canvas-dot)",
               color: "#a1a1aa",
               display: "flex",
               alignItems: "center",
@@ -102,8 +102,8 @@ export function DeletableEdge({
               (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1a1a1a";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "#52525b";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--app-card-elevated)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--app-canvas-dot)";
               (e.currentTarget as HTMLButtonElement).style.color = "#a1a1aa";
             }}
           >

@@ -30,7 +30,7 @@ export function CapacityNode({ id, data, selected }: NodeProps) {
     <div
       style={{
         width: 220,
-        backgroundColor: "#111",
+        backgroundColor: "var(--app-bg-elevated)",
         borderRadius: 14,
         border: selected ? `2px solid ${BLUE}` : `1px solid ${BLUE}22`,
         overflow: "hidden",
@@ -58,20 +58,20 @@ export function CapacityNode({ id, data, selected }: NodeProps) {
         <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: utilColor }}>
           {avgUtil}<span style={{ fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>%</span>
         </div>
-        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "#555" }}>avg utilization</div>
+        <div className="text-[9px] uppercase tracking-widest mt-1" style={{ color: "var(--app-text-faint)" }}>avg utilization</div>
       </div>
 
       {/* Member bars */}
-      <div className="px-3 pb-2 space-y-1.5" style={{ borderTop: "1px solid #1e1e1e", paddingTop: 8 }}>
+      <div className="px-3 pb-2 space-y-1.5" style={{ borderTop: "1px solid var(--app-card-elevated)", paddingTop: 8 }}>
         {members.slice(0, 3).map((tm, i) => {
           const col = tm.utilizationRate > 90 ? RED : tm.utilizationRate > 80 ? AMBER : GREEN;
           return (
             <div key={i} className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-bold flex-shrink-0"
-                style={{ backgroundColor: tm.member?.color || "#333", color: "#fff" }}>
+                style={{ backgroundColor: tm.member?.color || "var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
                 {tm.member?.name?.charAt(0) ?? "?"}
               </div>
-              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#ffffff0a" }}>
+              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-text-primary)0a" }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.min(tm.utilizationRate, 100)}%`, backgroundColor: col }} />
               </div>
               <span className="text-[9px] w-7 text-right flex-shrink-0 font-medium" style={{ color: col }}>
@@ -83,11 +83,11 @@ export function CapacityNode({ id, data, selected }: NodeProps) {
       </div>
 
       {/* Bench + team count */}
-      <div className="flex items-center justify-between px-3 py-2.5" style={{ borderTop: "1px solid #1e1e1e" }}>
+      <div className="flex items-center justify-between px-3 py-2.5" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
         <span className="text-[9px] text-gray-600">{members.length} people</span>
         <div className="flex items-center gap-1">
-          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: totalBench > 0 ? GREEN : "#333" }} />
-          <span className="text-[9px]" style={{ color: totalBench > 0 ? GREEN : "#555" }}>{totalBench}h bench</span>
+          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: totalBench > 0 ? GREEN : "var(--app-canvas-dot)" }} />
+          <span className="text-[9px]" style={{ color: totalBench > 0 ? GREEN : "var(--app-text-faint)" }}>{totalBench}h bench</span>
         </div>
       </div>
     </div>

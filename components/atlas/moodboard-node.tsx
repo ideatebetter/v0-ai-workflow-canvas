@@ -17,8 +17,8 @@ export function MoodboardNode({ data, selected, id }: NodeProps) {
     <div
       className="group rounded-xl transition-all duration-200"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #ffffff" : "1px solid #ffffff30",
+        backgroundColor: "var(--app-card-elevated)",
+        border: selected ? "2px solid var(--app-text-primary)" : "1px solid var(--app-text-primary)30",
         width: 200,
         minHeight: 160,
       }}
@@ -30,20 +30,20 @@ export function MoodboardNode({ data, selected, id }: NodeProps) {
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center gap-2 border-b"
-        style={{ borderColor: "#ffffff20" }}
+        style={{ borderColor: "var(--app-text-primary)20" }}
       >
         <div
           className="w-6 h-6 rounded flex items-center justify-center"
-          style={{ backgroundColor: "#ffffff20" }}
+          style={{ backgroundColor: "var(--app-text-primary)20" }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
             <rect x="14" y="14" width="7" height="7" rx="1" />
           </svg>
         </div>
-        <span className="text-sm font-medium text-white flex-1 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+        <span className="text-sm font-medium text-foreground flex-1 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           {nodeData.label || "Moodboard"}
         </span>
         <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -139,7 +139,7 @@ export function MoodboardNode({ data, selected, id }: NodeProps) {
       <div
         className="px-3 py-2 border-t text-center transition-all duration-200"
         style={{
-          borderColor: "#ffffff20",
+          borderColor: "var(--app-text-primary)20",
           opacity: isHovered ? 1 : 0,
           maxHeight: isHovered ? 40 : 0,
           overflow: "hidden",

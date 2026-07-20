@@ -686,7 +686,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               placeholder=""
-              className="w-full bg-transparent text-[13px] text-white outline-none nowheel nopan"
+              className="w-full bg-transparent text-[13px] text-foreground outline-none nowheel nopan"
               style={{
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                 letterSpacing: "-0.01em"

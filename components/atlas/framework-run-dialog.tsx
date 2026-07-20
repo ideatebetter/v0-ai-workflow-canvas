@@ -66,19 +66,19 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
         className="relative w-full max-w-lg rounded-xl overflow-hidden flex flex-col max-h-[90vh]"
-        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+        style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
       >
         {/* Header */}
-        <div className="px-6 py-4 flex items-start gap-4 flex-shrink-0" style={{ borderBottom: "1px solid #333333" }}>
+        <div className="px-6 py-4 flex items-start gap-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}>
           {framework.previewImage ? (
             <img src={framework.previewImage} alt="" className="w-14 h-10 rounded-lg object-cover flex-shrink-0" />
           ) : (
-            <div className="w-14 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#252525", border: "1px solid #333" }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="#555" strokeWidth="1.5"/><path d="M7 10H13M10 7V13" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <div className="w-14 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="var(--app-text-faint)" strokeWidth="1.5"/><path d="M7 10H13M10 7V13" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/></svg>
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{framework.name}</h2>
+            <h2 className="text-base font-semibold text-foreground truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{framework.name}</h2>
             {framework.description && (
               <p className="text-xs text-gray-400 mt-0.5 line-clamp-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{framework.description}</p>
             )}
@@ -89,7 +89,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
               )}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0">
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors flex-shrink-0">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </button>
         </div>
@@ -98,7 +98,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
         <div className="px-6 py-5 overflow-y-auto flex-1">
           {params.length === 0 ? (
             <div className="py-8 text-center">
-              <div className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: "#252525", border: "1px solid #333" }}>
+              <div className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4V18M4 11H18" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </div>
               <p className="text-sm text-gray-400 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No parameters to fill in</p>
@@ -131,15 +131,15 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0" style={{ borderTop: "1px solid #333333" }}>
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+        <div className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0" style={{ borderTop: "1px solid var(--app-canvas-dot)" }}>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Cancel
           </button>
           <button
             type="button"
             onClick={handleRun}
             className="px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-            style={{ backgroundColor: "#F0FE00", color: "#0a0a0a", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 2.5L12 7.5L4 12.5V2.5Z" fill="currentColor"/></svg>
             Run Framework
@@ -173,12 +173,12 @@ function ParameterInput({
   );
 
   const inputStyle = {
-    backgroundColor: "#252525",
-    border: `1px solid ${error ? "#ef4444" : "#333333"}`,
+    backgroundColor: "var(--app-border-strong)",
+    border: `1px solid ${error ? "#ef4444" : "var(--app-canvas-dot)"}`,
     fontFamily: "system-ui, Inter, sans-serif",
   };
 
-  const inputClass = "w-full px-3.5 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40";
+  const inputClass = "w-full px-3.5 py-2.5 rounded-lg text-sm text-foreground placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/40";
 
   return (
     <div>
@@ -207,7 +207,7 @@ function ParameterInput({
         <div className="flex items-center gap-3">
           <input
             type="color"
-            value={value || "#ffffff"}
+            value={value || "var(--app-text-primary)"}
             onChange={e => onChange(e.target.value)}
             className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent"
           />
@@ -215,7 +215,7 @@ function ParameterInput({
             type="text"
             value={value}
             onChange={e => onChange(e.target.value)}
-            placeholder="#ffffff"
+            placeholder="var(--app-text-primary)"
             className={`${inputClass} flex-1`}
             style={inputStyle}
           />
@@ -292,7 +292,7 @@ function FileUploadInput({
     <div className="space-y-2">
       <label
         className="flex flex-col items-center justify-center gap-2 w-full py-5 rounded-lg cursor-pointer transition-colors hover:opacity-80"
-        style={{ ...inputStyle, border: "1.5px dashed #444" }}
+        style={{ ...inputStyle, border: "1.5px dashed var(--app-text-faint)" }}
       >
         <input
           type="file"
@@ -308,7 +308,7 @@ function FileUploadInput({
           </svg>
         ) : (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 4V14M4 10H16" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M10 4V14M4 10H16" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         )}
         <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -321,13 +321,13 @@ function FileUploadInput({
             <div
               key={i}
               className="relative group rounded-lg overflow-hidden flex-shrink-0"
-              style={{ width: 64, height: 64, backgroundColor: "#252525", border: "1px solid #333" }}
+              style={{ width: 64, height: 64, backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}
             >
               {f.fileType === "image" ? (
                 <img src={f.url} alt={f.fileName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 4L15 10L5 16V4Z" fill="#555"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 4L15 10L5 16V4Z" fill="var(--app-text-faint)"/></svg>
                 </div>
               )}
               <button

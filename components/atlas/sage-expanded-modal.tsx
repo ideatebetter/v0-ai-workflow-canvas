@@ -274,7 +274,7 @@ export function SageExpandedModal({
       <div
         className={`relative w-full max-w-2xl max-h-[80vh] rounded-2xl overflow-hidden flex flex-col ${isDragOver ? "ring-2 ring-[#F0FE00]" : ""}`}
         style={{
-          backgroundColor: isDragOver ? "rgba(240, 254, 0, 0.02)" : "#0a0a0a",
+          backgroundColor: isDragOver ? "rgba(240, 254, 0, 0.02)" : "var(--app-bg)",
           border: isDragOver ? "1px solid rgba(240, 254, 0, 0.5)" : "1px solid #F0FE0030",
           boxShadow: "0 0 60px rgba(240, 254, 0, 0.1)",
         }}
@@ -299,7 +299,7 @@ export function SageExpandedModal({
         {/* Header */}
         <div
           className="px-5 py-4 flex items-center justify-between border-b shrink-0"
-          style={{ borderColor: "#F0FE0020", backgroundColor: "#111111" }}
+          style={{ borderColor: "#F0FE0020", backgroundColor: "var(--app-bg-elevated)" }}
         >
           <div className="flex items-center gap-3">
             <div
@@ -309,7 +309,7 @@ export function SageExpandedModal({
               {getIcon()}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {getTitle()}
               </h2>
               <p className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -322,7 +322,7 @@ export function SageExpandedModal({
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M15 5L5 15M5 5L15 15" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M15 5L5 15M5 5L15 15" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -341,7 +341,7 @@ export function SageExpandedModal({
                   <div
                     className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm ${
                       msg.role === "user"
-                        ? "bg-white/10 text-white rounded-br-md"
+                        ? "bg-white/10 text-foreground rounded-br-md"
                         : "text-gray-300 rounded-bl-md"
                     }`}
                     style={{
@@ -363,7 +363,7 @@ export function SageExpandedModal({
               >
                 {getIcon()}
               </div>
-              <h3 className="text-lg font-medium text-white mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <h3 className="text-lg font-medium text-foreground mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Sage is active.
               </h3>
               <p className="text-sm text-gray-400 max-w-sm text-left" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -383,8 +383,8 @@ export function SageExpandedModal({
                   <button
                     key={suggestion}
                     onClick={() => setInputValue(suggestion)}
-                    className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                    style={{ border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    className="px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-foreground hover:bg-white/10 transition-colors"
+                    style={{ border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     {suggestion}
                   </button>
@@ -420,12 +420,12 @@ export function SageExpandedModal({
               style={{ backgroundColor: "#F0FE0015", border: "1px solid #F0FE0040" }}
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <div className="text-sm text-foreground font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   Suggested Statuses
                 </div>
                 <button
                   onClick={() => setPendingSuggestion(null)}
-                  className="text-gray-500 hover:text-white transition-colors"
+                  className="text-gray-500 hover:text-foreground transition-colors"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M11 3L3 11M3 3L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -466,7 +466,7 @@ export function SageExpandedModal({
         {/* Input Area */}
         <div
           className="px-5 py-4 border-t shrink-0"
-          style={{ borderColor: "#F0FE0020", backgroundColor: "#111111" }}
+          style={{ borderColor: "#F0FE0020", backgroundColor: "var(--app-bg-elevated)" }}
         >
           {/* Attachment previews */}
           {attachments.length > 0 && (
@@ -542,7 +542,7 @@ export function SageExpandedModal({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask Sage anything..."
-              className="flex-1 bg-white/5 text-sm text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-1 focus:ring-[#F0FE00]/30"
+              className="flex-1 bg-white/5 text-sm text-foreground placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-1 focus:ring-[#F0FE00]/30"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               disabled={isLoading}
             />

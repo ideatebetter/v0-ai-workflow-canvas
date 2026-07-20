@@ -27,21 +27,21 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
     <div
       className="fixed bottom-6 left-6 w-80 rounded-xl shadow-2xl overflow-hidden z-50"
       style={{
-        backgroundColor: "#1a1a1a",
-        border: "1px solid #333333",
+        backgroundColor: "var(--app-card-elevated)",
+        border: "1px solid var(--app-canvas-dot)",
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid #333333" }}
+        style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}
       >
         <div className="flex items-center gap-2">
           {!isAllComplete ? (
             <div className="w-5 h-5 relative">
               <svg className="animate-spin" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="8" stroke="#333333" strokeWidth="2" />
+                <circle cx="10" cy="10" r="8" stroke="var(--app-canvas-dot)" strokeWidth="2" />
                 <path
                   d="M10 2C14.4183 2 18 5.58172 18 10"
                   stroke="#F0FE00"
@@ -63,7 +63,7 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
               </svg>
             </div>
           )}
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-foreground">
             {!isAllComplete
               ? `Uploading ${uploads.length} file${uploads.length > 1 ? "s" : ""}...`
               : hasErrors
@@ -77,7 +77,7 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
             className="p-1 rounded hover:bg-white/10 transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 4L12 12M12 4L4 12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M4 4L12 12M12 4L4 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         )}
@@ -89,10 +89,10 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
           <div
             key={upload.id}
             className="flex items-center gap-3 px-4 py-2.5"
-            style={{ borderBottom: "1px solid #252525" }}
+            style={{ borderBottom: "1px solid var(--app-border-strong)" }}
           >
             {/* File Icon */}
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#252525" }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)" }}>
               {upload.status === "complete" ? (
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M3 8L6.5 11.5L13 4.5" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -103,17 +103,17 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
                 </svg>
               ) : (
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3V8L11 10" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="8" cy="8" r="5" stroke="#888888" strokeWidth="1.5" />
+                  <path d="M8 3V8L11 10" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="8" cy="8" r="5" stroke="var(--app-text-muted)" strokeWidth="1.5" />
                 </svg>
               )}
             </div>
 
             {/* File Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white truncate">{upload.fileName}</p>
+              <p className="text-sm text-foreground truncate">{upload.fileName}</p>
               {upload.status === "uploading" && (
-                <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#333333" }}>
+                <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "var(--app-canvas-dot)" }}>
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{
