@@ -215,7 +215,7 @@ export function ShareCanvasDialog({
                       >
                         {accessType === opt.value && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="flex-shrink-0">
-                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                         <span className={`${accessType === opt.value ? "text-foreground" : "text-gray-400"} ${accessType === opt.value ? "" : "ml-4"}`}>
@@ -258,7 +258,7 @@ export function ShareCanvasDialog({
                         <div className="w-4 flex-shrink-0 pt-0.5">
                           {permission === p.value && (
                             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                              <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M1.5 5L4 7.5L8.5 2.5" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           )}
                         </div>
@@ -331,7 +331,7 @@ export function ShareCanvasDialog({
                     >
                       {expiry === opt.value && (
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="flex-shrink-0">
-                          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
                       <span className={`${expiry === opt.value ? "text-foreground" : "text-gray-400"} ${expiry === opt.value ? "" : "ml-4"}`}>
@@ -357,7 +357,7 @@ export function ShareCanvasDialog({
                 className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
                 style={{
                   backgroundColor: linkCopied ? "rgba(240,254,0,0.15)" : "var(--app-canvas-dot)",
-                  color: linkCopied ? "#F0FE00" : "var(--app-text-primary)",
+                  color: linkCopied ? "var(--app-text-primary)" : "var(--app-text-primary)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -371,7 +371,7 @@ export function ShareCanvasDialog({
         <div className="px-6 pb-6 flex-shrink-0 space-y-2">
           <div
             className={`flex rounded-xl overflow-hidden transition-opacity ${canGenerate ? "" : "opacity-40"}`}
-            style={{ backgroundColor: "#F0FE00" }}
+            style={{ backgroundColor: "var(--app-text-primary)" }}
           >
             <button
               type="button"

@@ -99,7 +99,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
           {params.length === 0 ? (
             <div className="py-8 text-center">
               <div className="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)" }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4V18M4 11H18" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4V18M4 11H18" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </div>
               <p className="text-sm text-gray-400 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No parameters to fill in</p>
               <p className="text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>This framework will be added to your canvas as-is.</p>
@@ -139,7 +139,7 @@ export function FrameworkRunDialog({ framework, isOpen, onClose, onRun }: Framew
             type="button"
             onClick={handleRun}
             className="px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 2.5L12 7.5L4 12.5V2.5Z" fill="currentColor"/></svg>
             Run Framework

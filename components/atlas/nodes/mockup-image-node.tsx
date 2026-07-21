@@ -65,7 +65,7 @@ function MockupImageNodeComponent({
                 width: 24,
                 height: 24,
                 border: "2px solid var(--app-canvas-dot)",
-                borderTopColor: "#F0FE00",
+                borderTopColor: "var(--app-text-primary)",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
               }}

@@ -166,8 +166,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F0FE0015" }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <rect x="2" y="2" width="14" height="14" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
-                <path d="M6 9H12M9 6V12" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
+                <rect x="2" y="2" width="14" height="14" rx="2" stroke="var(--app-text-primary)" strokeWidth="1.5"/>
+                <path d="M6 9H12M9 6V12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
             <div>
@@ -188,7 +188,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
 
         {/* Step progress bar */}
         <div className="h-0.5 w-full bg-white/10 flex-shrink-0">
-          <div className="h-full bg-[#F0FE00] transition-all" style={{ width: step === 1 ? "50%" : "100%" }} />
+          <div className="h-full bg-foreground transition-all" style={{ width: step === 1 ? "50%" : "100%" }} />
         </div>
 
         {/* Content */}
@@ -233,8 +233,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         className="flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors"
                         style={{
                           backgroundColor: visibility === v ? "#F0FE0015" : "var(--app-border-strong)",
-                          border: `1px solid ${visibility === v ? "#F0FE00" : "var(--app-canvas-dot)"}`,
-                          color: visibility === v ? "#F0FE00" : "var(--app-text-muted)",
+                          border: `1px solid ${visibility === v ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
+                          color: visibility === v ? "var(--app-text-primary)" : "var(--app-text-muted)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
                       >
@@ -257,8 +257,8 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                         onClick={() => setCategory(cat)}
                         className="px-3 py-2 rounded-lg text-xs transition-colors"
                         style={{
-                          backgroundColor: category === cat ? "#F0FE00" : "var(--app-border-strong)",
-                          border: `1px solid ${category === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                          backgroundColor: category === cat ? "var(--app-text-primary)" : "var(--app-border-strong)",
+                          border: `1px solid ${category === cat ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                           color: category === cat ? "var(--app-bg)" : "var(--app-text-muted)",
                           fontFamily: "system-ui, Inter, sans-serif",
                         }}
@@ -278,7 +278,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   </label>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {tags.map(tag => (
-                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}>
                         {tag}
                         <button type="button" onClick={() => setTags(prev => prev.filter(t => t !== tag))} className="hover:text-foreground">
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -315,7 +315,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                 {parameters.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {parameters.map(p => (
-                      <span key={p.id} className="px-2 py-0.5 rounded text-[11px] font-mono" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "#F0FE00" }}>{`{{${p.id}}}`}</span>
+                      <span key={p.id} className="px-2 py-0.5 rounded text-[11px] font-mono" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "var(--app-text-primary)" }}>{`{{${p.id}}}`}</span>
                     ))}
                   </div>
                 )}
@@ -351,7 +351,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       </button>
                     </div>
                     {/* Placeholder badge */}
-                    <span className="font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "#F0FE00" }}>{`{{${param.id}}}`}</span>
+                    <span className="font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-text-faint)", color: "var(--app-text-primary)" }}>{`{{${param.id}}}`}</span>
                     <div className="flex-1" />
                     {/* Required toggle */}
                     <button
@@ -361,7 +361,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                       style={{
                         backgroundColor: param.required ? "#F0FE0020" : "transparent",
                         border: `1px solid ${param.required ? "#F0FE0050" : "var(--app-text-faint)"}`,
-                        color: param.required ? "#F0FE00" : "var(--app-text-faint)",
+                        color: param.required ? "var(--app-text-primary)" : "var(--app-text-faint)",
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}
                     >
@@ -460,7 +460,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                 onClick={() => setStep(2)}
                 disabled={!name.trim()}
                 className="px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Next: Parameters
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2L10 7L5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -481,7 +481,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   onClick={() => handleSave(true)}
                   disabled={isSaving}
                   className="px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                  style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {isSaving ? (
                     <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Publishing...</>

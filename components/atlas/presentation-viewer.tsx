@@ -177,7 +177,7 @@ function DraggableSlideImage({ children }: { children: React.ReactNode }) {
         <div className="absolute pointer-events-none" style={{
           left: `${snapDot.x}%`, top: `${snapDot.y}%`,
           transform: "translate(-50%,-50%)", width: 8, height: 8,
-          borderRadius: "50%", backgroundColor: "#F0FE00",
+          borderRadius: "50%", backgroundColor: "var(--app-text-primary)",
           boxShadow: "0 0 0 3px rgba(240,254,0,0.25)",
         }} />
       )}
@@ -370,7 +370,7 @@ function MoodboardSlide({ data }: { data: MoodboardNodeData }) {
             onClick={() => setView(v)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
             style={{
-              backgroundColor: view === v ? "#F0FE00" : "transparent",
+              backgroundColor: view === v ? "var(--app-text-primary)" : "transparent",
               color: view === v ? "#000" : "rgba(255,255,255,0.4)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}

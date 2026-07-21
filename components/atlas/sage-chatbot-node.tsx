@@ -450,7 +450,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
               <div
                 className="w-2 h-2 rounded-full transition-colors duration-300"
                 style={{
-                  backgroundColor: isLoading ? "#F0FE00" : "#30D158",
+                  backgroundColor: isLoading ? "var(--app-text-primary)" : "#30D158",
                   boxShadow: isLoading ? "0 0 8px rgba(240, 254, 0, 0.5)" : "0 0 8px rgba(48, 209, 88, 0.4)"
                 }}
               />
@@ -584,7 +584,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
               onClick={handleCreateFromSuggestion}
               className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 active:scale-[0.98]"
               style={{ 
-                background: "#F0FE00", 
+                background: "var(--app-text-primary)", 
                 color: "#000",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
@@ -718,7 +718,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
             disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-20 active:scale-90"
             style={{ 
-              backgroundColor: (inputValue.trim() || attachments.length > 0) ? "#F0FE00" : "rgba(255,255,255,0.1)",
+              backgroundColor: (inputValue.trim() || attachments.length > 0) ? "var(--app-text-primary)" : "rgba(255,255,255,0.1)",
               color: (inputValue.trim() || attachments.length > 0) ? "#000" : "rgba(255,255,255,0.3)"
             }}
           >

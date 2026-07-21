@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen } from "lucide-react";
 
 type OpType = "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth";
 
@@ -163,8 +164,8 @@ export function AddNodeMenu({
         <div className="menu-content" style={{ padding: "4px 0" }}>
           {/* Text */}
           <button type="button" onClick={() => { onAddTextNode(); onClose(); }} style={{ ...menuItemStyle, fontSize: 14 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-text-primary)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 4H13M5 8H11M4 12H12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-text-primary)20", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-primary)" }}>
+              <AlignLeft className="w-3 h-3" strokeWidth={1.5} />
             </div>
             Text
           </button>
@@ -189,9 +190,11 @@ export function AddNodeMenu({
               <img src="/sage-logo.svg" alt="Sage" style={{ width: 16, height: 16 }} />
               Sage
             </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "sage" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronRight
+              className="w-3 h-3"
+              strokeWidth={1.5}
+              style={{ color: "var(--app-text-muted)", transform: activeSubmenu === "sage" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+            />
           </button>
 
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
@@ -203,16 +206,16 @@ export function AddNodeMenu({
             style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ops" ? "rgba(255,255,255,0.1)" : "transparent" }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#8b5cf620", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
-                  <path d="M3 3v18h18" /><path d="M7 16l4-8 4 4 6-6" />
-                </svg>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#8b5cf620", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6" }}>
+                <TrendingUp className="w-2.5 h-2.5" strokeWidth={2} />
               </div>
               Ops Data
             </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ops" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronRight
+              className="w-3 h-3"
+              strokeWidth={1.5}
+              style={{ color: "var(--app-text-muted)", transform: activeSubmenu === "ops" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+            />
           </button>
 
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
@@ -224,16 +227,16 @@ export function AddNodeMenu({
             style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ai" ? "rgba(255,255,255,0.1)" : "transparent" }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#F0FE0020", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#F0FE00" strokeWidth="1.2" strokeLinejoin="round" />
-                </svg>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#F0FE0020", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-primary)" }}>
+                <Sparkles className="w-2.5 h-2.5" strokeWidth={1.2} />
               </div>
               Generate
             </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ai" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronRight
+              className="w-3 h-3"
+              strokeWidth={1.5}
+              style={{ color: "var(--app-text-muted)", transform: activeSubmenu === "ai" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+            />
           </button>
 
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
@@ -243,8 +246,8 @@ export function AddNodeMenu({
             onChange={(e) => { if (e.target.files?.length) { onUploadFile(e.target.files); onClose(); } }}
           />
           <button type="button" onClick={() => fileInputRef.current?.click()} style={{ ...menuItemStyle, fontSize: 14 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M7 2V12M2 7H12" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center", color: "#a1a1aa" }}>
+              <Plus className="w-2.5 h-2.5" strokeWidth={1.5} />
             </div>
             Upload File
           </button>
@@ -257,8 +260,8 @@ export function AddNodeMenu({
             onClick={() => { setShowLinkInput(v => !v); setLinkInputValue(""); setTimeout(() => linkInputRef.current?.focus(), 50); }}
             style={{ ...menuItemStyle, fontSize: 14, backgroundColor: showLinkInput ? "rgba(255,255,255,0.06)" : "transparent" }}
           >
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M9 4l3 3-3 3" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center", color: "#a1a1aa" }}>
+              <ArrowRight className="w-2.5 h-2.5" strokeWidth={1.5} />
             </div>
             Add Link
           </button>
@@ -281,7 +284,7 @@ export function AddNodeMenu({
                 type="button"
                 disabled={!linkInputValue.trim()}
                 onClick={() => { if (linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); } }}
-                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "#F0FE00" : "var(--app-border)", color: linkInputValue.trim() ? "#000" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
+                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "var(--app-text-primary)" : "var(--app-border)", color: linkInputValue.trim() ? "#000" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
               >
                 Add
               </button>
@@ -332,12 +335,10 @@ export function AddNodeMenu({
                     style={{ ...menuItemStyle, justifyContent: "space-between" }}
                   >
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-                      </svg>
+                      <LayoutGrid className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "#8b5cf6" }} />
                       Organizational
                     </span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                   </button>
                   <button
                     type="button"
@@ -345,12 +346,10 @@ export function AddNodeMenu({
                     style={{ ...menuItemStyle, justifyContent: "space-between" }}
                   >
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                      </svg>
+                      <FolderOpen className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "#8b5cf6" }} />
                       Project
                     </span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                   </button>
                 </>
               )}
@@ -359,7 +358,7 @@ export function AddNodeMenu({
               {opsLevel === "org" && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("root")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <ChevronLeft className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                     Organizational
                   </button>
                   {OP_NODES.map(({ key, label }) => (
@@ -374,7 +373,7 @@ export function AddNodeMenu({
               {opsLevel === "project-list" && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("root")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <ChevronLeft className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                     Select project
                   </button>
                   {PROJECTS.map(p => (
@@ -388,7 +387,7 @@ export function AddNodeMenu({
                         <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: p.color, flexShrink: 0 }} />
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                       </span>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                     </button>
                   ))}
                 </>
@@ -398,7 +397,7 @@ export function AddNodeMenu({
               {opsLevel === "project-nodes" && selectedProject && (
                 <>
                   <button type="button" onClick={() => setOpsLevel("project-list")} style={backButtonStyle}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3L4.5 6L7.5 9" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <ChevronLeft className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                     <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: selectedProject.color }} />
                     {selectedProject.name}
                   </button>

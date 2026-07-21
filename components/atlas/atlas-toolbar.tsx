@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown, Check, Plus, MoreVertical, LayoutGrid, PlusSquare, Copy, Pencil } from "lucide-react";
 import type { Canvas, CanvasPage } from "@/lib/atlas-types";
 
 interface AtlasToolbarProps {
@@ -170,12 +171,10 @@ export function AtlasToolbar({
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {activePage?.name ?? "Page 1"}
-                      <svg
-                        width="10" height="10" viewBox="0 0 10 10" fill="none"
-                        className={`transition-transform ${showPagesDropdown ? "rotate-180" : ""}`}
-                      >
-                        <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <ChevronDown
+                        className={`w-2.5 h-2.5 transition-transform ${showPagesDropdown ? "rotate-180" : ""}`}
+                        strokeWidth={1.5}
+                      />
                     </button>
                   </>
                 )}
@@ -234,9 +233,7 @@ export function AtlasToolbar({
                             {page.name}
                           </button>
                           {isActive && (
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 text-blue-400">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                            <Check className="w-3 h-3 flex-shrink-0 text-blue-400" strokeWidth={1.5} />
                           )}
                         </>
                       )}
@@ -254,9 +251,7 @@ export function AtlasToolbar({
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   <span className="w-3 flex-shrink-0" />
-                  <svg width="13" height="13" viewBox="0 0 12 12" fill="none" className="flex-shrink-0">
-                    <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <Plus className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                   New Page
                 </button>
               </div>
@@ -270,11 +265,7 @@ export function AtlasToolbar({
               onClick={() => setShowMenu(!showMenu)}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1.5" fill="currentColor"/>
-                <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                <circle cx="8" cy="13" r="1.5" fill="currentColor"/>
-              </svg>
+              <MoreVertical className="w-4 h-4" />
             </button>
 
             {showMenu && (
@@ -285,12 +276,7 @@ export function AtlasToolbar({
                   className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-                    <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-                    <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-                    <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.3"/>
-                  </svg>
+                  <LayoutGrid className="w-4 h-4" strokeWidth={1.3} />
                   Browse Frameworks
                 </button>
                 <button
@@ -299,10 +285,7 @@ export function AtlasToolbar({
                   className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M5.5 8H10.5M8 5.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <PlusSquare className="w-4 h-4" strokeWidth={1.5} />
                   Save as Framework
                 </button>
                 {hasOtherCanvases && (
@@ -315,10 +298,7 @@ export function AtlasToolbar({
                       className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${hasSelectedNodes ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-muted-foreground/50 cursor-not-allowed"}`}
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                        <path d="M11 5V4C11 3.17157 10.3284 2.5 9.5 2.5H4C3.17157 2.5 2.5 3.17157 2.5 4V9.5C2.5 10.3284 3.17157 11 4 11H5" stroke="currentColor" strokeWidth="1.5"/>
-                      </svg>
+                      <Copy className="w-4 h-4" strokeWidth={1.5} />
                       Copy to Canvas
                       {!hasSelectedNodes && <span className="text-[10px] text-muted-foreground ml-auto">Select nodes first</span>}
                     </button>
@@ -331,9 +311,7 @@ export function AtlasToolbar({
                   className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Pencil className="w-4 h-4" strokeWidth={1.5} />
                   Rename Canvas
                 </button>
               </div>

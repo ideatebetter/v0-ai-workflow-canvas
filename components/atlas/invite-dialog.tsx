@@ -168,7 +168,7 @@ export function InviteDialog({ open, onClose, settings, onSettingsChange }: Invi
               onClick={handleInvite}
               disabled={loading || !email.trim() || !user}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40"
-              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               {loading ? "Sending…" : "Send Invite"}
             </button>

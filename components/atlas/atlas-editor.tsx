@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { X, Check, ChevronDown, Plus, User, Users, Sparkles, Send, MessageSquare, Presentation, Link2, Upload, ArrowLeft, Trash2, TriangleAlert } from "lucide-react";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -2591,9 +2592,7 @@ presentationMode={presentationMode}
                 style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
                 title="Delete flow"
               >
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path d="M6 2L2 6M2 2L6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <X className="w-2 h-2" strokeWidth={1.5} />
               </button>
               {/* Flow chip */}
               <button
@@ -2601,16 +2600,12 @@ presentationMode={presentationMode}
                 onClick={() => handleSelectFlow(selectedFlowId === flow.id ? null : flow.id)}
                 className="flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium transition-all"
                 style={{
-                  backgroundColor: selectedFlowId === flow.id ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                  backgroundColor: selectedFlowId === flow.id ? "var(--app-text-primary)" : "rgba(255,255,255,0.08)",
                   color: selectedFlowId === flow.id ? "var(--app-bg-elevated)" : "rgba(255,255,255,0.7)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <rect x="1" y="2" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                  <path d="M4 12H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M7 10V12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
+                <Presentation className="w-3.5 h-3.5" strokeWidth={1.2} />
                 {flow.name}
               </button>
             </div>
@@ -2639,18 +2634,14 @@ presentationMode={presentationMode}
                   onClick={() => { handleSaveFlow(newFlowName); setSavingFlow(false); setNewFlowName(""); }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Check className="w-3 h-3" strokeWidth={1.5} />
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSavingFlow(false); setNewFlowName(""); }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-2.5 h-2.5" strokeWidth={1.5} />
                 </button>
               </div>
             ) : (
@@ -2665,9 +2656,7 @@ presentationMode={presentationMode}
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <Plus className="w-3 h-3" strokeWidth={1.5} />
                 Save flow
               </button>
             )
@@ -3068,11 +3057,7 @@ presentationMode={presentationMode}
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-            <polyline points="16 6 12 2 8 6"/>
-            <line x1="12" y1="2" x2="12" y2="15"/>
-          </svg>
+          <Upload className="w-4 h-4" strokeWidth={2} style={{ color: "#60a5fa" }} />
           <span className="text-sm text-foreground">
             Found matching nodes for {pastedSyncSuggestion.count} pasted item{pastedSyncSuggestion.count !== 1 ? "s" : ""}
           </span>
@@ -3093,9 +3078,7 @@ presentationMode={presentationMode}
             onClick={() => setPastedSyncSuggestion(null)}
             className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <X className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-faint)" }} />
           </button>
         </div>
       )}
@@ -3179,7 +3162,7 @@ presentationMode={presentationMode}
           >
             <h2 
               className="text-lg font-semibold mb-2"
-              style={{ color: "#FFFFFF", fontFamily: "system-ui, Inter, sans-serif" }}
+              style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
             >
               File Already Exists
             </h2>
@@ -3196,15 +3179,12 @@ presentationMode={presentationMode}
                 onClick={handleAddAsVersion}
                 className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 style={{ 
-                  backgroundColor: "#F0FE00",
+                  backgroundColor: "var(--app-text-primary)",
                   color: "#000000",
                   fontFamily: "system-ui, Inter, sans-serif"
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Upload className="w-4 h-4" strokeWidth={1.5} />
                 Add as New Version
               </button>
               
@@ -3214,7 +3194,7 @@ presentationMode={presentationMode}
                 className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors"
                 style={{ 
                   backgroundColor: "#2C2C2E",
-                  color: "#FFFFFF",
+                  color: "var(--app-text-primary)",
                   fontFamily: "system-ui, Inter, sans-serif"
                 }}
               >
@@ -3357,9 +3337,7 @@ presentationMode={presentationMode}
             style={{ color: "var(--app-text-faint)", height: 35, flexShrink: 0 }}
             title="Add page"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <Plus className="w-3 h-3" strokeWidth={1.5} />
           </button>
         </div>
       )}
@@ -3384,10 +3362,7 @@ presentationMode={presentationMode}
           {/* Header strip */}
           <div style={{ padding: "12px 14px 0", display: "flex", alignItems: "flex-start", gap: 10 }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#FF990020", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2L14 13H2L8 2Z" stroke="#FF9900" strokeWidth="1.4" strokeLinejoin="round"/>
-                <path d="M8 7V9.5M8 11.5V12" stroke="#FF9900" strokeWidth="1.4" strokeLinecap="round"/>
-              </svg>
+              <TriangleAlert className="w-3.5 h-3.5" strokeWidth={1.4} style={{ color: "#FF9900" }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: "var(--app-text-primary)", margin: 0 }}>Naming convention mismatch</p>
@@ -3454,7 +3429,7 @@ presentationMode={presentationMode}
                   setSelectedNode((prev) => prev?.id === namingMismatchAlert.nodeId ? { ...prev, data: { ...prev.data, label, fileName: label } } : prev);
                   setNamingMismatchAlert(null);
                 }}
-                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: namingMismatchAlert.renameValue.trim() ? "#F0FE00" : "var(--app-canvas-dot)", border: "none", borderRadius: 8, color: namingMismatchAlert.renameValue.trim() ? "#000" : "var(--app-text-faint)", cursor: namingMismatchAlert.renameValue.trim() ? "pointer" : "default" }}
+                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: namingMismatchAlert.renameValue.trim() ? "var(--app-text-primary)" : "var(--app-canvas-dot)", border: "none", borderRadius: 8, color: namingMismatchAlert.renameValue.trim() ? "#000" : "var(--app-text-faint)", cursor: namingMismatchAlert.renameValue.trim() ? "pointer" : "default" }}
               >
                 Save
               </button>
@@ -3462,7 +3437,7 @@ presentationMode={presentationMode}
               <button
                 type="button"
                 onClick={() => setNamingMismatchAlert((a) => a ? { ...a, renaming: true } : null)}
-                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: "#F0FE00", border: "none", borderRadius: 8, color: "#000", cursor: "pointer" }}
+                style={{ padding: "6px 14px", fontSize: 12, fontWeight: 600, backgroundColor: "var(--app-text-primary)", border: "none", borderRadius: 8, color: "#000", cursor: "pointer" }}
               >
                 Rename
               </button>
@@ -3478,14 +3453,12 @@ presentationMode={presentationMode}
           style={{
             backgroundColor: "var(--app-card-elevated)",
             border: "1px solid #F0FE0040",
-            color: "#F0FE00",
+            color: "var(--app-text-primary)",
             fontFamily: "system-ui, Inter, sans-serif",
             boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 7L5 10L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
           Link copied to clipboard
         </div>
       )}

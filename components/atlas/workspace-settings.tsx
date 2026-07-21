@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { AlertCircle, Check, Copy, Building2, Shield, Pencil, Info, Search, X, Plus, ChevronDown, ChevronRight, Lock, Upload, RotateCw, Trash2, Users, Settings, Mail, PlusSquare, TriangleAlert } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth-context";
@@ -552,7 +553,7 @@ export function WorkspaceSettingsDialog({
                       onClick={copyFigmaToken}
                       className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-all"
                       style={{
-                        background: figmaTokenCopied ? "#0a3a1a" : "#F0FE00",
+                        background: figmaTokenCopied ? "#0a3a1a" : "var(--app-text-primary)",
                         color: figmaTokenCopied ? "#4ade80" : "#000",
                         border: "none",
                         minWidth: 64,
@@ -560,12 +561,12 @@ export function WorkspaceSettingsDialog({
                     >
                       {figmaTokenCopied ? (
                         <>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          <Check className="w-3 h-3" strokeWidth={1.5} />
                           Copied
                         </>
                       ) : (
                         <>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="4" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M4 4V3C4 2.4 4.4 2 5 2H9C9.6 2 10 2.4 10 3V7C10 7.6 9.6 8 9 8H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                          <Copy className="w-3 h-3" strokeWidth={1.2} />
                           Copy
                         </>
                       )}
@@ -582,9 +583,7 @@ export function WorkspaceSettingsDialog({
               {/* Figma Personal Access Token — always visible */}
               <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                 <div className="flex items-center gap-2">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
+                  <Lock className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
                   <p className="text-xs font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Figma Personal Access Token
                   </p>
@@ -607,7 +606,7 @@ export function WorkspaceSettingsDialog({
                 />
                 {figmaPatInput.trim() && (
                   <div className="flex items-center gap-1.5 text-xs" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <Check className="w-3 h-3" strokeWidth={2.5} />
                     Token saved
                   </div>
                 )}
@@ -617,9 +616,7 @@ export function WorkspaceSettingsDialog({
               {canvas && (
                 <div className="mt-4 rounded-xl p-4 space-y-3" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
                   <div className="flex items-center gap-2">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
+                    <Upload className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
                     <p className="text-xs font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       Sync Canvas from Figma
                     </p>
@@ -644,7 +641,7 @@ export function WorkspaceSettingsDialog({
                     disabled={!canvas.figmaUrl || !figmaPatInput.trim() || figmaImportStatus === "loading"}
                     className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-semibold transition-all"
                     style={{
-                      backgroundColor: !canvas.figmaUrl || !figmaPatInput.trim() ? "var(--app-card-elevated)" : "#F0FE00",
+                      backgroundColor: !canvas.figmaUrl || !figmaPatInput.trim() ? "var(--app-card-elevated)" : "var(--app-text-primary)",
                       color: !canvas.figmaUrl || !figmaPatInput.trim() ? "var(--app-text-faint)" : "#000",
                       border: "none",
                       minWidth: 80,
@@ -654,9 +651,7 @@ export function WorkspaceSettingsDialog({
                       <><div className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />Syncing…</>
                     ) : (
                       <>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.8"/>
-                        </svg>
+                        <RotateCw className="w-3 h-3" strokeWidth={2.2} />
                         Sync All Frames
                       </>
                     )}
@@ -671,8 +666,8 @@ export function WorkspaceSettingsDialog({
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}>
                       {figmaImportStatus === "error"
-                        ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        ? <AlertCircle className="w-3 h-3" strokeWidth={2} />
+                        : <Check className="w-3 h-3" strokeWidth={2} />
                       }
                       {figmaImportMessage}
                     </div>
@@ -687,9 +682,7 @@ export function WorkspaceSettingsDialog({
                 className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                  <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Building2 className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 Workspace Details
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -765,10 +758,7 @@ export function WorkspaceSettingsDialog({
                 className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                  <path d="M12.75 15.75V14.25C12.75 13.4544 12.4339 12.6913 11.8713 12.1287C11.3087 11.5661 10.5456 11.25 9.75 11.25H3.75C2.95435 11.25 2.19129 11.5661 1.62868 12.1287C1.06607 12.6913 0.75 13.4544 0.75 14.25V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M6.75 8.25C8.40685 8.25 9.75 6.90685 9.75 5.25C9.75 3.59315 8.40685 2.25 6.75 2.25C5.09315 2.25 3.75 3.59315 3.75 5.25C3.75 6.90685 5.09315 8.25 6.75 8.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Users className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 Team Members
                 {membersLoading && (
                   <span className="text-xs text-gray-600 font-normal" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Loading…</span>
@@ -854,11 +844,9 @@ export function WorkspaceSettingsDialog({
                             onClick={() => setTransferConfirmUserId(confirmingTransfer ? null : member.userId)}
                             title="Transfer ownership"
                             className="flex-shrink-0 p-1.5 rounded transition-colors"
-                            style={{ color: confirmingTransfer ? "#F0FE00" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                            style={{ color: confirmingTransfer ? "var(--app-text-primary)" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
                           >
-                            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                              <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                            <Shield className="w-3 h-3" strokeWidth={1.4} />
                           </button>
                         )}
 
@@ -870,9 +858,7 @@ export function WorkspaceSettingsDialog({
                             className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Remove member"
                           >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                            <X className="w-3 h-3" strokeWidth={1.5} />
                           </button>
                         )}
                         {!canRemove && !canTransfer && <div className="w-[28px] flex-shrink-0" />}
@@ -881,7 +867,7 @@ export function WorkspaceSettingsDialog({
                       {/* Transfer ownership confirmation inline */}
                       {confirmingTransfer && (
                         <div className="mx-1 mb-1 px-3 py-2.5 rounded-lg flex items-center justify-between gap-3" style={{ backgroundColor: "#1a1500", border: "1px solid #3a3000" }}>
-                          <p className="text-xs" style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <p className="text-xs" style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}>
                             Transfer ownership to <strong>{member.name}</strong>? You'll become an Admin.
                           </p>
                           <div className="flex gap-2 flex-shrink-0">
@@ -897,7 +883,7 @@ export function WorkspaceSettingsDialog({
                               type="button"
                               onClick={() => handleTransferOwnership(member.userId)}
                               className="text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors"
-                              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               Confirm
                             </button>
@@ -941,7 +927,7 @@ export function WorkspaceSettingsDialog({
                     onClick={handleInvite}
                     disabled={inviteLoading || !inviteEmail.trim() || !user}
                     className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     {inviteLoading ? "..." : "Invite"}
                   </button>
@@ -961,7 +947,7 @@ export function WorkspaceSettingsDialog({
                     <p className="text-xs text-gray-400 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Share this invite link:</p>
                     <div className="flex items-center gap-2">
                       <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", fontFamily: "monospace" }} />
-                      <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--app-border-strong)", color: "#F0FE00" }}>Copy</button>
+                      <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-primary)" }}>Copy</button>
                     </div>
                   </div>
                 )}
@@ -979,10 +965,7 @@ export function WorkspaceSettingsDialog({
                     className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                      <rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M6 9H12M9 6V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <Plus className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                     Canvas Settings
                     <span className="text-xs text-gray-500 font-normal ml-1 truncate max-w-[180px]">{canvas.name}</span>
                   </h3>
@@ -1011,11 +994,7 @@ export function WorkspaceSettingsDialog({
                 className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                  <path d="M3 4.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3 9H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3 13.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Settings className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 Preferences
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -1070,11 +1049,7 @@ export function WorkspaceSettingsDialog({
                   className="text-foreground font-semibold text-base flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                    <path d="M2.25 4.5H15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2.25 9H11.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2.25 13.5H8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Settings className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   Naming Conventions
                 </h3>
                 <Switch
@@ -1096,13 +1071,11 @@ export function WorkspaceSettingsDialog({
                       )}
                       <span
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                        style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                       >
                         {NAMING_TOKENS.find((t) => t.id === token)?.label || token}
                         <button type="button" onClick={() => removeToken(index)} className="hover:opacity-70">
-                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                            <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <X className="w-2.5 h-2.5" strokeWidth={1.5} />
                         </button>
                       </span>
                     </div>
@@ -1189,12 +1162,7 @@ export function WorkspaceSettingsDialog({
                     className="text-foreground font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-gray-400">
-                      <path d="M14.25 15.75V14.25C14.25 13.0074 13.2426 12 12 12H6C4.75736 12 3.75 13.0074 3.75 14.25V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 9C10.6569 9 12 7.65685 12 6C12 4.34315 10.6569 3 9 3C7.34315 3 6 4.34315 6 6C6 7.65685 7.34315 9 9 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M15.75 6.75L15.75 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M17.625 8.625H13.875" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Plus className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                     Admin: Add User
                   </h3>
                   
@@ -1242,7 +1210,7 @@ export function WorkspaceSettingsDialog({
                       disabled={createUserLoading || !newUserName.trim() || !newUserEmail.trim()}
                       className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                       style={{
-                        backgroundColor: "#F0FE00",
+                        backgroundColor: "var(--app-text-primary)",
                         color: "var(--app-bg-elevated)",
                         fontFamily: "system-ui, Inter, sans-serif",
                       }}
@@ -1271,7 +1239,7 @@ export function WorkspaceSettingsDialog({
                             type="button"
                             onClick={() => navigator.clipboard.writeText(createUserSuccess.tempPassword)}
                             className="px-2 py-0.5 rounded text-xs hover:bg-white/10 transition-colors"
-                            style={{ color: "#F0FE00" }}
+                            style={{ color: "var(--app-text-primary)" }}
                           >
                             Copy
                           </button>
@@ -1349,18 +1317,13 @@ export function WorkspaceSettingsDialog({
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: "#F0FE0015" }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                        <rect x="3" y="3" width="14" height="14" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
-                        <path d="M7 10H13M10 7V13" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
+                      <PlusSquare className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Make Framework</div>
                       <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Save this canvas as a reusable framework</div>
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-gray-500">
-                      <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500" strokeWidth={1.5} />
                   </button>
                 </div>
               </>
@@ -1375,11 +1338,7 @@ export function WorkspaceSettingsDialog({
                     className="font-semibold text-base mb-4 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif", color: "#ef4444" }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 2L14 13H2L8 2Z" stroke="#ef4444" strokeWidth="1.3" strokeLinejoin="round"/>
-                      <path d="M8 6V9" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
-                      <circle cx="8" cy="11" r="0.6" fill="#ef4444"/>
-                    </svg>
+                    <TriangleAlert className="w-4 h-4" strokeWidth={1.3} style={{ color: "#ef4444" }} />
                     Danger Zone
                   </h3>
 
@@ -1404,12 +1363,7 @@ export function WorkspaceSettingsDialog({
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#ef444415" }}
                       >
-                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                          <path d="M5 6H15L14 17H6L5 6Z" stroke="#ef4444" strokeWidth="1.4" strokeLinejoin="round"/>
-                          <path d="M3 6H17" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
-                          <path d="M8 3H12" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
-                          <path d="M8 10V14M12 10V14" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
-                        </svg>
+                        <Trash2 className="w-4 h-4" strokeWidth={1.4} style={{ color: "#ef4444" }} />
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>

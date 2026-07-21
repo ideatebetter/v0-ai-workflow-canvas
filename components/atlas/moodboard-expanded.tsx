@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { LayoutGrid, Grid2X2, Send, X, ChevronLeft, ChevronRight, ChevronDown, Play, List } from "lucide-react";
 import type { MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 
 type LayoutMode = "masonry" | "freeform" | "grid";
@@ -186,12 +187,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: "var(--app-text-primary)20" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
+              <LayoutGrid className="w-4 h-4" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
             </div>
             <div>
               {isEditingLabel ? (
@@ -287,12 +283,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 }}
                 title="Grid layout"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                  <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                  <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                  <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                </svg>
+                <Grid2X2 className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -305,10 +296,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 style={{ backgroundColor: "var(--app-text-primary)08", color: "var(--app-text-muted)" }}
                 title="Share moodboard"
               >
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                  <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                  <path d="M6.5 9L14 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                </svg>
+                <Send className="w-3.5 h-3.5" strokeWidth={1.4} />
               </button>
             )}
 
@@ -333,9 +321,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
               className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
               style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <X className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
             </button>
           </div>
         </div>
@@ -383,9 +369,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                       {/* Play icon for videos */}
                       {isVideo && (
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
-                            <path d="M4 3L13 8L4 13V3Z" />
-                          </svg>
+                          <Play className="w-2.5 h-2.5" fill="white" stroke="white" />
                         </div>
                       )}
                       
@@ -476,9 +460,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                       {/* Play icon for videos */}
                       {isVideo && (
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
-                            <path d="M4 3L13 8L4 13V3Z" />
-                          </svg>
+                          <Play className="w-2.5 h-2.5" fill="white" stroke="white" />
                         </div>
                       )}
                       
@@ -538,9 +520,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                       {/* Play icon for videos */}
                       {isVideo && (
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
-                            <path d="M4 3L13 8L4 13V3Z" />
-                          </svg>
+                          <Play className="w-2.5 h-2.5" fill="white" stroke="white" />
                         </div>
                       )}
                       
@@ -580,9 +560,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
                 style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M12 4L6 10L12 16" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <ChevronLeft className="w-5 h-5" strokeWidth={2} style={{ color: "var(--app-text-muted)" }} />
               </button>
               <div 
                 className="px-4 py-2 rounded-full"
@@ -628,9 +606,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                     backgroundColor: presentationLayout === "list" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 4.5H15M3 9H15M3 13.5H15" stroke={presentationLayout === "list" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <List className="w-4 h-4" strokeWidth={1.5} style={{ color: presentationLayout === "list" ? "var(--app-text-primary)" : "var(--app-text-muted)" }} />
                 </button>
 
                 {/* Grid */}
@@ -642,12 +618,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                     backgroundColor: presentationLayout === "grid" ? "var(--app-text-primary)15" : "transparent",
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
-                    <rect x="10.5" y="2" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
-                    <rect x="2" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
-                    <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1" stroke={presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5"/>
-                  </svg>
+                  <Grid2X2 className="w-4 h-4" strokeWidth={1.5} style={{ color: presentationLayout === "grid" ? "var(--app-text-primary)" : "var(--app-text-muted)" }} />
                 </button>
 
                 {/* Columns/Masonry */}
@@ -693,9 +664,7 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 ml-2"
                 style={{ backgroundColor: "var(--app-card-elevated)" }}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M13 5L5 13M5 5L13 13" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <X className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { TrendingUp, Users, Upload, X, Image as ImageIcon, FileText, Loader2, Send } from "lucide-react";
 import type { UIMessage } from "@ai-sdk/react";
 
 import { getSageChatStore } from "./sage-chatbot-node";
@@ -245,19 +246,11 @@ export function SageExpandedModal({
         );
       case "sageOverview":
         return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
-            <path d="M3 3v18h18" />
-            <path d="M18 17l-5-5-4 4-3-3" />
-          </svg>
+          <TrendingUp className="w-5 h-5" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
         );
       case "stakeholder":
         return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
+          <Users className="w-5 h-5" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
         );
     }
   };
@@ -286,11 +279,7 @@ export function SageExpandedModal({
         {isDragOver && (
           <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl pointer-events-none" style={{ background: "rgba(240, 254, 0, 0.05)" }}>
             <div className="text-[#F0FE00] text-base font-medium flex items-center gap-3">
-              <svg width="24" height="24" viewBox="0 0 16 16" fill="none">
-                <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Upload className="w-6 h-6" strokeWidth={1.5} />
               Drop files here
             </div>
           </div>
@@ -304,7 +293,7 @@ export function SageExpandedModal({
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#F0FE00" }}
+              style={{ backgroundColor: "var(--app-text-primary)" }}
             >
               {getIcon()}
             </div>
@@ -321,9 +310,7 @@ export function SageExpandedModal({
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M15 5L5 15M5 5L15 15" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <X className="w-5 h-5" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
           </button>
         </div>
 
@@ -359,7 +346,7 @@ export function SageExpandedModal({
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                style={{ backgroundColor: "#F0FE00" }}
+                style={{ backgroundColor: "var(--app-text-primary)" }}
               >
                 {getIcon()}
               </div>
@@ -401,9 +388,9 @@ export function SageExpandedModal({
               >
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-[#F0FE00] animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                   <span className="text-xs text-[#F0FE00]" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Sage is thinking...
@@ -427,9 +414,7 @@ export function SageExpandedModal({
                   onClick={() => setPendingSuggestion(null)}
                   className="text-gray-500 hover:text-foreground transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M11 3L3 11M3 3L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>
               </div>
               <div className="flex flex-wrap gap-2 mb-4">
@@ -450,7 +435,7 @@ export function SageExpandedModal({
                 onClick={handleCreateFromSuggestion}
                 className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
                 style={{ 
-                  backgroundColor: "#F0FE00", 
+                  backgroundColor: "var(--app-text-primary)", 
                   color: "#000",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
@@ -478,25 +463,16 @@ export function SageExpandedModal({
                   style={{ backgroundColor: "rgba(240, 254, 0, 0.1)", border: "1px solid rgba(240, 254, 0, 0.2)" }}
                 >
                   {attachment.type.startsWith("image/") ? (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
-                      <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
-                      <path d="M2 11l3-3 2 2 4-4 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ImageIcon className="w-4 h-4 text-[#F0FE00]" strokeWidth={1.5} />
                   ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#F0FE00]">
-                      <path d="M9 2H4C3.44772 2 3 2.44772 3 3V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V6L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 2V6H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <FileText className="w-4 h-4 text-[#F0FE00]" strokeWidth={1.5} />
                   )}
                   <span className="text-[#F0FE00] max-w-[150px] truncate">{attachment.name}</span>
                   <button
                     onClick={() => removeAttachment(index)}
                     className="ml-1 hover:bg-white/10 rounded p-1 transition-colors"
                   >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-[#F0FE00]/60">
-                      <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <X className="w-3 h-3 text-[#F0FE00]/60" strokeWidth={1.5} />
                   </button>
                 </div>
               ))}
@@ -524,15 +500,9 @@ export function SageExpandedModal({
               title="Attach files"
             >
               {isUploading ? (
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="animate-spin text-[#F0FE00]">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="32" strokeDashoffset="8"/>
-                </svg>
+                <Loader2 className="w-4 h-4 animate-spin text-[#F0FE00]" strokeWidth={2} />
               ) : (
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                  <path d="M14 10V12.6667C14 13.403 13.403 14 12.6667 14H3.33333C2.59695 14 2 13.403 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M11.3333 5.33333L8 2L4.66667 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Upload className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
               )}
             </button>
             
@@ -551,11 +521,9 @@ export function SageExpandedModal({
               onClick={handleSend}
               disabled={isLoading || (!inputValue.trim() && attachments.length === 0)}
               className="p-3 rounded-xl transition-all disabled:opacity-50 hover:brightness-110"
-              style={{ backgroundColor: "#F0FE00" }}
+              style={{ backgroundColor: "var(--app-text-primary)" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-              </svg>
+              <Send className="w-4 h-4" strokeWidth={2} style={{ color: "#000" }} />
             </button>
           </div>
         </div>

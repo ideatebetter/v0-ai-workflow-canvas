@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { X, Check, AlignLeft, Eye, Unlink, Square, List, Search, Clock } from "lucide-react";
 import type { Canvas, AtlasNode, FileNodeData, TextNodeData } from "@/lib/atlas-types";
 
 interface SyncFileDialogProps {
@@ -195,9 +196,7 @@ export function SyncFileDialog({
           style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
         >
           {isTargetText ? (
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-              <path d="M3 4H13M3 8H10M3 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <AlignLeft className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
           ) : isTargetFile && ((nodeData as FileNodeData).previewImages?.[0] || (nodeData as FileNodeData).uploadedFile?.url) ? (
             <img
               src={(nodeData as FileNodeData).uploadedFile?.url || (nodeData as FileNodeData).previewImages?.[0]}
@@ -220,9 +219,7 @@ export function SyncFileDialog({
         </div>
         {isNodeSelected && (
           <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <path d="M4 8L7 11L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Check className="w-3 h-3 text-white" strokeWidth={2} />
           </div>
         )}
       </button>
@@ -272,9 +269,7 @@ export function SyncFileDialog({
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <X className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
           </button>
         </div>
 
@@ -292,9 +287,7 @@ export function SyncFileDialog({
               style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
             >
               {isTextNode ? (
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                  <path d="M3 4H13M3 8H10M3 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <AlignLeft className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
               ) : (
                 <span className="text-xs text-gray-400 font-medium">
                   {(selectedData as FileNodeData).fileExtension?.replace(".", "").toUpperCase() || "FILE"}
@@ -314,10 +307,7 @@ export function SyncFileDialog({
                 className="ml-auto px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5"
                 style={{ backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e" }}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 8C4 8 5.5 4 8 4C10.5 4 12 8 12 8C12 8 10.5 12 8 12C5.5 12 4 8 4 8Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                </svg>
+                <Eye className="w-3 h-3" strokeWidth={1.5} />
                 Synced
               </div>
             )}
@@ -340,11 +330,7 @@ export function SyncFileDialog({
                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
               >
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-red-400">
-                  <path d="M4 8H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M2 4L4 2M14 4L12 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M2 12L4 14M14 12L12 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <Unlink className="w-4 h-4 text-red-400" strokeWidth={1.5} />
               </div>
               <div>
                 <p className="text-sm text-red-400 font-medium" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -364,9 +350,7 @@ export function SyncFileDialog({
                 className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2"
                 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-gray-500">
-                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                </svg>
+                <Square className="w-3 h-3 text-gray-500" strokeWidth={1.5} />
                 This Canvas
               </div>
               {currentCanvasPageMatches.map(({ pageName, nodes }) => (
@@ -375,9 +359,7 @@ export function SyncFileDialog({
                     className="text-xs text-gray-400 mb-2 flex items-center gap-1.5 ml-1"
                     style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                   >
-                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="text-gray-600">
-                      <path d="M4 4H12M4 8H10M4 12H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <AlignLeft className="w-2.5 h-2.5 text-gray-600" strokeWidth={1.5} />
                     {pageName}
                   </div>
                   <div className="space-y-2">
@@ -394,9 +376,7 @@ export function SyncFileDialog({
               className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2"
               style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-gray-500">
-                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <List className="w-3 h-3 text-gray-500" strokeWidth={1.5} />
               Other Canvases
               {totalMatches > 0 && (
                 <span
@@ -410,14 +390,10 @@ export function SyncFileDialog({
 
             {/* Search bar */}
             <div className="relative mb-3">
-              <svg
-                width="14" height="14"
-                viewBox="0 0 16 16" fill="none"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              >
-                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M10.5 10.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <Search
+                className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                strokeWidth={1.5}
+              />
               <input
                 type="text"
                 placeholder="Search canvases..."
@@ -438,9 +414,7 @@ export function SyncFileDialog({
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
                 >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-3 h-3" strokeWidth={1.5} />
                 </button>
               )}
             </div>
@@ -463,9 +437,7 @@ export function SyncFileDialog({
                         className="flex items-center gap-2 mb-2"
                         style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-gray-500 shrink-0">
-                          <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                        </svg>
+                        <Square className="w-3 h-3 text-gray-500 shrink-0" strokeWidth={1.5} />
                         <span className="text-xs text-gray-400 flex-1 truncate">{canvas.name}</span>
                         {matchCount > 0 ? (
                           <span
@@ -507,10 +479,7 @@ export function SyncFileDialog({
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
         >
           <p className="text-xs text-gray-500" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="inline mr-1.5 -mt-0.5">
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M8 5V8.5L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <Clock className="w-3 h-3 inline mr-1.5 -mt-0.5" strokeWidth={1.5} />
             Updates sync automatically
           </p>
           <div className="flex items-center gap-2">

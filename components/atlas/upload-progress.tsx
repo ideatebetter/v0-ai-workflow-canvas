@@ -44,7 +44,7 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
                 <circle cx="10" cy="10" r="8" stroke="var(--app-canvas-dot)" strokeWidth="2" />
                 <path
                   d="M10 2C14.4183 2 18 5.58172 18 10"
-                  stroke="#F0FE00"
+                  stroke="var(--app-text-primary)"
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
@@ -118,7 +118,7 @@ export function UploadProgress({ uploads, onDismiss }: UploadProgressProps) {
                     className="h-full rounded-full transition-all duration-300"
                     style={{
                       width: `${upload.progress}%`,
-                      backgroundColor: "#F0FE00",
+                      backgroundColor: "var(--app-text-primary)",
                     }}
                   />
                 </div>

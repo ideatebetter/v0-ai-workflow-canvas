@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { X, Eye, Play, Link2, FileText, CheckSquare } from "lucide-react";
 import { type NodeProps } from "@xyflow/react";
 import { SmartHandles } from "./smart-handles";
 import type { FileNodeData } from "@/lib/atlas-types";
@@ -319,7 +320,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               width: 22,
               height: 22,
               borderRadius: "50%",
-              backgroundColor: "#F0FE00",
+              backgroundColor: "var(--app-text-primary)",
               color: "var(--app-bg-elevated)",
               display: "flex",
               alignItems: "center",
@@ -351,7 +352,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 borderRadius: "50%",
                 backgroundColor: "var(--app-card-elevated)",
                 border: "1px solid #F0FE00",
-                color: "#F0FE00",
+                color: "var(--app-text-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -360,9 +361,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               }}
               title="Remove from presentation"
             >
-              <svg width="7" height="7" viewBox="0 0 7 7" fill="none">
-                <path d="M5.5 1.5L1.5 5.5M1.5 1.5L5.5 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
+              <X className="w-1.5 h-1.5" strokeWidth={1.3} />
             </button>
           )}
         </div>
@@ -397,10 +396,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
             style={{ backgroundColor: "rgba(34, 197, 94, 0.15)" }}
             title="Synced with other files"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="text-green-400">
-              <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <Eye className="w-3 h-3 text-green-400" strokeWidth={1.5} />
           </div>
         )}
       </div>
@@ -498,7 +494,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
             </div>
           ) : fileData.linkType === "generic" ? (
             <div style={{ height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "var(--app-card-elevated)", borderRadius: 12, padding: "0 16px" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <Link2 className="w-6 h-6" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
               <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif", textAlign: "center", wordBreak: "break-all", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {(() => { try { return new URL(fileData.linkUrl || "").hostname; } catch { return fileData.linkUrl; } })()}
               </span>
@@ -518,12 +514,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 gap: 8,
               }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.4 }}>
-                <rect width="24" height="24" rx="6" fill="#FF0000" fillOpacity="0.2"/>
-                <path d="M7 17V7H14L17 10V17H7Z" stroke="#FF5555" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M14 7V10H17" stroke="#FF5555" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M9 13H15M9 15H13" stroke="#FF5555" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
+              <FileText className="w-7 h-7" strokeWidth={1.5} style={{ color: "#FF5555", opacity: 0.4 }} />
               <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Loading preview…</span>
             </div>
           ) : (
@@ -551,9 +542,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 className="w-10 h-10 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
-                  <path d="M4 3L13 8L4 13V3Z" />
-                </svg>
+                <Play className="w-4 h-4" fill="white" stroke="white" />
               </div>
             </div>
           )}
@@ -609,10 +598,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 Tasks
               </span>
               <div className="flex items-center gap-1.5">
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="var(--app-text-muted)" strokeWidth="1.25"/>
-                  <path d="M5 7L6.5 8.5L9 5.5" stroke="var(--app-text-muted)" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <CheckSquare className="w-3 h-3" strokeWidth={1.25} style={{ color: "var(--app-text-muted)" }} />
                 <span 
                   className="text-xs"
                   style={{ color: "#999999", fontFamily: "system-ui, Inter, sans-serif" }}

@@ -8,9 +8,9 @@ import { SmartHandles } from "./smart-handles";
 import type { TextNodeData } from "@/lib/atlas-types";
 import { usePresentationNodes } from "./atlas-canvas";
 
-// Color options
+// Color options — "Default" flips with theme; the rest are hardcoded accents
 const TEXT_COLORS = [
-  { value: "var(--app-text-primary)", label: "White" },
+  { value: "var(--app-text-primary)", label: "Default" },
   { value: "#F0FE00", label: "Yellow" },
   { value: "#3B82F6", label: "Blue" },
   { value: "#10B981", label: "Green" },
@@ -20,6 +20,14 @@ const TEXT_COLORS = [
   { value: "#EC4899", label: "Pink" },
   { value: "#6B7280", label: "Gray" },
 ];
+
+// Legacy stored colors (from dark-only era) that should now flow with the theme.
+const LEGACY_DEFAULT_COLORS = new Set(["#ffffff", "#FFFFFF", "#fff", "#FFF", "white", "#F0FE00", "#f0fe00"]);
+function resolveTextColor(stored: string | undefined): string {
+  if (!stored) return "var(--app-text-primary)";
+  if (LEGACY_DEFAULT_COLORS.has(stored)) return "var(--app-text-primary)";
+  return stored;
+}
 
 // Font options
 const FONT_OPTIONS = [
@@ -93,7 +101,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
   const { setNodes } = useReactFlow();
 
   const [formatting, setFormatting] = useState<TextFormatting>({
-    color: (textData as any).formatting?.color || "var(--app-text-primary)",
+    color: resolveTextColor((textData as any).formatting?.color),
     font: (textData as any).formatting?.font || "sans",
     bold: (textData as any).formatting?.bold || false,
     align: (textData as any).formatting?.align || "left",
@@ -311,7 +319,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
               width: 22,
               height: 22,
               borderRadius: "50%",
-              backgroundColor: "#F0FE00",
+              backgroundColor: "var(--app-text-primary)",
               color: "var(--app-bg-elevated)",
               display: "flex",
               alignItems: "center",
@@ -343,7 +351,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
                 borderRadius: "50%",
                 backgroundColor: "var(--app-card-elevated)",
                 border: "1px solid #F0FE00",
-                color: "#F0FE00",
+                color: "var(--app-text-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

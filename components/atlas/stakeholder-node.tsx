@@ -38,7 +38,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
       >
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-          style={{ backgroundColor: "#F0FE0030", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+          style={{ backgroundColor: "#F0FE0030", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
         >
           {nodeData.stakeholder?.initials || "?"}
         </div>
@@ -86,7 +86,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
           <div className="space-y-1">
             {nodeData.keyInsights.slice(0, 2).map((insight, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <div className="w-1 h-1 rounded-full mt-1.5" style={{ backgroundColor: "#F0FE00" }} />
+                <div className="w-1 h-1 rounded-full mt-1.5" style={{ backgroundColor: "var(--app-text-primary)" }} />
                 <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   {insight.length > 50 ? insight.slice(0, 50) + "..." : insight}
                 </span>

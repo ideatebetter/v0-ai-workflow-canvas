@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useMemo } from "react";
+import { Play, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, X, Upload, HelpCircle, ArrowLeft, ArrowDown, ChevronDown, Trash2, AlertTriangle, Info, Sparkles, Star, LayoutGrid, Layout, Workflow } from "lucide-react";
 import { ReactFlow, Background, ReactFlowProvider, Panel, MarkerType, useNodesState, type NodeTypes } from "@xyflow/react";
 import type { CanvasFramework, FrameworkParameter, AtlasNode } from "@/lib/atlas-types";
 import { CanvasPreview } from "./canvas-preview";
@@ -52,8 +53,8 @@ function WorkflowCanvas({
       id: `pf-${e.id}`,
       type: "default",
       animated: true,
-      style: { strokeWidth: 1.5, stroke: "#F0FE00" },
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#F0FE00", width: 14, height: 14 },
+      style: { strokeWidth: 1.5, stroke: "var(--app-text-primary)" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "var(--app-text-primary)", width: 14, height: 14 },
     }));
     return [...styledBase, ...flowEdges] as never[];
   }, [edges, activeFlow]);
@@ -100,15 +101,13 @@ function WorkflowCanvas({
                   style={{
                     fontFamily: "system-ui, Inter, sans-serif",
                     fontSize: 11,
-                    backgroundColor: isActive ? "#F0FE00" : "var(--app-card-elevated)",
+                    backgroundColor: isActive ? "var(--app-text-primary)" : "var(--app-card-elevated)",
                     color: isActive ? "var(--app-bg)" : "var(--app-text-secondary)",
-                    border: `1px solid ${isActive ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                    border: `1px solid ${isActive ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                   }}
                 >
                   {/* Play icon */}
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2.5 1.5L8.5 5L2.5 8.5V1.5Z" fill="currentColor" />
-                  </svg>
+                  <Play className="w-2.5 h-2.5" fill="currentColor" strokeWidth={0} />
                   {flow.name}
                 </button>
               );
@@ -166,9 +165,7 @@ function FileDropZone({
           onClick={() => { setManualMode(false); onChange(null); }}
           className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-foreground transition-colors"
         >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M6 2L3 5L6 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ChevronLeft className="w-2.5 h-2.5" strokeWidth={1.3} />
           Upload a file instead
         </button>
       </div>
@@ -194,16 +191,9 @@ function FileDropZone({
             style={{ backgroundColor: "rgba(240,254,0,0.12)" }}
           >
             {isPDF ? (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#F0FE00" strokeWidth="1.2" />
-                <path d="M4 5H10M4 7.5H10M4 10H7" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
+              <FileText className="w-3.5 h-3.5" strokeWidth={1.2} style={{ color: "var(--app-text-primary)" }} />
             ) : (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect x="1" y="1" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.2" />
-                <circle cx="4.5" cy="4.5" r="1.2" fill="#F0FE00" />
-                <path d="M1 9L4.5 6L7 8.5L9.5 6.5L13 9" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.2} style={{ color: "var(--app-text-primary)" }} />
             )}
           </div>
           <span className="text-sm text-foreground truncate flex-1">{value.name}</span>
@@ -212,9 +202,7 @@ function FileDropZone({
             onClick={() => onChange(null)}
             className="text-gray-500 hover:text-foreground transition-colors flex-shrink-0"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
       ) : (
@@ -231,7 +219,7 @@ function FileDropZone({
             }}
             className={`w-full rounded-lg flex flex-col items-center justify-center gap-1.5 transition-all ${tall ? "flex-1" : "py-3"}`}
             style={{
-              border: `1.5px dashed ${dragging ? "#F0FE00" : "var(--app-border-strong)"}`,
+              border: `1.5px dashed ${dragging ? "var(--app-text-primary)" : "var(--app-border-strong)"}`,
               backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "var(--app-bg-elevated)",
             }}
           >
@@ -239,13 +227,10 @@ function FileDropZone({
               className="w-6 h-6 rounded-full flex items-center justify-center"
               style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "var(--app-card-elevated)" }}
             >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <Upload className="w-3 h-3" strokeWidth={1.5} style={{ color: dragging ? "var(--app-text-primary)" : "var(--app-text-faint)" }} />
             </div>
             <span className="text-xs text-gray-500">
-              Drop file or <span style={{ color: "#F0FE00" }}>browse</span>
+              Drop file or <span style={{ color: "var(--app-text-primary)" }}>browse</span>
             </span>
           </button>
         </div>
@@ -333,7 +318,7 @@ function MultiFileDropZone({
         }}
         className={`w-full rounded-lg flex flex-col items-center justify-center gap-1.5 transition-all ${tall ? "flex-1" : "py-3"}`}
         style={{
-          border: `1.5px dashed ${dragging ? "#F0FE00" : "var(--app-border-strong)"}`,
+          border: `1.5px dashed ${dragging ? "var(--app-text-primary)" : "var(--app-border-strong)"}`,
           backgroundColor: dragging ? "rgba(240,254,0,0.05)" : "var(--app-bg-elevated)",
         }}
       >
@@ -341,20 +326,17 @@ function MultiFileDropZone({
           className="w-6 h-6 rounded-full flex items-center justify-center"
           style={{ backgroundColor: dragging ? "rgba(240,254,0,0.15)" : "var(--app-card-elevated)" }}
         >
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 12H14" stroke={dragging ? "#F0FE00" : "var(--app-text-faint)"} strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Upload className="w-3 h-3" strokeWidth={1.5} style={{ color: dragging ? "var(--app-text-primary)" : "var(--app-text-faint)" }} />
         </div>
         <span className="text-xs text-gray-500">
-          Drop files or <span style={{ color: "#F0FE00" }}>browse</span>
+          Drop files or <span style={{ color: "var(--app-text-primary)" }}>browse</span>
         </span>
         {hasManualMode && (
           <span
             className="text-[11px] text-gray-600 hover:text-gray-400 transition-colors mt-0.5"
             onClick={(e) => { e.stopPropagation(); setManualMode(true); }}
           >
-            or <span style={{ color: "#F0FE00" }}>input manually</span>
+            or <span style={{ color: "var(--app-text-primary)" }}>input manually</span>
           </span>
         )}
       </button>
@@ -373,16 +355,9 @@ function MultiFileDropZone({
                 style={{ backgroundColor: "rgba(240,254,0,0.10)" }}
               >
                 {file.type.startsWith("image/") ? (
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="1" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.2" />
-                    <circle cx="4.5" cy="4.5" r="1.2" fill="#F0FE00" />
-                    <path d="M1 9L4.5 6L7 8.5L9.5 6.5L13 9" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <ImageIcon className="w-3 h-3" strokeWidth={1.2} style={{ color: "var(--app-text-primary)" }} />
                 ) : (
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                    <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#F0FE00" strokeWidth="1.2" />
-                    <path d="M4 5H10M4 7.5H10M4 10H7" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
+                  <FileText className="w-3 h-3" strokeWidth={1.2} style={{ color: "var(--app-text-primary)" }} />
                 )}
               </div>
               <span className="text-xs text-gray-300 truncate flex-1">{file.name}</span>
@@ -394,9 +369,7 @@ function MultiFileDropZone({
                 onClick={() => removeFile(i)}
                 className="text-gray-600 hover:text-foreground transition-colors flex-shrink-0 ml-1"
               >
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                  <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <X className="w-3 h-3" strokeWidth={1.5} />
               </button>
             </div>
           ))}
@@ -489,7 +462,7 @@ function ParamInput({
       <div className="flex items-center gap-2">
         <input
           type="color"
-          value={strVal || "#F0FE00"}
+          value={strVal || "var(--app-text-primary)"}
           onChange={(e) => onChange(e.target.value)}
           className="w-9 h-9 rounded-lg cursor-pointer flex-shrink-0"
           style={{ backgroundColor: "transparent", border: "1px solid var(--app-border-strong)", padding: 2 }}
@@ -498,7 +471,7 @@ function ParamInput({
           type="text"
           value={strVal}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="#F0FE00"
+          placeholder="var(--app-text-primary)"
           className={`${base} flex-1`}
           style={style}
         />
@@ -551,13 +524,9 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           onClick={onBack}
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-foreground transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
           <span>{breadcrumbLabel}</span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-600">
-            <path d="M4 9L8 6L4 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ChevronRight className="w-3 h-3 text-gray-600" strokeWidth={1.2} />
           <span className="text-foreground font-medium">{framework.name}</span>
         </button>
 
@@ -573,10 +542,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
             }`}
             style={{ backgroundColor: tab === "app" ? "var(--app-text-primary)" : "transparent" }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
-              <rect x="3" y="3" width="8" height="5" rx="1" stroke="currentColor" strokeWidth="1.1" />
-            </svg>
+            <Layout className="w-3.5 h-3.5" strokeWidth={1.3} />
             App
           </button>
           <button
@@ -587,13 +553,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
             }`}
             style={{ backgroundColor: tab === "workflow" ? "var(--app-text-primary)" : "transparent" }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="2.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="7" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="7" cy="11" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="11.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M4 7H5.5M8.5 3.8L10.2 6.2M8.5 10.2L10.2 7.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
+            <Workflow className="w-3.5 h-3.5" strokeWidth={1.2} />
             Canvas
           </button>
         </div>
@@ -602,7 +562,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
           <span className="text-sm text-gray-500">{framework.createdBy.name}</span>
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium overflow-hidden flex-shrink-0"
-            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)" }}
+            style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg)" }}
           >
             {framework.createdBy.avatar ? (
               <img src={framework.createdBy.avatar} alt="" className="w-full h-full object-cover" />
@@ -642,25 +602,15 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                     {/* Stats */}
                     <div className="flex items-center gap-5 mb-3">
                       <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                          <path d="M7 2.5L8.5 5.5H12L9.5 7.5L10.5 10.5L7 8.5L3.5 10.5L4.5 7.5L2 5.5H5.5L7 2.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-                        </svg>
+                        <Star className="w-3 h-3" strokeWidth={1.3} />
                         {framework.upvotes} upvotes
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                          <path d="M7 2V9M7 9L4.5 6.5M7 9L9.5 6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M2 11H12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                        </svg>
+                        <ArrowDown className="w-3 h-3" strokeWidth={1.3} />
                         {framework.downloads} uses
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                          <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                          <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                          <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                          <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                        </svg>
+                        <LayoutGrid className="w-3 h-3" strokeWidth={1.2} />
                         {framework.nodes.length} nodes
                       </div>
                     </div>
@@ -685,11 +635,9 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                       type="button"
                       onClick={handleRun}
                       className="px-5 py-2 rounded-xl text-sm font-semibold text-[var(--app-bg)] transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 mb-4"
-                      style={{ backgroundColor: "#F0FE00" }}
+                      style={{ backgroundColor: "var(--app-text-primary)" }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M5 3L13 8L5 13V3Z" fill="currentColor" />
-                      </svg>
+                      <Play className="w-3.5 h-3.5" fill="currentColor" strokeWidth={0} />
                       Run Framework
                     </button>
 
@@ -721,7 +669,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                         {[
                           { label: "Strategy Deck", desc: "Walks through all 6 strategy pillars in sequence", color: "#60a5fa" },
-                          { label: "Full Sprint Walkthrough", desc: "Complete end-to-end: strategy → brief → moodboard → logo → mockups", color: "#F0FE00" },
+                          { label: "Full Sprint Walkthrough", desc: "Complete end-to-end: strategy → brief → moodboard → logo → mockups", color: "var(--app-text-primary)" },
                           { label: "Brief + Moodboard", desc: "Creative brief cards flowing into moodboard review", color: "#a78bfa" },
                         ].map((pf) => (
                           <div key={pf.label} className="flex items-start gap-2">
@@ -773,11 +721,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
                             <span className="text-sm text-gray-300">{param.label}</span>
                             {param.tooltip && (
                               <span className="relative group inline-flex items-center">
-                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" className="text-gray-600 cursor-help">
-                                  <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
-                                  <path d="M6 5V8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                                  <circle cx="6" cy="3.5" r="0.6" fill="currentColor" />
-                                </svg>
+                                <Info className="w-3 h-3 text-gray-600 cursor-help" strokeWidth={1.2} />
                                 <span
                                   className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 w-52 rounded-lg px-3 py-2 text-[11px] leading-relaxed text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                                   style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
@@ -804,11 +748,7 @@ export function FrameworkDetailPage({ framework, onBack, onRun, breadcrumbLabel 
               className="absolute bottom-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl flex items-center gap-2.5 pointer-events-none"
               style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "1px solid var(--app-border-strong)" }}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="7" r="5.5" stroke="var(--app-text-muted)" strokeWidth="1.3" />
-                <path d="M7 5V7.5" stroke="var(--app-text-muted)" strokeWidth="1.3" strokeLinecap="round" />
-                <circle cx="7" cy="9.5" r="0.6" fill="var(--app-text-muted)" />
-              </svg>
+              <Info className="w-3.5 h-3.5" strokeWidth={1.3} style={{ color: "var(--app-text-muted)" }} />
               <span className="text-xs text-gray-400">Read-only view — run the framework to use it</span>
             </div>
           </div>

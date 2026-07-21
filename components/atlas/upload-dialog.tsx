@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
+import { Layers, Image as ImageIcon, PenTool, Video, Music, FileText, Upload, AlertCircle, X, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -235,55 +236,17 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
     const category = getFileCategoryFromExtension(extension);
     switch (category) {
       case "design":
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 2L2 6L10 10L18 6L10 2Z" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 14L10 18L18 14" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 10L10 14L18 10" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
+        return <Layers className="w-5 h-5" strokeWidth={1.5} style={{ color: "#A78BFA" }} />;
       case "image":
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="16" height="16" rx="2" stroke="#34D399" strokeWidth="1.5"/>
-            <circle cx="7" cy="7" r="2" stroke="#34D399" strokeWidth="1.5"/>
-            <path d="M18 14L13 9L5 17" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
+        return <ImageIcon className="w-5 h-5" strokeWidth={1.5} style={{ color: "#34D399" }} />;
       case "vector":
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 3L17 17M3 17L17 3" stroke="#F472B6" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="3" cy="3" r="2" fill="#F472B6"/>
-            <circle cx="17" cy="17" r="2" fill="#F472B6"/>
-            <circle cx="3" cy="17" r="2" fill="#F472B6"/>
-            <circle cx="17" cy="3" r="2" fill="#F472B6"/>
-          </svg>
-        );
+        return <PenTool className="w-5 h-5" strokeWidth={1.5} style={{ color: "#F472B6" }} />;
       case "video":
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="4" width="12" height="12" rx="2" stroke="#60A5FA" strokeWidth="1.5"/>
-            <path d="M14 8L18 6V14L14 12" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
+        return <Video className="w-5 h-5" strokeWidth={1.5} style={{ color: "#60A5FA" }} />;
       case "audio":
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 3V17" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M6 7V13" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M14 7V13" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M2 9V11" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M18 9V11" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        );
+        return <Music className="w-5 h-5" strokeWidth={1.5} style={{ color: "#1DB954" }} />;
       default:
-        return (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 2H12L16 6V18H4V2Z" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 2V6H16" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        );
+        return <FileText className="w-5 h-5" strokeWidth={1.5} style={{ color: "#9CA3AF" }} />;
     }
   };
 
@@ -331,10 +294,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                 className="w-12 h-12 rounded-full flex items-center justify-center"
                 style={{ background: "#2C2C2E" }}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <Upload className="w-6 h-6" strokeWidth={2} style={{ color: "#8E8E93" }} />
               </div>
               <div>
                 <p className="text-sm text-foreground font-medium" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -359,11 +319,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
               }}
             >
               <div className="flex items-start gap-2">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
-                  <circle cx="9" cy="9" r="7" stroke="#EF4444" strokeWidth="1.5"/>
-                  <path d="M9 6V9.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
-                  <circle cx="9" cy="12" r="0.75" fill="#EF4444"/>
-                </svg>
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" strokeWidth={1.5} style={{ color: "#EF4444" }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-red-400 mb-1" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
                     {validationErrors.length === 1 ? "File could not be added" : `${validationErrors.length} files could not be added`}
@@ -381,9 +337,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                   onClick={() => setValidationErrors([])}
                   className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4L10 10M10 4L4 10" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "#EF4444" }} />
                 </button>
               </div>
             </div>
@@ -433,15 +387,11 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                     <div className="flex-shrink-0">
                       {fileInfo.status === "complete" ? (
                         <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 7L6 10L11 4" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <Check className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "#22C55E" }} />
                         </div>
                       ) : fileInfo.status === "error" ? (
                         <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 4L10 10M10 4L4 10" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
+                          <X className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "#EF4444" }} />
                         </div>
                       ) : fileInfo.status === "uploading" ? (
                         <div className="w-6 h-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
@@ -453,9 +403,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                           }}
                           className="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 4L10 10M10 4L4 10" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round"/>
-                          </svg>
+                          <X className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "#8E8E93" }} />
                         </button>
                       )}
                     </div>

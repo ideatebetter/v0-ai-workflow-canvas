@@ -1,31 +1,30 @@
 "use client";
 
 import React, { useMemo } from "react";
-import type { AtlasNode } from "@/lib/atlas-types";
-import type { Edge } from "@xyflow/react";
+import type { AtlasNode, CanvasCardEdge } from "./types";
 
 interface CanvasPreviewProps {
   nodes: AtlasNode[];
-  edges?: Edge[];
+  edges?: CanvasCardEdge[];
   className?: string;
 }
 
-// Node type to color mapping
+// Node type → status accent color for edges + hints. Adapt to your node vocabulary.
 const NODE_TYPE_COLORS: Record<string, string> = {
   "file-node": "#3B82F6",
   "atlas-file-node": "#3B82F6",
-  "file": "#3B82F6",
-  "text-note": "var(--app-text-primary)",
-  "text": "var(--app-text-primary)",
+  file: "#3B82F6",
+  "text-note": "#111111",
+  text: "#111111",
   "sage-chatbot": "#10B981",
-  "sageChatbot": "#10B981",
+  sageChatbot: "#10B981",
   "presentation-group": "#8B5CF6",
-  "presentationGroup": "#8B5CF6",
+  presentationGroup: "#8B5CF6",
   "canvas-group": "#F59E0B",
-  "briefInput": "#3B82F6",
-  "mockupImage": "#EC4899",
-  "aiPrompt": "#EC4899",
-  "moodboard": "#F59E0B",
+  briefInput: "#3B82F6",
+  mockupImage: "#EC4899",
+  aiPrompt: "#EC4899",
+  moodboard: "#F59E0B",
   default: "#6B7280",
 };
 
@@ -39,134 +38,136 @@ const BRIEF_CARD_KEYS = new Set([
 
 function getNodeColor(node: AtlasNode): string {
   const nodeType = (node.type as string) || "default";
-
-  if (nodeType === "file-node" || nodeType === "atlas-file-node" || nodeType === "file") {
+  if (
+    nodeType === "file-node" ||
+    nodeType === "atlas-file-node" ||
+    nodeType === "file"
+  ) {
     const status = (node.data as Record<string, unknown>)?.status as string;
     if (status === "approved") return "#10B981";
     if (status === "in-review") return "#F59E0B";
     if (status === "in-progress") return "#3B82F6";
     if (status === "rejected") return "#EF4444";
   }
-
   if (nodeType === "briefInput") {
     const cardKey = (node.data as Record<string, unknown>)?.cardKey as string;
     return BRIEF_CARD_KEYS.has(cardKey) ? "#F59E0B" : "#3B82F6";
   }
-
   return NODE_TYPE_COLORS[nodeType] || NODE_TYPE_COLORS.default;
 }
 
-// Extract an image URL from a node's data, or null if none applies.
 function getNodeImageUrl(node: AtlasNode): string | null {
   const type = (node.type as string) || "";
   const data = node.data as Record<string, unknown> | undefined;
   if (!data) return null;
 
-  // Mockup image nodes
   if (type === "mockupImage") {
     const url = data.imageUrl as string | undefined;
     if (url) return url;
   }
-
-  // Moodboard nodes: use first image
   if (type === "moodboard") {
-    const images = data.images as Array<{ url?: string; thumbnail?: string; fileType?: string }> | undefined;
-    const first = images?.find(i => i.fileType !== "video") ?? images?.[0];
+    const images = data.images as
+      | Array<{ url?: string; thumbnail?: string; fileType?: string }>
+      | undefined;
+    const first = images?.find((i) => i.fileType !== "video") ?? images?.[0];
     if (first?.thumbnail) return first.thumbnail;
     if (first?.url) return first.url;
   }
-
-  // File nodes: previewImages first, then uploadedFile.url if it looks like an image
   if (type === "file" || type === "file-node" || type === "atlas-file-node") {
     const preview = (data.previewImages as string[] | undefined)?.[0];
     if (preview) return preview;
     const uploaded = data.uploadedFile as { url?: string } | undefined;
     const url = uploaded?.url;
     const ext = (data.fileExtension as string | undefined)?.toLowerCase();
-    const isImageExt = ext && ["jpg", "jpeg", "png", "gif", "webp", "svg", "heic", "avif"].includes(ext);
+    const isImageExt =
+      ext && ["jpg", "jpeg", "png", "gif", "webp", "svg", "heic", "avif"].includes(ext);
     if (url && isImageExt) return url;
   }
-
   return null;
 }
 
-// Extract preview text from a text-like node.
 function getNodeText(node: AtlasNode): string | null {
   const type = (node.type as string) || "";
   const data = node.data as Record<string, unknown> | undefined;
   if (!data) return null;
-
   if (type === "text" || type === "text-note") {
     const content = data.content as string | undefined;
     if (content) return content.trim();
   }
-
-  // briefInput cards have a label + fields; show the label as a proxy
   if (type === "briefInput") {
     const label = data.label as string | undefined;
     if (label) return label;
   }
-
   return null;
 }
 
-// Return an SVG path string for a small icon in a node corner. Uses stroke, not fill.
 function getNodeIconPath(nodeType: string): string | null {
   switch (nodeType) {
     case "sage-chatbot":
     case "sageChatbot":
-      // chat bubble
       return "M4 4h16v10h-8l-4 4v-4H4z";
     case "presentation-group":
     case "presentationGroup":
-      // grid / slides
       return "M3 4h8v6H3zM13 4h8v6h-8zM3 12h8v8H3zM13 12h8v8h-8z";
     case "capacity":
     case "financial":
     case "projectHealth":
     case "pipeline":
     case "teamHealth":
-      // bar chart
       return "M4 20V10M10 20V4M16 20v-8M22 20H2";
     case "briefInput":
-      // doc
       return "M6 3h9l5 5v13H6zM15 3v5h5";
     case "aiPrompt":
-      // sparkle
       return "M12 2v6M12 16v6M2 12h6M16 12h6M6 6l4 4M14 14l4 4M18 6l-4 4M10 14l-4 4";
     case "docFrame":
-      // frame
       return "M4 4h16v16H4zM4 9h16";
     case "file":
     case "file-node":
     case "atlas-file-node":
-      // file page
       return "M6 3h9l5 5v13H6zM15 3v5h5";
     default:
       return null;
   }
 }
 
-// Renders a mini mock of the node's real look inside a card at (x, y, w, h)
-function renderNodeMock(type: string, x: number, y: number, w: number, h: number): React.ReactNode {
+function renderNodeMock(
+  type: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): React.ReactNode {
   const pad = 10;
   const cx = x + pad;
   const cy = y + pad;
   const innerW = w - pad * 2;
   const innerH = h - pad * 2;
 
-  // Header bar (title placeholder) — same across most node types
   const header = (
     <g>
-      <rect x={cx} y={cy} width={Math.min(innerW * 0.55, 100)} height={6} rx={2} fill="#111111" fillOpacity={0.85} />
-      <rect x={cx} y={cy + 12} width={Math.min(innerW * 0.3, 60)} height={4} rx={1.5} fill="#888888" />
+      <rect
+        x={cx}
+        y={cy}
+        width={Math.min(innerW * 0.55, 100)}
+        height={6}
+        rx={2}
+        fill="#111111"
+        fillOpacity={0.85}
+      />
+      <rect
+        x={cx}
+        y={cy + 12}
+        width={Math.min(innerW * 0.3, 60)}
+        height={4}
+        rx={1.5}
+        fill="#888888"
+      />
     </g>
   );
 
   switch (type) {
     case "capacity":
     case "teamHealth": {
-      // Rows of avatar dot + horizontal progress bar
       const rows = 4;
       const rowGap = 10;
       const startY = cy + 26;
@@ -182,9 +183,29 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
             const pct = [0.75, 0.5, 0.85, 0.4][i] ?? 0.6;
             return (
               <g key={i}>
-                <circle cx={cx + dot / 2} cy={ry + rowH / 2} r={dot / 2} fill={["#3B82F6", "#F59E0B", "#10B981", "#EC4899"][i % 4]} />
-                <rect x={cx + dot + 6} y={ry + rowH / 2 - 2} width={innerW - dot - 6} height={4} rx={2} fill="#e0e0e0" />
-                <rect x={cx + dot + 6} y={ry + rowH / 2 - 2} width={(innerW - dot - 6) * pct} height={4} rx={2} fill="#4ADE80" fillOpacity={0.7} />
+                <circle
+                  cx={cx + dot / 2}
+                  cy={ry + rowH / 2}
+                  r={dot / 2}
+                  fill={["#3B82F6", "#F59E0B", "#10B981", "#EC4899"][i % 4]}
+                />
+                <rect
+                  x={cx + dot + 6}
+                  y={ry + rowH / 2 - 2}
+                  width={innerW - dot - 6}
+                  height={4}
+                  rx={2}
+                  fill="#e0e0e0"
+                />
+                <rect
+                  x={cx + dot + 6}
+                  y={ry + rowH / 2 - 2}
+                  width={(innerW - dot - 6) * pct}
+                  height={4}
+                  rx={2}
+                  fill="#4ADE80"
+                  fillOpacity={0.7}
+                />
               </g>
             );
           })}
@@ -193,23 +214,38 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     }
 
     case "financial": {
-      // Big number + trending line chart
       const chartTop = cy + 32;
       const chartH = Math.max(20, innerH - 42);
       const chartW = innerW;
       const pts = [0.7, 0.5, 0.6, 0.35, 0.55, 0.25, 0.3];
-      const points = pts.map((p, i) => `${cx + (i / (pts.length - 1)) * chartW},${chartTop + p * chartH}`).join(" ");
+      const points = pts
+        .map((p, i) => `${cx + (i / (pts.length - 1)) * chartW},${chartTop + p * chartH}`)
+        .join(" ");
       return (
         <g>
           {header}
-          <rect x={cx} y={cy + 22} width={Math.min(innerW * 0.4, 70)} height={10} rx={2} fill="#4ADE80" fillOpacity={0.25} />
-          <polyline points={points} fill="none" stroke="#F87171" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+          <rect
+            x={cx}
+            y={cy + 22}
+            width={Math.min(innerW * 0.4, 70)}
+            height={10}
+            rx={2}
+            fill="#4ADE80"
+            fillOpacity={0.25}
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#F87171"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </g>
       );
     }
 
     case "projectHealth": {
-      // Status pills row + a mini stacked bar
       const pillY = cy + 26;
       const pillH = 8;
       const barY = pillY + pillH + 8;
@@ -223,13 +259,34 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
         <g>
           {header}
           {pillColors.map((c, i) => {
-            const el = <rect key={i} x={px} y={pillY} width={pillWidths[i]} height={pillH} rx={pillH / 2} fill={c} fillOpacity={0.6} />;
+            const el = (
+              <rect
+                key={i}
+                x={px}
+                y={pillY}
+                width={pillWidths[i]}
+                height={pillH}
+                rx={pillH / 2}
+                fill={c}
+                fillOpacity={0.6}
+              />
+            );
             px += pillWidths[i] + 6;
             return el;
           })}
           {segments.map((s, i) => {
             const wSeg = innerW * s;
-            const el = <rect key={i} x={bx} y={barY} width={wSeg} height={barH} fill={pillColors[i]} fillOpacity={0.7} />;
+            const el = (
+              <rect
+                key={i}
+                x={bx}
+                y={barY}
+                width={wSeg}
+                height={barH}
+                fill={pillColors[i]}
+                fillOpacity={0.7}
+              />
+            );
             bx += wSeg;
             return el;
           })}
@@ -238,14 +295,20 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     }
 
     case "pipeline": {
-      // Row of connected stage dots
       const midY = cy + Math.max(24, innerH * 0.55);
       const stages = 5;
       const gap = innerW / (stages - 1);
       return (
         <g>
           {header}
-          <line x1={cx} y1={midY} x2={cx + innerW} y2={midY} stroke="#cccccc" strokeWidth={1.5} />
+          <line
+            x1={cx}
+            y1={midY}
+            x2={cx + innerW}
+            y2={midY}
+            stroke="#cccccc"
+            strokeWidth={1.5}
+          />
           {Array.from({ length: stages }).map((_, i) => {
             const cX = cx + i * gap;
             const done = i < 2;
@@ -268,20 +331,26 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
 
     case "sageChatbot":
     case "sage-chatbot": {
-      // Chat bubbles
       const b1Y = cy + 24;
       return (
         <g>
           {header}
           <rect x={cx} y={b1Y} width={innerW * 0.55} height={10} rx={5} fill="#e0e0e0" />
-          <rect x={cx + innerW * 0.35} y={b1Y + 16} width={innerW * 0.55} height={10} rx={5} fill="#3B82F6" fillOpacity={0.5} />
+          <rect
+            x={cx + innerW * 0.35}
+            y={b1Y + 16}
+            width={innerW * 0.55}
+            height={10}
+            rx={5}
+            fill="#3B82F6"
+            fillOpacity={0.5}
+          />
           <rect x={cx} y={b1Y + 32} width={innerW * 0.4} height={10} rx={5} fill="#e0e0e0" />
         </g>
       );
     }
 
     case "stakeholder": {
-      // Grid of avatars
       const size = 12;
       const rows = 2;
       const cols = 3;
@@ -310,7 +379,6 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
 
     case "presentationGroup":
     case "presentation-group": {
-      // 2x2 slide grid
       const gap = 4;
       const cellW = (innerW - gap) / 2;
       const gridY = cy + 20;
@@ -318,7 +386,7 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
       return (
         <g>
           {header}
-          {[0, 1, 2, 3].map(i => (
+          {[0, 1, 2, 3].map((i) => (
             <rect
               key={i}
               x={cx + (i % 2) * (cellW + gap)}
@@ -334,11 +402,18 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     }
 
     case "aiPrompt": {
-      // Text lines + sparkle
       return (
         <g>
           {header}
-          <rect x={cx} y={cy + 24} width={innerW * 0.9} height={4} rx={1} fill="#EC4899" fillOpacity={0.5} />
+          <rect
+            x={cx}
+            y={cy + 24}
+            width={innerW * 0.9}
+            height={4}
+            rx={1}
+            fill="#EC4899"
+            fillOpacity={0.5}
+          />
           <rect x={cx} y={cy + 32} width={innerW * 0.7} height={4} rx={1} fill="#888888" />
           <rect x={cx} y={cy + 40} width={innerW * 0.5} height={4} rx={1} fill="#888888" />
           <path
@@ -353,11 +428,10 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     }
 
     case "docFrame": {
-      // Doc lines
       return (
         <g>
           {header}
-          {[0, 1, 2, 3, 4].map(i => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <rect
               key={i}
               x={cx}
@@ -373,7 +447,6 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     }
 
     case "statusPill": {
-      // Just a pill
       const pillH = Math.min(innerH, 18);
       return (
         <rect
@@ -393,14 +466,27 @@ function renderNodeMock(type: string, x: number, y: number, w: number, h: number
     case "file-node":
     case "atlas-file-node":
     default: {
-      // Generic file/doc placeholder with icon
       const iconPath = getNodeIconPath(type);
       const iconSize = Math.min(28, w * 0.28, h * 0.55);
       return (
         <g>
           {header}
-          <rect x={cx} y={cy + 26} width={innerW * 0.7} height={3} rx={1} fill="#cccccc" />
-          <rect x={cx} y={cy + 34} width={innerW * 0.5} height={3} rx={1} fill="#cccccc" />
+          <rect
+            x={cx}
+            y={cy + 26}
+            width={innerW * 0.7}
+            height={3}
+            rx={1}
+            fill="#cccccc"
+          />
+          <rect
+            x={cx}
+            y={cy + 34}
+            width={innerW * 0.5}
+            height={3}
+            rx={1}
+            fill="#cccccc"
+          />
           {iconPath && (
             <g
               transform={`translate(${x + w - iconSize - pad}, ${y + h - iconSize - pad})`}
@@ -429,12 +515,10 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
     if (!nodes || nodes.length === 0) {
       return { scaledNodes: [], scaledEdges: [], viewBox: "0 0 100 100" };
     }
-
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-
     nodes.forEach((node) => {
       const x = node.position.x;
       const y = node.position.y;
@@ -445,13 +529,11 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
       maxX = Math.max(maxX, x + width);
       maxY = Math.max(maxY, y + height);
     });
-
     const padding = 40;
     minX -= padding;
     minY -= padding;
     maxX += padding;
     maxY += padding;
-
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
 
@@ -475,14 +557,12 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
         text: getNodeText(node),
       };
     });
-
     const scaledE = (edges ?? []).flatMap((edge) => {
       const src = nodeMap.get(edge.source);
       const tgt = nodeMap.get(edge.target);
       if (!src || !tgt) return [];
       return [{ id: edge.id, x1: src.cx, y1: src.cy, x2: tgt.cx, y2: tgt.cy }];
     });
-
     return {
       scaledNodes: scaled,
       scaledEdges: scaledE,
@@ -508,8 +588,8 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-xs text-gray-500 tracking-wide"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            className="text-xs tracking-wide"
+            style={{ color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Empty canvas
           </span>
@@ -534,11 +614,7 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
         }}
       />
 
-      <svg
-        viewBox={viewBox}
-        className="w-full h-full"
-        preserveAspectRatio="xMidYMid meet"
-      >
+      <svg viewBox={viewBox} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
         {scaledEdges.map((edge) => (
           <line
             key={edge.id}
@@ -557,13 +633,18 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
           const clipId = `clip-${node.id}-${nodeIndex}`;
           const rx = 8;
 
-          // Image nodes — render the actual image via foreignObject
           if (node.imageUrl) {
             return (
               <g key={`${node.id}-${nodeIndex}`}>
                 <defs>
                   <clipPath id={clipId}>
-                    <rect x={node.x} y={node.y} width={node.width} height={node.height} rx={rx} />
+                    <rect
+                      x={node.x}
+                      y={node.y}
+                      width={node.width}
+                      height={node.height}
+                      rx={rx}
+                    />
                   </clipPath>
                 </defs>
                 <foreignObject
@@ -574,14 +655,24 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
                   clipPath={`url(#${clipId})`}
                 >
                   <div
-                    style={{ width: "100%", height: "100%", overflow: "hidden", borderRadius: rx }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      overflow: "hidden",
+                      borderRadius: rx,
+                    }}
                   >
                     <img
                       src={node.imageUrl}
                       alt=""
                       loading="lazy"
                       referrerPolicy="no-referrer"
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
                     />
                   </div>
                 </foreignObject>
@@ -599,7 +690,6 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
             );
           }
 
-          // Text nodes — render the content preview via foreignObject
           if (node.text) {
             return (
               <g key={`${node.id}-${nodeIndex}`}>
@@ -640,7 +730,6 @@ export function CanvasPreview({ nodes, edges, className = "" }: CanvasPreviewPro
             );
           }
 
-          // Everything else — dark card resembling the actual node, with per-type mock content
           return (
             <g key={`${node.id}-${nodeIndex}`}>
               <rect

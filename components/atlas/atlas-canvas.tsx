@@ -629,9 +629,9 @@ const reactFlowInstance = useReactFlow();
         return {
           ...edge,
           type: "default",
-          style: { strokeWidth: 1.5, stroke: "#F0FE00" },
+          style: { strokeWidth: 1.5, stroke: "var(--app-text-primary)" },
           animated: true,
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#F0FE00", width: 14, height: 14 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--app-text-primary)", width: 14, height: 14 },
         };
       }
       if (isMockup) {
@@ -782,10 +782,10 @@ onClick={(event) => {
         }}
         connectionLineStyle={{
           strokeWidth: presentationMode ? 3 : 2,
-          stroke: presentationMode ? "#F0FE00" : "var(--app-canvas-dot)",
+          stroke: presentationMode ? "var(--app-text-primary)" : "var(--app-canvas-dot)",
           strokeDasharray: presentationMode ? "8 4" : "5 5",
         }}
-        className="bg-background"
+        style={{ backgroundColor: "var(--canvas-bg)" }}
         panOnDrag={commentMode ? false : [1, 2]}
         zoomOnScroll={true}
         zoomOnPinch={true}
@@ -801,8 +801,8 @@ onClick={(event) => {
           style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", borderRadius: 8 }}
         />
         <MiniMap
-          nodeColor="#444444"
-          maskColor="rgba(10,10,10,0.7)"
+          nodeColor="var(--app-text-faint)"
+          maskColor="var(--app-hover)"
           style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border)", borderRadius: 8 }}
         />
       </ReactFlow>
@@ -956,7 +956,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
-  backgroundColor: "#F0FE00",
+  backgroundColor: "var(--app-text-primary)",
   color: "#000000",
   fontFamily: "system-ui, Inter, sans-serif",
   }}
@@ -986,7 +986,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
-    backgroundColor: "#F0FE00",
+    backgroundColor: "var(--app-text-primary)",
     color: "#000000",
     fontFamily: "system-ui, Inter, sans-serif",
   }}
@@ -1011,7 +1011,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
           <div
             className="px-4 py-2 rounded-full flex items-center gap-2"
             style={{
-              backgroundColor: "#F0FE00",
+              backgroundColor: "var(--app-text-primary)",
               color: "var(--app-bg-elevated)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
@@ -1031,8 +1031,8 @@ onAddOperationalNode={handleMenuAddOperationalNode}
             className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all"
             style={{
               backgroundColor: showConnectors ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.08)",
-              color: showConnectors ? "#F0FE00" : "rgba(255,255,255,0.5)",
-              border: `1px solid ${showConnectors ? "#F0FE00" : "rgba(255,255,255,0.15)"}`,
+              color: showConnectors ? "var(--app-text-primary)" : "rgba(255,255,255,0.5)",
+              border: `1px solid ${showConnectors ? "var(--app-text-primary)" : "rgba(255,255,255,0.15)"}`,
               fontFamily: "system-ui, Inter, sans-serif",
             }}
             title={showConnectors ? "Hide connector arrows" : "Show connector arrows"}
@@ -1052,7 +1052,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
           style={{
             backgroundColor: "var(--app-card-elevated)",
             border: "1px solid #F0FE00",
-            color: "#F0FE00",
+            color: "var(--app-text-primary)",
             fontFamily: "system-ui, Inter, sans-serif",
           }}
         >

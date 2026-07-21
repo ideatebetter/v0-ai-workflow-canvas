@@ -99,8 +99,8 @@ export function SmartHandles({ nodeId }: SmartHandlesProps) {
   const isAltSource = altConnectMode && altConnectSource === nodeId;
   const isAltTarget = altConnectMode && altConnectSource !== null && altConnectSource !== nodeId;
 
-  const dotColor = isInPresentation ? "#F0FE00" : "#525252";
-  const dotBg = isInPresentation ? "#F0FE00" : "var(--app-card-elevated)";
+  const dotColor = isInPresentation ? "var(--app-text-primary)" : "#525252";
+  const dotBg = isInPresentation ? "var(--app-text-primary)" : "var(--app-card-elevated)";
 
   const dotStyle = (side: EdgeSide): React.CSSProperties => ({
     width: handleSize,
@@ -135,7 +135,7 @@ export function SmartHandles({ nodeId }: SmartHandlesProps) {
             className="absolute pointer-events-none"
             style={{
               inset: -4,
-              border: `2px solid ${isAltSource ? "#F0FE00" : isAltTarget ? "#60a5fa" : dotColor}`,
+              border: `2px solid ${isAltSource ? "var(--app-text-primary)" : isAltTarget ? "#60a5fa" : dotColor}`,
               borderRadius: "inherit",
               opacity: isAltSource ? 1 : 0.65,
               boxShadow: isAltSource ? "0 0 0 4px rgba(240,254,0,0.15)" : "none",

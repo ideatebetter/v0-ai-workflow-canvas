@@ -113,7 +113,7 @@ export function PresentationGroupNode({
         className="flex items-center gap-2 px-3 py-2"
         style={{ borderBottom: "1px solid var(--app-canvas-dot)" }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2" className="flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="2" className="flex-shrink-0">
           <rect x="2" y="2" width="9" height="9" rx="1" />
           <rect x="13" y="2" width="9" height="5" rx="1" />
           <rect x="13" y="9" width="9" height="6" rx="1" />
@@ -130,15 +130,15 @@ export function PresentationGroupNode({
             onKeyDown={handleKeyDown}
             className="flex-1 text-xs font-medium bg-transparent border-none outline-none min-w-0"
             style={{
-              color: "#F0FE00",
+              color: "var(--app-text-primary)",
               fontFamily: "system-ui, Inter, sans-serif",
-              caretColor: "#F0FE00",
+              caretColor: "var(--app-text-primary)",
             }}
           />
         ) : (
           <span
             className="text-xs font-medium truncate cursor-text hover:opacity-80 flex-1"
-            style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
             onDoubleClick={() => setIsEditing(true)}
             title="Double-click to rename"
           >
@@ -156,10 +156,10 @@ export function PresentationGroupNode({
           }}
         >
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-            <rect x="1" y="1" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
-            <rect x="6" y="1" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
-            <rect x="1" y="6" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
-            <rect x="6" y="6" width="4" height="4" rx="0.8" stroke="#F0FE00" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="1" y="1" width="4" height="4" rx="0.8" stroke="var(--app-text-primary)" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="6" y="1" width="4" height="4" rx="0.8" stroke="var(--app-text-primary)" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="1" y="6" width="4" height="4" rx="0.8" stroke="var(--app-text-primary)" strokeWidth="1.2" strokeOpacity="0.6"/>
+            <rect x="6" y="6" width="4" height="4" rx="0.8" stroke="var(--app-text-primary)" strokeWidth="1.2" strokeOpacity="0.6"/>
           </svg>
         </button>
         {/* Share */}
@@ -173,8 +173,8 @@ export function PresentationGroupNode({
           }}
         >
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-            <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="#F0FE00" strokeWidth="1.4" strokeLinejoin="round" strokeOpacity="0.7"/>
-            <path d="M6.5 9L14 2" stroke="#F0FE00" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.7"/>
+            <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="var(--app-text-primary)" strokeWidth="1.4" strokeLinejoin="round" strokeOpacity="0.7"/>
+            <path d="M6.5 9L14 2" stroke="var(--app-text-primary)" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.7"/>
           </svg>
         </button>
       </div>

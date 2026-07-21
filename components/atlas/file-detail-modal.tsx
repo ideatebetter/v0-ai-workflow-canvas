@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { Pause, Play, MessageSquare, ChevronLeft, ChevronRight, ChevronDown, X, Plus, Volume2, VolumeX, Maximize, Minimize, Loader2, Trash2, Check, ExternalLink, MessageCircle, MoreHorizontal, CheckSquare, User, Send, Upload, Circle, Link2, Download, Pencil, Music, FileText, Calendar, Plus as PlusIcon, MoreVertical } from "lucide-react";
 import type { FileNodeData, FileVersion, FileActivity, ImageComment, VideoTimestampComment, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
 import { STATUS_COLORS, STATUS_LABELS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -350,7 +351,7 @@ function VideoPlayerWithComments({
             {/* Progress fill */}
             <div
               className="absolute left-0 top-0 h-full rounded-full pointer-events-none"
-              style={{ width: `${progress}%`, backgroundColor: "#F0FE00" }}
+              style={{ width: `${progress}%`, backgroundColor: "var(--app-text-primary)" }}
             />
 
             {/* Existing comment ticks */}
@@ -433,7 +434,7 @@ function VideoPlayerWithComments({
                   width: 12,
                   height: 12,
                   borderRadius: "50%",
-                  backgroundColor: "#F0FE00",
+                  backgroundColor: "var(--app-text-primary)",
                   border: "2px solid var(--app-card-elevated)",
                   zIndex: 10,
                   pointerEvents: "none",
@@ -498,7 +499,7 @@ function VideoPlayerWithComments({
                   disabled={!pendingText.trim()}
                   style={{
                     padding: "4px 10px", borderRadius: 6, border: "none",
-                    backgroundColor: pendingText.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                    backgroundColor: pendingText.trim() ? "var(--app-text-primary)" : "var(--app-border-strong)",
                     color: pendingText.trim() ? "#000" : "var(--app-text-faint)",
                     fontSize: 12, fontWeight: 600,
                     cursor: pendingText.trim() ? "pointer" : "default",
@@ -524,14 +525,9 @@ function VideoPlayerWithComments({
               className="text-foreground hover:text-gray-300 transition-colors"
             >
               {isPlaying ? (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <rect x="5" y="4" width="3" height="12" rx="1" />
-                  <rect x="12" y="4" width="3" height="12" rx="1" />
-                </svg>
+                <Pause className="w-5 h-5" fill="currentColor" stroke="currentColor" />
               ) : (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M6 4L16 10L6 16V4Z" />
-                </svg>
+                <Play className="w-5 h-5" fill="currentColor" stroke="currentColor" />
               )}
             </button>
             {/* Time */}
@@ -544,9 +540,7 @@ function VideoPlayerWithComments({
             {/* Comment count */}
             {videoComments.length > 0 && (
               <span className="text-xs flex items-center gap-1" style={{ color: "#7C3AED", fontFamily: "system-ui, Inter, sans-serif" }}>
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <MessageSquare className="w-3 h-3" strokeWidth={1.5} />
                 {videoComments.length}
               </span>
             )}
@@ -556,15 +550,13 @@ function VideoPlayerWithComments({
               onClick={() => { setIsCommentMode((v) => !v); setPendingTimestamp(null); }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
               style={{
-                backgroundColor: isCommentMode ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                backgroundColor: isCommentMode ? "var(--app-text-primary)" : "rgba(255,255,255,0.08)",
                 color: isCommentMode ? "#000" : "var(--app-text-secondary)",
                 border: isCommentMode ? "none" : "1px solid var(--app-border-strong)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <MessageSquare className="w-3 h-3" strokeWidth={1.5} />
               {isCommentMode ? "Click timeline…" : "Comment"}
             </button>
             {/* File name + size */}
@@ -845,7 +837,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
     const d = new Date(dateStr + "T00:00:00");
     const today = new Date(); today.setHours(0,0,0,0);
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-    if (d.getTime() === today.getTime()) return { label: "Today", color: "#F0FE00" };
+    if (d.getTime() === today.getTime()) return { label: "Today", color: "var(--app-text-primary)" };
     if (d.getTime() === tomorrow.getTime()) return { label: "Tomorrow", color: "#FB923C" };
     if (d < today) return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "#F87171" };
     return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), color: "var(--app-text-muted)" };
@@ -956,35 +948,23 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
     switch (type) {
       case "upload":
         return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2V10M8 2L5 5M8 2L11 5M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <Upload className="w-4 h-4" strokeWidth={1.5} />
         );
       case "comment":
         return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <MessageSquare className="w-4 h-4" strokeWidth={1.5} />
         );
       case "status-change":
         return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <Check className="w-4 h-4" strokeWidth={1.5} />
         );
       case "task-complete":
         return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <CheckSquare className="w-4 h-4" strokeWidth={1.5} />
         );
       case "version-add":
         return (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+          <Plus className="w-4 h-4" strokeWidth={1.5} />
         );
       default:
         return null;
@@ -1019,15 +999,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             title="Copy link to this file"
           >
             {linkCopied ? (
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M3 7.5L6 10.5L12 4.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Check className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
             ) : (
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M6 9L9 6" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M8.5 3.5L9.75 2.25C10.5784 1.42157 11.9216 1.42157 12.75 2.25C13.5784 3.07843 13.5784 4.42157 12.75 5.25L11.5 6.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M6.5 11.5L5.25 12.75C4.42157 13.5784 3.07843 13.5784 2.25 12.75C1.42157 11.9216 1.42157 10.5784 2.25 9.75L3.5 8.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <Link2 className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
             )}
           </button>
 
@@ -1050,10 +1024,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
             title="Download file"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <Download className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
           </button>
           
           {/* Close button */}
@@ -1063,9 +1034,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
             style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <X className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
           </button>
         </div>
 
@@ -1090,15 +1059,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               title="Click to rename"
             >
               {fileData.label}
-              <svg 
-                width="16" 
-                height="16" 
-                viewBox="0 0 16 16" 
-                fill="none" 
-                className="opacity-0 group-hover:opacity-50 transition-opacity"
-              >
-                <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Pencil className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" strokeWidth={1.5} />
             </h2>
           )}
 
@@ -1120,16 +1081,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   }}
                   className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors z-10"
                   style={{
-                    backgroundColor: isAnnotating ? "#F0FE00" : "rgba(255,255,255,0.08)",
+                    backgroundColor: isAnnotating ? "var(--app-text-primary)" : "rgba(255,255,255,0.08)",
                     color: isAnnotating ? "#000" : "var(--app-text-secondary)",
                     border: isAnnotating ? "none" : "1px solid var(--app-border-strong)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                   title={isAnnotating ? "Exit comment mode" : "Add a comment"}
                 >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
                   {isAnnotating ? "Click to pin" : "Comment"}
                 </button>
 
@@ -1163,7 +1122,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                           width: 24,
                           height: 24,
                           borderRadius: "50%",
-                          backgroundColor: "#F0FE00",
+                          backgroundColor: "var(--app-text-primary)",
                           color: "#000",
                           fontSize: 11,
                           fontWeight: 700,
@@ -1243,7 +1202,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                           width: 24,
                           height: 24,
                           borderRadius: "50%",
-                          backgroundColor: "#F0FE00",
+                          backgroundColor: "var(--app-text-primary)",
                           color: "#000",
                           fontSize: 11,
                           fontWeight: 700,
@@ -1321,7 +1280,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                               padding: "4px 10px",
                               borderRadius: 6,
                               border: "none",
-                              backgroundColor: newCommentText.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                              backgroundColor: newCommentText.trim() ? "var(--app-text-primary)" : "var(--app-border-strong)",
                               color: newCommentText.trim() ? "#000" : "var(--app-text-faint)",
                               fontSize: 12,
                               fontWeight: 600,
@@ -1353,9 +1312,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 <div className="flex items-center gap-3">
                   {(fileData.imageComments || []).length > 0 && (
                     <span className="text-xs text-gray-500 flex items-center gap-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 4C2 2.89543 2.89543 2 4 2H12C13.1046 2 14 2.89543 14 4V9C14 10.1046 13.1046 11 12 11H5L2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <MessageSquare className="w-3 h-3" strokeWidth={1.5} />
                       {(fileData.imageComments || []).length} comment{(fileData.imageComments || []).length !== 1 ? "s" : ""}
                     </span>
                   )}
@@ -1461,11 +1418,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: "#1DB954" }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
-                      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
-                      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
-                    </svg>
+                    <Music className="w-3.5 h-3.5" fill="white" stroke="white" />
                   </div>
                   <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     {fileData.fileName}
@@ -1496,7 +1449,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 ) : (
                   <div className="p-4 text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Could not embed YouTube video.{" "}
-                    <a href={fileData.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#F0FE00" }}>Open in new tab</a>
+                    <a href={fileData.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--app-text-primary)" }}>Open in new tab</a>
                   </div>
                 );
               })()}
@@ -1526,9 +1479,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       style={{ color: "#4285F4", border: "1px solid #4285F440", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       Open in Google Docs
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <ExternalLink className="w-2.5 h-2.5" strokeWidth={1.5} />
                     </a>
                   </div>
                 </>
@@ -1554,9 +1505,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     style={{ color: "#A259FF", border: "1px solid #A259FF40", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Open in Figma
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ExternalLink className="w-2.5 h-2.5" strokeWidth={1.5} />
                   </a>
                 </div>
               )}
@@ -1564,10 +1513,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               {fileData.linkType === "generic" && (
                 <div className="p-5 flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 1C4.13 1 1 4.13 1 8C1 11.87 4.13 15 8 15C11.87 15 15 11.87 15 8C15 4.13 11.87 1 8 1Z" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
-                      <path d="M5 8H11M8 5V11" stroke="var(--app-text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
+                    <Link2 className="w-3.5 h-3.5" strokeWidth={1.2} style={{ color: "var(--app-text-muted)" }} />
                     <a
                       href={fileData.linkUrl}
                       target="_blank"
@@ -1586,9 +1532,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     style={{ color: "#d1d5db", border: "1px solid var(--app-canvas-dot)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Open Link
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ExternalLink className="w-2.5 h-2.5" strokeWidth={1.5} />
                   </a>
                 </div>
               )}
@@ -1609,9 +1553,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
               >
                 {STATUS_LABELS[fileData.status]}
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <ChevronDown className="w-3 h-3" strokeWidth={1.5} />
               </button>
               
               {/* Status Dropdown */}
@@ -1634,9 +1576,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       />
                       <span className="text-foreground">{STATUS_LABELS[status]}</span>
                       {fileData.status === status && (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
-                          <path d="M3 7L6 10L11 4" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                        <Check className="w-3.5 h-3.5 ml-auto" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
                       )}
                     </button>
                   ))}
@@ -1655,11 +1595,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 className="flex items-center gap-2 text-gray-300 hover:text-foreground transition-colors cursor-pointer"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M5 1V3M11 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <Calendar className="w-4 h-4" strokeWidth={1.5} />
                 {dueDate ? (
                   <span>{new Date(dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 ) : (
@@ -1769,24 +1705,19 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   disabled={isUploadingVersion}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   style={{ 
-                    backgroundColor: "#F0FE00", 
+                    backgroundColor: "var(--app-text-primary)", 
                     color: "#000000",
                     fontFamily: "system-ui, Inter, sans-serif"
                   }}
                 >
                   {isUploadingVersion ? (
                     <>
-                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32" />
-                      </svg>
+                      <Loader2 className="animate-spin w-4 h-4" strokeWidth={3} />
                       Uploading {uploadProgress}%
                     </>
                   ) : (
                     <>
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
                       New Version
                     </>
                   )}
@@ -1803,9 +1734,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)" }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M10 4L6 8L10 12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ChevronLeft className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                   </button>
                 )}
                 {canScrollRight && (
@@ -1815,9 +1744,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-border-strong)" }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 4L10 8L6 12" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ChevronRight className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                   </button>
                 )}
 
@@ -1892,7 +1819,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   <Checkbox
                     checked={task.completed}
                     onCheckedChange={() => handleTaskToggle(task.id)}
-                    className="data-[state=checked]:bg-[#F0FE00] data-[state=checked]:border-[#F0FE00] data-[state=checked]:text-black border-gray-600"
+                    className="data-[state=checked]:bg-foreground data-[state=checked]:border-[#F0FE00] data-[state=checked]:text-black border-gray-600"
                   />
                   <span
                     className={`flex-1 text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-200"}`}
@@ -1910,10 +1837,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       style={{ color: task.dueDate ? formatDueDate(task.dueDate).color : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       title={task.dueDate ? "Change due date" : "Set due date"}
                     >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
-                        <rect x="1" y="2" width="10" height="9" rx="1.5"/>
-                        <path d="M4 1v2M8 1v2M1 5h10" strokeLinecap="round"/>
-                      </svg>
+                      <Calendar className="w-3 h-3" strokeWidth={1.3} />
                       {task.dueDate ? formatDueDate(task.dueDate).label : ""}
                     </button>
                     {showDueDateInput === task.id && (
@@ -1956,10 +1880,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       {task.assignee ? (
                         task.assignee.name.split(" ").map(n => n[0]).join("")
                       ) : (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M2.5 12C2.5 9.5 4.5 8 7 8C9.5 8 11.5 9.5 11.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <User className="w-3.5 h-3.5" strokeWidth={1.5} />
                       )}
                     </button>
                     
@@ -2036,10 +1957,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       style={{ color: newTodoDueDate ? formatDueDate(newTodoDueDate).color : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }}
                       title="Set due date"
                     >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3">
-                        <rect x="1" y="2" width="10" height="9" rx="1.5"/>
-                        <path d="M4 1v2M8 1v2M1 5h10" strokeLinecap="round"/>
-                      </svg>
+                      <Calendar className="w-3 h-3" strokeWidth={1.3} />
                       {newTodoDueDate ? formatDueDate(newTodoDueDate).label : "Due"}
                     </button>
                     {showDueDateInput === "new" && (
@@ -2072,10 +1990,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                       {newTodoAssignee ? (
                         newTodoAssignee.name.split(" ").map(n => n[0]).join("")
                       ) : (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-                          <path d="M2.5 12C2.5 9.5 4.5 8 7 8C9.5 8 11.5 9.5 11.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <User className="w-3.5 h-3.5" strokeWidth={1.5} />
                       )}
                     </button>
                     
@@ -2114,7 +2029,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     disabled={!newTodoTitle.trim()}
                     className="px-3 py-1 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                     style={{ 
-                      backgroundColor: newTodoTitle.trim() ? "#F0FE00" : "var(--app-border-strong)",
+                      backgroundColor: newTodoTitle.trim() ? "var(--app-text-primary)" : "var(--app-border-strong)",
                       color: newTodoTitle.trim() ? "#000000" : "var(--app-text-muted)",
                       fontFamily: "system-ui, Inter, sans-serif"
                     }}
@@ -2130,9 +2045,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                     }}
                     className="p-1 text-gray-500 hover:text-gray-300 transition-colors"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <X className="w-4 h-4" strokeWidth={1.5} />
                   </button>
                 </div>
               ) : (
@@ -2142,9 +2055,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-white/5 text-gray-500 hover:text-gray-300"
                   style={{ border: "1px dashed var(--app-border-strong)" }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <Plus className="w-4 h-4" strokeWidth={1.5} />
                   <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     Add a to-do
                   </span>
@@ -2203,7 +2114,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             width: 18,
                             height: 18,
                             borderRadius: "50%",
-                            backgroundColor: "#F0FE00",
+                            backgroundColor: "var(--app-text-primary)",
                             color: "#000",
                             fontSize: 10,
                             fontWeight: 700,

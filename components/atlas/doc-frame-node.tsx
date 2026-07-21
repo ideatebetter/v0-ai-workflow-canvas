@@ -57,7 +57,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
     ));
   }, [collapsed, id, setNodes]);
 
-  const borderColor = selected ? "#F0FE00" : "var(--app-border-strong)";
+  const borderColor = selected ? "var(--app-text-primary)" : "var(--app-border-strong)";
 
   return (
     <div style={{ width: 440, fontFamily: "system-ui, Inter, sans-serif" }}>

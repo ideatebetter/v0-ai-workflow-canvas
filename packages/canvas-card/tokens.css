@@ -1,0 +1,40 @@
+/*
+ * Canvas card design tokens.
+ * Drop these into your project's globals.css (inside the same :root and .dark blocks
+ * you already use for theming), or import this file directly if you don't have a
+ * theme system yet.
+ *
+ * Assumes `.dark` on <html> to opt into dark mode (e.g., via next-themes or a data-attribute).
+ */
+
+:root {
+  --app-bg: #ffffff;
+  --app-bg-elevated: #f5f5f5;
+  --app-card: #f5f5f5;
+  --app-card-elevated: #ececec;
+  --app-border-subtle: #eeeeee;
+  --app-border: #e5e5e5;
+  --app-border-strong: #d4d4d4;
+  --app-text-primary: #0a0a0a;
+  --app-text-secondary: #4a4a4a;
+  --app-text-muted: #888888;
+  --app-text-faint: #a4a4a4;
+  --app-canvas-dot: #cccccc;
+  --app-shadow: rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --app-bg: #0a0a0a;
+  --app-bg-elevated: #121212;
+  --app-card: #141414;
+  --app-card-elevated: #1a1a1a;
+  --app-border-subtle: #1e1e1e;
+  --app-border: #222222;
+  --app-border-strong: #2a2a2a;
+  --app-text-primary: #ffffff;
+  --app-text-secondary: #a4a4a4;
+  --app-text-muted: #888888;
+  --app-text-faint: #666666;
+  --app-canvas-dot: #404040;
+  --app-shadow: rgba(0, 0, 0, 0.5);
+}

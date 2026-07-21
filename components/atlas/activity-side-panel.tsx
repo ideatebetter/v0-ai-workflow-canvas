@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import type { AtlasNode, CanvasComment, FileNodeData, TaskItem } from "@/lib/atlas-types";
 
 const FONT = { fontFamily: "system-ui, Inter, sans-serif" };
-const YELLOW = "#F0FE00";
+const YELLOW = "var(--app-text-primary)";
 
 interface TodoEntry {
   task: TaskItem;
@@ -164,7 +164,7 @@ function TodosTab({ todos }: { todos: TodoEntry[] }) {
       {[...byNode.entries()].map(([nodeId, group]) => (
         <div key={nodeId}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#F0FE00" }} />
+            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "var(--app-text-primary)" }} />
             <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide truncate">{group.label}</span>
           </div>
           <div className="space-y-1.5">

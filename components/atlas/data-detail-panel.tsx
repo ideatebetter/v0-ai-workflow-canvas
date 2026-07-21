@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { LayoutGrid, DollarSign, Activity, TrendingUp, Users, MessageSquare, TriangleAlert, Sparkles, Settings, ChevronDown, Check, Send, X, Calendar, Zap, Search, ChevronRight } from "lucide-react";
 import type {
   CapacityNodeData,
   CapacityTeamMember,
@@ -21,49 +22,35 @@ const TYPE_META: Record<DataNodeType, { label: string; accent: string; icon: Rea
     label: "Capacity & Resourcing",
     accent: "#3b82f6",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-      </svg>
+      <LayoutGrid className="w-4 h-4" strokeWidth={2} style={{ color: "#3b82f6" }} />
     ),
   },
   financial: {
     label: "Financial Performance",
     accent: "#10b981",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
+      <DollarSign className="w-4 h-4" strokeWidth={2} style={{ color: "#10b981" }} />
     ),
   },
   projectHealth: {
     label: "Project Health",
     accent: "#8b5cf6",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-      </svg>
+      <Activity className="w-4 h-4" strokeWidth={2} style={{ color: "#8b5cf6" }} />
     ),
   },
   pipeline: {
     label: "Pipeline Forecast",
     accent: "#f59e0b",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
-        <path d="M3 3v18h18" /><path d="M7 16l4-8 4 4 6-6" />
-      </svg>
+      <TrendingUp className="w-4 h-4" strokeWidth={2} style={{ color: "#f59e0b" }} />
     ),
   },
   teamHealth: {
     label: "Team Health",
     accent: "#ec4899",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
+      <Users className="w-4 h-4" strokeWidth={2} style={{ color: "#ec4899" }} />
     ),
   },
 };
@@ -142,9 +129,7 @@ function CapacityViz({ data, nodeId }: { data: CapacityNodeData; nodeId: string 
                   {/* Calendar hint */}
                   <div className="flex items-center justify-end px-3 pt-1.5">
                     <span className="text-[8px] text-gray-700 flex items-center gap-1">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-                      </svg>
+                      <Calendar className="w-2 h-2" strokeWidth={2} />
                       View calendar
                     </span>
                   </div>
@@ -577,7 +562,7 @@ function SageAlignmentCard({
       <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
         <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-500">Alignment Overview</span>
         <div className="flex items-center gap-1">
-          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F0FE00" }}>
+          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--app-text-primary)" }}>
             <SageStar size={7} />
           </div>
           <span className="text-[8px] text-gray-600">Sage</span>
@@ -587,13 +572,13 @@ function SageAlignmentCard({
         {isStreaming && !responseText ? (
           <div className="flex items-center gap-1 pt-0.5">
             {[0, 1, 2].map(i => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "#F0FE00", animationDelay: `${i * 0.15}s` }} />
+              <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "var(--app-text-primary)", animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         ) : (
           <p className="text-[10px] text-gray-300 leading-relaxed">
             {responseText}
-            {isStreaming && <span className="inline-block w-0.5 h-3 ml-0.5 align-middle animate-pulse" style={{ backgroundColor: "#F0FE00" }} />}
+            {isStreaming && <span className="inline-block w-0.5 h-3 ml-0.5 align-middle animate-pulse" style={{ backgroundColor: "var(--app-text-primary)" }} />}
           </p>
         )}
       </div>
@@ -622,7 +607,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
   const feedbackColor = (data.openFeedbackCycles ?? 0) === 0 ? GREEN : stalledCycles.length > 0 ? RED : AMBER;
 
   const SOURCE_ICON: Record<string, string> = { calendar: "Cal", client_experience: "CX", manual_log: "Sage" };
-  const SOURCE_COLOR: Record<string, string> = { calendar: PURPLE, client_experience: "#3b82f6", manual_log: "#F0FE00" };
+  const SOURCE_COLOR: Record<string, string> = { calendar: PURPLE, client_experience: "#3b82f6", manual_log: "var(--app-text-primary)" };
 
   const STATUS_LABEL: Record<string, string> = { active: "Active", awaiting_revision: "Awaiting revision", stalled: "Stalled" };
   const STATUS_COLOR: Record<string, string> = { active: AMBER, awaiting_revision: "#3b82f6", stalled: RED };
@@ -854,7 +839,7 @@ function ProjectHealthViz({ data, nodeId }: { data: ProjectHealthNodeData; nodeI
               </div>
               {data.sageRevisionInsight && revAbove > 0 && (
                 <div className="flex items-start gap-2 rounded px-2.5 py-2" style={{ backgroundColor: "#F0FE0010", border: "1px solid #F0FE0020" }}>
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "#F0FE00" }}>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "var(--app-text-primary)" }}>
                     <SageStar size={8} />
                   </div>
                   <div>
@@ -1011,7 +996,7 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
             <div className="rounded-xl overflow-hidden flex-1 min-h-0 flex flex-col" style={CARD}>
               <div className="px-4 py-2.5 flex-shrink-0" style={SEC_HEAD}>
                 <div className="flex items-center gap-1.5">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <TriangleAlert className="w-2.5 h-2.5" strokeWidth={2.2} style={{ color: "#f59e0b" }} />
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-500">Competing for Same Team</span>
                 </div>
               </div>
@@ -1273,9 +1258,7 @@ function TeamHealthViz({ data, nodeId }: { data: TeamHealthNodeData; nodeId: str
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[9px] text-gray-500">Saved this cycle by Ideate</span>
                     <div className="rounded-lg p-1.5" style={{ backgroundColor: `${GREEN}15` }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth="1.5">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                      </svg>
+                      <Zap className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: GREEN }} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 divide-x divide-[#22c55e20]">
@@ -1383,7 +1366,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--app-text-primary)" }}>
               <SageStar size={16} />
             </div>
             <div>
@@ -1401,7 +1384,7 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
           return (
             <div key={msg.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               {!isUser && (
-                <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0 mt-0.5" style={{ backgroundColor: "#F0FE00" }}>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0 mt-0.5" style={{ backgroundColor: "var(--app-text-primary)" }}>
                   <SageStar size={10} />
                 </div>
               )}
@@ -1414,12 +1397,12 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
         })}
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0" style={{ backgroundColor: "#F0FE00" }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center mr-2 flex-shrink-0" style={{ backgroundColor: "var(--app-text-primary)" }}>
               <SageStar size={10} />
             </div>
             <div className="flex items-center gap-1 px-3 py-2 rounded-xl" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
               {[0, 1, 2].map(i => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "#F0FE00", animationDelay: `${i * 0.15}s` }} />
+                <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: "var(--app-text-primary)", animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           </div>
@@ -1444,11 +1427,9 @@ function DataChat({ nodeType, nodeData, nodeId }: { nodeType: DataNodeType; node
             onClick={handleSend}
             disabled={!input.trim() || isStreaming}
             className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
-            style={{ backgroundColor: input.trim() && !isStreaming ? "#F0FE00" : "var(--app-border-strong)", color: input.trim() && !isStreaming ? "#000" : "var(--app-text-faint)" }}
+            style={{ backgroundColor: input.trim() && !isStreaming ? "var(--app-text-primary)" : "var(--app-border-strong)", color: input.trim() && !isStreaming ? "#000" : "var(--app-text-faint)" }}
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M22 2L11 13" /><path d="M22 2L15 22l-4-9-9-4 20-7z" />
-            </svg>
+            <Send className="w-3 h-3" strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -1540,13 +1521,11 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
                   </>
                 ) : (
                   <>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+                    <Settings className="w-3 h-3" strokeWidth={2} />
                     Switch project
                   </>
                 )}
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: "transform 0.15s", transform: projectPickerOpen ? "rotate(180deg)" : "none" }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+                <ChevronDown className="w-2.5 h-2.5" strokeWidth={2.5} style={{ transition: "transform 0.15s", transform: projectPickerOpen ? "rotate(180deg)" : "none" }} />
               </button>
 
               {projectPickerOpen && (
@@ -1574,7 +1553,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
                       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
                       {p.name}
                       {activeProjectId === p.id && (
-                        <svg className="ml-auto flex-shrink-0" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <Check className="ml-auto flex-shrink-0 w-3 h-3" strokeWidth={2.5} style={{ color: "var(--app-text-primary)" }} />
                       )}
                     </button>
                   ))}
@@ -1590,9 +1569,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
             style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <X className="w-3.5 h-3.5" strokeWidth={2} />
           </button>
         </div>
 
@@ -1620,7 +1597,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
       >
         {/* Sage panel header */}
         <div className="flex items-center gap-2.5 px-4 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--app-border-strong)" }}>
-          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
+          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--app-text-primary)" }}>
             <SageStar size={13} />
           </div>
           <div className="flex-1">
@@ -1634,9 +1611,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
             className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
             style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "var(--app-text-muted)" }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
         </div>
 
@@ -1652,7 +1627,7 @@ export function DataDetailPanel({ nodeId, nodeType, nodeData, onClose, onNodeDat
         onClick={() => setSageOpen(true)}
         className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-xl transition-all duration-200"
         style={{
-          backgroundColor: "#F0FE00",
+          backgroundColor: "var(--app-text-primary)",
           color: "var(--app-bg-elevated)",
           fontFamily: "system-ui, Inter, sans-serif",
           fontSize: 13,

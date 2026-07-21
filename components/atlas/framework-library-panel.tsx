@@ -71,8 +71,8 @@ export function FrameworkLibraryPanel({ isOpen, onClose, frameworks, currentUser
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F0FE0015" }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect x="1" y="1" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.3"/>
-                <path d="M4.5 7H9.5M7 4.5V9.5" stroke="#F0FE00" strokeWidth="1.3" strokeLinecap="round"/>
+                <rect x="1" y="1" width="12" height="12" rx="2" stroke="var(--app-text-primary)" strokeWidth="1.3"/>
+                <path d="M4.5 7H9.5M7 4.5V9.5" stroke="var(--app-text-primary)" strokeWidth="1.3" strokeLinecap="round"/>
               </svg>
             </div>
             <h2 className="text-sm font-semibold text-foreground" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Framework Library</h2>
@@ -114,7 +114,7 @@ export function FrameworkLibraryPanel({ isOpen, onClose, frameworks, currentUser
               style={{
                 backgroundColor: filter === f ? "#F0FE0015" : "transparent",
                 border: `1px solid ${filter === f ? "#F0FE0040" : "transparent"}`,
-                color: filter === f ? "#F0FE00" : "var(--app-text-faint)",
+                color: filter === f ? "var(--app-text-primary)" : "var(--app-text-faint)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
@@ -130,8 +130,8 @@ export function FrameworkLibraryPanel({ isOpen, onClose, frameworks, currentUser
             onClick={() => setCategoryFilter("all")}
             className="px-2 py-0.5 rounded text-[10px] transition-colors"
             style={{
-              backgroundColor: categoryFilter === "all" ? "#F0FE00" : "var(--app-card-elevated)",
-              border: "1px solid " + (categoryFilter === "all" ? "#F0FE00" : "var(--app-canvas-dot)"),
+              backgroundColor: categoryFilter === "all" ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+              border: "1px solid " + (categoryFilter === "all" ? "var(--app-text-primary)" : "var(--app-canvas-dot)"),
               color: categoryFilter === "all" ? "var(--app-bg)" : "var(--app-text-faint)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
@@ -145,8 +145,8 @@ export function FrameworkLibraryPanel({ isOpen, onClose, frameworks, currentUser
               onClick={() => setCategoryFilter(cat)}
               className="px-2 py-0.5 rounded text-[10px] transition-colors"
               style={{
-                backgroundColor: categoryFilter === cat ? "#F0FE00" : "var(--app-card-elevated)",
-                border: "1px solid " + (categoryFilter === cat ? "#F0FE00" : "var(--app-canvas-dot)"),
+                backgroundColor: categoryFilter === cat ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                border: "1px solid " + (categoryFilter === cat ? "var(--app-text-primary)" : "var(--app-canvas-dot)"),
                 color: categoryFilter === cat ? "var(--app-bg)" : "var(--app-text-faint)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
@@ -254,7 +254,7 @@ function FrameworkCard({
           {paramCount > 0 && (
             <>
               <span className="text-[10px] text-gray-600">·</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: "#F0FE0010", border: "1px solid #F0FE0030", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: "#F0FE0010", border: "1px solid #F0FE0030", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}>
                 {paramCount} param{paramCount !== 1 ? "s" : ""}
               </span>
             </>
@@ -290,7 +290,7 @@ function FrameworkCard({
             type="button"
             onClick={() => onRun(framework)}
             className="flex-1 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
-            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 2L10 6L3 10V2Z" fill="currentColor"/></svg>
             Run

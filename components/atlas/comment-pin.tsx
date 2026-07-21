@@ -90,7 +90,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
           comment.resolved ? "opacity-50" : ""
         }`}
         style={{
-          backgroundColor: isSelected ? "#F0FE00" : comment.author.avatar ? "transparent" : "#F0FE00",
+          backgroundColor: isSelected ? "var(--app-text-primary)" : comment.author.avatar ? "transparent" : "var(--app-text-primary)",
           border: isSelected ? "2px solid #F0FE00" : "2px solid var(--app-border-strong)",
           boxShadow: isSelected ? "0 0 0 4px rgba(240, 254, 0, 0.3)" : "0 2px 8px rgba(0,0,0,0.4)",
         }}
@@ -180,7 +180,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
             <div className="flex gap-2">
               <div
                 className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-medium"
-                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
+                style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}
               >
                 {comment.author.initials}
               </div>
@@ -266,7 +266,7 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
                 onClick={handleReply}
                 disabled={!replyText.trim()}
                 className="p-1 rounded transition-colors disabled:opacity-30"
-                style={{ color: replyText.trim() ? "#F0FE00" : "var(--app-text-muted)" }}
+                style={{ color: replyText.trim() ? "var(--app-text-primary)" : "var(--app-text-muted)" }}
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12.25 1.75L6.125 7.875M12.25 1.75L8.75 12.25L6.125 7.875M12.25 1.75L1.75 5.25L6.125 7.875" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
@@ -312,7 +312,7 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center mb-2 mx-auto"
         style={{
-          backgroundColor: "#F0FE00",
+          backgroundColor: "var(--app-text-primary)",
           border: "2px solid #F0FE00",
           boxShadow: "0 0 0 4px rgba(240, 254, 0, 0.3), 0 2px 8px rgba(0,0,0,0.4)",
         }}
@@ -363,7 +363,7 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
             disabled={!content.trim()}
             className="px-3 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-30"
             style={{
-              backgroundColor: content.trim() ? "#F0FE00" : "var(--app-canvas-dot)",
+              backgroundColor: content.trim() ? "var(--app-text-primary)" : "var(--app-canvas-dot)",
               color: content.trim() ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}

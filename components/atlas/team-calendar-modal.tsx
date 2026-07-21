@@ -91,7 +91,7 @@ function DayColumn({ date, member, isOff, onToggleOff, isToday }: DayColumnProps
         </span>
         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold`}
           style={{
-            backgroundColor: isToday ? "#F0FE00" : "transparent",
+            backgroundColor: isToday ? "var(--app-text-primary)" : "transparent",
             color: isToday ? "var(--app-bg-elevated)" : weekend ? "var(--app-text-faint)" : "#ccc",
           }}>
           {date.getDate()}
@@ -193,7 +193,7 @@ function TeamPlanningView({ members, weekDates, daysOff, onToggleOff }:
               style={{ borderLeft: "1px solid var(--app-border)", backgroundColor: isOff ? "#ef444412" : isToday ? "#F0FE0008" : "transparent" }}>
               <span className="text-[9px] uppercase tracking-widest text-gray-600">{DAY_SHORT[d.getDay()]}</span>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold`}
-                style={{ backgroundColor: isToday ? "#F0FE00" : "transparent", color: isToday ? "var(--app-bg-elevated)" : "#ccc" }}>
+                style={{ backgroundColor: isToday ? "var(--app-text-primary)" : "transparent", color: isToday ? "var(--app-bg-elevated)" : "#ccc" }}>
                 {d.getDate()}
               </div>
               {isOff && <span className="text-[8px] font-medium" style={{ color: "#ef4444" }}>Team Off</span>}
@@ -348,7 +348,7 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
             {([["individual", "Week View"], ["team", "Team View"]] as const).map(([v, label]) => (
               <button key={v} type="button" onClick={() => setView(v)}
                 className="px-3 py-1.5 rounded-md text-[10px] font-medium transition-colors"
-                style={{ backgroundColor: view === v ? "#F0FE00" : "transparent", color: view === v ? "var(--app-bg-elevated)" : "#777" }}>
+                style={{ backgroundColor: view === v ? "var(--app-text-primary)" : "transparent", color: view === v ? "var(--app-bg-elevated)" : "#777" }}>
                 {label}
               </button>
             ))}

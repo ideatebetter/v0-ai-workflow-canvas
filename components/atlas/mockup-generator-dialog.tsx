@@ -199,13 +199,13 @@ export function MockupGeneratorDialog({
                   style={{
                     backgroundColor: "rgba(240, 254, 0, 0.08)",
                     border: "1px solid rgba(240, 254, 0, 0.2)",
-                    color: "#F0FE00",
+                    color: "var(--app-text-primary)",
                     ...font,
                   }}
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <circle cx="6" cy="6" r="5" stroke="#F0FE00" strokeWidth="1.2"/>
-                    <path d="M6 4v3M6 8.5v.5" stroke="#F0FE00" strokeWidth="1.2" strokeLinecap="round"/>
+                    <circle cx="6" cy="6" r="5" stroke="var(--app-text-primary)" strokeWidth="1.2"/>
+                    <path d="M6 4v3M6 8.5v.5" stroke="var(--app-text-primary)" strokeWidth="1.2" strokeLinecap="round"/>
                   </svg>
                   {detectedScenes.length} scenes detected:{" "}
                   <span className="opacity-75">{detectedScenes.slice(0, 4).join(", ")}</span>

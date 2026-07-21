@@ -56,10 +56,10 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="1.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="1.5">
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="#F0FE00" stroke="none"/>
-                  <polyline points="21 15 16 10 5 21" stroke="#F0FE00"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="var(--app-text-primary)" stroke="none"/>
+                  <polyline points="21 15 16 10 5 21" stroke="var(--app-text-primary)"/>
                 </svg>
               </div>
               <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)", fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -139,7 +139,7 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
             type="button"
             onClick={handleDownload}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all hover:opacity-90"
-            style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+            style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M7 2v8M4 7l3 3 3-3M2 12h10" strokeLinecap="round"/>

@@ -170,9 +170,9 @@ export function NodeContextMenu({
             onClose();
           }}
           className="w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors flex items-center gap-3"
-          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif", color: "#F0FE00" }}
+          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif", color: "var(--app-text-primary)" }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "#F0FE00" }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "var(--app-text-primary)" }}>
             <rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2"/>
             <path d="M5 8H11M8 5V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>

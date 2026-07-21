@@ -138,7 +138,7 @@ export function MoveToCanvasDialog({
                 mode === "move" ? "text-black" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
-                backgroundColor: mode === "move" ? "#F0FE00" : "transparent",
+                backgroundColor: mode === "move" ? "var(--app-text-primary)" : "transparent",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
@@ -158,7 +158,7 @@ export function MoveToCanvasDialog({
                 mode === "copy" ? "text-black" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
-                backgroundColor: mode === "copy" ? "#F0FE00" : "transparent",
+                backgroundColor: mode === "copy" ? "var(--app-text-primary)" : "transparent",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
@@ -204,7 +204,7 @@ export function MoveToCanvasDialog({
                 className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: "rgba(240, 254, 0, 0.1)" }}
               >
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#F0FE00" strokeWidth="1.5">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--app-text-primary)" strokeWidth="1.5">
                   <rect x="2" y="2" width="16" height="16" rx="2" />
                   <path d="M10 6V14M6 10H14" strokeLinecap="round" />
                 </svg>
@@ -306,7 +306,7 @@ export function MoveToCanvasDialog({
                             </svg>
                           )}
                           {isSelected && !multiPage && (
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FE00" }}>
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--app-text-primary)" }}>
                               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                                 <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
@@ -353,7 +353,7 @@ export function MoveToCanvasDialog({
                               {/* Page icon */}
                               <div
                                 className="w-7 h-7 rounded flex items-center justify-center shrink-0 text-[10px] font-medium"
-                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.06)", color: isPageSelected ? "#F0FE00" : "var(--app-text-faint)" }}
+                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.06)", color: isPageSelected ? "var(--app-text-primary)" : "var(--app-text-faint)" }}
                               >
                                 {idx + 1}
                               </div>
@@ -367,7 +367,7 @@ export function MoveToCanvasDialog({
                                 {page.nodes.length} nodes
                               </span>
                               {isPageSelected && (
-                                <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#F0FE00" }}>
+                                <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--app-text-primary)" }}>
                                   <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
                                     <path d="M2 5L4.5 7.5L8.5 2.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
@@ -424,7 +424,7 @@ export function MoveToCanvasDialog({
               disabled={(!selectedCanvasId && !newCanvasName.trim()) || selectedNodes.length === 0}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98]"
               style={{
-                backgroundColor: "#F0FE00",
+                backgroundColor: "var(--app-text-primary)",
                 color: "#000",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}

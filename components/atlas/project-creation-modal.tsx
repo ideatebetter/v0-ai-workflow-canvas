@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { GripVertical, X, Plus, LayoutGrid, PlusSquare, FolderOpen, Clock, Check } from "lucide-react";
 import type { WorkspaceMember, CanvasFramework, Canvas } from "@/lib/atlas-types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -175,7 +176,7 @@ function StepBasics({ data, onChange, errors }: {
               onClick={() => onChange("billingType", bt)}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
               style={{
-                backgroundColor: data.billingType === bt ? "#F0FE00" : "var(--app-bg)",
+                backgroundColor: data.billingType === bt ? "var(--app-text-primary)" : "var(--app-bg)",
                 color: data.billingType === bt ? "var(--app-bg-elevated)" : "var(--app-text-muted)",
                 border: `1px solid ${data.billingType === bt ? "transparent" : "var(--app-canvas-dot)"}`,
                 ...FONT,
@@ -252,14 +253,7 @@ function StepTimeline({ data, onChange, errors }: {
               }}
             >
               {/* Drag handle */}
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0 text-gray-600 cursor-grab">
-                <circle cx="4" cy="3" r="1.2" fill="currentColor"/>
-                <circle cx="8" cy="3" r="1.2" fill="currentColor"/>
-                <circle cx="4" cy="6" r="1.2" fill="currentColor"/>
-                <circle cx="8" cy="6" r="1.2" fill="currentColor"/>
-                <circle cx="4" cy="9" r="1.2" fill="currentColor"/>
-                <circle cx="8" cy="9" r="1.2" fill="currentColor"/>
-              </svg>
+              <GripVertical className="w-3 h-3 flex-shrink-0 text-gray-600 cursor-grab" />
 
               <span className="text-xs text-gray-600 w-4 flex-shrink-0 text-center" style={FONT}>{idx + 1}</span>
 
@@ -303,9 +297,7 @@ function StepTimeline({ data, onChange, errors }: {
                   onClick={() => onChange("phases", data.phases.filter((_, i) => i !== idx))}
                   className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors ml-1"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>
               )}
             </div>
@@ -318,9 +310,7 @@ function StepTimeline({ data, onChange, errors }: {
           className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
           style={FONT}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+          <Plus className="w-3 h-3" strokeWidth={1.5} />
           Add phase
         </button>
         {errors.phases && <ErrorMsg msg={errors.phases} />}
@@ -367,7 +357,7 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
             <div key={member.userId} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
               style={{ backgroundColor: "var(--app-bg-elevated)", border: "1px solid var(--app-border-strong)" }}>
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}>
+                style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}>
                 {member.initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -389,9 +379,7 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
               {member.userId !== currentUserId && (
                 <button type="button" onClick={() => removeMember(member.userId)}
                   className="text-gray-600 hover:text-gray-400 transition-colors flex-shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                 </button>
               )}
             </div>
@@ -416,9 +404,7 @@ function StepTeam({ data, onChange, workspaceMembers, currentUserId, errors }: {
                   <div className="text-sm text-gray-300 truncate" style={FONT}>{member.name}</div>
                   {member.email && <div className="text-xs text-gray-600 truncate" style={FONT}>{member.email}</div>}
                 </div>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-600 flex-shrink-0">
-                  <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <Plus className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" strokeWidth={1.5} />
               </button>
             ))}
           </div>
@@ -462,7 +448,7 @@ function StepEstimate({ data, onChange }: {
         {data.members.map(member => (
           <div key={member.userId} className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}>
+              style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}>
               {member.initials}
             </div>
             <span className="flex-1 text-sm text-gray-300 min-w-0 truncate" style={FONT}>{member.name}</span>
@@ -485,7 +471,7 @@ function StepEstimate({ data, onChange }: {
 // ─── Step 5: Setup ────────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
-  branding: "#F0FE00",
+  branding: "var(--app-text-primary)",
   campaign: "#F59E0B",
   "ux-product": "#3B82F6",
   motion: "#8B5CF6",
@@ -508,12 +494,7 @@ function StepSetup({ data, onChange, frameworks }: {
       label: "Start from a framework",
       description: "Use a template to scaffold the project canvas",
       icon: (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="#F0FE00" strokeWidth="1.5"/>
-          <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="#F0FE00" strokeWidth="1.5"/>
-          <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="#F0FE00" strokeWidth="1.5"/>
-          <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="#F0FE00" strokeWidth="1.5"/>
-        </svg>
+        <LayoutGrid className="w-5 h-5" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
       ),
     },
     {
@@ -521,10 +502,7 @@ function StepSetup({ data, onChange, frameworks }: {
       label: "Blank canvas",
       description: "Open an empty canvas and build from scratch",
       icon: (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="2" width="16" height="16" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
-          <path d="M7 10H13M10 7V13" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+        <PlusSquare className="w-5 h-5" strokeWidth={1.5} style={{ color: "#3B82F6" }} />
       ),
     },
     {
@@ -532,9 +510,7 @@ function StepSetup({ data, onChange, frameworks }: {
       label: "Start a collection",
       description: "Group canvases together under this project",
       icon: (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M2 6C2 4.89543 2.89543 4 4 4H7L9 6H16C17.1046 6 18 6.89543 18 8V15C18 16.1046 17.1046 17 16 17H4C2.89543 17 2 16.1046 2 15V6Z" stroke="#10B981" strokeWidth="1.5"/>
-        </svg>
+        <FolderOpen className="w-5 h-5" strokeWidth={1.5} style={{ color: "#10B981" }} />
       ),
     },
     {
@@ -542,10 +518,7 @@ function StepSetup({ data, onChange, frameworks }: {
       label: "Skip for now",
       description: "Set up the canvas later",
       icon: (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="7.5" stroke="var(--app-text-faint)" strokeWidth="1.5"/>
-          <path d="M10 6V10L13 12" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+        <Clock className="w-5 h-5" strokeWidth={1.5} style={{ color: "var(--app-text-faint)" }} />
       ),
     },
   ];
@@ -575,8 +548,8 @@ function StepSetup({ data, onChange, frameworks }: {
             </div>
             <div className="flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center"
               style={{
-                borderColor: data.setupChoice === choice.id ? "#F0FE00" : "var(--app-text-faint)",
-                backgroundColor: data.setupChoice === choice.id ? "#F0FE00" : "transparent",
+                borderColor: data.setupChoice === choice.id ? "var(--app-text-primary)" : "var(--app-text-faint)",
+                backgroundColor: data.setupChoice === choice.id ? "var(--app-text-primary)" : "transparent",
               }}>
               {data.setupChoice === choice.id && (
                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "var(--app-bg-elevated)" }} />
@@ -597,7 +570,7 @@ function StepSetup({ data, onChange, frameworks }: {
                 <circle cx="5" cy="7" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
                 <circle cx="5" cy="10.5" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
                 <circle cx="9" cy="3.5" r="2" stroke="var(--app-text-muted)" strokeWidth="1.2"/>
-                <circle cx="9" cy="7" r="2" stroke="#F0FE00" strokeWidth="1.2"/>
+                <circle cx="9" cy="7" r="2" stroke="var(--app-text-primary)" strokeWidth="1.2"/>
               </svg>
             </div>
             <input
@@ -646,9 +619,7 @@ function StepSetup({ data, onChange, frameworks }: {
                     <div className="text-xs text-gray-500 truncate" style={FONT}>{fw.description}</div>
                   </div>
                   {selected && (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                      <path d="M3 8L6.5 11.5L13 4.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Check className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                   )}
                 </button>
               );
@@ -929,9 +900,7 @@ export function ProjectCreationModal({
             <p className="text-xs text-gray-600 mt-0.5" style={FONT}>{STEP_LABELS[step]}</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-600 hover:text-gray-300 transition-colors">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -949,7 +918,7 @@ export function ProjectCreationModal({
                   style={{
                     width: i === step ? 20 : 7,
                     height: 7,
-                    backgroundColor: i === step ? "#F0FE00" : i < step ? "var(--app-text-faint)" : "var(--app-border-strong)",
+                    backgroundColor: i === step ? "var(--app-text-primary)" : i < step ? "var(--app-text-faint)" : "var(--app-border-strong)",
                   }}
                 />
                 {i === step && <span className="text-xs text-gray-400" style={FONT}>{label}</span>}
@@ -1002,7 +971,7 @@ export function ProjectCreationModal({
               onClick={isLastStep ? handleSubmit : handleContinue}
               disabled={submitting}
               className="px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-60"
-              style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", ...FONT }}
+              style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", ...FONT }}
             >
               {submitting ? "Creating…" : isLastStep ? "Create Project" : "Continue"}
             </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { X, Check, ChevronDown, ChevronRight, ChevronLeft, Plus, PlusSquare, Search, Home, Settings, Bell, Send, MessageSquare, Trash2, Pencil, Star, Upload, FileText, Users, User, MoreHorizontal, MoreVertical, Copy, ExternalLink, Filter, Calendar, Clock, Eye, LayoutGrid, List, Folder, FolderOpen, TriangleAlert, ArrowRight, Sparkles, AlertCircle, HelpCircle, Lock, LogOut, Image as ImageIcon, Building2, CheckSquare, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -131,7 +132,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
         <Link
           href="/auth/login"
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-          style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+          style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
         >
           Sign in
         </Link>
@@ -144,7 +145,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
       <div className="flex items-center gap-3">
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden"
-          style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)" }}
+          style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}
         >
           {profilePicture ? (
             <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
@@ -165,10 +166,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
           className="p-1.5 text-gray-500 hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
           title="Change password"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
+          <Lock className="w-4 h-4" strokeWidth={2} />
         </Link>
         <button
           type="button"
@@ -179,11 +177,7 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
           className="p-1.5 text-gray-500 hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
           title="Sign out"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
+          <LogOut className="w-4 h-4" strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -1358,7 +1352,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           >
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden flex-shrink-0"
-              style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "var(--app-bg-elevated)" }}
+              style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}
               suppressHydrationWarning
             >
               {workspaceSettings.branding?.workspaceIcon ? (
@@ -1379,9 +1373,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                 {isWorkspaceSynced ? `${workspaceSettings.members.length} Member${workspaceSettings.members.length !== 1 ? "s" : ""}` : <span className="inline-block w-12 h-2.5 bg-white/10 rounded animate-pulse" />}
               </div>
             </div>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-gray-500">
-              <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-gray-500" strokeWidth={1.5} />
           </button>
 
           {/* Workspace Switcher Dropdown */}
@@ -1408,7 +1400,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                 >
                   <div
                     className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: ws.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "var(--app-bg-elevated)" }}
+                    style={{ backgroundColor: ws.branding?.workspaceIcon ? "transparent" : "var(--app-text-primary)", color: "var(--app-bg-elevated)" }}
                   >
                     {ws.branding?.workspaceIcon ? (
                       <img src={ws.branding.workspaceIcon} alt={ws.name} className="w-full h-full object-contain" />
@@ -1421,9 +1413,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                     <div className="text-xs text-gray-500">{ws.members.length} member{ws.members.length !== 1 ? "s" : ""}</div>
                   </div>
                   {ws.id === activeWorkspaceId && (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 text-yellow-400">
-                      <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Check className="w-3.5 h-3.5 flex-shrink-0 text-yellow-400" strokeWidth={1.5} />
                   )}
                 </button>
               ))}
@@ -1437,9 +1427,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
               >
                 <div className="w-7 h-7 rounded-md flex items-center justify-center border border-dashed flex-shrink-0" style={{ borderColor: "var(--app-text-faint)" }}>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M6 2.5V9.5M2.5 6H9.5" stroke="var(--app-text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <Plus className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                 </div>
                 <span className="text-sm text-gray-400">Create workspace</span>
               </button>
@@ -1459,10 +1447,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2.25 6.75L9 2.25L15.75 6.75V14.25C15.75 14.6478 15.592 15.0294 15.3107 15.3107C15.0294 15.592 14.6478 15.75 14.25 15.75H3.75C3.35218 15.75 2.97064 15.592 2.68934 15.3107C2.40804 15.0294 2.25 14.6478 2.25 14.25V6.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6.75 15.75V9H11.25V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Home className="w-4 h-4" strokeWidth={1.5} />
               Home
             </button>
             <button
@@ -1473,12 +1458,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="2" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
+              <LayoutGrid className="w-4 h-4" strokeWidth={1.5} />
               All Canvases
             </button>
             <button
@@ -1489,10 +1469,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 4C2 2.89543 2.89543 2 4 2H8L10 4H14C15.1046 4 16 4.89543 16 6V14C16 15.1046 15.1046 16 14 16H4C2.89543 16 2 15.1046 2 14V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 10H12M9 7V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <FolderOpen className="w-4 h-4" strokeWidth={1.5} />
               All Files
             </button>
             <button
@@ -1503,11 +1480,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M5.5 7L7 8.5L10.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M5.5 11H12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <List className="w-4 h-4" strokeWidth={1.5} />
               All To-Dos
               {allTodosFlat.filter(d => !d.task.completed).length > 0 && (
                 <span className="ml-auto text-xs rounded-full px-1.5 py-0.5" style={{ backgroundColor: "var(--app-border-strong)", color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -1523,10 +1496,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M9 5.5V9.5L11.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Clock className="w-4 h-4" strokeWidth={1.5} />
               Time Tracking
             </button>
             <button
@@ -1537,12 +1507,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
+              <LayoutGrid className="w-4 h-4" strokeWidth={1.5} />
               Frameworks
             </button>
             <button
@@ -1553,13 +1518,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="4" cy="12" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                <circle cx="14" cy="12" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M9 9C11.5 9 13 10.5 13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M9 9C6.5 9 5 10.5 5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <Users className="w-4 h-4" strokeWidth={1.5} />
               Community
             </button>
             <button
@@ -1570,10 +1529,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M14.55 11.25C14.4333 11.5166 14.3979 11.8123 14.4482 12.0992C14.4985 12.3861 14.6323 12.6517 14.8333 12.8625L14.8875 12.9167C15.0489 13.078 15.1768 13.2696 15.2641 13.4804C15.3514 13.6912 15.3964 13.917 15.3964 14.1451C15.3964 14.3731 15.3514 14.5989 15.2641 14.8097C15.1768 15.0205 15.0489 15.2122 14.8875 15.3735C14.7262 15.5349 14.5345 15.6628 14.3237 15.7501C14.1129 15.8374 13.8871 15.8824 13.6591 15.8824C13.431 15.8824 13.2052 15.8374 12.9944 15.7501C12.7836 15.6628 12.5919 15.5349 12.4306 15.3735L12.3764 15.3193C12.1656 15.1183 11.9 14.9846 11.6131 14.9343C11.3262 14.884 11.0305 14.9194 10.764 15.036C10.5028 15.1469 10.2813 15.3324 10.1267 15.5696C9.97213 15.8068 9.89122 16.0849 9.89396 16.3685V16.5C9.89396 16.9602 9.71117 17.4016 9.38611 17.7267C9.06104 18.0517 8.61962 18.2345 8.15943 18.2345C7.69923 18.2345 7.25781 18.0517 6.93275 17.7267C6.60768 17.4016 6.4249 16.9602 6.4249 16.5V16.431C6.41718 16.1399 6.32742 15.8569 6.16609 15.6174C6.00476 15.3779 5.77869 15.1919 5.51358 15.0819C5.24708 14.9653 4.95139 14.9299 4.66449 14.9802C4.3776 15.0305 4.11196 15.1642 3.90115 15.3652L3.84694 15.4194C3.68563 15.5808 3.49396 15.7087 3.28317 15.796C3.07238 15.8833 2.84656 15.9283 2.61854 15.9283C2.39052 15.9283 2.1647 15.8833 1.95391 15.796C1.74312 15.7087 1.55145 15.5808 1.39014 15.4194C1.22873 15.2581 1.10087 15.0665 1.01356 14.8557C0.926249 14.6449 0.881272 14.4191 0.881272 14.191C0.881272 13.963 0.926249 13.7372 1.01356 13.5264C1.10087 13.3156 1.22873 13.1239 1.39014 12.9626L1.44435 12.9084C1.64533 12.6976 1.77908 12.432 1.82936 12.1451C1.87965 11.8582 1.84422 11.5625 1.72762 11.296C1.61668 11.0348 1.43116 10.8133 1.19399 10.6587C0.956815 10.5041 0.678688 10.4232 0.395077 10.426H0.263687C-0.196508 10.426 -0.637924 10.2432 -0.962992 9.91813C-1.28806 9.59307 -1.47084 9.15165 -1.47084 8.69145C-1.47084 8.23126 -1.28806 7.78984 -0.962992 7.46478C-0.637924 7.13971 -0.196508 6.95693 0.263687 6.95693H0.332774C0.623912 6.94921 0.906917 6.85945 1.14641 6.69812C1.38591 6.53679 1.57192 6.31072 1.68192 6.04561C1.79852 5.77911 1.83395 5.48342 1.78366 5.19652C1.73338 4.90963 1.59963 4.64399 1.39865 4.43318L1.34444 4.37897C1.18303 4.21766 1.05517 4.02599 0.967863 3.8152C0.880553 3.60441 0.835576 3.37859 0.835576 3.15057C0.835576 2.92255 0.880553 2.69673 0.967863 2.48594C1.05517 2.27515 1.18303 2.08348 1.34444 1.92217C1.50575 1.76076 1.69742 1.6329 1.90821 1.54559C2.119 1.45828 2.34482 1.4133 2.57284 1.4133C2.80086 1.4133 3.02668 1.45828 3.23747 1.54559C3.44826 1.6329 3.63993 1.76076 3.80124 1.92217L3.85545 1.97638C4.06626 2.17736 4.3319 2.31111 4.61879 2.36139C4.90569 2.41168 5.20138 2.37625 5.46788 2.25965H5.51358C5.7748 2.14871 5.99631 1.9632 6.15093 1.72602C6.30555 1.48885 6.38646 1.21072 6.38372 0.927114V0.795724C6.38372 0.335528 6.5665 -0.105888 6.89157 -0.430956C7.21664 -0.756024 7.65806 -0.938805 8.11825 -0.938805C8.57845 -0.938805 9.01987 -0.756024 9.34493 -0.430956C9.67 -0.105888 9.85278 0.335528 9.85278 0.795724V0.864811C9.85004 1.14842 9.93095 1.42655 10.0856 1.66372C10.2402 1.9009 10.4617 2.08641 10.7229 2.19735C10.9894 2.31395 11.2851 2.34938 11.572 2.29909C11.8589 2.24881 12.1245 2.11506 12.3353 1.91408L12.3895 1.85987C12.5508 1.69846 12.7425 1.5706 12.9533 1.48329C13.1641 1.39598 13.3899 1.351 13.6179 1.351C13.846 1.351 14.0718 1.39598 14.2826 1.48329C14.4934 1.5706 14.685 1.69846 14.8463 1.85987C15.0077 2.02118 15.1356 2.21285 15.2229 2.42364C15.3102 2.63443 15.3552 2.86025 15.3552 3.08827C15.3552 3.31629 15.3102 3.54211 15.2229 3.7529C15.1356 3.96369 15.0077 4.15536 14.8463 4.31667L14.7921 4.37088C14.5911 4.58169 14.4574 4.84733 14.4071 5.13422C14.3568 5.42112 14.3923 5.71681 14.5088 5.98331V6.02901C14.6198 6.29023 14.8053 6.51174 15.0425 6.66636C15.2796 6.82098 15.5578 6.90189 15.8414 6.89915H15.9728C16.433 6.89915 16.8744 7.08193 17.1994 7.407C17.5245 7.73207 17.7073 8.17349 17.7073 8.63368C17.7073 9.09388 17.5245 9.5353 17.1994 9.86036C16.8744 10.1854 16.433 10.3682 15.9728 10.3682H15.9037C15.6201 10.3655 15.3419 10.4464 15.1048 10.601C14.8676 10.7556 14.6821 10.9771 14.5712 11.2383C14.4546 11.5048 14.4191 11.8005 14.4694 12.0874C14.5197 12.3743 14.6535 12.6399 14.8544 12.8507L14.9086 12.9049C15.07 13.0662 15.1979 13.2579 15.2852 13.4687C15.3725 13.6795 15.4175 13.9053 15.4175 14.1333C15.4175 14.3614 15.3725 14.5872 15.2852 14.798C15.1979 15.0087 15.07 15.2004 14.9086 15.3617C14.7473 15.5231 14.5556 15.651 14.3448 15.7383C14.134 15.8256 13.9082 15.8706 13.6802 15.8706C13.4522 15.8706 13.2263 15.8256 13.0156 15.7383C12.8048 15.651 12.6131 15.5231 12.4518 15.3617L12.3976 15.3075C12.1868 15.1065 11.9211 14.9728 11.6342 14.9225C11.3473 14.8722 11.0516 14.9076 10.7851 15.0242H10.7394C10.4782 15.1352 10.2567 15.3207 10.1021 15.5579C9.94746 15.7951 9.86655 16.0732 9.86929 16.3568V16.4882C9.86929 16.9484 9.68651 17.3898 9.36144 17.7149C9.03637 18.0399 8.59496 18.2227 8.13476 18.2227C7.67457 18.2227 7.23315 18.0399 6.90808 17.7149C6.58301 17.3898 6.40023 16.9484 6.40023 16.4882V16.419C6.39749 16.1354 6.31658 15.8573 6.16196 15.6201C6.00734 15.383 5.78583 15.1975 5.52461 15.0865C5.25811 14.9699 4.96242 14.9345 4.67553 14.9848C4.38863 15.0351 4.12299 15.1688 3.91218 15.3698L3.85797 15.424C3.69666 15.5854 3.50499 15.7133 3.2942 15.8006C3.08341 15.8879 2.85759 15.9329 2.62957 15.9329C2.40155 15.9329 2.17573 15.8879 1.96494 15.8006C1.75415 15.7133 1.56248 15.5854 1.40117 15.424C1.23976 15.2627 1.1119 15.071 1.02459 14.8602C0.937282 14.6494 0.892305 14.4236 0.892305 14.1956C0.892305 13.9676 0.937282 13.7417 1.02459 13.531C1.1119 13.3202 1.23976 13.1285 1.40117 12.9672L1.45538 12.913C1.65636 12.7022 1.79011 12.4365 1.84039 12.1496C1.89068 11.8627 1.85525 11.567 1.73865 11.3005V11.2548C1.62771 10.9936 1.44219 10.7721 1.20502 10.6175C0.967845 10.4629 0.689718 10.382 0.406107 10.3847H0.27472C-0.185476 10.3847 -0.626892 10.2019 -0.951959 9.87686C-1.27703 9.5518 -1.45981 9.11038 -1.45981 8.65018C-1.45981 8.18999 -1.27703 7.74857 -0.951959 7.4235C-0.626892 7.09843 -0.185476 6.91565 0.27472 6.91565H0.343807C0.627418 6.91839 0.905545 6.83748 1.14272 6.68286C1.37989 6.52824 1.5654 6.30673 1.67635 6.04551" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Settings className="w-4 h-4" strokeWidth={1.5} />
               Settings
             </button>
           </nav>
@@ -1594,13 +1550,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                <ellipse cx="9" cy="9" rx="3" ry="7" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M2 9H16" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M3.5 5H14.5" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M3.5 13H14.5" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
+              <Users className="w-4 h-4" strokeWidth={1.5} />
               All Workspace
             </button>
           </div>
@@ -1620,10 +1570,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="8" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M6 8V5C6 3.34315 7.34315 2 9 2C10.6569 2 12 3.34315 12 5V8" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
+              <Lock className="w-4 h-4" strokeWidth={1.5} />
               All Private
             </button>
           </div>
@@ -1658,17 +1605,7 @@ const [showSageChat, setShowSageChat] = useState(false);
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" strokeWidth={1.5} />
               <input
                 type="text"
                 placeholder="Search"
@@ -1690,10 +1627,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
               style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M2 14C2 11.2386 4.68629 9 8 9C11.3137 9 14 11.2386 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <User className="w-4 h-4" strokeWidth={1.5} />
               {workspaceSettings.members.length}
             </button>
 
@@ -1717,12 +1651,10 @@ const [showSageChat, setShowSageChat] = useState(false);
                 type="button"
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-[var(--app-bg-elevated)] transition-colors hover:opacity-90"
-                style={{ backgroundColor: "#F0FE00" }}
+                style={{ backgroundColor: "var(--app-text-primary)" }}
                 title="Create new"
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
+                <Plus className="w-5 h-5" strokeWidth={2.5} />
               </button>
 
               {/* Create Dropdown */}
@@ -1749,10 +1681,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <rect x="2" y="2" width="12" height="12" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
-                          <path d="M5.5 8H10.5M8 5.5V10.5" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <PlusSquare className="w-4 h-4" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                       </div>
                       <div>
                         <div className="font-medium text-foreground">New Project</div>
@@ -1775,10 +1704,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <rect x="2" y="2" width="12" height="12" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
-                          <path d="M5.5 8H10.5M8 5.5V10.5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <PlusSquare className="w-4 h-4" strokeWidth={1.5} style={{ color: "#3B82F6" }} />
                       </div>
                       <div>
                         <div className="font-medium">New Canvas</div>
@@ -1799,9 +1725,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "var(--app-border-strong)" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" stroke="#10B981" strokeWidth="1.5"/>
-                        </svg>
+                        <FolderOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: "#10B981" }} />
                       </div>
                       <div>
                         <div className="font-medium">New Collection</div>
@@ -1844,9 +1768,9 @@ const [showSageChat, setShowSageChat] = useState(false);
                       type="button"
                       onClick={() => { setShowNewGlobalTodo(v => !v); setNewGlobalTodoTitle(""); setNewGlobalTodoNodeId(""); setNewGlobalTodoCanvasId(""); setNewGlobalTodoDueDate(""); setNewGlobalTodoAssigneeId(""); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                      style={{ backgroundColor: showNewGlobalTodo ? "#F0FE00" : "var(--app-card-elevated)", color: showNewGlobalTodo ? "#000" : "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif", border: "1px solid " + (showNewGlobalTodo ? "transparent" : "var(--app-border-strong)") }}
+                      style={{ backgroundColor: showNewGlobalTodo ? "var(--app-text-primary)" : "var(--app-card-elevated)", color: showNewGlobalTodo ? "#000" : "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif", border: "1px solid " + (showNewGlobalTodo ? "transparent" : "var(--app-border-strong)") }}
                     >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      <Plus className="w-3 h-3" strokeWidth={1.5} />
                       New To-Do
                     </button>
                   </div>
@@ -1935,7 +1859,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               setShowNewGlobalTodo(false);
                             }}
                             className="px-4 py-1.5 rounded-lg text-xs font-medium transition-opacity"
-                            style={{ backgroundColor: "#F0FE00", color: "#000", fontFamily: "system-ui, Inter, sans-serif", opacity: (!newGlobalTodoTitle.trim() || !newGlobalTodoNodeId) ? 0.4 : 1 }}
+                            style={{ backgroundColor: "var(--app-text-primary)", color: "#000", fontFamily: "system-ui, Inter, sans-serif", opacity: (!newGlobalTodoTitle.trim() || !newGlobalTodoNodeId) ? 0.4 : 1 }}
                           >
                             Add To-Do
                           </button>
@@ -2021,7 +1945,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                   {displayed.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-faint)" strokeWidth="2"/><path d="M9 14l3 3 7-7" stroke="var(--app-text-faint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <CheckSquare className="w-7 h-7" strokeWidth={2} style={{ color: "var(--app-text-faint)" }} />
                       </div>
                       <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No to-dos found</div>
                       <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Add to-dos on files in your canvases</div>
@@ -2031,7 +1955,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                       {displayed.map(({ task, fileName, canvasName, canvasId, nodeId, projectName }) => {
                         const dueDateColor = task.dueDate
                           ? task.dueDate < today && !task.completed ? "#F87171"
-                          : task.dueDate === today ? "#F0FE00"
+                          : task.dueDate === today ? "var(--app-text-primary)"
                           : task.dueDate === new Date(Date.now() + 86400000).toISOString().slice(0, 10) ? "#FB923C"
                           : "var(--app-text-muted)"
                           : "var(--app-text-muted)";
@@ -2050,9 +1974,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               style={{ borderColor: task.completed ? "#4ADE80" : "var(--app-text-faint)", backgroundColor: task.completed ? "rgba(74,222,128,0.15)" : "transparent" }}
                             >
                               {task.completed && (
-                                <svg viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
-                                  <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <Check className="w-full h-full" strokeWidth={1.5} style={{ color: "#4ADE80" }} />
                               )}
                             </button>
                             <div className="flex-1 min-w-0">
@@ -2120,15 +2042,11 @@ const [showSageChat, setShowSageChat] = useState(false);
                       style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <svg
-                          width="12" height="12" viewBox="0 0 12 12" fill="none"
-                          className={`flex-shrink-0 transition-transform ${collapsed ? "" : "rotate-90"}`}
-                        >
-                          <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" fill={project.color} fillOpacity="0.2" stroke={project.color} strokeWidth="1.5"/>
-                        </svg>
+                        <ChevronRight
+                          className={`w-3 h-3 flex-shrink-0 transition-transform ${collapsed ? "" : "rotate-90"}`}
+                          strokeWidth={1.5}
+                        />
+                        <FolderOpen className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} style={{ color: project.color }} />
                         <span className="truncate font-medium">{project.name}</span>
                         <span className="text-xs text-gray-600 ml-1 flex-shrink-0">{projectCanvases.length} canvases</span>
                       </div>
@@ -2160,18 +2078,14 @@ const [showSageChat, setShowSageChat] = useState(false);
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               {fileNodes.length > 0 ? (
-                                <svg
-                                  width="12" height="12" viewBox="0 0 12 12" fill="none"
-                                  className={`flex-shrink-0 transition-transform ${canvasExpanded ? "rotate-90" : ""}`}
-                                >
-                                  <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <ChevronRight
+                                  className={`w-3 h-3 flex-shrink-0 transition-transform ${canvasExpanded ? "rotate-90" : ""}`}
+                                  strokeWidth={1.5}
+                                />
                               ) : (
                                 <div className="w-3 flex-shrink-0" />
                               )}
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                                <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                              </svg>
+                              <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                               <span className="truncate">{canvas.name}</span>
                             </div>
                             <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
@@ -2188,10 +2102,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2">
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                                  <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                                 <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
                               </div>
                               <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
@@ -2266,10 +2177,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                             style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                                <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                               <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
                             </div>
                             <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
@@ -2286,7 +2194,7 @@ const [showSageChat, setShowSageChat] = useState(false);
               {projects.length === 0 && canvases.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                   <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H22C23.6569 10 25 11.3431 25 13V22C25 23.6569 23.6569 25 22 25H7C5.34315 25 4 23.6569 4 22V9Z" stroke="var(--app-text-faint)" strokeWidth="2"/></svg>
+                    <FolderOpen className="w-7 h-7" strokeWidth={2} style={{ color: "var(--app-text-faint)" }} />
                   </div>
                   <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No files yet</div>
                   <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create a canvas and add files to see them here</div>
@@ -2310,8 +2218,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                       frameworksFilter === f ? "text-[var(--app-bg)]" : "text-gray-400 hover:text-foreground hover:bg-white/5"
                     }`}
                     style={{
-                      backgroundColor: frameworksFilter === f ? "#F0FE00" : "var(--app-card-elevated)",
-                      border: `1px solid ${frameworksFilter === f ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                      backgroundColor: frameworksFilter === f ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                      border: `1px solid ${frameworksFilter === f ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
                   >
@@ -2357,7 +2265,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                           className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
                           style={{
                             backgroundColor: "rgba(0,0,0,0.7)",
-                            color: framework.visibility === "private" ? "var(--app-text-muted)" : framework.visibility === "workspace" ? "#60a5fa" : "#F0FE00",
+                            color: framework.visibility === "private" ? "var(--app-text-muted)" : framework.visibility === "workspace" ? "#60a5fa" : "var(--app-text-primary)",
                             fontFamily: "system-ui, Inter, sans-serif",
                           }}
                         >
@@ -2413,7 +2321,7 @@ const [showSageChat, setShowSageChat] = useState(false);
                               type="button"
                               onClick={() => handleOpenFramework(framework)}
                               className="px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors hover:opacity-90"
-                              style={{ backgroundColor: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+                              style={{ backgroundColor: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               Run
                             </button>
@@ -2440,8 +2348,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                     : "text-gray-400 hover:text-foreground hover:bg-white/5"
                 }`}
                 style={{
-                  backgroundColor: selectedCategory === "all" ? "#F0FE00" : "var(--app-card-elevated)",
-                  border: `1px solid ${selectedCategory === "all" ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                  backgroundColor: selectedCategory === "all" ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                  border: `1px solid ${selectedCategory === "all" ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -2458,8 +2366,8 @@ All Frameworks
                       : "text-gray-400 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{
-                    backgroundColor: selectedCategory === cat ? "#F0FE00" : "var(--app-card-elevated)",
-                    border: `1px solid ${selectedCategory === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                    backgroundColor: selectedCategory === cat ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                    border: `1px solid ${selectedCategory === cat ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
@@ -2476,10 +2384,7 @@ All Frameworks
                     className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
                     style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                   >
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-muted)" strokeWidth="2"/>
-                      <path d="M10 14H18M14 10V18" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
+                    <PlusSquare className="w-7 h-7" strokeWidth={2} style={{ color: "var(--app-text-muted)" }} />
                   </div>
                   <p className="text-gray-400 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     No frameworks found
@@ -2503,7 +2408,7 @@ All Frameworks
                             className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
                             style={{ 
                               backgroundColor: "rgba(0,0,0,0.7)", 
-                              color: "#F0FE00",
+                              color: "var(--app-text-primary)",
                               fontFamily: "system-ui, Inter, sans-serif",
                             }}
                           >
@@ -2584,16 +2489,7 @@ All Frameworks
                                   fontFamily: "system-ui, Inter, sans-serif",
                                 }}
                               >
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path
-                                    d="M8 3L10 7H14L11 10L12 14L8 11.5L4 14L5 10L2 7H6L8 3Z"
-                                    fill={hasUpvoted ? "currentColor" : "none"}
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
+                                <Star className="w-4 h-4" strokeWidth={1.5} fill={hasUpvoted ? "currentColor" : "none"} />
                                 {framework.upvotes}
                               </button>
 
@@ -2602,10 +2498,7 @@ All Frameworks
                                 className="flex items-center gap-1.5 text-sm text-gray-500"
                                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                               >
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>
+                                <Upload className="w-3.5 h-3.5 rotate-180" strokeWidth={1.5} />
                                 {framework.downloads}
                               </div>
                             </div>
@@ -2620,9 +2513,7 @@ All Frameworks
                                   className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                                   title="Remove framework"
                                 >
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M2 4H14M5.5 4V2.5C5.5 2.22386 5.72386 2 6 2H10C10.2761 2 10.5 2.22386 10.5 2.5V4M12.5 4V13.5C12.5 13.7761 12.2761 14 12 14H4C3.72386 14 3.5 13.7761 3.5 13.5V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
+                                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                                 </button>
                               )}
                               {/* Open Framework Button */}
@@ -2631,7 +2522,7 @@ All Frameworks
                                 onClick={() => handleOpenFramework(framework)}
                                 className="px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors hover:opacity-90"
                                 style={{
-                                  backgroundColor: "#F0FE00",
+                                  backgroundColor: "var(--app-text-primary)",
                                   fontFamily: "system-ui, Inter, sans-serif",
                                 }}
                               >
@@ -2677,9 +2568,7 @@ All Frameworks
               {/* Workspace Details */}
               <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                    <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
+                  <Building2 className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   Workspace Details
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -2731,11 +2620,11 @@ All Frameworks
                       {workspaceSettings.branding?.workspaceIcon ? (
                         <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="max-w-full max-h-full object-contain p-1" />
                       ) : (
-                        <span className="text-xl font-bold" style={{ color: "#F0FE00" }}>{workspaceSettings.name.charAt(0)}</span>
+                        <span className="text-xl font-bold" style={{ color: "var(--app-text-primary)" }}>{workspaceSettings.name.charAt(0)}</span>
                       )}
                     </div>
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <Upload className="w-3 h-3" strokeWidth={1.5} />
                       Icon
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
@@ -2751,7 +2640,7 @@ All Frameworks
                       )}
                     </div>
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <Upload className="w-3 h-3" strokeWidth={1.5} />
                       Wordmark
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
@@ -2763,11 +2652,11 @@ All Frameworks
                       {workspaceSettings.branding?.profilePicture ? (
                         <img src={workspaceSettings.branding.profilePicture} alt="Profile" className="max-w-full max-h-full object-contain p-1" />
                       ) : (
-                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="5" stroke="var(--app-text-muted)" strokeWidth="2"/><path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="var(--app-text-muted)" strokeWidth="2" strokeLinecap="round"/></svg>
+                        <User className="w-6 h-6" strokeWidth={2} style={{ color: "var(--app-text-muted)" }} />
                       )}
                     </div>
                     <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", color: "var(--app-text-primary)" }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <Upload className="w-3 h-3" strokeWidth={1.5} />
                       Photo
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const { upload } = await import("@vercel/blob/client"); const blob = await upload(file.name, file, { access: "public", handleUploadUrl: "/api/upload/client" }); const updated = { ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: blob.url } }; onWorkspaceSettingsChange(updated); onSaveWorkspaceDetails?.(updated); } catch (error) { console.error("Upload failed:", error); } }} />
                     </label>
@@ -2806,7 +2695,7 @@ All Frameworks
                           type="button"
                           onClick={() => { navigator.clipboard.writeText(figmaPluginToken); setFigmaPluginTokenCopied(true); setTimeout(() => setFigmaPluginTokenCopied(false), 2000); }}
                           className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium transition-all"
-                          style={{ background: figmaPluginTokenCopied ? "#0a3a1a" : "#F0FE00", color: figmaPluginTokenCopied ? "#4ade80" : "#000", border: "none", minWidth: 64 }}
+                          style={{ background: figmaPluginTokenCopied ? "#0a3a1a" : "var(--app-text-primary)", color: figmaPluginTokenCopied ? "#4ade80" : "#000", border: "none", minWidth: 64 }}
                         >
                           {figmaPluginTokenCopied ? "Copied" : "Copy"}
                         </button>
@@ -2844,7 +2733,7 @@ All Frameworks
                       />
                       {figmaPatInput.trim() && (
                         <div className="flex items-center gap-1.5 text-xs flex-shrink-0" style={{ color: "#22c55e", fontFamily: "system-ui, Inter, sans-serif" }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          <Check className="w-3 h-3" strokeWidth={2.5} />
                           Saved
                         </div>
                       )}
@@ -2857,12 +2746,7 @@ All Frameworks
               <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-foreground font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                      <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="5.83333" cy="4.66667" r="2.66667" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M15.3333 14V12.6667C15.3329 12.0758 15.1362 11.5019 14.7742 11.0349C14.4122 10.5679 13.9054 10.2344 13.3333 10.0867" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M10.6667 2.08667C11.2403 2.23354 11.7487 2.56714 12.1118 3.03488C12.4748 3.50262 12.6719 4.07789 12.6719 4.67C12.6719 5.26211 12.4748 5.83738 12.1118 6.30512C11.7487 6.77286 11.2403 7.10646 10.6667 7.25333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Users className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                     Team Members
                     {settingsMembersLoading && <span className="text-xs text-gray-600 font-normal">Loading…</span>}
                   </h3>
@@ -2870,9 +2754,9 @@ All Frameworks
                     type="button"
                     onClick={() => setShowInviteDialog(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
-                    style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                    style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <Plus className="w-3 h-3" strokeWidth={1.5} />
                     Invite
                   </button>
                 </div>
@@ -2968,11 +2852,9 @@ All Frameworks
                                 title="Transfer ownership"
                                 onClick={() => setSettingsTransferConfirmId(confirmingTransfer ? null : member.userId)}
                                 className="flex-shrink-0 p-1.5 rounded transition-colors"
-                                style={{ color: confirmingTransfer ? "#F0FE00" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
+                                style={{ color: confirmingTransfer ? "var(--app-text-primary)" : "var(--app-text-faint)", backgroundColor: confirmingTransfer ? "#F0FE0015" : "transparent" }}
                               >
-                                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                                  <path d="M7 1L10 4M10 4L7 7M10 4H4C2.9 4 2 4.9 2 6V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <ArrowRight className="w-3 h-3" strokeWidth={1.4} />
                               </button>
                             )}
 
@@ -2991,9 +2873,7 @@ All Frameworks
                                 }}
                                 className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                               >
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                <X className="w-3 h-3" strokeWidth={1.5} />
                               </button>
                             )}
                             {!canRemove && !canTransfer && <div className="w-[28px] flex-shrink-0" />}
@@ -3001,7 +2881,7 @@ All Frameworks
 
                           {confirmingTransfer && (
                             <div className="mx-1 mb-1 px-3 py-2.5 rounded-lg flex items-center justify-between gap-3" style={{ backgroundColor: "#1a1500", border: "1px solid #3a3000" }}>
-                              <p className="text-xs" style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                              <p className="text-xs" style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}>
                                 Transfer ownership to <strong>{member.name}</strong>? You&apos;ll become an Admin.
                               </p>
                               <div className="flex gap-2 flex-shrink-0">
@@ -3020,7 +2900,7 @@ All Frameworks
                                     else loadSettingsMembers(settingsSupabaseWorkspaceId);
                                   }}
                                   className="text-xs px-2.5 py-1 rounded-lg font-semibold"
-                                  style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                                  style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
                                 >Confirm</button>
                               </div>
                             </div>
@@ -3059,7 +2939,7 @@ All Frameworks
                         return (
                           <div key={inv.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
                             <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: "var(--app-border)", color: "var(--app-text-muted)" }}>
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.4} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium truncate" style={{ color: "var(--app-text-secondary)", fontFamily: "system-ui, Inter, sans-serif" }}>{inv.email}</div>
@@ -3110,9 +2990,7 @@ All Frameworks
                               }}
                               className="flex-shrink-0 p-1.5 rounded text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                             >
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <X className="w-3 h-3" strokeWidth={1.5} />
                             </button>
                           </div>
                         );
@@ -3125,11 +3003,7 @@ All Frameworks
               {/* Preferences */}
               <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <h3 className="text-foreground font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                    <path d="M2.66667 4H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2.66667 8H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2.66667 12H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <List className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   Preferences
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -3164,7 +3038,7 @@ All Frameworks
                     <button
                       type="button"
                       onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, autoSave: !workspaceSettings.preferences.autoSave } })}
-                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.autoSave ? "bg-[#F0FE00]" : "bg-gray-600"}`}
+                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.autoSave ? "bg-foreground" : "bg-gray-600"}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${workspaceSettings.preferences.autoSave ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
@@ -3174,7 +3048,7 @@ All Frameworks
                     <button
                       type="button"
                       onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, showGrid: !workspaceSettings.preferences.showGrid } })}
-                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.showGrid ? "bg-[#F0FE00]" : "bg-gray-600"}`}
+                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.showGrid ? "bg-foreground" : "bg-gray-600"}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${workspaceSettings.preferences.showGrid ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
@@ -3186,11 +3060,7 @@ All Frameworks
               <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-foreground font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                      <path d="M2 4H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 8H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <List className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                     Naming Conventions
                   </h3>
                   <button
@@ -3200,7 +3070,7 @@ All Frameworks
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
                     Edit
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
                   </button>
                 </div>
                 <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
@@ -3212,11 +3082,7 @@ All Frameworks
               {/* Data & Sync Section — removed */}
               {false && <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}>
                 <h3 className="text-foreground font-medium text-sm flex items-center gap-2 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
-                    <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <ArrowRight className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   Data & Sync
                 </h3>
                 <div className="space-y-3">
@@ -3233,7 +3099,7 @@ All Frameworks
                       disabled={isLoadingCanvases || !onSaveAllToCloud}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ 
-                        backgroundColor: "#F0FE00", 
+                        backgroundColor: "var(--app-text-primary)", 
                         color: "#000",
                         fontFamily: "system-ui, Inter, sans-serif" 
                       }}
@@ -3449,11 +3315,7 @@ All Frameworks
               {onDeleteWorkspace && (workspaces?.length ?? 1) > 1 && (
                 <div className="rounded-xl p-6" style={{ backgroundColor: "var(--app-card)", border: "1px solid #2a1515" }}>
                   <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
-                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 2L14 13H2L8 2Z" stroke="#ef4444" strokeWidth="1.3" strokeLinejoin="round"/>
-                      <path d="M8 6V9" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
-                      <circle cx="8" cy="11" r="0.6" fill="#ef4444"/>
-                    </svg>
+                    <TriangleAlert className="w-3.5 h-3.5" strokeWidth={1.3} style={{ color: "#ef4444" }} />
                     Danger Zone
                   </h3>
 
@@ -3465,12 +3327,7 @@ All Frameworks
                       style={{ backgroundColor: "#1a0d0d", border: "1px solid #3a1a1a" }}
                     >
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#ef444415" }}>
-                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                          <path d="M5 6H15L14 17H6L5 6Z" stroke="#ef4444" strokeWidth="1.4" strokeLinejoin="round"/>
-                          <path d="M3 6H17" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
-                          <path d="M8 3H12" stroke="#ef4444" strokeWidth="1.4" strokeLinecap="round"/>
-                          <path d="M8 10V14M12 10V14" stroke="#ef4444" strokeWidth="1.3" strokeLinecap="round"/>
-                        </svg>
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.4} style={{ color: "#ef4444" }} />
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium" style={{ color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>Delete Workspace</div>
@@ -3765,9 +3622,7 @@ All Frameworks
                                         }}
                                       >
                                         {task.completed && (
-                                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ color: "#4ADE80" }}>
-                                            <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                          </svg>
+                                          <Check className="w-2.5 h-2.5" strokeWidth={1.5} style={{ color: "#4ADE80" }} />
                                         )}
                                       </button>
                                       <span
@@ -3823,9 +3678,7 @@ All Frameworks
                               className="text-gray-500 hover:text-foreground transition-colors"
                               aria-label={ribbonView === "calendar" ? "Previous month" : "Previous week"}
                             >
-                              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                                <path d="M6.5 1L1.5 6L6.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <ChevronLeft className="w-3 h-3" strokeWidth={1.5} />
                             </button>
                             <h4 className="text-foreground font-bold text-2xl leading-none" style={{ fontFamily: "Inter, system-ui, sans-serif" }} suppressHydrationWarning>
                               {ribbonView === "calendar" ? calendarHeader : rangeLabel}
@@ -3838,9 +3691,7 @@ All Frameworks
                               className="text-gray-500 hover:text-foreground transition-colors"
                               aria-label={ribbonView === "calendar" ? "Next month" : "Next week"}
                             >
-                              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                                <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
                             </button>
                           </div>
                           <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: "var(--app-card-elevated)" }}>
@@ -3854,12 +3705,7 @@ All Frameworks
                               }}
                               title="Calendar view"
                             >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
-                                <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" fill="currentColor"/>
-                                <rect x="1.5" y="9" width="5.5" height="5.5" rx="1" fill="currentColor"/>
-                                <rect x="9" y="9" width="5.5" height="5.5" rx="1" fill="currentColor"/>
-                              </svg>
+                              <LayoutGrid className="w-4 h-4" strokeWidth={0} fill="currentColor" />
                             </button>
                             <button
                               type="button"
@@ -3871,11 +3717,7 @@ All Frameworks
                               }}
                               title="List view"
                             >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <rect x="1.5" y="3" width="13" height="2" rx="1" fill="currentColor"/>
-                                <rect x="1.5" y="7" width="13" height="2" rx="1" fill="currentColor"/>
-                                <rect x="1.5" y="11" width="13" height="2" rx="1" fill="currentColor"/>
-                              </svg>
+                              <List className="w-4 h-4" strokeWidth={2} />
                             </button>
                           </div>
                         </div>
@@ -4033,9 +3875,7 @@ All Frameworks
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                         title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <Star className="w-4 h-4" strokeWidth={1.5} fill={canvas.isFavorite ? "var(--app-text-primary)" : "none"} style={{ color: "var(--app-text-primary)" }} />
                       </button>
                       <button
                         type="button"
@@ -4046,9 +3886,7 @@ All Frameworks
                         className="p-1.5 rounded-lg hover:bg-red-500/20"
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} style={{ color: "#ef4444" }} />
                       </button>
                     </div>
                   </div>
@@ -4111,9 +3949,7 @@ All Frameworks
                             }}
                             title="Set collection"
                           >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/>
-                            </svg>
+                            <FolderOpen className="w-3 h-3" strokeWidth={1.2} />
                             <span className="max-w-[70px] truncate">
                               {canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}
                             </span>
@@ -4131,7 +3967,7 @@ All Frameworks
                                   className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                  <X className="w-3 h-3" strokeWidth={1.2} />
                                   No collection
                                 </button>
                                 {projects.map(p => (
@@ -4145,7 +3981,7 @@ All Frameworks
                                     <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
                                     <span className="truncate">{p.name}</span>
                                     {canvas.projectId === p.id && (
-                                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                      <Check className="w-2.5 h-2.5 ml-auto flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                                     )}
                                   </button>
                                 ))}
@@ -4185,9 +4021,7 @@ All Frameworks
                               >
                                 {projectCanvases.length === 0 ? (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" opacity="0.3">
-                                      <path d="M4 9C4 7.34315 5.34315 6 7 6H12L15 10H27C28.6569 10 30 11.3431 30 13V25C30 26.6569 28.6569 28 27 28H7C5.34315 28 4 26.6569 4 25V9Z" stroke="white" strokeWidth="2"/>
-                                    </svg>
+                                    <FolderOpen className="w-8 h-8" strokeWidth={2} style={{ color: "white", opacity: 0.3 }} />
                                   </div>
                                 ) : projectCanvases.length === 1 ? (
                                   <div className="w-full h-full">
@@ -4208,9 +4042,7 @@ All Frameworks
                                   className="absolute top-2 right-2 hidden group-hover/collectioncard:flex p-1 rounded-lg items-center justify-center"
                                   style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                    <path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
-                                  </svg>
+                                  <X className="w-3 h-3" strokeWidth={1.5} style={{ color: "#ef4444" }} />
                                 </button>
                               </div>
                               <div className="mt-2">
@@ -4244,18 +4076,13 @@ All Frameworks
                               <CanvasPreview nodes={canvas.nodes} />
                               <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setShareCanvasId(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }} title="Share canvas">
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M14 2L2 7L6.5 9L9 14L14 2Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-                                    <path d="M6.5 9L14 2" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-                                  </svg>
+                                  <Send className="w-4 h-4" strokeWidth={1.4} stroke="white" />
                                 </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); toggleFavorite(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                                  <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
-                                  </svg>
+                                  <Star className="w-4 h-4" strokeWidth={1.5} fill={canvas.isFavorite ? "var(--app-text-primary)" : "none"} style={{ color: "var(--app-text-primary)" }} />
                                 </button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setCanvasToDelete(canvas.id); }} className="p-1.5 rounded-lg hover:bg-red-500/20" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                  <Trash2 className="w-4 h-4" strokeWidth={1.5} style={{ color: "#ef4444" }} />
                                 </button>
                               </div>
                             </div>
@@ -4280,7 +4107,7 @@ All Frameworks
                                 {projects.length > 0 && (
                                   <div className="relative">
                                     <button type="button" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(collectionMenuCanvasId === canvas.id ? null : canvas.id); }} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors hover:bg-white/10" style={{ color: canvas.projectId ? projects.find(p => p.id === canvas.projectId)?.color ?? "var(--app-text-muted)" : "var(--app-text-faint)", fontFamily: "system-ui, Inter, sans-serif" }} title="Set collection">
-                                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/></svg>
+                                      <FolderOpen className="w-3 h-3" strokeWidth={1.2} />
                                       <span className="max-w-[70px] truncate">{canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}</span>
                                     </button>
                                     {collectionMenuCanvasId === canvas.id && (
@@ -4288,14 +4115,14 @@ All Frameworks
                                         <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setCollectionMenuCanvasId(null); }} />
                                         <div className="absolute bottom-full right-0 mb-1 py-1 rounded-lg shadow-xl z-50 min-w-[160px]" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}>
                                           <button type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, undefined); }} className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                            <X className="w-3 h-3" strokeWidth={1.2} />
                                             No collection
                                           </button>
                                           {projects.map(p => (
                                             <button key={p.id} type="button" onClick={(e) => { e.stopPropagation(); handleSetCanvasCollection(canvas.id, p.id); }} className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                                               <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
                                               <span className="truncate">{p.name}</span>
-                                              {canvas.projectId === p.id && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                              {canvas.projectId === p.id && <Check className="w-2.5 h-2.5 ml-auto flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />}
                                             </button>
                                           ))}
                                         </div>
@@ -4312,7 +4139,7 @@ All Frameworks
                   ) : isWorkspaceSynced && filteredCanvases.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center" style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="3" stroke="var(--app-text-faint)" strokeWidth="2"/><path d="M10 14H18M14 10V18" stroke="var(--app-text-faint)" strokeWidth="2" strokeLinecap="round"/></svg>
+                        <PlusSquare className="w-7 h-7" strokeWidth={2} style={{ color: "var(--app-text-faint)" }} />
                       </div>
                       <div className="text-foreground font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>No canvases yet</div>
                       <div className="text-gray-500 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Create your first canvas to get started</div>
@@ -4382,9 +4209,7 @@ All Frameworks
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                         title={canvas.isFavorite ? "Unpin" : "Pin to top"}
                       >
-                        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2.5L15.5 6L10 10.5L9 14.5L7.5 11C6 10 5 9.5 3.5 9L2.5 8L7 3.5L8 4.5Z" fill={canvas.isFavorite ? "#F0FE00" : "none"} stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.5 11L2.5 16" stroke={canvas.isFavorite ? "#F0FE00" : "var(--app-text-primary)"} strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
+                        <Star className="w-4 h-4" strokeWidth={1.5} fill={canvas.isFavorite ? "var(--app-text-primary)" : "none"} style={{ color: "var(--app-text-primary)" }} />
                       </button>
                       <button
                         type="button"
@@ -4395,9 +4220,7 @@ All Frameworks
                         className="p-1.5 rounded-lg hover:bg-red-500/20"
                         style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} style={{ color: "#ef4444" }} />
                       </button>
                     </div>
                   </div>
@@ -4460,9 +4283,7 @@ All Frameworks
                             }}
                             title="Set collection"
                           >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M1 3.5C1 2.948 1.448 2.5 2 2.5H3.5L4.5 4H9C9.552 4 10 4.448 10 5V9C10 9.552 9.552 10 9 10H2C1.448 10 1 9.552 1 9V3.5Z" stroke="currentColor" strokeWidth="1.2"/>
-                            </svg>
+                            <FolderOpen className="w-3 h-3" strokeWidth={1.2} />
                             <span className="max-w-[70px] truncate">
                               {canvas.projectId ? (projects.find(p => p.id === canvas.projectId)?.name ?? "") : "Add to collection"}
                             </span>
@@ -4480,7 +4301,7 @@ All Frameworks
                                   className="w-full px-3 py-2 text-left text-xs text-gray-400 hover:bg-white/10 hover:text-foreground transition-colors flex items-center gap-2"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                                  <X className="w-3 h-3" strokeWidth={1.2} />
                                   No collection
                                 </button>
                                 {projects.map(p => (
@@ -4494,7 +4315,7 @@ All Frameworks
                                     <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }} />
                                     <span className="truncate">{p.name}</span>
                                     {canvas.projectId === p.id && (
-                                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="ml-auto flex-shrink-0"><path d="M2 5L4 7L8 3" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                      <Check className="w-2.5 h-2.5 ml-auto flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--app-text-primary)" }} />
                                     )}
                                   </button>
                                 ))}
@@ -4532,7 +4353,7 @@ All Frameworks
                 onClick={() => setShowNewCanvasDialog(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  backgroundColor: "#F0FE00",
+                  backgroundColor: "var(--app-text-primary)",
                   color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
@@ -4858,7 +4679,7 @@ All Frameworks
                 onClick={handleCreateCanvas}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  backgroundColor: "#F0FE00",
+                  backgroundColor: "var(--app-text-primary)",
                   color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
@@ -4962,7 +4783,7 @@ All Frameworks
                 onClick={handleCreateProject}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  backgroundColor: "#F0FE00",
+                  backgroundColor: "var(--app-text-primary)",
                   color: "var(--app-bg-elevated)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
@@ -5105,7 +4926,7 @@ All Frameworks
                   setShowCreateWorkspaceDialog(false);
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-                style={{ backgroundColor: "#F0FE00", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ backgroundColor: "var(--app-text-primary)", color: "var(--app-bg-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Create
               </button>
@@ -5137,7 +4958,7 @@ All Frameworks
       >
         {showSageChat ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18M6 6L18 18" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18 6L6 18M6 6L18 18" stroke="var(--app-text-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ) : (
           <img src="/sage-logo.svg" alt="Sage" className="w-7 h-7" />
@@ -5169,7 +4990,7 @@ All Frameworks
                 <button
                   onClick={handleNewChat}
                   className="text-xs px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
-                  style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   + New
                 </button>
@@ -5229,13 +5050,13 @@ All Frameworks
               className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               title="Chat History"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "#F0FE00" : "var(--app-text-muted)"} strokeWidth="1.5">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "var(--app-text-primary)" : "var(--app-text-muted)"} strokeWidth="1.5">
                 <path d="M2 4h12M2 8h12M2 12h8" />
               </svg>
             </button>
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#F0FE00" }}
+              style={{ backgroundColor: "var(--app-text-primary)" }}
             >
               <svg width="20" height="20" viewBox="0 0 647.22 647.22" fill="none">
                 <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
@@ -5279,7 +5100,7 @@ All Frameworks
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-                style={{ backgroundColor: "#F0FE00" }}
+                style={{ backgroundColor: "var(--app-text-primary)" }}
               >
                 <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
                   <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
@@ -5313,25 +5134,25 @@ All Frameworks
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Surface and classify feedback across the project
+                    <span style={{ color: "var(--app-text-primary)" }}>•</span> Surface and classify feedback across the project
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Flag when work has drifted from stated intent
+                    <span style={{ color: "var(--app-text-primary)" }}>•</span> Flag when work has drifted from stated intent
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Log and retrieve key decisions as they&apos;re made
+                    <span style={{ color: "var(--app-text-primary)" }}>•</span> Log and retrieve key decisions as they&apos;re made
                   </li>
                   <li
                     className="text-sm text-gray-400 flex items-center gap-2"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <span style={{ color: "#F0FE00" }}>•</span> Execute canvas actions through natural language
+                    <span style={{ color: "var(--app-text-primary)" }}>•</span> Execute canvas actions through natural language
                   </li>
                 </ul>
               </div>
@@ -5344,7 +5165,7 @@ All Frameworks
                   <>
                     <div
                       className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-                      style={{ backgroundColor: "#F0FE00" }}
+                      style={{ backgroundColor: "var(--app-text-primary)" }}
                     >
                       <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
                         <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
@@ -5396,7 +5217,7 @@ All Frameworks
               <div className="flex gap-3">
                 <div
                   className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-                  style={{ backgroundColor: "#F0FE00" }}
+                  style={{ backgroundColor: "var(--app-text-primary)" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 647.22 647.22" fill="none">
                     <rect fill="#000" x="0" y="265.27" width="113.94" height="113.94" rx="31.65" ry="31.65"/>
@@ -5452,7 +5273,7 @@ All Frameworks
                 type="submit"
                 disabled={!sageInput.trim() || sageStatus === "streaming"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed"
-                style={{ backgroundColor: sageInput.trim() ? "#F0FE00" : "var(--app-canvas-dot)" }}
+                style={{ backgroundColor: sageInput.trim() ? "var(--app-text-primary)" : "var(--app-canvas-dot)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path

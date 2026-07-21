@@ -218,7 +218,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
                     key={ratio.value}
                     onClick={() => { setAspectRatio(ratio.value); setShowRatioDropdown(false); }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/10 transition-colors"
-                    style={{ color: ratio.value === aspectRatio ? "#F0FE00" : "var(--app-text-primary)" }}
+                    style={{ color: ratio.value === aspectRatio ? "var(--app-text-primary)" : "var(--app-text-primary)" }}
                   >
                     {ratio.label}
                   </button>
@@ -252,7 +252,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
                     key={num}
                     onClick={() => { setVariations(num); setShowVariationsDropdown(false); }}
                     className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/10 transition-colors"
-                    style={{ color: num === variations ? "#F0FE00" : "var(--app-text-primary)" }}
+                    style={{ color: num === variations ? "var(--app-text-primary)" : "var(--app-text-primary)" }}
                   >
                     {num} {num === 1 ? "image" : "images"}
                   </button>
@@ -290,7 +290,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           {isGenerating ? "Generating…" : isEnhancing ? "Sage is enhancing…" : `Generate from ${nodeData.sourceFileName}`}
         </span>
         {(isGenerating || isEnhancing) && (
-          <Loader2 className="w-3.5 h-3.5 ml-auto animate-spin" style={{ color: "#F0FE00" }} />
+          <Loader2 className="w-3.5 h-3.5 ml-auto animate-spin" style={{ color: "var(--app-text-primary)" }} />
         )}
       </div>
 
@@ -343,9 +343,9 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           title="Enhance with Sage"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
           style={{
-            backgroundColor: enhanced ? "#F0FE00" : "var(--app-border-strong)",
-            color: enhanced ? "var(--app-bg-elevated)" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE00" : "var(--app-text-faint)",
-            border: `1px solid ${enhanced ? "#F0FE00" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE0044" : "var(--app-canvas-dot)"}`,
+            backgroundColor: enhanced ? "var(--app-text-primary)" : "var(--app-border-strong)",
+            color: enhanced ? "var(--app-bg-elevated)" : prompt.trim() && !isEnhancing && !isGenerating ? "var(--app-text-primary)" : "var(--app-text-faint)",
+            border: `1px solid ${enhanced ? "var(--app-text-primary)" : prompt.trim() && !isEnhancing && !isGenerating ? "#F0FE0044" : "var(--app-canvas-dot)"}`,
             cursor: prompt.trim() && !isEnhancing && !isGenerating ? "pointer" : "not-allowed",
           }}
         >

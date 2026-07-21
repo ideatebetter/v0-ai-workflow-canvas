@@ -144,8 +144,8 @@ export function SaveFrameworkDialog({
               style={{ backgroundColor: "#F0FE0015" }}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="3" width="14" height="14" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
-                <path d="M7 10H13M10 7V13" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
+                <rect x="3" y="3" width="14" height="14" rx="2" stroke="var(--app-text-primary)" strokeWidth="1.5"/>
+                <path d="M7 10H13M10 7V13" stroke="var(--app-text-primary)" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
             <div>
@@ -241,7 +241,7 @@ export function SaveFrameworkDialog({
                   }`}
                   style={{
                     backgroundColor: visibility === option.id ? "#F0FE0015" : "var(--app-border-strong)",
-                    border: `1px solid ${visibility === option.id ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                    border: `1px solid ${visibility === option.id ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                   }}
                 >
                   <div
@@ -296,8 +296,8 @@ export function SaveFrameworkDialog({
                       : "text-gray-400 hover:text-foreground hover:bg-white/5"
                   }`}
                   style={{
-                    backgroundColor: category === cat ? "#F0FE00" : "var(--app-border-strong)",
-                    border: `1px solid ${category === cat ? "#F0FE00" : "var(--app-canvas-dot)"}`,
+                    backgroundColor: category === cat ? "var(--app-text-primary)" : "var(--app-border-strong)",
+                    border: `1px solid ${category === cat ? "var(--app-text-primary)" : "var(--app-canvas-dot)"}`,
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
@@ -325,7 +325,7 @@ export function SaveFrameworkDialog({
                   style={{
                     backgroundColor: "var(--app-border-strong)",
                     border: "1px solid var(--app-canvas-dot)",
-                    color: "#F0FE00",
+                    color: "var(--app-text-primary)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
@@ -365,7 +365,7 @@ export function SaveFrameworkDialog({
                 style={{
                   backgroundColor: "var(--app-border-strong)",
                   border: "1px solid var(--app-canvas-dot)",
-                  color: "#F0FE00",
+                  color: "var(--app-text-primary)",
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
@@ -418,7 +418,7 @@ export function SaveFrameworkDialog({
             disabled={!name.trim() || isSaving}
             className="px-5 py-2.5 rounded-lg text-sm font-medium text-[var(--app-bg)] transition-colors disabled:opacity-50 flex items-center gap-2"
             style={{
-              backgroundColor: "#F0FE00",
+              backgroundColor: "var(--app-text-primary)",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
           >

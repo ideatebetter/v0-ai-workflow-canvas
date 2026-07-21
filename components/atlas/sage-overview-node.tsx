@@ -228,7 +228,7 @@ export function SageOverviewNode({ id, data, selected }: NodeProps) {
         </button>
         <button
           onClick={() => setViewLayer("deep")}
-          className="flex-1 py-1.5 text-[10px] text-[#F0FE00] hover:bg-[#F0FE00]/10 rounded-lg transition-colors"
+          className="flex-1 py-1.5 text-[10px] text-[#F0FE00] hover:bg-foreground/10 rounded-lg transition-colors"
           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
         >
           Full details
