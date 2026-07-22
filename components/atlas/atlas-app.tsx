@@ -45,6 +45,11 @@ export function AtlasApp() {
   const [recentCanvasIds, setRecentCanvasIds] = useState<string[]>([]);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const savingCanvasesRef = useRef<Set<string>>(new Set()); // Track canvases currently being saved
+  // Fingerprint of the last payload successfully written per canvas id. Used to
+  // short-circuit no-op saves that would otherwise feed a save->fetch->save loop
+  // when something upstream keeps re-triggering handleCanvasChange* with content
+  // identical to what's already persisted.
+  const lastSavedFingerprintRef = useRef<Map<string, string>>(new Map());
   const [deepLinkNodeId, setDeepLinkNodeId] = useState<string | null>(null);
 
   // Load canvases from API
@@ -81,6 +86,22 @@ export function AtlasApp() {
           }));
           console.log("[v0] Setting canvases:", loadedCanvases.map(c => c.name));
           setCanvases(loadedCanvases);
+          // Prime the save fingerprint cache so a subsequent no-op change on
+          // one of these canvases (same content, new object identity) doesn't
+          // trigger an unnecessary API write.
+          for (const c of loadedCanvases) {
+            lastSavedFingerprintRef.current.set(c.id, JSON.stringify({
+              name: c.name,
+              description: c.description,
+              nodes: c.nodes,
+              edges: c.edges,
+              comments: c.comments,
+              pages: c.pages,
+              activePageId: c.activePageId,
+              workspaceId: c.workspaceId,
+              presentationFlows: c.presentationFlows,
+            }));
+          }
         } else {
           // No canvases in DB — demo account keeps placeholder data, real users start fresh
           const isDemo = user.email === DEMO_EMAIL;
@@ -103,16 +124,35 @@ export function AtlasApp() {
   // Save canvas to API (debounced)
   const saveCanvasToAPI = useCallback(async (canvas: Canvas) => {
     if (!user) return;
-    
+
     // Skip if this canvas is already being saved (prevent double-saves during ID update)
     if (savingCanvasesRef.current.has(canvas.id)) {
       console.log("[v0] Canvas already being saved, skipping:", canvas.id);
       return;
     }
-    
+
+    // Skip when the payload is identical to the last successful save for this
+    // canvas. Guards against a feedback loop where a caller keeps re-invoking
+    // saveCanvasToAPI with unchanged content (updatedAt is excluded from the
+    // fingerprint since we set it on every touch).
+    const fingerprint = JSON.stringify({
+      name: canvas.name,
+      description: canvas.description,
+      nodes: canvas.nodes,
+      edges: canvas.edges,
+      comments: canvas.comments,
+      pages: canvas.pages,
+      activePageId: canvas.activePageId,
+      workspaceId: canvas.workspaceId,
+      presentationFlows: canvas.presentationFlows,
+    });
+    if (lastSavedFingerprintRef.current.get(canvas.id) === fingerprint) {
+      return;
+    }
+
     savingCanvasesRef.current.add(canvas.id);
     console.log("[v0] Saving canvas to API:", canvas.name, canvas.id);
-    
+
     try {
       // Check if canvas exists in database
       const checkResponse = await fetch(`/api/canvas?id=${canvas.id}`);
@@ -141,6 +181,9 @@ export function AtlasApp() {
           }),
         });
         console.log("[v0] Update response:", updateResponse.status);
+        if (updateResponse.ok) {
+          lastSavedFingerprintRef.current.set(canvas.id, fingerprint);
+        }
         savingCanvasesRef.current.delete(canvas.id);
       } else {
         // Create new canvas
@@ -165,9 +208,10 @@ export function AtlasApp() {
           // Track the new ID as "being saved" to prevent re-detection
           if (newId) {
             savingCanvasesRef.current.add(newId);
+            lastSavedFingerprintRef.current.set(newId, fingerprint);
           }
           // Update local canvas with database ID
-          setCanvases(prev => prev.map(c => 
+          setCanvases(prev => prev.map(c =>
             c.id === canvas.id ? { ...c, id: newId } : c
           ));
           // Clean up both old and new IDs after state settles
