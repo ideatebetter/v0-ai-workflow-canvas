@@ -1549,32 +1549,32 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               <button
                 type="button"
                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-foreground cursor-pointer transition-opacity hover:opacity-80"
-                style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+                style={{ backgroundColor: STATUS_COLORS[fileData.status], color: "#ffffff" }}
               >
                 {STATUS_LABELS[fileData.status]}
                 <ChevronDown className="w-3 h-3" strokeWidth={1.5} />
               </button>
-              
+
               {/* Status Dropdown */}
               {showStatusDropdown && (
-                <div 
+                <div
                   className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-xl z-20 min-w-[140px]"
-                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                 >
                   {(Object.keys(STATUS_LABELS) as Array<keyof typeof STATUS_LABELS>).map((status) => (
                     <button
                       key={status}
                       type="button"
                       onClick={() => handleStatusChange(status)}
-                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 transition-colors"
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
-                      <span 
+                      <span
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: STATUS_COLORS[status] }}
                       />
-                      <span className="text-foreground">{STATUS_LABELS[status]}</span>
+                      <span style={{ color: "var(--app-text-primary)" }}>{STATUS_LABELS[status]}</span>
                       {fileData.status === status && (
                         <Check className="w-3.5 h-3.5 ml-auto" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
                       )}
@@ -1605,22 +1605,23 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
               
               {/* Date Picker Dropdown */}
               {showDatePicker && (
-                <div 
+                <div
                   className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-xl z-20"
-                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)" }}
                 >
                   <input
                     type="date"
                     defaultValue={dueDate ? new Date(dueDate).toISOString().split("T")[0] : ""}
                     onChange={(e) => handleDueDateChange(e.target.value)}
-                    className="bg-transparent text-foreground text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
-                    style={{ colorScheme: "dark" }}
+                    className="bg-transparent text-sm px-2 py-1 rounded focus:outline-none"
+                    style={{ color: "var(--app-text-primary)", border: "1px solid var(--app-border-strong)" }}
                   />
                   {dueDate && (
                     <button
                       type="button"
                       onClick={() => handleDueDateChange("")}
-                      className="mt-2 w-full text-xs text-gray-400 hover:text-foreground transition-colors"
+                      className="mt-2 w-full text-xs transition-colors"
+                      style={{ color: "var(--app-text-muted)" }}
                     >
                       Clear date
                     </button>
@@ -1704,9 +1705,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   onClick={() => versionInputRef.current?.click()}
                   disabled={isUploadingVersion}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                  style={{ 
-                    backgroundColor: "var(--app-text-primary)", 
-                    color: "#000000",
+                  style={{
+                    backgroundColor: "var(--app-text-primary)",
+                    color: "var(--app-bg)",
                     fontFamily: "system-ui, Inter, sans-serif"
                   }}
                 >

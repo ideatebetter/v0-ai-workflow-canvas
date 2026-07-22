@@ -574,13 +574,13 @@ export function MoodboardExpanded({ data, nodeId, onClose, onUngroup, onDataChan
                     onChange={(e) => setEditedLabel(e.target.value)}
                     onBlur={handleLabelSave}
                     onKeyDown={handleLabelKeyDown}
-                    className="text-sm font-medium text-gray-300 bg-transparent border-b border-white/30 outline-none"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "100px" }}
+                    className="text-sm font-medium bg-transparent border-b outline-none"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "100px", color: "var(--app-text-primary)", borderColor: "var(--app-border-strong)" }}
                   />
                 ) : (
-                  <span 
-                    className="text-sm font-medium text-gray-300 cursor-pointer hover:text-foreground transition-colors"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  <span
+                    className="text-sm font-medium cursor-pointer transition-colors"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-primary)" }}
                     onClick={handleLabelClick}
                     title="Click to edit"
                   >
