@@ -93,7 +93,7 @@ export function AddNodeMenu({
     padding: "8px 12px",
     textAlign: "left",
     fontSize: 13,
-    color: "#d1d5db",
+    color: "var(--app-text-primary)",
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
@@ -184,7 +184,7 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => setActiveSubmenu(activeSubmenu === "sage" ? null : "sage")}
-            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "sage" ? "rgba(255,255,255,0.1)" : "transparent" }}
+            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "sage" ? "var(--app-hover)" : "transparent" }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <img src="/sage-logo.svg" alt="Sage" style={{ width: 16, height: 16 }} />
@@ -203,7 +203,7 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => setActiveSubmenu(activeSubmenu === "ops" ? null : "ops")}
-            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ops" ? "rgba(255,255,255,0.1)" : "transparent" }}
+            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ops" ? "var(--app-hover)" : "transparent" }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#8b5cf620", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6" }}>
@@ -224,7 +224,7 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => setActiveSubmenu(activeSubmenu === "ai" ? null : "ai")}
-            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ai" ? "rgba(255,255,255,0.1)" : "transparent" }}
+            style={{ ...menuItemStyle, fontSize: 14, justifyContent: "space-between", backgroundColor: activeSubmenu === "ai" ? "var(--app-hover)" : "transparent" }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#F0FE0020", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-primary)" }}>
@@ -258,7 +258,7 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => { setShowLinkInput(v => !v); setLinkInputValue(""); setTimeout(() => linkInputRef.current?.focus(), 50); }}
-            style={{ ...menuItemStyle, fontSize: 14, backgroundColor: showLinkInput ? "rgba(255,255,255,0.06)" : "transparent" }}
+            style={{ ...menuItemStyle, fontSize: 14, backgroundColor: showLinkInput ? "var(--app-hover)" : "transparent" }}
           >
             <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center", color: "#a1a1aa" }}>
               <ArrowRight className="w-2.5 h-2.5" strokeWidth={1.5} />
@@ -278,13 +278,13 @@ export function AddNodeMenu({
                   else if (e.key === "Escape") setShowLinkInput(false);
                 }}
                 placeholder="Paste a URL…"
-                style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", borderRadius: 6, color: "#d1d5db", outline: "none", ...fontStyle }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", borderRadius: 6, color: "var(--app-text-primary)", outline: "none", ...fontStyle }}
               />
               <button
                 type="button"
                 disabled={!linkInputValue.trim()}
                 onClick={() => { if (linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); } }}
-                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "var(--app-text-primary)" : "var(--app-border)", color: linkInputValue.trim() ? "#000" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
+                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "var(--app-text-primary)" : "var(--app-border)", color: linkInputValue.trim() ? "var(--app-bg)" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
               >
                 Add
               </button>

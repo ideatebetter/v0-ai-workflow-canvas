@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { X, Check, ChevronDown, ChevronRight, ChevronLeft, Plus, PlusSquare, Search, Home, Settings, Bell, Send, MessageSquare, Trash2, Pencil, Star, Upload, FileText, Users, User, MoreHorizontal, MoreVertical, Copy, ExternalLink, Filter, Calendar, Clock, Eye, LayoutGrid, List, Folder, FolderOpen, TriangleAlert, ArrowRight, Sparkles, AlertCircle, HelpCircle, Lock, LogOut, Image as ImageIcon, Building2, CheckSquare, Loader2 } from "lucide-react";
+import { X, Check, ChevronDown, ChevronRight, ChevronLeft, Plus, PlusSquare, Search, Home, Settings, Bell, Send, MessageSquare, Trash2, Pencil, Star, Upload, FileText, Users, User, MoreHorizontal, MoreVertical, Copy, ExternalLink, Filter, Calendar, Clock, Eye, LayoutGrid, List, Folder, FolderOpen, TriangleAlert, ArrowRight, Sparkles, AlertCircle, HelpCircle, Lock, LogOut, Image as ImageIcon, Building2, CheckSquare, Loader2, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -216,6 +217,13 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
+
+  // Theme toggle — resolvedTheme reflects the actual applied theme even when
+  // themeSetting is "system". Guard the toggle UI behind a mounted flag so
+  // SSR/CSR don't diverge (next-themes returns undefined on the server).
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => { setThemeMounted(true); }, []);
 
   // Figma integration state (settings page)
   const [figmaPatInput, setFigmaPatInput] = useState(workspaceSettings.figmaPat ?? "");
@@ -1629,6 +1637,24 @@ const [showSageChat, setShowSageChat] = useState(false);
             >
               <User className="w-4 h-4" strokeWidth={1.5} />
               {workspaceSettings.members.length}
+            </button>
+
+            {/* Theme toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:text-foreground hover:bg-white/5 transition-colors"
+              style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)" }}
+            >
+              {themeMounted ? (
+                resolvedTheme === "dark"
+                  ? <Sun className="w-4 h-4" strokeWidth={1.5} />
+                  : <Moon className="w-4 h-4" strokeWidth={1.5} />
+              ) : (
+                <Sun className="w-4 h-4 opacity-0" strokeWidth={1.5} />
+              )}
             </button>
 
             {/* Invite */}

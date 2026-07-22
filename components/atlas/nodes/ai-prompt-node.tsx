@@ -320,17 +320,17 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
 
       {/* Bottom Bar */}
       <div
-        className="flex items-center justify-between px-3 py-2"
+        className="flex items-center gap-2 px-3 py-2"
         style={{ borderTop: "1px solid var(--app-border-strong)" }}
       >
         {/* Source thumbnail */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded overflow-hidden" style={{ backgroundColor: "var(--app-border-strong)" }}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0" style={{ backgroundColor: "var(--app-border-strong)" }}>
             {nodeData.sourceImageUrl && (
               <img src={nodeData.sourceImageUrl} alt="Source" className="w-full h-full object-cover" />
             )}
           </div>
-          <span className="text-xs" style={{ color: "var(--app-text-faint)" }}>
+          <span className="text-xs truncate" style={{ color: "var(--app-text-faint)" }}>
             {nodeData.sourceFileName}
           </span>
         </div>
@@ -341,7 +341,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           onClick={handleEnhancePrompt}
           disabled={!prompt.trim() || isEnhancing || isGenerating}
           title="Enhance with Sage"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0"
           style={{
             backgroundColor: enhanced ? "var(--app-text-primary)" : "var(--app-border-strong)",
             color: enhanced ? "var(--app-bg-elevated)" : prompt.trim() && !isEnhancing && !isGenerating ? "var(--app-text-primary)" : "var(--app-text-faint)",
