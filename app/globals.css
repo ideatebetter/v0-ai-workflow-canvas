@@ -87,9 +87,9 @@ body {
     --app-border: #e5e5e5;
     --app-border-strong: #d4d4d4;
     --app-text-primary: #0a0a0a;
-    --app-text-secondary: #4a4a4a;
-    --app-text-muted: #888888;
-    --app-text-faint: #a4a4a4;
+    --app-text-secondary: #2e2e2e;
+    --app-text-muted: #555555;
+    --app-text-faint: #777777;
     --app-shadow: rgba(0,0,0,0.08);
     --app-canvas-dot: #cccccc;
   }
@@ -258,3 +258,14 @@ body {
   background: rgba(59, 130, 246, 0.08) !important;
   border: 1px dashed rgba(59, 130, 246, 0.5) !important;
 }
+
+/* Light-mode legibility: Tailwind gray-{200-500} utilities were tuned for
+   dark backgrounds and become washed out on light surfaces. Darken them so
+   nav items, list rows, and secondary metadata read as real text (not
+   greyed-out/disabled). Only applies when NOT in .dark. */
+:root:not(.dark) .text-gray-200 { color: #374151; }
+:root:not(.dark) .text-gray-300 { color: #374151; }
+:root:not(.dark) .text-gray-400 { color: #4b5563; }
+:root:not(.dark) .text-gray-500 { color: #4b5563; }
+:root:not(.dark) .text-gray-600 { color: #374151; }
+:root:not(.dark) .hover\:text-gray-300:hover { color: #1f2937; }
