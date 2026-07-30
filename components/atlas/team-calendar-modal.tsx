@@ -328,11 +328,11 @@ export function TeamCalendarModal({ member, allMembers, onClose }: TeamCalendarM
                   className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-medium transition-colors flex-shrink-0"
                   style={{
                     backgroundColor: focusMember === m ? (m.member?.color || "#525252") : "var(--app-card-elevated)",
-                    color: focusMember === m ? "var(--app-text-primary)" : "#777",
+                    color: focusMember === m ? "#ffffff" : "var(--app-text-muted)",
                     border: `1px solid ${focusMember === m ? "transparent" : "var(--app-border-strong)"}`,
                   }}>
                   <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                    style={{ backgroundColor: focusMember === m ? "rgba(255,255,255,0.3)" : (m.member?.color || "#525252"), color: "var(--app-text-primary)" }}>
+                    style={{ backgroundColor: focusMember === m ? "rgba(255,255,255,0.3)" : (m.member?.color || "#525252"), color: "#ffffff" }}>
                     {m.member?.name?.charAt(0)}
                   </div>
                   {m.member?.name?.split(" ")[0]}

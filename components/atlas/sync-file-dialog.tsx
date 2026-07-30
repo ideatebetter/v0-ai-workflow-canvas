@@ -187,13 +187,13 @@ export function SyncFileDialog({
         }}
         className="w-full p-3 rounded-xl text-left transition-all flex items-center gap-3"
         style={{
-          backgroundColor: isNodeSelected ? "rgba(34, 197, 94, 0.1)" : "rgba(255,255,255,0.03)",
-          border: isNodeSelected ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid rgba(255,255,255,0.06)",
+          backgroundColor: isNodeSelected ? "rgba(34, 197, 94, 0.1)" : "var(--app-card)",
+          border: isNodeSelected ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid var(--app-border-subtle)",
         }}
       >
         <div
           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+          style={{ backgroundColor: "var(--app-hover)" }}
         >
           {isTargetText ? (
             <AlignLeft className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
@@ -237,18 +237,18 @@ export function SyncFileDialog({
       <div
         className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden"
         style={{
-          background: "rgba(28, 28, 30, 0.98)",
+          backgroundColor: "var(--app-card-elevated)",
           backdropFilter: "blur(40px) saturate(180%)",
           WebkitBackdropFilter: "blur(40px) saturate(180%)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+          border: "1px solid var(--app-border)",
+          boxShadow: "0 25px 50px -12px var(--app-shadow)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="px-6 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: "1px solid var(--app-border-subtle)" }}
         >
           <div>
             <h2
@@ -274,7 +274,7 @@ export function SyncFileDialog({
         </div>
 
         {/* Current item info */}
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid var(--app-border-subtle)" }}>
           <div
             className="text-xs text-gray-500 uppercase tracking-wider mb-2"
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
@@ -284,7 +284,7 @@ export function SyncFileDialog({
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+              style={{ backgroundColor: "var(--app-hover)" }}
             >
               {isTextNode ? (
                 <AlignLeft className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
@@ -401,12 +401,12 @@ export function SyncFileDialog({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-4 py-2 rounded-lg text-sm text-foreground placeholder-gray-600 outline-none transition-colors"
                 style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  backgroundColor: "var(--app-hover)",
+                  border: "1px solid var(--app-border-subtle)",
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                 }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--app-border-strong)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--app-border-subtle)")}
               />
               {searchQuery && (
                 <button

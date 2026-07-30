@@ -506,7 +506,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 width: "100%",
                 height: 160,
                 borderRadius: 12,
-                background: "rgba(255,255,255,0.04)",
+                background: "var(--app-hover)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -515,7 +515,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               }}
             >
               <FileText className="w-7 h-7" strokeWidth={1.5} style={{ color: "#FF5555", opacity: 0.4 }} />
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Loading preview…</span>
+              <span style={{ fontSize: 10, color: "var(--app-text-faint)" }}>Loading preview…</span>
             </div>
           ) : (
             <img
@@ -601,7 +601,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
                 <CheckSquare className="w-3 h-3" strokeWidth={1.25} style={{ color: "var(--app-text-muted)" }} />
                 <span 
                   className="text-xs"
-                  style={{ color: "#999999", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {completedTasks}/{taskCount}
                 </span>
@@ -618,7 +618,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
               </span>
               <span 
                 className="text-xs"
-                style={{ color: "#999999", fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 {fileData.lastModified}
               </span>

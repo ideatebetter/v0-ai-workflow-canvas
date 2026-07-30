@@ -161,7 +161,7 @@ export function StatusPillNode({ id, data, selected }: NodeProps) {
           className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs whitespace-nowrap"
           style={{
             backgroundColor: "var(--app-canvas-dot)",
-            color: "#999999",
+            color: "var(--app-text-muted)",
             fontFamily: "system-ui, Inter, sans-serif",
           }}
         >

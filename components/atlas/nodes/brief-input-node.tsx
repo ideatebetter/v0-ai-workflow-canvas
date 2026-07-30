@@ -181,15 +181,15 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
     <div
       style={{
         width: 340,
-        background: "rgba(20, 20, 22, 0.98)",
+        background: "var(--app-card-elevated)",
         border: selected
           ? `1.5px solid ${accent}`
-          : `1px solid rgba(255,255,255,0.08)`,
+          : `1px solid var(--app-border)`,
         borderRadius: 14,
         overflow: "hidden",
         boxShadow: selected
-          ? `0 0 0 3px ${accent}22, 0 8px 32px rgba(0,0,0,0.4)`
-          : "0 4px 16px rgba(0,0,0,0.3)",
+          ? `0 0 0 3px ${accent}22, 0 8px 32px var(--app-shadow)`
+          : "0 4px 16px var(--app-shadow)",
         fontFamily: FONT,
       }}
     >
@@ -199,7 +199,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
       <div
         style={{
           padding: "10px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid var(--app-border-subtle)",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -269,8 +269,8 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                 style={{
                   flex: 1,
                   padding: "14px 10px",
-                  background: isDragging ? `${accent}18` : "rgba(255,255,255,0.03)",
-                  border: `1.5px dashed ${isDragging ? accent : "rgba(255,255,255,0.1)"}`,
+                  background: isDragging ? `${accent}18` : "var(--app-bg)",
+                  border: `1.5px dashed ${isDragging ? accent : "var(--app-border)"}`,
                   borderRadius: 10,
                   cursor: "pointer",
                   textAlign: "center",
@@ -279,14 +279,14 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
               >
                 <div style={{ marginBottom: 6 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto", display: "block" }}>
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinejoin="round"/>
-                    <polyline points="14 2 14 8 20 8" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinejoin="round"/>
-                    <line x1="12" y1="18" x2="12" y2="12" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
-                    <polyline points="9 15 12 12 15 15" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinejoin="round"/>
+                    <polyline points="14 2 14 8 20 8" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinejoin="round"/>
+                    <line x1="12" y1="18" x2="12" y2="12" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
+                    <polyline points="9 15 12 12 15 15" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>Drop a file</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>PDF, DOC, DOCX</div>
+                <div style={{ fontSize: 11, color: "var(--app-text-secondary)", fontWeight: 500 }}>Drop a file</div>
+                <div style={{ fontSize: 10, color: "var(--app-text-faint)", marginTop: 2 }}>PDF, DOC, DOCX</div>
               </button>
 
               {/* Enter link */}
@@ -296,8 +296,8 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                 style={{
                   flex: 1,
                   padding: "14px 10px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1.5px dashed rgba(255,255,255,0.1)",
+                  background: "var(--app-bg)",
+                  border: "1.5px dashed var(--app-border)",
                   borderRadius: 10,
                   cursor: "pointer",
                   textAlign: "center",
@@ -306,20 +306,20 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
               >
                 <div style={{ marginBottom: 6 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto", display: "block" }}>
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>Enter a link</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>Notion, Docs, Drive…</div>
+                <div style={{ fontSize: 11, color: "var(--app-text-secondary)", fontWeight: 500 }}>Enter a link</div>
+                <div style={{ fontSize: 10, color: "var(--app-text-faint)", marginTop: 2 }}>Notion, Docs, Drive…</div>
               </button>
             </div>
 
             {/* Divider */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", fontWeight: 500 }}>or</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              <div style={{ flex: 1, height: 1, background: "var(--app-border-subtle)" }} />
+              <span style={{ fontSize: 10, color: "var(--app-text-faint)", fontWeight: 500 }}>or</span>
+              <div style={{ flex: 1, height: 1, background: "var(--app-border-subtle)" }} />
             </div>
 
             {/* Input manually */}
@@ -398,20 +398,20 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   padding: 24,
-                  background: isDragging ? `${accent}12` : "rgba(255,255,255,0.02)",
-                  border: `2px dashed ${isDragging ? accent : "rgba(255,255,255,0.1)"}`,
+                  background: isDragging ? `${accent}12` : "var(--app-bg)",
+                  border: `2px dashed ${isDragging ? accent : "var(--app-border)"}`,
                   borderRadius: 10,
                   textAlign: "center",
                   cursor: "pointer",
                 }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="17 8 12 3 7 8" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="12" y1="3" x2="12" y2="15" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <polyline points="17 8 12 3 7 8" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="12" y1="3" x2="12" y2="15" stroke="var(--app-text-faint)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>Drop file here or click to browse</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>PDF, DOC, DOCX</div>
+                <div style={{ fontSize: 12, color: "var(--app-text-muted)", fontWeight: 500 }}>Drop file here or click to browse</div>
+                <div style={{ fontSize: 10, color: "var(--app-text-faint)", marginTop: 4 }}>PDF, DOC, DOCX</div>
               </div>
             )}
             <input
@@ -427,7 +427,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
         {/* ── URL STATE ── */}
         {mode === "url" && (
           <div>
-            <label style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 500, display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 11, color: "var(--app-text-muted)", fontWeight: 500, display: "block", marginBottom: 6 }}>
               Document or page URL
             </label>
             <div style={{ display: "flex", gap: 8 }}>
@@ -439,8 +439,8 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                 style={{
                   flex: 1,
                   padding: "9px 12px",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "var(--app-bg)",
+                  border: "1px solid var(--app-border)",
                   borderRadius: 8,
                   color: "var(--app-text-primary)",
                   fontSize: 12,
@@ -462,7 +462,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                   background: accent,
                   border: "none",
                   borderRadius: 8,
-                  color: "#000",
+                  color: "#ffffff",
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: urlDraft.trim() ? "pointer" : "not-allowed",
@@ -499,7 +499,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {config.fields.map(field => (
               <div key={field.key}>
-                <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", display: "block", marginBottom: 5 }}>
+                <label style={{ fontSize: 10, color: "var(--app-text-muted)", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", display: "block", marginBottom: 5 }}>
                   {field.label}
                 </label>
                 {field.type === "textarea" ? (
@@ -511,8 +511,8 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "var(--app-bg)",
+                      border: "1px solid var(--app-border)",
                       borderRadius: 8,
                       color: "var(--app-text-primary)",
                       fontSize: 12,
@@ -524,7 +524,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                     }}
                     onClick={e => e.stopPropagation()}
                     onFocus={e => { e.currentTarget.style.borderColor = `${accent}60`; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--app-border)"; }}
                   />
                 ) : (
                   <input
@@ -535,8 +535,8 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "var(--app-bg)",
+                      border: "1px solid var(--app-border)",
                       borderRadius: 8,
                       color: "var(--app-text-primary)",
                       fontSize: 12,
@@ -546,7 +546,7 @@ export function BriefInputNode({ id, data, selected }: NodeProps) {
                     }}
                     onClick={e => e.stopPropagation()}
                     onFocus={e => { e.currentTarget.style.borderColor = `${accent}60`; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--app-border)"; }}
                   />
                 )}
               </div>

@@ -124,7 +124,7 @@ export function MockupDetailModal({ data, onClose }: MockupDetailModalProps) {
                   <path d="M8 1L10 3" strokeLinejoin="round"/>
                   <path d="M4 6H8M4 8H7" strokeLinecap="round"/>
                 </svg>
-                <span className="text-xs truncate" style={{ color: "#999", fontFamily: "system-ui, Inter, sans-serif" }}>
+                <span className="text-xs truncate" style={{ color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
                   {data.sourceFileName}
                 </span>
               </div>

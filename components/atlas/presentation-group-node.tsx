@@ -188,7 +188,7 @@ export function PresentationGroupNode({
 
       {/* Show +N if more than 6 */}
       {count > 6 && (
-        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] bg-black/60 text-gray-400">
+        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] bg-black/60 text-white">
           +{count - 6}
         </div>
       )}

@@ -269,7 +269,7 @@ function FrameworkCard({
                 <p className="text-[10px] text-gray-500 mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Parameters</p>
                 <div className="flex flex-wrap gap-1">
                   {framework.parameters!.map(p => (
-                    <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", color: "#ccc" }}>{p.label}{p.required ? "*" : ""}</span>
+                    <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", color: "var(--app-text-primary)" }}>{p.label}{p.required ? "*" : ""}</span>
                   ))}
                 </div>
               </div>

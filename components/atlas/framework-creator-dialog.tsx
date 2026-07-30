@@ -472,7 +472,7 @@ export function FrameworkCreatorDialog({ open, onClose, canvas, currentUser, onS
                   onClick={() => handleSave(false)}
                   disabled={isSaving}
                   className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-                  style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", color: "#ccc", fontFamily: "system-ui, Inter, sans-serif" }}
+                  style={{ backgroundColor: "var(--app-border-strong)", border: "1px solid var(--app-text-faint)", color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
                 >
                   {isSaving ? "Saving..." : "Save as Draft"}
                 </button>
