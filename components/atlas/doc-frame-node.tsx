@@ -91,7 +91,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
         </span>
 
         {/* Page count badge */}
-        <span style={{ background: "var(--app-border)", color: "#777", fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
+        <span style={{ background: "var(--app-border)", color: "var(--app-text-muted)", fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap", flexShrink: 0 }}>
           {pageCount} {pageCount === 1 ? "page" : "pages"}
         </span>
 

@@ -269,3 +269,20 @@ body {
 :root:not(.dark) .text-gray-500 { color: #4b5563; }
 :root:not(.dark) .text-gray-600 { color: #374151; }
 :root:not(.dark) .hover\:text-gray-300:hover { color: #1f2937; }
+
+/* Light-mode legibility: `bg-white/N` and `hover:bg-white/N` are dark-mode
+   idioms (subtle white overlay on dark bg). On light surfaces they render as
+   near-invisible white-on-white. Invert to a black overlay of similar strength
+   so interactive states and subtle backgrounds stay visible. */
+:root:not(.dark) .bg-white\/5 { background-color: rgba(0,0,0,0.04); }
+:root:not(.dark) .bg-white\/10 { background-color: rgba(0,0,0,0.06); }
+:root:not(.dark) .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04); }
+:root:not(.dark) .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.06); }
+
+/* Light-mode legibility: `bg-black/60` overlays are typically used behind
+   thumbnails/media as a scrim so light-colored text on top reads well. On
+   those overlays we still want light text; make sure `text-gray-400` doesn't
+   get darkened by the earlier override for these badges. */
+:root:not(.dark) .bg-black\/60.text-gray-400,
+:root:not(.dark) .bg-black\/50.text-gray-400,
+:root:not(.dark) .bg-black\/70.text-gray-400 { color: #d1d5db; }

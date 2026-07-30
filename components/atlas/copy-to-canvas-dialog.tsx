@@ -87,18 +87,18 @@ export function MoveToCanvasDialog({
       <div
         className="w-full max-w-md rounded-2xl overflow-hidden"
         style={{
-          background: "rgba(28, 28, 30, 0.95)",
+          backgroundColor: "var(--app-card-elevated)",
           backdropFilter: "blur(40px) saturate(180%)",
           WebkitBackdropFilter: "blur(40px) saturate(180%)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+          border: "1px solid var(--app-border)",
+          boxShadow: "0 25px 50px -12px var(--app-shadow)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="px-6 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: "1px solid var(--app-border-subtle)" }}
         >
           <div>
             <h2
@@ -126,19 +126,20 @@ export function MoveToCanvasDialog({
         </div>
 
         {/* Mode Toggle */}
-        <div className="px-6 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="px-6 py-3" style={{ borderBottom: "1px solid var(--app-border-subtle)" }}>
           <div
             className="flex rounded-lg p-1"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+            style={{ backgroundColor: "var(--app-hover)" }}
           >
             <button
               type="button"
               onClick={() => setMode("move")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "move" ? "text-black" : "text-gray-400 hover:text-foreground"
+                mode === "move" ? "" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
                 backgroundColor: mode === "move" ? "var(--app-text-primary)" : "transparent",
+                color: mode === "move" ? "var(--app-bg)" : undefined,
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
@@ -155,10 +156,11 @@ export function MoveToCanvasDialog({
               type="button"
               onClick={() => setMode("copy")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === "copy" ? "text-black" : "text-gray-400 hover:text-foreground"
+                mode === "copy" ? "" : "text-gray-400 hover:text-foreground"
               }`}
               style={{
                 backgroundColor: mode === "copy" ? "var(--app-text-primary)" : "transparent",
+                color: mode === "copy" ? "var(--app-bg)" : undefined,
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >
@@ -195,8 +197,8 @@ export function MoveToCanvasDialog({
               showNewCanvasInput ? "ring-2 ring-[#F0FE00]" : "hover:bg-white/5"
             }`}
             style={{
-              backgroundColor: showNewCanvasInput ? "rgba(240, 254, 0, 0.08)" : "rgba(255,255,255,0.03)",
-              border: "1px dashed rgba(255,255,255,0.15)",
+              backgroundColor: showNewCanvasInput ? "rgba(240, 254, 0, 0.08)" : "var(--app-card)",
+              border: "1px dashed var(--app-border)",
             }}
           >
             <div className="flex items-center gap-3">
@@ -230,7 +232,7 @@ export function MoveToCanvasDialog({
                 autoFocus
                 className="w-full px-4 py-3 rounded-xl text-sm text-foreground placeholder-gray-500 outline-none transition-all"
                 style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
+                  backgroundColor: "var(--app-hover)",
                   border: "1px solid rgba(240, 254, 0, 0.3)",
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
                 }}
@@ -265,8 +267,8 @@ export function MoveToCanvasDialog({
                         isSelected ? "ring-2 ring-[#F0FE00]" : "hover:bg-white/5"
                       }`}
                       style={{
-                        backgroundColor: isSelected ? "rgba(240, 254, 0, 0.08)" : "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.06)",
+                        backgroundColor: isSelected ? "rgba(240, 254, 0, 0.08)" : "var(--app-card)",
+                        border: "1px solid var(--app-border-subtle)",
                         borderBottomLeftRadius: isSelected && multiPage ? 0 : undefined,
                         borderBottomRightRadius: isSelected && multiPage ? 0 : undefined,
                       }}
@@ -308,7 +310,7 @@ export function MoveToCanvasDialog({
                           {isSelected && !multiPage && (
                             <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--app-text-primary)" }}>
                               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M2.5 6L5 8.5L9.5 3.5" stroke="var(--app-bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           )}
@@ -325,7 +327,7 @@ export function MoveToCanvasDialog({
                           borderTop: "none",
                           borderBottomLeftRadius: 12,
                           borderBottomRightRadius: 12,
-                          backgroundColor: "rgba(255,255,255,0.02)",
+                          backgroundColor: "var(--app-bg-elevated)",
                         }}
                       >
                         <p
@@ -347,19 +349,19 @@ export function MoveToCanvasDialog({
                               className="w-full flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-white/05"
                               style={{
                                 backgroundColor: isPageSelected ? "rgba(240,254,0,0.06)" : undefined,
-                                borderTop: idx > 0 ? "1px solid rgba(255,255,255,0.04)" : undefined,
+                                borderTop: idx > 0 ? "1px solid var(--app-border-subtle)" : undefined,
                               }}
                             >
                               {/* Page icon */}
                               <div
                                 className="w-7 h-7 rounded flex items-center justify-center shrink-0 text-[10px] font-medium"
-                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "rgba(255,255,255,0.06)", color: isPageSelected ? "var(--app-text-primary)" : "var(--app-text-faint)" }}
+                                style={{ backgroundColor: isPageSelected ? "rgba(240,254,0,0.15)" : "var(--app-hover)", color: isPageSelected ? "var(--app-text-primary)" : "var(--app-text-faint)" }}
                               >
                                 {idx + 1}
                               </div>
                               <span
                                 className="flex-1 text-sm text-left truncate"
-                                style={{ color: isPageSelected ? "var(--app-text-primary)" : "rgba(255,255,255,0.6)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+                                style={{ color: isPageSelected ? "var(--app-text-primary)" : "var(--app-text-secondary)", fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
                               >
                                 {page.name}
                               </span>
@@ -369,7 +371,7 @@ export function MoveToCanvasDialog({
                               {isPageSelected && (
                                 <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--app-text-primary)" }}>
                                   <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                                    <path d="M2 5L4.5 7.5L8.5 2.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2 5L4.5 7.5L8.5 2.5" stroke="var(--app-bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
                                 </div>
                               )}
@@ -397,7 +399,7 @@ export function MoveToCanvasDialog({
         {/* Footer */}
         <div
           className="px-6 py-4 flex items-center justify-between gap-3"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderTop: "1px solid var(--app-border-subtle)" }}
         >
           {/* Destination summary */}
           <p className="text-xs text-gray-500 truncate" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}>
@@ -425,7 +427,7 @@ export function MoveToCanvasDialog({
               className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98]"
               style={{
                 backgroundColor: "var(--app-text-primary)",
-                color: "#000",
+                color: "var(--app-bg)",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
               }}
             >

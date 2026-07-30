@@ -496,7 +496,7 @@ export function SageExpandedModal({
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading || isUploading}
               className="p-3 rounded-xl transition-all disabled:opacity-50 hover:bg-white/10"
-              style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+              style={{ backgroundColor: "var(--app-hover)" }}
               title="Attach files"
             >
               {isUploading ? (
