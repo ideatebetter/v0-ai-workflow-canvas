@@ -1,9 +1,21 @@
 "use client"
 
 import { FileText, Plus } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,8 +23,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useDocumentsStore } from "@/lib/documents/store"
-import { ancestorChain, buildTree } from "@/lib/documents/tree"
+import { ancestorChain, buildTree, isDescendantOf } from "@/lib/documents/tree"
 import { TreeRow, type TreeRowCallbacks } from "./tree-row"
+import { buildDropId, parseDropId, type DropZone } from "./dnd/drop-zone"
+import { useHoverAutoExpand } from "./dnd/hover-auto-expand"
 
 export function DocumentsSection() {
   const router = useRouter()
@@ -25,8 +39,13 @@ export function DocumentsSection() {
   const setFolderCollapsed = useDocumentsStore((s) => s.setFolderCollapsed)
   const deleteNode = useDocumentsStore((s) => s.deleteNode)
   const duplicateNode = useDocumentsStore((s) => s.duplicateNode)
+  const moveNode = useDocumentsStore((s) => s.moveNode)
 
   const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [overDropId, setOverDropId] = useState<string | null>(null)
+  const treeRef = useRef(tree)
+  treeRef.current = tree
 
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
@@ -134,6 +153,42 @@ export function DocumentsSection() {
     toast("Move to ships in a later phase")
   }, [])
 
+  const rejectedDropTargetIds = useMemo(() => {
+    if (!activeDragId) return new Set<string>()
+    const rejected = new Set<string>([activeDragId])
+    const active = tree[activeDragId]
+    if (active?.type === "folder") {
+      const walk = (id: string) => {
+        for (const n of Object.values(tree)) {
+          if (n.parentId === id) {
+            rejected.add(n.id)
+            if (n.type === "folder") walk(n.id)
+          }
+        }
+      }
+      walk(activeDragId)
+    }
+    return rejected
+  }, [tree, activeDragId])
+
+  const hoveredFolderId = useMemo(() => {
+    const zone = parseDropId(overDropId, (id) => treeRef.current[id]?.parentId ?? null)
+    if (!zone) return null
+    if (zone.kind === "into") return zone.nodeId
+    return null
+  }, [overDropId])
+
+  useHoverAutoExpand(
+    activeDragId ? hoveredFolderId : null,
+    (id) => {
+      const node = treeRef.current[id]
+      if (node?.type === "folder" && node.collapsed) {
+        setFolderCollapsed(id, false)
+      }
+    },
+    600,
+  )
+
   const callbacks: TreeRowCallbacks = useMemo(
     () => ({
       onOpenDocument: openDocument,
@@ -151,6 +206,9 @@ export function DocumentsSection() {
       activeDocId,
       ancestorsOfActive,
       renamingId,
+      activeDragId,
+      overDropId,
+      rejectedDropTargetIds,
     }),
     [
       openDocument,
@@ -168,7 +226,87 @@ export function DocumentsSection() {
       activeDocId,
       ancestorsOfActive,
       renamingId,
+      activeDragId,
+      overDropId,
+      rejectedDropTargetIds,
     ],
+  )
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  )
+
+  const onDragStart = useCallback((e: DragStartEvent) => {
+    setActiveDragId(String(e.active.id))
+    setOverDropId(null)
+  }, [])
+
+  const onDragOver = useCallback((e: DragOverEvent) => {
+    setOverDropId(e.over ? String(e.over.id) : null)
+  }, [])
+
+  const onDragEnd = useCallback(
+    (e: DragEndEvent) => {
+      const activeId = String(e.active.id)
+      const overId = e.over ? String(e.over.id) : null
+      setActiveDragId(null)
+      setOverDropId(null)
+      if (!overId) return
+
+      const currentTree = treeRef.current
+      const zone: DropZone | null =
+        overId === buildDropId.rootEnd
+          ? { kind: "root-end" }
+          : parseDropId(overId, (id) => currentTree[id]?.parentId ?? null)
+      if (!zone) return
+
+      let targetParentId: string | null
+      let beforeId: string | null = null
+      let afterId: string | null = null
+
+      if (zone.kind === "root-end") {
+        targetParentId = null
+      } else if (zone.kind === "into") {
+        targetParentId = zone.nodeId
+      } else if (zone.kind === "before") {
+        targetParentId = zone.parentId
+        beforeId = zone.nodeId
+      } else {
+        targetParentId = zone.parentId
+        afterId = zone.nodeId
+      }
+
+      if (activeId === targetParentId) return
+      const active = currentTree[activeId]
+      if (!active) return
+      if (
+        active.type === "folder" &&
+        targetParentId !== null &&
+        (targetParentId === activeId ||
+          isDescendantOf(currentTree, activeId, targetParentId))
+      ) {
+        toast.error("Can't move a folder into itself")
+        return
+      }
+
+      const result = moveNode({
+        id: activeId,
+        newParentId: targetParentId,
+        beforeId,
+        afterId,
+      })
+      if (!result.ok) {
+        toast.error(
+          result.reason === "cycle"
+            ? "Can't move a folder into itself"
+            : result.reason === "invalid"
+              ? "Can't drop into a document"
+              : "Move failed",
+        )
+      }
+    },
+    [moveNode],
   )
 
   const isEmpty = rendered.length === 0
@@ -243,12 +381,55 @@ export function DocumentsSection() {
           </button>
         </div>
       ) : (
-        <div className="pr-1">
-          {rendered.map((entry) => (
-            <TreeRow key={entry.node.id} entry={entry} callbacks={callbacks} />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={pointerWithin}
+          onDragStart={onDragStart}
+          onDragOver={onDragOver}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => {
+            setActiveDragId(null)
+            setOverDropId(null)
+          }}
+        >
+          <div className="pr-1">
+            {rendered.map((entry) => (
+              <TreeRow key={entry.node.id} entry={entry} callbacks={callbacks} />
+            ))}
+          </div>
+          <DragOverlay dropAnimation={null}>
+            {activeDragId ? <DragChip label={dragLabel(tree, activeDragId)} /> : null}
+          </DragOverlay>
+        </DndContext>
       )}
+    </div>
+  )
+}
+
+function dragLabel(
+  tree: Record<string, { type: string; name?: string; title?: string }>,
+  id: string,
+): string {
+  const node = tree[id]
+  if (!node) return "Item"
+  return (
+    (node.type === "folder"
+      ? (node as { name: string }).name
+      : (node as { title: string }).title) || (node.type === "folder" ? "Untitled folder" : "Untitled")
+  )
+}
+
+function DragChip({ label }: { label: string }) {
+  return (
+    <div
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-lg text-sm text-foreground"
+      style={{
+        backgroundColor: "var(--app-card-elevated)",
+        borderColor: "var(--app-border-strong)",
+        fontFamily: "system-ui, Inter, sans-serif",
+      }}
+    >
+      {label}
     </div>
   )
 }

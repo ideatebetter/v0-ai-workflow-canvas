@@ -5,10 +5,12 @@ import {
   FileText,
   Folder,
   FolderOpen,
+  GripVertical,
   MoreHorizontal,
   Plus,
 } from "lucide-react"
 import { useState } from "react"
+import { useDraggable, useDroppable } from "@dnd-kit/core"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { TreeNodeWithChildren } from "@/lib/documents/types"
 import { InlineRename } from "./inline-rename"
+import { buildDropId } from "./dnd/drop-zone"
 
 const INDENT_PX = 12
 const MAX_INDENT_LEVEL = 6
@@ -45,6 +48,9 @@ export interface TreeRowCallbacks {
   activeDocId: string | null
   ancestorsOfActive: Set<string>
   renamingId: string | null
+  activeDragId: string | null
+  overDropId: string | null
+  rejectedDropTargetIds: Set<string>
 }
 
 export function TreeRow({
@@ -62,6 +68,7 @@ export function TreeRow({
   const forceExpanded = isFolder && callbacks.ancestorsOfActive.has(node.id)
   const expanded = isFolder && (forceExpanded || !node.collapsed)
   const isRenaming = callbacks.renamingId === node.id
+  const isDragging = callbacks.activeDragId === node.id
 
   const label = isFolder ? node.name : node.title
   const displayLabel = label || (isFolder ? "New folder" : "Untitled")
@@ -69,149 +76,223 @@ export function TreeRow({
   const visualDepth = Math.min(depth, MAX_INDENT_LEVEL)
   const indentStyle = { paddingLeft: 8 + visualDepth * INDENT_PX }
 
+  const draggable = useDraggable({
+    id: node.id,
+    data: { type: node.type, parentId: node.parentId },
+  })
+
+  const dropBefore = useDroppable({
+    id: buildDropId.before(node.id),
+    data: { kind: "before", nodeId: node.id, parentId: node.parentId },
+  })
+  const dropInto = useDroppable({
+    id: buildDropId.into(node.id),
+    disabled: !isFolder,
+    data: { kind: "into", nodeId: node.id },
+  })
+  const dropAfter = useDroppable({
+    id: buildDropId.after(node.id),
+    data: { kind: "after", nodeId: node.id, parentId: node.parentId },
+  })
+
+  const rejected = callbacks.rejectedDropTargetIds.has(node.id)
+  const overBefore = callbacks.overDropId === buildDropId.before(node.id) && !rejected
+  const overInto = callbacks.overDropId === buildDropId.into(node.id) && !rejected
+  const overAfter = callbacks.overDropId === buildDropId.after(node.id) && !rejected
+
   const handleRowClick = () => {
-    if (isRenaming) return
+    if (isRenaming || callbacks.activeDragId) return
     if (isFolder) callbacks.onToggleFolder(node.id, !expanded)
     else callbacks.onOpenDocument(node.id)
   }
 
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
+      <div className="relative">
+        {/* top drop zone strip */}
+        <div
+          ref={dropBefore.setNodeRef}
+          className="absolute top-0 left-0 right-0 h-1.5 z-10"
+          aria-hidden
+        />
+        {overBefore && (
           <div
-            role="button"
-            tabIndex={0}
-            onClick={handleRowClick}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                handleRowClick()
-              } else if (e.key === "F2") {
-                e.preventDefault()
-                callbacks.onStartRename(node.id)
-              }
-            }}
-            onMouseEnter={() => setHover(true)}
-            onMouseLeave={() => setHover(false)}
-            className={`group w-full flex items-center gap-1.5 pr-1 py-1 rounded-md text-sm cursor-pointer transition-colors ${
-              isActive
-                ? "bg-white/10 text-foreground"
-                : "text-gray-300 hover:bg-white/5 hover:text-foreground"
-            }`}
-            style={{ ...indentStyle, fontFamily: "system-ui, Inter, sans-serif" }}
-          >
-            {isFolder ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  callbacks.onToggleFolder(node.id, !expanded)
-                }}
-                className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded hover:bg-white/10"
-                aria-label={expanded ? "Collapse" : "Expand"}
+            className="absolute top-0 left-0 right-0 h-0.5 z-20 pointer-events-none"
+            style={{ backgroundColor: "var(--app-text-primary)", boxShadow: "0 0 0 1px var(--app-bg-elevated)" }}
+            aria-hidden
+          />
+        )}
+
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div
+              ref={(el) => {
+                draggable.setNodeRef(el)
+                dropInto.setNodeRef(el)
+              }}
+              {...draggable.attributes}
+              role="button"
+              tabIndex={0}
+              onClick={handleRowClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleRowClick()
+                } else if (e.key === "F2") {
+                  e.preventDefault()
+                  callbacks.onStartRename(node.id)
+                }
+              }}
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
+              className={`group w-full flex items-center gap-1.5 pr-1 py-1 rounded-md text-sm cursor-pointer transition-colors ${
+                isDragging ? "opacity-40" : ""
+              } ${
+                overInto
+                  ? "bg-white/15 text-foreground ring-1 ring-white/25"
+                  : isActive
+                    ? "bg-white/10 text-foreground"
+                    : "text-gray-300 hover:bg-white/5 hover:text-foreground"
+              }`}
+              style={{ ...indentStyle, fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <span
+                {...draggable.listeners}
+                className="flex-shrink-0 w-3 flex items-center justify-center text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-300 cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Drag"
               >
-                <ChevronRight
-                  className="w-3 h-3 transition-transform"
-                  strokeWidth={1.75}
-                  style={{ transform: expanded ? "rotate(90deg)" : "none" }}
-                />
-              </button>
-            ) : (
-              <span className="flex-shrink-0 w-4 h-4" aria-hidden />
-            )}
+                <GripVertical className="w-3 h-3" strokeWidth={1.5} />
+              </span>
 
-            <span className="flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400">
               {isFolder ? (
-                expanded ? (
-                  <FolderOpen className="w-3.5 h-3.5" strokeWidth={1.5} />
-                ) : (
-                  <Folder className="w-3.5 h-3.5" strokeWidth={1.5} />
-                )
-              ) : node.type === "document" && node.icon ? (
-                <span className="text-[13px] leading-none">{node.icon}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    callbacks.onToggleFolder(node.id, !expanded)
+                  }}
+                  className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded hover:bg-white/10"
+                  aria-label={expanded ? "Collapse" : "Expand"}
+                >
+                  <ChevronRight
+                    className="w-3 h-3 transition-transform"
+                    strokeWidth={1.75}
+                    style={{ transform: expanded ? "rotate(90deg)" : "none" }}
+                  />
+                </button>
               ) : (
-                <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <span className="flex-shrink-0 w-4 h-4" aria-hidden />
               )}
-            </span>
 
-            {isRenaming ? (
-              <InlineRename
-                value={label}
-                placeholder={isFolder ? "New folder" : "Untitled"}
-                onCommit={(next) => callbacks.onCommitRename(node.id, next)}
-                onCancel={callbacks.onCancelRename}
-              />
-            ) : (
-              <span className="flex-1 min-w-0 truncate">{displayLabel}</span>
-            )}
-
-            {(hover || isActive) && !isRenaming && (
-              <div className="flex-shrink-0 flex items-center gap-0.5">
-                {isFolder && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-0.5 rounded hover:bg-white/10 text-gray-400 hover:text-foreground"
-                        aria-label="Add inside folder"
-                      >
-                        <Plus className="w-3.5 h-3.5" strokeWidth={1.75} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          callbacks.onCreateDocumentInFolder(node.id)
-                        }}
-                      >
-                        New document
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          callbacks.onCreateFolderInFolder(node.id)
-                        }}
-                      >
-                        New folder
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+              <span className="flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400">
+                {isFolder ? (
+                  expanded ? (
+                    <FolderOpen className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  ) : (
+                    <Folder className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  )
+                ) : node.type === "document" && node.icon ? (
+                  <span className="text-[13px] leading-none">{node.icon}</span>
+                ) : (
+                  <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
                 )}
-                <RowContextMenuTrigger onSelect={(cmd) => runCommand(cmd, node.id, callbacks)} />
-              </div>
-            )}
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => callbacks.onStartRename(node.id)}>
-            Rename
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => callbacks.onDuplicate(node.id)}>
-            Duplicate
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => callbacks.onMoveTo(node.id)}>
-            Move to
-          </ContextMenuItem>
-          {!isFolder && (
-            <ContextMenuItem onClick={() => callbacks.onAddToCanvas(node.id)}>
-              Add to canvas
+              </span>
+
+              {isRenaming ? (
+                <InlineRename
+                  value={label}
+                  placeholder={isFolder ? "New folder" : "Untitled"}
+                  onCommit={(next) => callbacks.onCommitRename(node.id, next)}
+                  onCancel={callbacks.onCancelRename}
+                />
+              ) : (
+                <span className="flex-1 min-w-0 truncate">{displayLabel}</span>
+              )}
+
+              {(hover || isActive) && !isRenaming && !callbacks.activeDragId && (
+                <div className="flex-shrink-0 flex items-center gap-0.5">
+                  {isFolder && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-0.5 rounded hover:bg-white/10 text-gray-400 hover:text-foreground"
+                          aria-label="Add inside folder"
+                        >
+                          <Plus className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            callbacks.onCreateDocumentInFolder(node.id)
+                          }}
+                        >
+                          New document
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            callbacks.onCreateFolderInFolder(node.id)
+                          }}
+                        >
+                          New folder
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <RowMoreMenu
+                    onSelect={(cmd) => runCommand(cmd, node.id, callbacks)}
+                  />
+                </div>
+              )}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-48">
+            <ContextMenuItem onClick={() => callbacks.onStartRename(node.id)}>
+              Rename
             </ContextMenuItem>
-          )}
-          <ContextMenuItem onClick={() => callbacks.onCopyLink(node.id)}>
-            Copy link
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            onClick={() => callbacks.onDelete(node.id)}
-            className="text-red-400 focus:text-red-400"
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+            <ContextMenuItem onClick={() => callbacks.onDuplicate(node.id)}>
+              Duplicate
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => callbacks.onMoveTo(node.id)}>
+              Move to
+            </ContextMenuItem>
+            {!isFolder && (
+              <ContextMenuItem onClick={() => callbacks.onAddToCanvas(node.id)}>
+                Add to canvas
+              </ContextMenuItem>
+            )}
+            <ContextMenuItem onClick={() => callbacks.onCopyLink(node.id)}>
+              Copy link
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onClick={() => callbacks.onDelete(node.id)}
+              className="text-red-400 focus:text-red-400"
+            >
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+
+        {/* bottom drop zone strip */}
+        <div
+          ref={dropAfter.setNodeRef}
+          className="absolute bottom-0 left-0 right-0 h-1.5 z-10"
+          aria-hidden
+        />
+        {overAfter && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-0.5 z-20 pointer-events-none"
+            style={{ backgroundColor: "var(--app-text-primary)", boxShadow: "0 0 0 1px var(--app-bg-elevated)" }}
+            aria-hidden
+          />
+        )}
+      </div>
 
       {isFolder && expanded && children.length > 0 && (
         <div>
@@ -259,7 +340,7 @@ function runCommand(
   }
 }
 
-function RowContextMenuTrigger({
+function RowMoreMenu({
   onSelect,
 }: {
   onSelect: (cmd: RowCommand) => void
