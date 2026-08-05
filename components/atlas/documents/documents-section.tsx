@@ -24,11 +24,29 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useDocumentsStore } from "@/lib/documents/store"
 import { ancestorChain, buildTree, isDescendantOf } from "@/lib/documents/tree"
+import { findBacklinks, type Backlink } from "@/lib/documents/backlinks"
+import type { Canvas } from "@/lib/atlas-types"
 import { TreeRow, type TreeRowCallbacks } from "./tree-row"
 import { buildDropId, parseDropId, type DropZone } from "./dnd/drop-zone"
 import { useHoverAutoExpand } from "./dnd/hover-auto-expand"
 
-export function DocumentsSection() {
+export interface DocumentsSectionProps {
+  canvases?: Canvas[]
+  activeCanvasId?: string | null
+  onAddDocumentToCanvas?: (args: {
+    docId: string
+    canvasId: string
+    position?: { x: number; y: number }
+  }) => void
+  onNavigateToCanvas?: (canvasId: string, nodeId?: string) => void
+}
+
+export function DocumentsSection({
+  canvases = [],
+  activeCanvasId = null,
+  onAddDocumentToCanvas,
+  onNavigateToCanvas,
+}: DocumentsSectionProps = {}) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -145,9 +163,41 @@ export function DocumentsSection() {
     }
   }, [])
 
-  const handleAddToCanvas = useCallback((_id: string) => {
-    toast("Add to canvas ships in a later phase")
-  }, [])
+  const backlinksByDocId = useMemo(() => {
+    const map = new Map<string, Backlink[]>()
+    if (!canvases.length) return map
+    for (const id of Object.keys(tree)) {
+      if (tree[id]?.type !== "document") continue
+      const bls = findBacklinks(canvases, id)
+      if (bls.length) map.set(id, bls)
+    }
+    return map
+  }, [tree, canvases])
+
+  const handleAddToCanvas = useCallback(
+    (docId: string, canvasId?: string) => {
+      if (!onAddDocumentToCanvas) {
+        toast("No canvas is available to add to yet")
+        return
+      }
+      const targetId = canvasId ?? activeCanvasId ?? canvases[0]?.id
+      if (!targetId) {
+        toast("Create a canvas first")
+        return
+      }
+      onAddDocumentToCanvas({ docId, canvasId: targetId })
+      const canvas = canvases.find((c) => c.id === targetId)
+      toast.success(`Added to canvas${canvas ? ` "${canvas.name}"` : ""}`)
+    },
+    [onAddDocumentToCanvas, activeCanvasId, canvases],
+  )
+
+  const handleNavigateBacklink = useCallback(
+    (canvasId: string, nodeId?: string) => {
+      onNavigateToCanvas?.(canvasId, nodeId)
+    },
+    [onNavigateToCanvas],
+  )
 
   const handleMoveTo = useCallback((_id: string) => {
     toast("Move to ships in a later phase")
@@ -201,8 +251,13 @@ export function DocumentsSection() {
       onDuplicate: handleDuplicate,
       onDelete: handleDelete,
       onCopyLink: handleCopyLink,
-      onAddToCanvas: handleAddToCanvas,
+      onAddToCanvas: (id) => handleAddToCanvas(id),
+      onAddToCanvasSpecific: (id, canvasId) => handleAddToCanvas(id, canvasId),
+      onNavigateToCanvas: handleNavigateBacklink,
       onMoveTo: handleMoveTo,
+      canvases,
+      activeCanvasId,
+      backlinksByDocId,
       activeDocId,
       ancestorsOfActive,
       renamingId,
@@ -222,7 +277,11 @@ export function DocumentsSection() {
       handleDelete,
       handleCopyLink,
       handleAddToCanvas,
+      handleNavigateBacklink,
       handleMoveTo,
+      canvases,
+      activeCanvasId,
+      backlinksByDocId,
       activeDocId,
       ancestorsOfActive,
       renamingId,

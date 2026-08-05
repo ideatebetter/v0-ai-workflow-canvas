@@ -1576,7 +1576,30 @@ const [showSageChat, setShowSageChat] = useState(false);
             </button>
           </div>
 
-          <DocumentsSection />
+          <DocumentsSection
+            canvases={canvases}
+            onNavigateToCanvas={(canvasId) => onOpenCanvas(canvasId)}
+            onAddDocumentToCanvas={({ docId, canvasId, position }) => {
+              onCanvasesChange(
+                canvases.map((c) => {
+                  if (c.id !== canvasId) return c;
+                  const newNode: AtlasNode = {
+                    id: `doc-node-${crypto.randomUUID()}`,
+                    type: "document",
+                    position: position ?? { x: 240, y: 200 },
+                    width: 380,
+                    height: 260,
+                    data: { docId, displayMode: "card" },
+                  };
+                  return {
+                    ...c,
+                    nodes: [...c.nodes, newNode],
+                    updatedAt: new Date().toISOString(),
+                  };
+                }),
+              );
+            }}
+          />
         </div>
 
         {/* User Section */}

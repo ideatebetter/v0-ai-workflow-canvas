@@ -6,6 +6,7 @@ import {
   Folder,
   FolderOpen,
   GripVertical,
+  Link2,
   MoreHorizontal,
   Plus,
 } from "lucide-react"
@@ -16,6 +17,9 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import {
@@ -26,6 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { TreeNodeWithChildren } from "@/lib/documents/types"
+import type { Backlink } from "@/lib/documents/backlinks"
+import type { Canvas } from "@/lib/atlas-types"
 import { InlineRename } from "./inline-rename"
 import { buildDropId } from "./dnd/drop-zone"
 
@@ -44,7 +50,12 @@ export interface TreeRowCallbacks {
   onDelete: (id: string) => void
   onCopyLink: (id: string) => void
   onAddToCanvas: (id: string) => void
+  onAddToCanvasSpecific: (id: string, canvasId: string) => void
+  onNavigateToCanvas: (canvasId: string, nodeId?: string) => void
   onMoveTo: (id: string) => void
+  canvases: Canvas[]
+  activeCanvasId: string | null
+  backlinksByDocId: Map<string, Backlink[]>
   activeDocId: string | null
   ancestorsOfActive: Set<string>
   renamingId: string | null
@@ -72,6 +83,7 @@ export function TreeRow({
 
   const label = isFolder ? node.name : node.title
   const displayLabel = label || (isFolder ? "New folder" : "Untitled")
+  const backlinks = !isFolder ? callbacks.backlinksByDocId.get(node.id) ?? [] : []
 
   const visualDepth = Math.min(depth, MAX_INDENT_LEVEL)
   const indentStyle = { paddingLeft: 8 + visualDepth * INDENT_PX }
@@ -207,7 +219,19 @@ export function TreeRow({
                   onCancel={callbacks.onCancelRename}
                 />
               ) : (
-                <span className="flex-1 min-w-0 truncate">{displayLabel}</span>
+                <>
+                  <span className="flex-1 min-w-0 truncate">{displayLabel}</span>
+                  {backlinks.length > 0 && !hover && (
+                    <span
+                      className="flex-shrink-0 flex items-center gap-0.5 text-[10px] text-gray-500"
+                      title={`On ${backlinks.length} canvas${backlinks.length === 1 ? "" : "es"}`}
+                      aria-label={`On ${backlinks.length} canvas${backlinks.length === 1 ? "" : "es"}`}
+                    >
+                      <Link2 className="w-3 h-3" strokeWidth={1.5} />
+                      {backlinks.length}
+                    </span>
+                  )}
+                </>
               )}
 
               {(hover || isActive) && !isRenaming && !callbacks.activeDragId && (
@@ -251,7 +275,7 @@ export function TreeRow({
               )}
             </div>
           </ContextMenuTrigger>
-          <ContextMenuContent className="w-48">
+          <ContextMenuContent className="w-52">
             <ContextMenuItem onClick={() => callbacks.onStartRename(node.id)}>
               Rename
             </ContextMenuItem>
@@ -262,9 +286,73 @@ export function TreeRow({
               Move to
             </ContextMenuItem>
             {!isFolder && (
-              <ContextMenuItem onClick={() => callbacks.onAddToCanvas(node.id)}>
-                Add to canvas
-              </ContextMenuItem>
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>Add to canvas</ContextMenuSubTrigger>
+                <ContextMenuSubContent className="w-60 max-h-72 overflow-y-auto">
+                  {callbacks.canvases.length === 0 ? (
+                    <ContextMenuItem disabled>No canvases yet</ContextMenuItem>
+                  ) : (
+                    <>
+                      {callbacks.activeCanvasId && (
+                        <>
+                          {(() => {
+                            const active = callbacks.canvases.find(
+                              (c) => c.id === callbacks.activeCanvasId,
+                            )
+                            if (!active) return null
+                            return (
+                              <>
+                                <ContextMenuItem
+                                  onClick={() =>
+                                    callbacks.onAddToCanvasSpecific(node.id, active.id)
+                                  }
+                                >
+                                  {active.name}{" "}
+                                  <span className="ml-auto text-[10px] text-gray-500">
+                                    current
+                                  </span>
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                              </>
+                            )
+                          })()}
+                        </>
+                      )}
+                      {callbacks.canvases
+                        .filter((c) => c.id !== callbacks.activeCanvasId)
+                        .map((c) => (
+                          <ContextMenuItem
+                            key={c.id}
+                            onClick={() =>
+                              callbacks.onAddToCanvasSpecific(node.id, c.id)
+                            }
+                          >
+                            {c.name}
+                          </ContextMenuItem>
+                        ))}
+                    </>
+                  )}
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+            )}
+            {!isFolder && backlinks.length > 0 && (
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>
+                  On {backlinks.length} canvas{backlinks.length === 1 ? "" : "es"}
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent className="w-60 max-h-72 overflow-y-auto">
+                  {backlinks.map((bl) => (
+                    <ContextMenuItem
+                      key={`${bl.canvasId}:${bl.nodeId}`}
+                      onClick={() =>
+                        callbacks.onNavigateToCanvas(bl.canvasId, bl.nodeId)
+                      }
+                    >
+                      {bl.canvasName}
+                    </ContextMenuItem>
+                  ))}
+                </ContextMenuSubContent>
+              </ContextMenuSub>
             )}
             <ContextMenuItem onClick={() => callbacks.onCopyLink(node.id)}>
               Copy link
