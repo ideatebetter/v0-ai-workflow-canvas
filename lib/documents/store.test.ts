@@ -177,6 +177,45 @@ describe("deleteNode", () => {
   })
 })
 
+describe("tombstones + restore", () => {
+  it("moves deleted documents into a tombstones slice", () => {
+    const store = makeStore()
+    const id = store.getState().createDocument({ title: "Draft" })
+    store.getState().deleteNode(id)
+    expect(store.getState().tree[id]).toBeUndefined()
+    const t = store.getState().tombstones[id]
+    expect(t?.title).toBe("Draft")
+  })
+
+  it("cascade delete tombstones every descendant document but not folders", () => {
+    const store = makeStore()
+    const root = store.getState().createFolder({ name: "root" })
+    const a = store.getState().createDocument({ parentId: root, title: "A" })
+    const b = store.getState().createDocument({ parentId: root, title: "B" })
+    store.getState().deleteNode(root)
+    const ts = store.getState().tombstones
+    expect(Object.keys(ts).sort()).toEqual([a, b].sort())
+    expect(ts[root]).toBeUndefined()
+  })
+
+  it("restoreDocument brings a document back at the root", () => {
+    const store = makeStore()
+    const id = store.getState().createDocument({ title: "Draft" })
+    store.getState().deleteNode(id)
+    const restored = store.getState().restoreDocument(id)
+    expect(restored).toBe(id)
+    const node = store.getState().tree[id]
+    expect(node?.type === "document" && node.title).toBe("Draft")
+    expect(node?.parentId).toBeNull()
+    expect(store.getState().tombstones[id]).toBeUndefined()
+  })
+
+  it("restoreDocument returns null for an unknown id", () => {
+    const store = makeStore()
+    expect(store.getState().restoreDocument("nope")).toBeNull()
+  })
+})
+
 describe("duplicateNode", () => {
   it("clones a document with a new id and ' copy' suffix", () => {
     const store = makeStore()

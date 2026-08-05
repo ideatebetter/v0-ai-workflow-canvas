@@ -1,8 +1,9 @@
 "use client"
 
 import { NodeResizer, useReactFlow, useViewport, type NodeProps } from "@xyflow/react"
-import { FileText, Maximize2 } from "lucide-react"
+import { FileText, Maximize2, RotateCcw, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import { SmartHandles } from "../smart-handles"
 import { DocumentEditor } from "../documents/document-editor"
 import { useDocumentsStore } from "@/lib/documents/store"
@@ -30,6 +31,8 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
   const doc = useDocumentsStore(
     (s) => s.tree[docId] as DocumentNodeType | undefined,
   )
+  const tombstone = useDocumentsStore((s) => s.tombstones[docId])
+  const restoreDocument = useDocumentsStore((s) => s.restoreDocument)
 
   const enterPanel = useCallback(() => {
     if (displayMode === "panel") return
@@ -65,7 +68,7 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
       ? "var(--app-text-primary)"
       : "var(--app-border-strong)"
 
-  if (!hydrated || !doc) {
+  if (!hydrated) {
     return (
       <div
         style={{
@@ -81,7 +84,61 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
         }}
       >
         <SmartHandles nodeId={id} />
-        {!hydrated ? "Loading document…" : "Document unavailable"}
+        Loading document…
+      </div>
+    )
+  }
+
+  if (!doc) {
+    return (
+      <div
+        style={{
+          width: MIN_W,
+          padding: 12,
+          background: "var(--app-card-elevated)",
+          border: `1px dashed ${tombstone ? "var(--app-border-strong)" : borderColor}`,
+          borderRadius: 10,
+          fontFamily: "system-ui, Inter, sans-serif",
+          fontSize: 13,
+          color: "var(--app-text-muted)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        <SmartHandles nodeId={id} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Trash2 style={{ width: 14, height: 14 }} strokeWidth={1.5} />
+          <span style={{ color: "var(--app-text-primary)" }}>
+            {tombstone ? `Deleted · ${tombstone.title || "Untitled"}` : "Document unavailable"}
+          </span>
+        </div>
+        {tombstone && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              const restored = restoreDocument(tombstone.id)
+              if (restored) toast.success("Document restored")
+            }}
+            style={{
+              alignSelf: "flex-start",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 8px",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid var(--app-border-strong)",
+              color: "var(--app-text-primary)",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+          >
+            <RotateCcw style={{ width: 12, height: 12 }} strokeWidth={1.5} />
+            Restore
+          </button>
+        )}
       </div>
     )
   }

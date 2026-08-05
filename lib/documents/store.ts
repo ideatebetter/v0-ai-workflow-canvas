@@ -12,6 +12,16 @@ import { emptyDocContent } from "./types"
 import { childrenOf, collectDescendantIds, isDescendantOf } from "./tree"
 import { orderAfter, orderBetween } from "./fractional"
 
+export interface Tombstone {
+  id: NodeId
+  title: string
+  icon: string | null
+  content: DocContent
+  deletedAt: number
+}
+
+export type TombstoneMap = Record<NodeId, Tombstone>
+
 const STORAGE_KEY = "atlas:v1:docs"
 const STORAGE_VERSION = 1
 
@@ -31,6 +41,7 @@ const lastOrderAmong = (state: TreeState, parentId: NodeId | null): string | nul
 
 export interface DocumentsState {
   tree: TreeState
+  tombstones: TombstoneMap
 
   createFolder: (input: { parentId?: NodeId | null; name?: string }) => NodeId
   createDocument: (input: {
@@ -52,6 +63,8 @@ export interface DocumentsState {
   }) => { ok: true } | { ok: false; reason: "cycle" | "missing" | "invalid" }
 
   deleteNode: (id: NodeId) => NodeId[]
+
+  restoreDocument: (id: NodeId) => NodeId | null
 
   duplicateNode: (id: NodeId) => NodeId | null
 }
@@ -104,6 +117,7 @@ export const createDocumentsStore = () =>
     persist(
       (set, get) => ({
         tree: {},
+        tombstones: {},
 
         createFolder: ({ parentId = null, name = "New folder" }) => {
           const id = newId()
@@ -213,9 +227,49 @@ export const createDocumentsStore = () =>
           const descendants = collectDescendantIds(state, id)
           const removed = [id, ...descendants]
           const patch: Record<NodeId, TreeNode | null> = {}
-          for (const removedId of removed) patch[removedId] = null
-          set({ tree: applyPatch(state, patch) })
+          const tombstonePatch: TombstoneMap = {}
+          const now = Date.now()
+          for (const removedId of removed) {
+            const node = state[removedId]
+            if (node?.type === "document") {
+              tombstonePatch[removedId] = {
+                id: removedId,
+                title: node.title,
+                icon: node.icon,
+                content: node.content,
+                deletedAt: now,
+              }
+            }
+            patch[removedId] = null
+          }
+          set({
+            tree: applyPatch(state, patch),
+            tombstones: { ...get().tombstones, ...tombstonePatch },
+          })
           return removed
+        },
+
+        restoreDocument: (id) => {
+          const t = get().tombstones[id]
+          if (!t) return null
+          const now = Date.now()
+          const restored: DocumentNode = {
+            id: t.id,
+            type: "document",
+            parentId: null,
+            title: t.title,
+            icon: t.icon,
+            order: orderForNewChild(get().tree, null),
+            content: t.content,
+            createdAt: now,
+            updatedAt: now,
+          }
+          const { [id]: _, ...remaining } = get().tombstones
+          set({
+            tree: applyPatch(get().tree, { [id]: restored }),
+            tombstones: remaining,
+          })
+          return id
         },
 
         duplicateNode: (id) => {
@@ -277,7 +331,7 @@ export const createDocumentsStore = () =>
         migrate: (persisted, _version) => {
           return persisted as DocumentsState
         },
-        partialize: (s) => ({ tree: s.tree }),
+        partialize: (s) => ({ tree: s.tree, tombstones: s.tombstones }),
       },
     ),
   )

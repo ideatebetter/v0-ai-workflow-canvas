@@ -1,7 +1,7 @@
 "use client"
 
-import { FileText, Plus } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { FileText, FolderClosed, Plus, Search, X } from "lucide-react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
@@ -25,6 +25,7 @@ import {
 import { useDocumentsStore } from "@/lib/documents/store"
 import { ancestorChain, buildTree, isDescendantOf } from "@/lib/documents/tree"
 import { findBacklinks, type Backlink } from "@/lib/documents/backlinks"
+import { searchDocuments } from "@/lib/documents/search"
 import type { Canvas } from "@/lib/atlas-types"
 import { TreeRow, type TreeRowCallbacks } from "./tree-row"
 import { buildDropId, parseDropId, type DropZone } from "./dnd/drop-zone"
@@ -62,8 +63,14 @@ export function DocumentsSection({
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [overDropId, setOverDropId] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
   const treeRef = useRef(tree)
   treeRef.current = tree
+
+  const searchResults = useMemo(() => {
+    if (!query.trim()) return null
+    return searchDocuments(tree, query)
+  }, [tree, query])
 
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
@@ -370,6 +377,39 @@ export function DocumentsSection({
 
   const isEmpty = rendered.length === 0
 
+  const treeContainerRef = useRef<HTMLDivElement | null>(null)
+  const focusRowByOffset = useCallback((offset: 1 | -1) => {
+    const root = treeContainerRef.current
+    if (!root) return
+    const rows = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-doc-row-id]'),
+    )
+    if (rows.length === 0) return
+    const active = document.activeElement as HTMLElement | null
+    const idx = active ? rows.indexOf(active) : -1
+    const nextIdx =
+      idx === -1
+        ? offset === 1
+          ? 0
+          : rows.length - 1
+        : (idx + offset + rows.length) % rows.length
+    rows[nextIdx]?.focus()
+  }, [])
+
+  const onSectionKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (renamingId) return
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        focusRowByOffset(1)
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault()
+        focusRowByOffset(-1)
+      }
+    },
+    [focusRowByOffset, renamingId],
+  )
+
   if (!hydrated) {
     return (
       <div className="mb-6">
@@ -415,6 +455,38 @@ export function DocumentsSection({
         </DropdownMenu>
       </div>
 
+      {!isEmpty && (
+        <div className="px-2 pb-1.5">
+          <div
+            className="relative flex items-center rounded-md"
+            style={{
+              backgroundColor: "var(--app-card-elevated)",
+              border: "1px solid var(--app-border)",
+            }}
+          >
+            <Search className="w-3.5 h-3.5 text-gray-500 ml-2 flex-shrink-0" strokeWidth={1.5} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search documents"
+              className="flex-1 min-w-0 bg-transparent border-0 outline-none px-2 py-1 text-xs text-foreground placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-white/25 rounded-md"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="p-1 mr-1 text-gray-500 hover:text-foreground rounded"
+                aria-label="Clear search"
+              >
+                <X className="w-3 h-3" strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {isEmpty ? (
         <div
           className="mx-2 mt-1 rounded-lg border border-dashed p-3 text-center"
@@ -439,6 +511,55 @@ export function DocumentsSection({
             New document
           </button>
         </div>
+      ) : searchResults ? (
+        <div className="px-2" ref={treeContainerRef} onKeyDown={onSectionKeyDown}>
+          {searchResults.length === 0 ? (
+            <p
+              className="text-xs text-gray-500 px-1 py-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              No matches for &ldquo;{query}&rdquo;
+            </p>
+          ) : (
+            searchResults.map((r) => (
+              <div
+                key={r.node.id}
+                data-doc-row-id={r.node.id}
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  r.node.type === "document"
+                    ? openDocument(r.node.id)
+                    : setQuery("")
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    if (r.node.type === "document") openDocument(r.node.id)
+                  }
+                }}
+                className="flex flex-col items-start gap-0 px-2 py-1.5 rounded-md cursor-pointer hover:bg-white/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/25"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                <div className="flex items-center gap-1.5 w-full min-w-0">
+                  {r.node.type === "folder" ? (
+                    <FolderClosed className="w-3 h-3 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  ) : (
+                    <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                  )}
+                  <span className="text-sm text-foreground truncate">
+                    {r.node.type === "folder" ? r.node.name : r.node.title || "Untitled"}
+                  </span>
+                </div>
+                {r.breadcrumb.length > 0 && (
+                  <div className="pl-4 text-[10px] text-gray-500 truncate w-full">
+                    {r.breadcrumb.join(" / ")}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       ) : (
         <DndContext
           sensors={sensors}
@@ -451,7 +572,7 @@ export function DocumentsSection({
             setOverDropId(null)
           }}
         >
-          <div className="pr-1">
+          <div className="pr-1" ref={treeContainerRef} onKeyDown={onSectionKeyDown}>
             {rendered.map((entry) => (
               <TreeRow key={entry.node.id} entry={entry} callbacks={callbacks} />
             ))}

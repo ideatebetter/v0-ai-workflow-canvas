@@ -145,6 +145,7 @@ export function TreeRow({
               {...draggable.attributes}
               role="button"
               tabIndex={0}
+              data-doc-row-id={node.id}
               onClick={handleRowClick}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -153,11 +154,25 @@ export function TreeRow({
                 } else if (e.key === "F2") {
                   e.preventDefault()
                   callbacks.onStartRename(node.id)
+                } else if (e.key === "Delete" || e.key === "Backspace") {
+                  if (isRenaming) return
+                  e.preventDefault()
+                  callbacks.onDelete(node.id)
+                } else if (isFolder && e.key === "ArrowRight") {
+                  if (!expanded) {
+                    e.preventDefault()
+                    callbacks.onToggleFolder(node.id, true)
+                  }
+                } else if (isFolder && e.key === "ArrowLeft") {
+                  if (expanded) {
+                    e.preventDefault()
+                    callbacks.onToggleFolder(node.id, false)
+                  }
                 }
               }}
               onMouseEnter={() => setHover(true)}
               onMouseLeave={() => setHover(false)}
-              className={`group w-full flex items-center gap-1.5 pr-1 py-1 rounded-md text-sm cursor-pointer transition-colors ${
+              className={`group w-full flex items-center gap-1.5 pr-1 py-1 rounded-md text-sm cursor-pointer transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 ${
                 isDragging ? "opacity-40" : ""
               } ${
                 overInto
@@ -188,7 +203,7 @@ export function TreeRow({
                   aria-label={expanded ? "Collapse" : "Expand"}
                 >
                   <ChevronRight
-                    className="w-3 h-3 transition-transform"
+                    className="w-3 h-3 transition-transform motion-reduce:transition-none"
                     strokeWidth={1.75}
                     style={{ transform: expanded ? "rotate(90deg)" : "none" }}
                   />
