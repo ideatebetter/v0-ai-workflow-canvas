@@ -22,6 +22,7 @@ import { DefaultChatTransport } from "ai";
 import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
 import { TimeTrackingPage } from "./time-tracking-page";
+import { DocumentsSection } from "./documents/documents-section";
 
 type SidebarFilter = "all" | "workspace" | "private";
 type HomeView = "home" | "canvases" | "community" | "frameworks" | "workspace-canvas" | "settings" | "all-files" | "todos" | "time-tracking";
@@ -1574,6 +1575,8 @@ const [showSageChat, setShowSageChat] = useState(false);
               All Private
             </button>
           </div>
+
+          <DocumentsSection />
         </div>
 
         {/* User Section */}

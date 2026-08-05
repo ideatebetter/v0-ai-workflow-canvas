@@ -1,0 +1,305 @@
+"use client"
+
+import {
+  ChevronRight,
+  FileText,
+  Folder,
+  FolderOpen,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react"
+import { useState } from "react"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { TreeNodeWithChildren } from "@/lib/documents/types"
+import { InlineRename } from "./inline-rename"
+
+const INDENT_PX = 12
+const MAX_INDENT_LEVEL = 6
+
+export interface TreeRowCallbacks {
+  onOpenDocument: (id: string) => void
+  onToggleFolder: (id: string, next: boolean) => void
+  onStartRename: (id: string) => void
+  onCommitRename: (id: string, name: string) => void
+  onCancelRename: () => void
+  onCreateDocumentInFolder: (parentId: string) => void
+  onCreateFolderInFolder: (parentId: string) => void
+  onDuplicate: (id: string) => void
+  onDelete: (id: string) => void
+  onCopyLink: (id: string) => void
+  onAddToCanvas: (id: string) => void
+  onMoveTo: (id: string) => void
+  activeDocId: string | null
+  ancestorsOfActive: Set<string>
+  renamingId: string | null
+}
+
+export function TreeRow({
+  entry,
+  callbacks,
+}: {
+  entry: TreeNodeWithChildren
+  callbacks: TreeRowCallbacks
+}) {
+  const { node, depth, children } = entry
+  const [hover, setHover] = useState(false)
+
+  const isFolder = node.type === "folder"
+  const isActive = !isFolder && callbacks.activeDocId === node.id
+  const forceExpanded = isFolder && callbacks.ancestorsOfActive.has(node.id)
+  const expanded = isFolder && (forceExpanded || !node.collapsed)
+  const isRenaming = callbacks.renamingId === node.id
+
+  const label = isFolder ? node.name : node.title
+  const displayLabel = label || (isFolder ? "New folder" : "Untitled")
+
+  const visualDepth = Math.min(depth, MAX_INDENT_LEVEL)
+  const indentStyle = { paddingLeft: 8 + visualDepth * INDENT_PX }
+
+  const handleRowClick = () => {
+    if (isRenaming) return
+    if (isFolder) callbacks.onToggleFolder(node.id, !expanded)
+    else callbacks.onOpenDocument(node.id)
+  }
+
+  return (
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleRowClick}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleRowClick()
+              } else if (e.key === "F2") {
+                e.preventDefault()
+                callbacks.onStartRename(node.id)
+              }
+            }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            className={`group w-full flex items-center gap-1.5 pr-1 py-1 rounded-md text-sm cursor-pointer transition-colors ${
+              isActive
+                ? "bg-white/10 text-foreground"
+                : "text-gray-300 hover:bg-white/5 hover:text-foreground"
+            }`}
+            style={{ ...indentStyle, fontFamily: "system-ui, Inter, sans-serif" }}
+          >
+            {isFolder ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  callbacks.onToggleFolder(node.id, !expanded)
+                }}
+                className="flex-shrink-0 flex items-center justify-center w-4 h-4 rounded hover:bg-white/10"
+                aria-label={expanded ? "Collapse" : "Expand"}
+              >
+                <ChevronRight
+                  className="w-3 h-3 transition-transform"
+                  strokeWidth={1.75}
+                  style={{ transform: expanded ? "rotate(90deg)" : "none" }}
+                />
+              </button>
+            ) : (
+              <span className="flex-shrink-0 w-4 h-4" aria-hidden />
+            )}
+
+            <span className="flex-shrink-0 flex items-center justify-center w-4 h-4 text-gray-400">
+              {isFolder ? (
+                expanded ? (
+                  <FolderOpen className="w-3.5 h-3.5" strokeWidth={1.5} />
+                ) : (
+                  <Folder className="w-3.5 h-3.5" strokeWidth={1.5} />
+                )
+              ) : node.type === "document" && node.icon ? (
+                <span className="text-[13px] leading-none">{node.icon}</span>
+              ) : (
+                <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
+              )}
+            </span>
+
+            {isRenaming ? (
+              <InlineRename
+                value={label}
+                placeholder={isFolder ? "New folder" : "Untitled"}
+                onCommit={(next) => callbacks.onCommitRename(node.id, next)}
+                onCancel={callbacks.onCancelRename}
+              />
+            ) : (
+              <span className="flex-1 min-w-0 truncate">{displayLabel}</span>
+            )}
+
+            {(hover || isActive) && !isRenaming && (
+              <div className="flex-shrink-0 flex items-center gap-0.5">
+                {isFolder && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-0.5 rounded hover:bg-white/10 text-gray-400 hover:text-foreground"
+                        aria-label="Add inside folder"
+                      >
+                        <Plus className="w-3.5 h-3.5" strokeWidth={1.75} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          callbacks.onCreateDocumentInFolder(node.id)
+                        }}
+                      >
+                        New document
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          callbacks.onCreateFolderInFolder(node.id)
+                        }}
+                      >
+                        New folder
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <RowContextMenuTrigger onSelect={(cmd) => runCommand(cmd, node.id, callbacks)} />
+              </div>
+            )}
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-48">
+          <ContextMenuItem onClick={() => callbacks.onStartRename(node.id)}>
+            Rename
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => callbacks.onDuplicate(node.id)}>
+            Duplicate
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => callbacks.onMoveTo(node.id)}>
+            Move to
+          </ContextMenuItem>
+          {!isFolder && (
+            <ContextMenuItem onClick={() => callbacks.onAddToCanvas(node.id)}>
+              Add to canvas
+            </ContextMenuItem>
+          )}
+          <ContextMenuItem onClick={() => callbacks.onCopyLink(node.id)}>
+            Copy link
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            onClick={() => callbacks.onDelete(node.id)}
+            className="text-red-400 focus:text-red-400"
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      {isFolder && expanded && children.length > 0 && (
+        <div>
+          {children.map((child) => (
+            <TreeRow key={child.node.id} entry={child} callbacks={callbacks} />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+type RowCommand =
+  | "rename"
+  | "duplicate"
+  | "moveTo"
+  | "addToCanvas"
+  | "copyLink"
+  | "delete"
+
+function runCommand(
+  cmd: RowCommand,
+  id: string,
+  callbacks: TreeRowCallbacks,
+): void {
+  switch (cmd) {
+    case "rename":
+      callbacks.onStartRename(id)
+      break
+    case "duplicate":
+      callbacks.onDuplicate(id)
+      break
+    case "moveTo":
+      callbacks.onMoveTo(id)
+      break
+    case "addToCanvas":
+      callbacks.onAddToCanvas(id)
+      break
+    case "copyLink":
+      callbacks.onCopyLink(id)
+      break
+    case "delete":
+      callbacks.onDelete(id)
+      break
+  }
+}
+
+function RowContextMenuTrigger({
+  onSelect,
+}: {
+  onSelect: (cmd: RowCommand) => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="p-0.5 rounded hover:bg-white/10 text-gray-400 hover:text-foreground"
+          aria-label="More"
+        >
+          <MoreHorizontal className="w-3.5 h-3.5" strokeWidth={1.75} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={() => onSelect("rename")}>
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSelect("duplicate")}>
+          Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSelect("moveTo")}>
+          Move to
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSelect("addToCanvas")}>
+          Add to canvas
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSelect("copyLink")}>
+          Copy link
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => onSelect("delete")}
+          className="text-red-400 focus:text-red-400"
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}

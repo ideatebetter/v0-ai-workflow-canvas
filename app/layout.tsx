@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { ResizeObserverErrorSuppressor } from "@/components/resize-observer-suppressor"
+import { Toaster } from "sonner"
 
 import './globals.css'
 
@@ -33,6 +34,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <Toaster theme="dark" position="bottom-right" richColors closeButton />
           </AuthProvider>
         </ThemeProvider>
       </body>
