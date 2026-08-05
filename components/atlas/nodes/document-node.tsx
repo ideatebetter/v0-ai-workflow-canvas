@@ -2,11 +2,11 @@
 
 import { NodeResizer, useReactFlow, useViewport, type NodeProps } from "@xyflow/react"
 import { FileText, Maximize2 } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { SmartHandles } from "../smart-handles"
 import { DocumentEditor } from "../documents/document-editor"
 import { useDocumentsStore } from "@/lib/documents/store"
+import { useDocumentOverlayStore } from "@/lib/documents/overlay-store"
 import type {
   DocumentCanvasNodeData,
   DocumentNode as DocumentNodeType,
@@ -21,7 +21,8 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
   const { docId, displayMode = "card" } = data as unknown as AtlasDocumentNodeData
   const { setNodes } = useReactFlow()
   const { zoom } = useViewport()
-  const router = useRouter()
+  const openOverlay = useDocumentOverlayStore((s) => s.open)
+  const editorContainerRef = useRef<HTMLDivElement | null>(null)
 
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => setHydrated(true), [])
@@ -52,7 +53,7 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
     )
   }, [displayMode, id, setNodes])
 
-  const openFull = useCallback(() => router.push(`/doc/${docId}`), [router, docId])
+  const openFull = useCallback(() => openOverlay(docId), [openOverlay, docId])
 
   const isPanel = displayMode === "panel"
   const isCard = !isPanel
@@ -198,17 +199,31 @@ export function DocumentNode({ id, data, selected }: NodeProps) {
       </div>
 
       <div
+        ref={editorContainerRef}
+        className={isPanel ? "nodrag nowheel" : ""}
         style={{
           flex: 1,
           minHeight: 0,
-          overflow: "hidden",
+          overflow: isPanel ? "auto" : "hidden",
           position: "relative",
         }}
         onKeyDown={(e) => {
-          if (isPanel && e.key === "Escape") {
+          if (!isPanel) return
+          if (e.key === "Escape") {
+            e.preventDefault()
             e.stopPropagation()
             exitPanel()
+            return
           }
+          // Prevent React Flow keyboard shortcuts (delete, backspace,
+          // and single-letter tool switches) from firing while editing.
+          e.stopPropagation()
+        }}
+        onKeyDownCapture={(e) => {
+          if (isPanel) e.stopPropagation()
+        }}
+        onPointerDown={(e) => {
+          if (isPanel) e.stopPropagation()
         }}
       >
         <DocumentEditor
