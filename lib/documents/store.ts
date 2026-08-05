@@ -289,3 +289,13 @@ const noopStorage = {
 }
 
 export const useDocumentsStore = createDocumentsStore()
+
+// Cross-tab sync: if another tab writes to atlas:v1:docs, rehydrate this
+// store from storage so open canvases reflect edits made in the doc editor.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) {
+      void useDocumentsStore.persist.rehydrate()
+    }
+  })
+}

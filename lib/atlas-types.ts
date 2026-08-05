@@ -854,11 +854,20 @@ export interface DocFrameNodeData {
   collapsed?: boolean;
 }
 
+// Reference to a document that lives in the tree (see lib/documents/*).
+// Canvas nodes of type "document" store ONLY the docId + display mode; the
+// content is fetched from the documents store, so a single document can
+// appear on multiple canvases with edits propagating everywhere.
+export interface DocumentCanvasNodeData {
+  docId: string;
+  displayMode?: "card" | "panel";
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt" | "presentationGroup" | "docFrame";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt" | "presentationGroup" | "docFrame" | "document";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | DocFrameNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | DocFrameNodeData | DocumentCanvasNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

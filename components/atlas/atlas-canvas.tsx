@@ -42,6 +42,7 @@ import { AIPromptNode } from "./nodes/ai-prompt-node";
 import { BriefInputNode } from "./nodes/brief-input-node";
 import { PresentationGroupNode } from "./presentation-group-node";
 import { DocFrameNode } from "./doc-frame-node";
+import { DocumentNode } from "./nodes/document-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
 import { SelectionBox } from "./selection-box";
@@ -69,6 +70,7 @@ const nodeTypes: NodeTypes = {
   briefInput: BriefInputNode,
   presentationGroup: PresentationGroupNode,
   docFrame: DocFrameNode,
+  document: DocumentNode,
 };
 
 interface AtlasCanvasProps {
