@@ -365,7 +365,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
           style={{
             backgroundColor: prompt.trim() && !isGenerating && !isEnhancing ? "var(--app-text-primary)" : "var(--app-canvas-dot)",
-            color: prompt.trim() && !isGenerating && !isEnhancing ? "#000" : "var(--app-text-faint)",
+            color: prompt.trim() && !isGenerating && !isEnhancing ? "var(--app-bg)" : "var(--app-text-faint)",
             cursor: prompt.trim() && !isGenerating && !isEnhancing ? "pointer" : "not-allowed",
           }}
         >

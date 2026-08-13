@@ -33,7 +33,7 @@ function MockupImageNodeComponent({
         overflow: "hidden",
         boxShadow: selected
           ? "0 0 0 2px rgba(240, 254, 0, 0.2)"
-          : "0 4px 12px rgba(0,0,0,0.3)",
+          : "0 4px 12px var(--app-shadow)",
         transition: "all 0.15s ease",
       }}
       onMouseEnter={() => setIsHovered(true)}
@@ -46,7 +46,7 @@ function MockupImageNodeComponent({
         style={{
           width: "100%",
           minHeight: imageLoaded ? undefined : 160,
-          backgroundColor: "var(--app-bg)",
+          backgroundColor: "var(--app-card-elevated)",
           position: "relative",
         }}
       >
