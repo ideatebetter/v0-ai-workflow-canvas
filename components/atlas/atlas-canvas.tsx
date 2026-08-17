@@ -334,8 +334,13 @@ const reactFlowInstance = useReactFlow();
       }
     }
 
-    // If moved less than 20px and no connection was made, treat as click - show add menu
-    if (distance < 20) {
+    // Otherwise: either a click on the port (distance < 20) or a drag dropped
+    // on empty canvas. Both open the add-node menu so a new node is created and
+    // auto-connected to the source. For drags, guard against drops on toolbars
+    // or floating panels by requiring the drop target to be inside the pane.
+    const droppedOnPane =
+      !!targetElement?.closest('.react-flow__pane, .react-flow__renderer');
+    if (distance < 20 || droppedOnPane) {
       let flowPosition = { x: clientX, y: clientY };
       try {
         flowPosition = reactFlowInstance.screenToFlowPosition({ x: clientX, y: clientY });
