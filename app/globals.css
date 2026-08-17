@@ -286,6 +286,18 @@
   background-color: var(--app-hover) !important;
 }
 
+/* Add-Node menu — grey hover on each row (matches home sidebar) */
+.menu-content > button:hover,
+.add-node-menu-submenu > button:hover {
+  background-color: var(--app-hover) !important;
+}
+
+/* AI prompt textarea — darken placeholder so it reads on light card */
+.ai-prompt-textarea::placeholder {
+  color: var(--app-text-secondary);
+  opacity: 1;
+}
+
 /* React Flow selection box - hide after selection complete */
 .react-flow__nodesselection-rect {
   display: none !important;
