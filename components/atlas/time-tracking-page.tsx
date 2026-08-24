@@ -793,6 +793,128 @@ function MemberCard({ member, weekDates }: { member: TeamMember; weekDates: stri
   );
 }
 
+// ─── project view ─────────────────────────────────────────────────────────────
+
+function ProjectSection({ projectId, weekDates }: { projectId: string; weekDates: string[] }) {
+  const proj = PROJECTS[projectId];
+  const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  const members = useMemo(() =>
+    TEAM_DATA
+      .map(m => {
+        const dayBlocks = weekDates.map(d => {
+          const log = m.logs.find(l => l.date === d);
+          return (log?.blocks ?? []).filter(b => b.projectId === projectId);
+        });
+        const totalMins = dayBlocks.reduce((a, bs) => a + bs.reduce((s, b) => s + b.durationMin, 0), 0);
+        return { member: m, dayBlocks, totalMins };
+      })
+      .filter(r => r.totalMins > 0),
+    [projectId, weekDates]
+  );
+
+  const projectWeekMins = useMemo(() => members.reduce((a, r) => a + r.totalMins, 0), [members]);
+
+  if (members.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}>
+      {/* Project header */}
+      <div className="flex items-center gap-3 px-5 py-3.5" style={{ borderBottom: "1px solid var(--app-card-elevated)" }}>
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: proj?.color ?? "var(--app-text-faint)" }} />
+        <div className="flex-1 min-w-0">
+          <div className="text-foreground font-semibold text-sm" style={font}>{proj?.name ?? projectId}</div>
+          <div className="text-xs text-gray-500 mt-0.5" style={font}>{proj?.client} · {members.length} contributor{members.length !== 1 ? "s" : ""}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500 mb-0.5" style={font}>Week total</div>
+          <div className="text-sm font-semibold text-foreground" style={font}>{fmtH(projectWeekMins)}</div>
+        </div>
+      </div>
+
+      {/* Member rows */}
+      {members.map(({ member, dayBlocks, totalMins }) => {
+        const rowKey = `${projectId}-${member.id}`;
+        const isExpanded = expandedKey === rowKey;
+
+        return (
+          <div key={member.id} style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
+            <div className="flex items-stretch">
+              {/* Member identity */}
+              <div className="flex items-center gap-2.5 px-4 py-3 w-44 flex-shrink-0" style={{ borderRight: "1px solid var(--app-card-elevated)" }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                  style={{ backgroundColor: member.color, color: "#fff" }}>
+                  {member.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-foreground truncate" style={font}>{member.name}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5" style={font}>{fmtH(totalMins)}</div>
+                </div>
+              </div>
+
+              {/* Day cells */}
+              <div className="grid grid-cols-5 flex-1">
+                {dayBlocks.map((blocks, i) => {
+                  const mins = blocks.reduce((a, b) => a + b.durationMin, 0);
+                  const isToday = weekDates[i] === TODAY;
+                  const cellKey = `${rowKey}-${i}`;
+                  const cellExpanded = expandedKey === cellKey;
+
+                  return (
+                    <button key={i} type="button"
+                      onClick={() => setExpandedKey(cellExpanded ? null : cellKey)}
+                      disabled={mins === 0}
+                      className="flex flex-col gap-1.5 p-2.5 text-left transition-colors hover:bg-white/[0.02]"
+                      style={{
+                        borderRight: i < 4 ? "1px solid var(--app-card-elevated)" : "none",
+                        backgroundColor: cellExpanded ? "var(--app-card-elevated)" : isToday ? "rgba(34,197,94,0.03)" : "transparent",
+                      }}>
+                      <span className="text-[10px] font-medium" style={{ color: isToday ? "#22c55e" : "var(--app-text-muted)", ...font }}>
+                        {DAY_LABELS[i]}
+                      </span>
+                      {mins > 0 ? (
+                        <>
+                          <div className="text-xs font-semibold text-foreground" style={font}>{fmtH(mins)}</div>
+                          <div className="relative h-2 rounded overflow-hidden w-full" style={{ backgroundColor: "var(--app-border-strong)" }}>
+                            <div className="absolute left-0 top-0 h-full rounded"
+                              style={{ width: `${Math.min(100, (mins / (8 * 60)) * 100)}%`, backgroundColor: proj?.color ?? "var(--app-text-faint)" }} />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-[10px] text-gray-700" style={font}>—</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Expanded day detail for a specific member+project cell */}
+            {expandedKey?.startsWith(`${rowKey}-`) && (() => {
+              const dayIdx = parseInt(expandedKey.split("-").pop()!);
+              const blocks = dayBlocks[dayIdx];
+              if (!blocks || blocks.length === 0) return null;
+              const fakeLog: DayLog = { date: weekDates[dayIdx], submitted: true, blocks };
+              return (
+                <div className="px-4 pb-4" style={{ borderTop: "1px solid var(--app-card-elevated)" }}>
+                  <div className="flex items-center justify-between pt-3 pb-1">
+                    <span className="text-xs text-gray-500 uppercase tracking-wider" style={font}>
+                      {DAY_LABELS[dayIdx]} · {member.name}
+                    </span>
+                    <span className="text-xs text-gray-500" style={font}>{fmtH(blocks.reduce((a, b) => a + b.durationMin, 0))} on {proj?.name}</span>
+                  </div>
+                  <DayDetail log={fakeLog} />
+                </div>
+              );
+            })()}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 interface TimeTrackingPageProps {
@@ -801,6 +923,7 @@ interface TimeTrackingPageProps {
 
 export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [viewMode, setViewMode] = useState<"team" | "projects">("team");
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
 
   const weekLabel = useMemo(() => {
@@ -844,18 +967,35 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
             </h1>
             <p className="text-gray-500 text-sm mt-0.5" style={font}>Project budget burn · Manager view</p>
           </div>
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid var(--app-border-strong)" }}>
-            <button type="button" onClick={() => setWeekOffset(o => o - 1)}
-              className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors" style={{ color: "var(--app-text-muted)" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <span className="text-sm text-gray-300 px-3 border-x" style={{ borderColor: "var(--app-border-strong)", ...font }}>{weekLabel}</span>
-            <button type="button" onClick={() => setWeekOffset(o => Math.min(o + 1, 0))}
-              disabled={weekOffset === 0}
-              className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors"
-              style={{ color: weekOffset === 0 ? "var(--app-canvas-dot)" : "var(--app-text-muted)" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
+          <div className="flex items-center gap-3">
+            {/* View toggle */}
+            <div className="flex items-center rounded-lg overflow-hidden p-0.5" style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border-strong)" }}>
+              {(["team", "projects"] as const).map(mode => (
+                <button key={mode} type="button" onClick={() => setViewMode(mode)}
+                  className="px-3 h-7 text-xs font-medium rounded-md transition-colors capitalize"
+                  style={{
+                    backgroundColor: viewMode === mode ? "var(--app-border-strong)" : "transparent",
+                    color: viewMode === mode ? "var(--app-text-primary)" : "var(--app-text-muted)",
+                    ...font,
+                  }}>
+                  By {mode === "team" ? "Team" : "Project"}
+                </button>
+              ))}
+            </div>
+            {/* Week navigator */}
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: "1px solid var(--app-border-strong)" }}>
+              <button type="button" onClick={() => setWeekOffset(o => o - 1)}
+                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors" style={{ color: "var(--app-text-muted)" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <span className="text-sm text-gray-300 px-3 border-x" style={{ borderColor: "var(--app-border-strong)", ...font }}>{weekLabel}</span>
+              <button type="button" onClick={() => setWeekOffset(o => Math.min(o + 1, 0))}
+                disabled={weekOffset === 0}
+                className="w-8 h-8 flex items-center justify-center hover:bg-white/5 transition-colors"
+                style={{ color: weekOffset === 0 ? "var(--app-canvas-dot)" : "var(--app-text-muted)" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -877,13 +1017,24 @@ export function TimeTrackingPage({ members: _members }: TimeTrackingPageProps) {
         {/* ── Project Budget Overview carousel ── */}
         <ProjectCarousel />
 
-        {/* ── Team Hours ── */}
-        <div>
-          <h2 className="text-foreground font-semibold text-sm mb-3" style={font}>Team Hours</h2>
-          <div className="space-y-3">
-            {TEAM_DATA.map(m => <MemberCard key={m.id} member={m} weekDates={weekDates} />)}
+        {/* ── Team / Project view ── */}
+        {viewMode === "team" ? (
+          <div>
+            <h2 className="text-foreground font-semibold text-sm mb-3" style={font}>Team Hours</h2>
+            <div className="space-y-3">
+              {TEAM_DATA.map(m => <MemberCard key={m.id} member={m} weekDates={weekDates} />)}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <h2 className="text-foreground font-semibold text-sm mb-3" style={font}>Hours by Project</h2>
+            <div className="space-y-3">
+              {Object.keys(PROJECTS).map(pid => (
+                <ProjectSection key={pid} projectId={pid} weekDates={weekDates} />
+              ))}
+            </div>
+          </div>
+        )}
 
         <p className="text-xs text-gray-700 text-center pb-4" style={font}>
           Click any day cell to see the full submitted breakdown · White tick = expected-to-date marker
