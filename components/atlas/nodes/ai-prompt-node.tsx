@@ -281,12 +281,12 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
         className="flex items-center gap-2 px-3 py-2"
         style={{ borderBottom: "1px solid var(--app-border-strong)" }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-muted)" strokeWidth="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--app-text-primary)" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <circle cx="8.5" cy="8.5" r="1.5" />
           <polyline points="21 15 16 10 5 21" />
         </svg>
-        <span className="text-sm" style={{ color: "var(--app-text-muted)" }}>
+        <span className="text-sm" style={{ color: "var(--app-text-primary)" }}>
           {isGenerating ? "Generating…" : isEnhancing ? "Sage is enhancing…" : `Generate from ${nodeData.sourceFileName}`}
         </span>
         {(isGenerating || isEnhancing) && (
@@ -301,7 +301,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={`Try "${placeholderSuggestion}"`}
-          className="w-full resize-none text-sm focus:outline-none"
+          className="ai-prompt-textarea w-full resize-none text-sm focus:outline-none"
           style={{
             backgroundColor: "transparent",
             color: "var(--app-text-primary)",
@@ -330,7 +330,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
               <img src={nodeData.sourceImageUrl} alt="Source" className="w-full h-full object-cover" />
             )}
           </div>
-          <span className="text-xs" style={{ color: "var(--app-text-faint)" }}>
+          <span className="text-xs" style={{ color: "var(--app-text-primary)" }}>
             {nodeData.sourceFileName}
           </span>
         </div>
@@ -365,7 +365,7 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
           style={{
             backgroundColor: prompt.trim() && !isGenerating && !isEnhancing ? "var(--app-text-primary)" : "var(--app-canvas-dot)",
-            color: prompt.trim() && !isGenerating && !isEnhancing ? "#000" : "var(--app-text-faint)",
+            color: prompt.trim() && !isGenerating && !isEnhancing ? "var(--app-bg)" : "var(--app-text-faint)",
             cursor: prompt.trim() && !isGenerating && !isEnhancing ? "pointer" : "not-allowed",
           }}
         >

@@ -71,6 +71,10 @@ export function NodeContextMenu({
 
   const nodeLabel = selectedCount === 1 ? "Node" : `${selectedCount} Nodes`;
 
+  const fontStyle = { fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" };
+  const itemClass = "ctx-menu-item w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-3";
+  const iconStyle: React.CSSProperties = { color: "var(--app-text-muted)" };
+
   return (
     <div
       ref={menuRef}
@@ -78,22 +82,23 @@ export function NodeContextMenu({
       style={{
         left: adjustedPosition.x,
         top: adjustedPosition.y,
-        background: "rgba(28, 28, 30, 0.98)",
+        background: "var(--app-card-elevated)",
         backdropFilter: "blur(40px) saturate(180%)",
         WebkitBackdropFilter: "blur(40px) saturate(180%)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset",
+        border: "1px solid var(--app-border)",
+        boxShadow: "0 25px 50px -12px var(--app-shadow)",
         minWidth: 200,
+        color: "var(--app-text-primary)",
       }}
     >
       {/* Header showing selection count */}
-      <div 
+      <div
         className="px-3 py-2 mb-1"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid var(--app-border-subtle)" }}
       >
-        <span 
-          className="text-xs text-gray-400 font-medium"
-          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+        <span
+          className="text-xs font-medium"
+          style={{ ...fontStyle, color: "var(--app-text-muted)" }}
         >
           {nodeLabel} Selected
         </span>
@@ -108,17 +113,17 @@ export function NodeContextMenu({
               onCopyLink();
               onClose();
             }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            className={itemClass}
+            style={{ ...fontStyle, color: "var(--app-text-primary)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
               <path d="M6.5 9.5L9.5 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M9 4L10.5 2.5C11.3284 1.67157 12.6716 1.67157 13.5 2.5V2.5C14.3284 3.32843 14.3284 4.67157 13.5 5.5L12 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M7 12L5.5 13.5C4.67157 14.3284 3.32843 14.3284 2.5 13.5V13.5C1.67157 12.6716 1.67157 11.3284 2.5 10.5L4 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Copy Link
           </button>
-          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--app-border-subtle)" }} />
         </>
       )}
 
@@ -129,15 +134,15 @@ export function NodeContextMenu({
           onDuplicate();
           onClose();
         }}
-        className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+        className={itemClass}
+        style={{ ...fontStyle, color: "var(--app-text-primary)" }}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
           <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
           <path d="M11 5V3.5C11 2.67157 10.3284 2 9.5 2H3.5C2.67157 2 2 2.67157 2 3.5V9.5C2 10.3284 2.67157 11 3.5 11H5" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
         Duplicate
-        <span className="ml-auto text-xs text-gray-500">⌘D</span>
+        <span className="ml-auto text-xs" style={{ color: "var(--app-text-faint)" }}>⌘D</span>
       </button>
 
       {/* Organize - only show when multiple nodes selected */}
@@ -148,10 +153,10 @@ export function NodeContextMenu({
             onOrganize();
             onClose();
           }}
-          className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+          className={itemClass}
+          style={{ ...fontStyle, color: "var(--app-text-primary)" }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
             <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
             <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
             <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/>
@@ -169,10 +174,10 @@ export function NodeContextMenu({
             onGroupForPresentation();
             onClose();
           }}
-          className="w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors flex items-center gap-3"
-          style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif", color: "var(--app-text-primary)" }}
+          className={itemClass}
+          style={{ ...fontStyle, color: "var(--app-text-primary)" }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "var(--app-text-primary)" }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
             <rect x="1.5" y="1.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2"/>
             <path d="M5 8H11M8 5V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
@@ -183,17 +188,17 @@ export function NodeContextMenu({
       {/* Sync option - for single file or text nodes */}
       {isSyncableNode && selectedCount === 1 && onSyncNode && (
         <>
-          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--app-border-subtle)" }} />
           <button
             type="button"
             onClick={() => {
               onSyncNode();
               onClose();
             }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            className={itemClass}
+            style={{ ...fontStyle, color: "var(--app-text-primary)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={isSynced ? "text-green-400" : "text-gray-400"}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={isSynced ? { color: "#22c55e" } : iconStyle}>
               <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -214,17 +219,17 @@ export function NodeContextMenu({
       {/* Sync multiple option - for multiple selected nodes */}
       {selectedCount > 1 && hasSyncableNodes && onSyncMultiple && (
         <>
-          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--app-border-subtle)" }} />
           <button
             type="button"
             onClick={() => {
               onSyncMultiple();
               onClose();
             }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            className={itemClass}
+            style={{ ...fontStyle, color: "var(--app-text-primary)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
               <path d="M4 10C4 10 5.5 6 8 6C10.5 6 12 10 12 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M4 6C4 6 5.5 10 8 10C10.5 10 12 6 12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M2 8H4M12 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -237,8 +242,8 @@ export function NodeContextMenu({
       {/* Divider */}
       {hasOtherCanvases && (
         <>
-          <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
-          
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--app-border-subtle)" }} />
+
           {/* Move to Canvas */}
           <button
             type="button"
@@ -246,10 +251,10 @@ export function NodeContextMenu({
               onMoveToCanvas();
               onClose();
             }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            className={itemClass}
+            style={{ ...fontStyle, color: "var(--app-text-primary)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
               <path d="M6 2H3C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M10 2H13C13.5523 2 14 2.44772 14 3V13C14 13.5523 13.5523 14 13 14H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M6 8H10M10 8L8 6M10 8L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -264,10 +269,10 @@ export function NodeContextMenu({
               onDuplicateToCanvas();
               onClose();
             }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/10 transition-colors flex items-center gap-3"
-            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+            className={itemClass}
+            style={{ ...fontStyle, color: "var(--app-text-primary)" }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={iconStyle}>
               <rect x="2" y="2" width="5" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
               <rect x="9" y="8" width="5" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M4.5 8V11.5C4.5 12.0523 4.94772 12.5 5.5 12.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -279,7 +284,7 @@ export function NodeContextMenu({
       )}
 
       {/* Divider */}
-      <div className="h-px mx-2 my-1" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+      <div className="h-px mx-2 my-1" style={{ backgroundColor: "var(--app-border-subtle)" }} />
 
       {/* Delete */}
       <button
@@ -288,15 +293,24 @@ export function NodeContextMenu({
           onDelete();
           onClose();
         }}
-        className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3"
-        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+        className="ctx-menu-item ctx-menu-item--danger w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-3"
+        style={{ ...fontStyle, color: "#ef4444" }}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-red-400">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "#ef4444" }}>
           <path d="M3 4H13M6 4V3C6 2.44772 6.44772 2 7 2H9C9.55228 2 10 2.44772 10 3V4M12 4V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
         Delete
-        <span className="ml-auto text-xs text-gray-500">⌫</span>
+        <span className="ml-auto text-xs" style={{ color: "var(--app-text-faint)" }}>⌫</span>
       </button>
+
+      <style jsx>{`
+        .ctx-menu-item:hover {
+          background-color: var(--app-hover);
+        }
+        .ctx-menu-item--danger:hover {
+          background-color: rgba(239, 68, 68, 0.1);
+        }
+      `}</style>
     </div>
   );
 }
