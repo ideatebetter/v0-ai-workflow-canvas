@@ -1341,7 +1341,7 @@ const [showSageChat, setShowSageChat] = useState(false);
     <div className="flex h-screen" style={{ backgroundColor: "var(--app-bg)" }}>
       {/* Sidebar */}
       <div
-        className="w-64 flex flex-col border-r"
+        className="home-sidebar w-64 flex flex-col border-r"
         style={{ backgroundColor: "var(--app-bg-elevated)", borderColor: "var(--app-border)" }}
       >
         {/* Workspace Header */}

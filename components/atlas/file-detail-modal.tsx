@@ -550,9 +550,9 @@ function VideoPlayerWithComments({
               onClick={() => { setIsCommentMode((v) => !v); setPendingTimestamp(null); }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
               style={{
-                backgroundColor: isCommentMode ? "var(--app-text-primary)" : "rgba(255,255,255,0.08)",
-                color: isCommentMode ? "#000" : "var(--app-text-secondary)",
-                border: isCommentMode ? "none" : "1px solid var(--app-border-strong)",
+                backgroundColor: isCommentMode ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                color: isCommentMode ? "var(--app-bg)" : "var(--app-text-primary)",
+                border: isCommentMode ? "none" : "1px solid var(--app-border)",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
@@ -1081,9 +1081,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   }}
                   className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors z-10"
                   style={{
-                    backgroundColor: isAnnotating ? "var(--app-text-primary)" : "rgba(255,255,255,0.08)",
-                    color: isAnnotating ? "#000" : "var(--app-text-secondary)",
-                    border: isAnnotating ? "none" : "1px solid var(--app-border-strong)",
+                    backgroundColor: isAnnotating ? "var(--app-text-primary)" : "var(--app-card-elevated)",
+                    color: isAnnotating ? "var(--app-bg)" : "var(--app-text-primary)",
+                    border: isAnnotating ? "none" : "1px solid var(--app-border)",
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                   title={isAnnotating ? "Exit comment mode" : "Add a comment"}
@@ -1123,7 +1123,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                           height: 24,
                           borderRadius: "50%",
                           backgroundColor: "var(--app-text-primary)",
-                          color: "#000",
+                          color: "var(--app-bg)",
                           fontSize: 11,
                           fontWeight: 700,
                           display: "flex",
@@ -1203,7 +1203,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                           height: 24,
                           borderRadius: "50%",
                           backgroundColor: "var(--app-text-primary)",
-                          color: "#000",
+                          color: "var(--app-bg)",
                           fontSize: 11,
                           fontWeight: 700,
                           display: "flex",
@@ -1543,38 +1543,38 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
           <div className="grid grid-cols-3 gap-6 mb-8">
             {/* Status - Clickable Dropdown */}
             <div className="relative">
-              <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                 Status
               </div>
               <button
                 type="button"
                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-foreground cursor-pointer transition-opacity hover:opacity-80"
-                style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+                style={{ backgroundColor: STATUS_COLORS[fileData.status], color: "#ffffff" }}
               >
                 {STATUS_LABELS[fileData.status]}
                 <ChevronDown className="w-3 h-3" strokeWidth={1.5} />
               </button>
-              
+
               {/* Status Dropdown */}
               {showStatusDropdown && (
-                <div 
+                <div
                   className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-xl z-20 min-w-[140px]"
-                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" }}
                 >
                   {(Object.keys(STATUS_LABELS) as Array<keyof typeof STATUS_LABELS>).map((status) => (
                     <button
                       key={status}
                       type="button"
                       onClick={() => handleStatusChange(status)}
-                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 transition-colors"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors hover:bg-[var(--app-hover)]"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-primary)" }}
                     >
-                      <span 
+                      <span
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: STATUS_COLORS[status] }}
                       />
-                      <span className="text-foreground">{STATUS_LABELS[status]}</span>
+                      <span>{STATUS_LABELS[status]}</span>
                       {fileData.status === status && (
                         <Check className="w-3.5 h-3.5 ml-auto" strokeWidth={2} style={{ color: "var(--app-text-primary)" }} />
                       )}
@@ -1586,41 +1586,42 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
             {/* Due Date - Clickable Date Picker */}
             <div className="relative">
-              <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                 Due Date
               </div>
               <button
                 type="button"
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center gap-2 text-gray-300 hover:text-foreground transition-colors cursor-pointer"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                className="flex items-center gap-2 transition-colors cursor-pointer hover:opacity-80"
+                style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-primary)" }}
               >
                 <Calendar className="w-4 h-4" strokeWidth={1.5} />
                 {dueDate ? (
                   <span>{new Date(dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 ) : (
-                  <span className="text-gray-500">Set date</span>
+                  <span style={{ color: "var(--app-text-muted)" }}>Set date</span>
                 )}
               </button>
-              
+
               {/* Date Picker Dropdown */}
               {showDatePicker && (
-                <div 
+                <div
                   className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-xl z-20"
-                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                  style={{ backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border)" }}
                 >
                   <input
                     type="date"
                     defaultValue={dueDate ? new Date(dueDate).toISOString().split("T")[0] : ""}
                     onChange={(e) => handleDueDateChange(e.target.value)}
-                    className="bg-transparent text-foreground text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
-                    style={{ colorScheme: "dark" }}
+                    className="bg-transparent text-sm px-2 py-1 rounded focus:outline-none"
+                    style={{ color: "var(--app-text-primary)", border: "1px solid var(--app-border-strong)" }}
                   />
                   {dueDate && (
                     <button
                       type="button"
                       onClick={() => handleDueDateChange("")}
-                      className="mt-2 w-full text-xs text-gray-400 hover:text-foreground transition-colors"
+                      className="mt-2 w-full text-xs transition-colors hover:opacity-80"
+                      style={{ color: "var(--app-text-muted)" }}
                     >
                       Clear date
                     </button>
@@ -1631,7 +1632,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
             {/* Team Members - Derived from task assignees */}
             <div>
-              <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                 Team Members
               </div>
               {assignees.length > 0 ? (
@@ -1639,24 +1640,24 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   {assignees.slice(0, 3).map((member) => (
                     <div key={member.id} className="flex items-center gap-2">
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-foreground"
-                        style={{ backgroundColor: member.avatarColor || "var(--app-text-muted)" }}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
+                        style={{ backgroundColor: member.avatarColor || "var(--app-text-muted)", color: "#ffffff" }}
                       >
                         {member.name.split(" ").map(n => n[0]).join("")}
                       </div>
-                      <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-secondary)" }}>
                         {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
                       </span>
                     </div>
                   ))}
                   {assignees.length > 3 && (
-                    <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <span className="text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                       +{assignees.length - 3} more
                     </span>
                   )}
                 </div>
               ) : (
-                <span className="text-sm text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                   Assign tasks to add members
                 </span>
               )}
@@ -1672,10 +1673,13 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? "bg-[var(--app-border-strong)] text-foreground"
-                    : "text-gray-500 hover:text-gray-300"
+                    ? "bg-[var(--app-border-strong)]"
+                    : "hover:opacity-80"
                 }`}
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                style={{
+                  fontFamily: "system-ui, Inter, sans-serif",
+                  color: activeTab === tab ? "var(--app-text-primary)" : "var(--app-text-muted)",
+                }}
               >
                 {tab === "overview" ? "Version History" : tab === "todos" ? `To-Dos (${tasks.length})` : "Activity"}
               </button>
@@ -1696,7 +1700,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
 
               {/* Upload New Version Button */}
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <h3 className="text-sm font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif", color: "var(--app-text-muted)" }}>
                   Version History ({versions.length})
                 </h3>
                 <button
@@ -1704,9 +1708,9 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                   onClick={() => versionInputRef.current?.click()}
                   disabled={isUploadingVersion}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                  style={{ 
-                    backgroundColor: "var(--app-text-primary)", 
-                    color: "#000000",
+                  style={{
+                    backgroundColor: "var(--app-text-primary)",
+                    color: "var(--app-bg)",
                     fontFamily: "system-ui, Inter, sans-serif"
                   }}
                 >
@@ -2115,7 +2119,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile, canva
                             height: 18,
                             borderRadius: "50%",
                             backgroundColor: "var(--app-text-primary)",
-                            color: "#000",
+                            color: "var(--app-bg)",
                             fontSize: 10,
                             fontWeight: 700,
                             flexShrink: 0,

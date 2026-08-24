@@ -959,7 +959,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
   backgroundColor: "var(--app-text-primary)",
-  color: "#000000",
+  color: "var(--app-bg)",
   fontFamily: "system-ui, Inter, sans-serif",
   }}
   >
@@ -989,7 +989,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
     backgroundColor: "var(--app-text-primary)",
-    color: "#000000",
+    color: "var(--app-bg)",
     fontFamily: "system-ui, Inter, sans-serif",
   }}
   >

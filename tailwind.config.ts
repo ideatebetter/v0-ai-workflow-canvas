@@ -83,6 +83,42 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      fontFamily: {
+        sans: [
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          'sans-serif',
+        ],
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          '"Liberation Mono"',
+          '"Courier New"',
+          'monospace',
+        ],
+      },
+      boxShadow: {
+        dialog: 'var(--shadow-dialog)',
+      },
+      transitionTimingFunction: {
+        'out-quad': 'var(--ease-out-quad)',
+        'out-cubic': 'var(--ease-out-cubic)',
+      },
+      transitionDuration: {
+        instant: '100ms',
+        fast: '150ms',
+        normal: '200ms',
+        slow: '300ms',
+      },
       keyframes: {
         'accordion-down': {
           from: {
