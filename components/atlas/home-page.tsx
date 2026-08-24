@@ -622,7 +622,6 @@ const [showSageChat, setShowSageChat] = useState(false);
   ];
 
   const ribbonDays = useMemo(() => {
-    if (isDemoAccount) return DEMO_RIBBON_DAYS;
     const todayIndex = 17;
     const today = new Date();
     return Array.from({ length: 28 }, (_, i) => {
@@ -632,6 +631,8 @@ const [showSageChat, setShowSageChat] = useState(false);
       const tasksOnDay = todosByDate[dateStr] ?? [];
       const isFuture = i > todayIndex;
       if (tasksOnDay.length === 0) {
+        // No real tasks due this day: demo accounts fall back to curated filler, real accounts show "All Clear"
+        if (isDemoAccount) return DEMO_RIBBON_DAYS[i];
         return { status: "smooth", title: "All Clear", description: "No deadlines", tags: [] as string[], isFuture };
       }
       const names = tasksOnDay.slice(0, 3).map(t => (t.task as any).text || t.fileName);
