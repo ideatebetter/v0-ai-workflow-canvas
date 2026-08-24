@@ -576,7 +576,7 @@ function SageAlignmentCard({
             ))}
           </div>
         ) : (
-          <p className="text-[10px] text-gray-300 leading-relaxed">
+          <p className="text-[10px] text-gray-700 leading-relaxed">
             {responseText}
             {isStreaming && <span className="inline-block w-0.5 h-3 ml-0.5 align-middle animate-pulse" style={{ backgroundColor: "var(--app-text-primary)" }} />}
           </p>
@@ -942,7 +942,7 @@ function PipelineViz({ data, nodeId }: { data: PipelineNodeData; nodeId: string 
                 <div style={{ backgroundColor: "var(--app-bg)" }}>
                   {items.map((p, i) => (
                     <div key={i} className="px-3 py-2 flex items-center justify-between" style={{ borderTop: i > 0 ? "1px solid var(--app-card-elevated)" : "none" }}>
-                      <span className="text-[10px] text-gray-300 truncate max-w-[120px]">{p.projectName}</span>
+                      <span className="text-[10px] text-gray-700 truncate max-w-[120px]">{p.projectName}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="text-[9px] text-gray-600">{p.estimatedHours}h</span>
                         <div className="px-1.5 py-0.5 rounded text-[9px] font-medium"
