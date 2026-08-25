@@ -41,6 +41,8 @@ import { ParseFileDialog } from "./parse-file-dialog";
 import { DataDetailPanel } from "./data-detail-panel";
 import { ShareCanvasDialog } from "./share-canvas-dialog";
 import { ActivitySidePanel } from "./activity-side-panel";
+import { FigmaImportModal } from "./figma-import-modal";
+import type { FigmaImportConfig } from "./figma-import-modal";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -203,6 +205,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   
   // Activity panel state
   const [activityOpen, setActivityOpen] = useState(false);
+
+  // Figma import modal state
+  const [showFigmaImportModal, setShowFigmaImportModal] = useState(false);
 
   // Comment mode state
   const [commentMode, setCommentMode] = useState(false);
@@ -2287,6 +2292,94 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       .catch(() => {});
   }, [doubleClickPosition, setNodes, workspaceSettings.namingConventions]);
 
+  // Handle Figma multi-frame import
+  const handleFigmaImport = useCallback((config: FigmaImportConfig) => {
+    const { fileKey, selectedFrames, importMode } = config;
+    const now = new Date().toISOString();
+    const centerX = 300;
+    const centerY = 200;
+
+    if (importMode === "hero-badge") {
+      // One node containing all selected frames
+      const nodeId = `figma-multi-${Date.now()}`;
+      const primaryFrame = selectedFrames[0];
+      const frameIds = selectedFrames.map((f) => f.id);
+      const frameNames = selectedFrames.map((f) => f.name);
+      const frameThumbnails = selectedFrames.map((f) => f.thumbnailUrl ?? "").filter(Boolean);
+
+      const newNode: AtlasNode = {
+        id: nodeId,
+        type: "file" as const,
+        position: { x: centerX, y: centerY },
+        selected: true,
+        data: {
+          label: primaryFrame.name,
+          fileName: `${primaryFrame.name}.fig`,
+          product: "atlas" as const,
+          status: "draft" as const,
+          fileExtension: ".fig" as const,
+          lastModified: "Just now",
+          previewImages: frameThumbnails.slice(0, 1),
+          figmaSync: {
+            figmaFileKey: fileKey,
+            figmaFrameId: primaryFrame.id,
+            figmaFrameName: primaryFrame.name,
+            lastSynced: now,
+            frameIds,
+            frameNames,
+            frameThumbnails,
+            importScope: "frame",
+            figmaPageId: primaryFrame.pageId,
+            figmaPageName: primaryFrame.pageName,
+          },
+        } as FileNodeData,
+      };
+
+      setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), newNode]);
+    } else {
+      // Separate node per frame, grid layout
+      const COLS = 3;
+      const NODE_W = 240;
+      const NODE_H = 220;
+      const GAP = 32;
+
+      const newNodes: AtlasNode[] = selectedFrames.map((frame, i) => {
+        const col = i % COLS;
+        const row = Math.floor(i / COLS);
+        return {
+          id: `figma-${Date.now()}-${i}`,
+          type: "file" as const,
+          position: {
+            x: centerX + col * (NODE_W + GAP),
+            y: centerY + row * (NODE_H + GAP),
+          },
+          selected: i === 0,
+          data: {
+            label: frame.name,
+            fileName: `${frame.name}.fig`,
+            product: "atlas" as const,
+            status: "draft" as const,
+            fileExtension: ".fig" as const,
+            lastModified: "Just now",
+            previewImages: frame.thumbnailUrl ? [frame.thumbnailUrl] : [],
+            figmaSync: {
+              figmaFileKey: fileKey,
+              figmaFrameId: frame.id,
+              figmaFrameName: frame.name,
+              lastSynced: now,
+              figmaPageId: frame.pageId,
+              figmaPageName: frame.pageName,
+            },
+          } as FileNodeData,
+        };
+      });
+
+      setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
+    }
+
+    setShowFigmaImportModal(false);
+  }, [setNodes]);
+
   // Handle version conflict resolution - add as new version
   const handleAddAsVersion = useCallback(() => {
     if (!versionConflict) return;
@@ -2700,6 +2793,7 @@ presentationMode={presentationMode}
   activityCount={comments.filter(c => !c.resolved).length}
   canvases={canvases}
   onOpenCanvas={onSwitchCanvas}
+  onFigmaImportClick={() => setShowFigmaImportModal(true)}
   />
 
       {/* Activity Side Panel — slides in from right edge, behind the toolbar */}
@@ -2852,6 +2946,15 @@ presentationMode={presentationMode}
         onClose={() => setShowUploadDialog(false)}
         onFilesUploaded={handleFilesUploaded}
       />
+
+      {/* Figma Import Modal */}
+      {showFigmaImportModal && (
+        <FigmaImportModal
+          onClose={() => setShowFigmaImportModal(false)}
+          onImport={handleFigmaImport}
+          initialPat={workspaceSettings.figmaPat}
+        />
+      )}
 
       {/* Share Canvas / Node Dialog */}
       <ShareCanvasDialog
