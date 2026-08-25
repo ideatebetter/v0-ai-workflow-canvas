@@ -12,18 +12,43 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
 
-    // pdf-parse v2 class API: pass data in constructor, call getText()
-    // getText() returns a TextResult with .pages (per-page) and .text (full doc)
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data });
-    const result = await parser.getText();
+    // Use pdfjs-dist legacy build — it works in Node.js without browser globals.
+    // pdf-parse v2 uses the browser ESM build which requires DOMMatrix (not in Node).
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-    // result.pages is an array of { num, text } objects
-    const pages = result.pages.length > 0
-      ? result.pages.map((p: { num: number; text: string }) => ({ pageNumber: p.num, text: p.text.trim() })).filter((p: { pageNumber: number; text: string }) => p.text.length > 0)
-      : [{ pageNumber: 1, text: result.text.trim() }];
+    const loadingTask = pdfjsLib.getDocument({
+      data,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    });
+    const pdf = await loadingTask.promise;
+    const numPages = pdf.numPages;
 
-    return NextResponse.json({ pages, numPages: result.total });
+    const pages: { pageNumber: number; text: string }[] = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item: unknown) => {
+          const it = item as { str?: string; hasEOL?: boolean };
+          return it.str ?? "";
+        })
+        .join(" ")
+        .replace(/ +/g, " ")
+        .trim();
+      if (text.length > 0) {
+        pages.push({ pageNumber: i, text });
+      }
+    }
+
+    const fallbackText = pages.map(p => p.text).join("\n\n");
+    const result = pages.length > 0
+      ? pages
+      : [{ pageNumber: 1, text: fallbackText }];
+
+    return NextResponse.json({ pages: result, numPages });
   } catch (error) {
     console.error("PDF parse error:", error);
     return NextResponse.json(
