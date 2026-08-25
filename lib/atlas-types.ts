@@ -534,6 +534,25 @@ export interface FinancialNodeData {
   utilizationAdjustedMargin?: number;
 }
 
+// Pre-client deal in the pipeline tracker
+export type DealStage = "discovery" | "proposal" | "negotiation" | "closing";
+export type DealStatus = "open" | "won" | "lost";
+
+export interface Deal {
+  id: string;
+  dealName: string;
+  clientName: string;
+  estimatedValue: number; // USD
+  estimatedHours?: number;
+  probability: number; // 0–100
+  stage: DealStage;
+  status: DealStatus;
+  convertedProjectId?: string; // set when status = "won"
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Pipeline & Workload Forecast node data interface
 export interface PipelineNodeData {
   label: string;
@@ -544,6 +563,7 @@ export interface PipelineNodeData {
   projectedLoad: number; // hours needed
   capacityStatus: "available" | "balanced" | "overloaded";
   lastUpdated: string;
+  deals?: Deal[]; // pre-client pipeline deals
   // Project-scoped additions
   projectId?: string;
   competingProjects?: { projectName: string; teamOverlap: string[]; impactLevel: "low" | "medium" | "high"; hours: number }[];

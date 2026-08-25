@@ -41,7 +41,7 @@ export function DocumentFullView({ docId }: Props) {
         </Link>
         <span className="text-gray-600">/</span>
         <span
-          className="text-sm text-gray-300 truncate"
+          className="text-sm text-foreground truncate"
           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
         >
           {node?.title || "Untitled"}

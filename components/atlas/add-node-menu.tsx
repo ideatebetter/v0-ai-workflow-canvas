@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen } from "lucide-react";
+import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen, Upload, Link2, Search, FileText, LayoutGrid as CanvasIcon } from "lucide-react";
+import type { Canvas } from "@/lib/atlas-types";
 
 type OpType = "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth";
 
@@ -18,6 +19,8 @@ interface AddNodeMenuProps {
   position?: { x: number; y: number };
   sourceNodeId?: string;
   sourceHandlePosition?: "left" | "right";
+  canvases?: Canvas[];
+  onOpenCanvas?: (canvasId: string) => void;
 }
 
 const PROJECTS = [
@@ -47,15 +50,54 @@ export function AddNodeMenu({
   onClose,
   position,
   sourceHandlePosition,
+  canvases,
+  onOpenCanvas,
 }: AddNodeMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const linkInputRef = useRef<HTMLInputElement>(null);
+  const fileSearchRef = useRef<HTMLInputElement>(null);
   const [menuPosition, setMenuPosition] = useState(position || { x: 200, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
-  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [addFileMode, setAddFileMode] = useState<"link" | "search" | null>(null);
   const [linkInputValue, setLinkInputValue] = useState("");
+  const [fileSearchQuery, setFileSearchQuery] = useState("");
+
+  // Search results for "Add File → Search"
+  const searchResults = useMemo(() => {
+    console.log("[AddNodeMenu search] canvases:", canvases?.length ?? "undefined", "names:", canvases?.map(c => c.name), "query:", JSON.stringify(fileSearchQuery));
+    if (!canvases || canvases.length === 0) return [];
+    const sorted = [...canvases].sort((a, b) =>
+      new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+    );
+    if (!fileSearchQuery.trim()) {
+      return sorted.slice(0, 6).map(c => ({ type: "canvas" as const, id: c.id, name: c.name, sub: "" }));
+    }
+    const q = fileSearchQuery.toLowerCase();
+    const results: { type: "canvas" | "doc" | "file"; id: string; name: string; sub: string }[] = [];
+    outer: for (const canvas of sorted) {
+      if (canvas.name.toLowerCase().includes(q)) {
+        results.push({ type: "canvas", id: canvas.id, name: canvas.name, sub: "" });
+        if (results.length >= 8) break;
+      }
+      const allNodes = canvas.pages?.flatMap(p => p.nodes) ?? canvas.nodes ?? [];
+      for (const node of allNodes) {
+        const d = node.data as Record<string, string | undefined>;
+        if (node.type === "document" && d.title?.toLowerCase().includes(q)) {
+          results.push({ type: "doc", id: canvas.id, name: d.title ?? "Untitled", sub: canvas.name });
+        } else if (node.type === "file") {
+          const label = d.label ?? d.fileName ?? "";
+          if (label.toLowerCase().includes(q)) {
+            results.push({ type: "file", id: canvas.id, name: label, sub: canvas.name });
+          }
+        }
+        if (results.length >= 8) break outer;
+      }
+    }
+    console.log("[AddNodeMenu search] results:", results.length, results.map(r => r.name));
+    return results;
+  }, [canvases, fileSearchQuery]);
 
   // Ops multi-level state
   const [opsLevel, setOpsLevel] = useState<"root" | "org" | "project-list" | "project-nodes">("root");
@@ -241,55 +283,121 @@ export function AddNodeMenu({
 
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
 
-          {/* Upload File */}
+          {/* Add File — expands to Upload / Link / Search */}
           <input ref={fileInputRef} type="file" multiple style={{ display: "none" }}
             onChange={(e) => { if (e.target.files?.length) { onUploadFile(e.target.files); onClose(); } }}
           />
-          <button type="button" onClick={() => fileInputRef.current?.click()} style={{ ...menuItemStyle, fontSize: 14 }}>
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center", color: "#a1a1aa" }}>
-              <Plus className="w-2.5 h-2.5" strokeWidth={1.5} />
+          <div>
+            {/* Three sub-options always visible */}
+            <div style={{ padding: "4px 8px 2px", fontSize: 11, fontWeight: 600, color: "var(--app-text-faint)", letterSpacing: "0.05em", textTransform: "uppercase", ...fontStyle }}>
+              Add File
             </div>
-            Upload File
-          </button>
+            {/* Upload from computer */}
+            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ ...menuItemStyle, fontSize: 13 }}>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-muted)" }}>
+                <Upload className="w-2.5 h-2.5" strokeWidth={1.8} />
+              </div>
+              Upload from computer
+            </button>
+            {/* Add link */}
+            <button
+              type="button"
+              onClick={() => {
+                setAddFileMode(m => m === "link" ? null : "link");
+                setFileSearchQuery("");
+                setTimeout(() => linkInputRef.current?.focus(), 50);
+              }}
+              style={{ ...menuItemStyle, fontSize: 13, backgroundColor: addFileMode === "link" ? "var(--app-active)" : "transparent" }}
+            >
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-muted)" }}>
+                <Link2 className="w-2.5 h-2.5" strokeWidth={1.8} />
+              </div>
+              Paste a link
+            </button>
+            {/* Search */}
+            <button
+              type="button"
+              onClick={() => {
+                setAddFileMode(m => m === "search" ? null : "search");
+                setLinkInputValue("");
+                setTimeout(() => fileSearchRef.current?.focus(), 50);
+              }}
+              style={{ ...menuItemStyle, fontSize: 13, backgroundColor: addFileMode === "search" ? "var(--app-active)" : "transparent" }}
+            >
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--app-text-muted)" }}>
+                <Search className="w-2.5 h-2.5" strokeWidth={1.8} />
+              </div>
+              Search files &amp; docs
+            </button>
 
-          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "var(--app-border)" }} />
+            {/* Link input */}
+            {addFileMode === "link" && (
+              <div style={{ padding: "4px 10px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+                <input
+                  ref={linkInputRef}
+                  type="url"
+                  value={linkInputValue}
+                  onChange={e => setLinkInputValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); }
+                    else if (e.key === "Escape") setAddFileMode(null);
+                    e.stopPropagation();
+                  }}
+                  placeholder="Paste a URL…"
+                  style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", borderRadius: 6, color: "var(--app-text-primary)", outline: "none", ...fontStyle }}
+                />
+                <button
+                  type="button"
+                  disabled={!linkInputValue.trim()}
+                  onClick={() => { if (linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); } }}
+                  style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "var(--app-text-primary)" : "var(--app-border)", color: linkInputValue.trim() ? "var(--app-bg)" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
+                >
+                  Add
+                </button>
+              </div>
+            )}
 
-          {/* Add Link */}
-          <button
-            type="button"
-            onClick={() => { setShowLinkInput(v => !v); setLinkInputValue(""); setTimeout(() => linkInputRef.current?.focus(), 50); }}
-            style={{ ...menuItemStyle, fontSize: 14, backgroundColor: showLinkInput ? "var(--app-active)" : "transparent" }}
-          >
-            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "var(--app-canvas-dot)20", display: "flex", alignItems: "center", justifyContent: "center", color: "#a1a1aa" }}>
-              <ArrowRight className="w-2.5 h-2.5" strokeWidth={1.5} />
-            </div>
-            Add Link
-          </button>
-
-          {showLinkInput && (
-            <div style={{ padding: "4px 12px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
-              <input
-                ref={linkInputRef}
-                type="url"
-                value={linkInputValue}
-                onChange={e => setLinkInputValue(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); }
-                  else if (e.key === "Escape") setShowLinkInput(false);
-                }}
-                placeholder="Paste a URL…"
-                style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-canvas-dot)", borderRadius: 6, color: "var(--app-text-primary)", outline: "none", ...fontStyle }}
-              />
-              <button
-                type="button"
-                disabled={!linkInputValue.trim()}
-                onClick={() => { if (linkInputValue.trim()) { onAddLink?.(linkInputValue.trim()); onClose(); } }}
-                style={{ width: "100%", padding: "6px 0", fontSize: 12, backgroundColor: linkInputValue.trim() ? "var(--app-text-primary)" : "var(--app-border)", color: linkInputValue.trim() ? "var(--app-bg)" : "var(--app-text-faint)", border: "none", borderRadius: 6, cursor: linkInputValue.trim() ? "pointer" : "default", fontWeight: 600, ...fontStyle }}
-              >
-                Add
-              </button>
-            </div>
-          )}
+            {/* Search input + results */}
+            {addFileMode === "search" && (
+              <div style={{ padding: "4px 10px 6px" }}>
+                <input
+                  ref={fileSearchRef}
+                  type="text"
+                  value={fileSearchQuery}
+                  onChange={e => setFileSearchQuery(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Escape") setAddFileMode(null); e.stopPropagation(); }}
+                  placeholder="Search canvases and docs…"
+                  style={{ width: "100%", boxSizing: "border-box", padding: "5px 8px", fontSize: 12, backgroundColor: "var(--app-card-elevated)", border: "1px solid var(--app-border-strong)", borderRadius: 6, color: "var(--app-text-primary)", outline: "none", ...fontStyle, marginBottom: 4 }}
+                />
+                {!fileSearchQuery.trim() && (
+                  <div style={{ fontSize: 10, color: "var(--app-text-faint)", padding: "2px 2px 4px", ...fontStyle, letterSpacing: "0.04em", textTransform: "uppercase" }}>Recent</div>
+                )}
+                {searchResults.length === 0 && fileSearchQuery.trim() && (
+                  <div style={{ fontSize: 12, color: "var(--app-text-faint)", padding: "6px 2px", textAlign: "center", ...fontStyle }}>
+                    {(!canvases || canvases.length === 0) ? "No canvases loaded" : "No results"}
+                  </div>
+                )}
+                {searchResults.map((r, i) => (
+                  <button
+                    key={`${r.id}-${i}`}
+                    type="button"
+                    onClick={() => { onOpenCanvas?.(r.id); onClose(); }}
+                    style={{ ...menuItemStyle, fontSize: 12, padding: "5px 6px", gap: 6, borderRadius: 5 }}
+                  >
+                    <div style={{ flexShrink: 0, color: "var(--app-text-muted)" }}>
+                      {r.type === "canvas" && <CanvasIcon className="w-3 h-3" strokeWidth={1.5} />}
+                      {r.type === "doc" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
+                      {r.type === "file" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--app-text-primary)" }}>{r.name}</div>
+                      {r.sub && <div style={{ fontSize: 10, color: "var(--app-text-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.sub}</div>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

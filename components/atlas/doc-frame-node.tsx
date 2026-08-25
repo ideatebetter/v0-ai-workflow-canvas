@@ -126,7 +126,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                 className="nodrag"
                 onDoubleClick={() => handleSectionDoubleClick(idx)}
                 style={{
-                  borderBottom: idx < sections.length - 1 ? "1px solid #1c1c1c" : "none",
+                  borderBottom: idx < sections.length - 1 ? "1px solid var(--app-border)" : "none",
                   padding: "11px 14px",
                   position: "relative",
                   background: isEditing ? "var(--app-card-elevated)" : "transparent",
@@ -140,7 +140,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                   top: 10,
                   right: 12,
                   background: "var(--app-card-elevated)",
-                  color: "#4a4a4a",
+                  color: "var(--app-text-muted)",
                   fontSize: 10,
                   fontWeight: 600,
                   padding: "1px 6px",
@@ -168,7 +168,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                       border: "none",
                       outline: "none",
                       resize: "none",
-                      color: "#e0e0e0",
+                      color: "var(--app-text-primary)",
                       fontSize: 13,
                       lineHeight: 1.6,
                       fontFamily: "system-ui, Inter, sans-serif",
@@ -178,7 +178,7 @@ export function DocFrameNode({ id, data, selected }: NodeProps) {
                   />
                 ) : (
                   <div style={{ paddingRight: 44 }}>
-                    <div style={{ color: "#e0e0e0", fontSize: 13, fontWeight: 600, lineHeight: 1.4, marginBottom: previewBody ? 4 : 0 }}>
+                    <div style={{ color: "var(--app-text-primary)", fontSize: 13, fontWeight: 600, lineHeight: 1.4, marginBottom: previewBody ? 4 : 0 }}>
                       {section.label || `Page ${section.pageNum}`}
                     </div>
                     {previewBody && (

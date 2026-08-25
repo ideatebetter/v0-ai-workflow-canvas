@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, LayoutGrid, Presentation, X, Search, Plus, Settings, Send } from "lucide-react";
 import { AddNodeMenu } from "./add-node-menu";
+import type { Canvas } from "@/lib/atlas-types";
 
 interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
@@ -28,6 +29,8 @@ interface CanvasSideToolbarProps {
   activityOpen: boolean;
   todoCount: number;
   activityCount: number;
+  canvases?: Canvas[];
+  onOpenCanvas?: (canvasId: string) => void;
 }
 
 export function CanvasSideToolbar({
@@ -54,6 +57,8 @@ export function CanvasSideToolbar({
   activityOpen,
   todoCount,
   activityCount,
+  canvases,
+  onOpenCanvas,
 }: CanvasSideToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addMenuPosition, setAddMenuPosition] = useState({ x: 0, y: 0 });
@@ -263,6 +268,8 @@ export function CanvasSideToolbar({
           onAddLink={onAddLink}
           onClose={() => setShowAddMenu(false)}
           position={addMenuPosition}
+          canvases={canvases}
+          onOpenCanvas={onOpenCanvas}
         />
       )}
 

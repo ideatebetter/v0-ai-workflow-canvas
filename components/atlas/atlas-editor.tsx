@@ -1608,6 +1608,101 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return () => window.removeEventListener("atlas:share-node", handler as EventListener);
   }, []);
 
+  // Pipeline deal tracker events
+  useEffect(() => {
+    // Add a new deal to a pipeline node
+    const handleAddDeal = (e: CustomEvent<{ nodeId: string; deal: import("@/lib/atlas-types").Deal }>) => {
+      const { nodeId, deal } = e.detail;
+      setNodes(nds => nds.map(n => {
+        if (n.id !== nodeId) return n;
+        const prev = (n.data as import("@/lib/atlas-types").PipelineNodeData).deals ?? [];
+        return { ...n, data: { ...n.data, deals: [...prev, deal] } };
+      }));
+    };
+
+    // Mark a deal as lost
+    const handleDealLost = (e: CustomEvent<{ nodeId: string; dealId: string }>) => {
+      const { nodeId, dealId } = e.detail;
+      const now = new Date().toISOString();
+      setNodes(nds => nds.map(n => {
+        if (n.id !== nodeId) return n;
+        const pipeData = n.data as import("@/lib/atlas-types").PipelineNodeData;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            deals: (pipeData.deals ?? []).map(d =>
+              d.id === dealId ? { ...d, status: "lost" as const, updatedAt: now } : d
+            ),
+          },
+        };
+      }));
+    };
+
+    // Mark a deal as won → create a project in the DB
+    const handleDealWon = async (e: CustomEvent<{ nodeId: string; dealId: string; deal: import("@/lib/atlas-types").Deal }>) => {
+      const { nodeId, dealId, deal } = e.detail;
+      const now = new Date().toISOString();
+      let convertedProjectId: string | undefined;
+
+      try {
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 90);
+
+        const res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: deal.dealName,
+            clientName: deal.clientName,
+            projectType: "brand",
+            billingType: "flat_fee",
+            startDate: today.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+            estimate: deal.estimatedValue > 0 ? { totalFee: deal.estimatedValue } : null,
+            phases: ["Discovery", "Design", "Delivery"],
+            members: [],
+            workspaceId: canvasRef.current.workspaceId ?? undefined,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          convertedProjectId = data.project?.id;
+        }
+      } catch {
+        // Project creation failed — still mark deal as won, just without a project ID
+      }
+
+      setNodes(nds => nds.map(n => {
+        if (n.id !== nodeId) return n;
+        const pipeData = n.data as import("@/lib/atlas-types").PipelineNodeData;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            deals: (pipeData.deals ?? []).map(d =>
+              d.id === dealId
+                ? { ...d, status: "won" as const, convertedProjectId, updatedAt: now }
+                : d
+            ),
+          },
+        };
+      }));
+    };
+
+    const dealWonWrapper = (e: Event) => { void handleDealWon(e as CustomEvent<{ nodeId: string; dealId: string; deal: import("@/lib/atlas-types").Deal }>); };
+    window.addEventListener("atlas:pipeline-add-deal", handleAddDeal as EventListener);
+    window.addEventListener("atlas:pipeline-deal-lost", handleDealLost as EventListener);
+    window.addEventListener("atlas:deal-won", dealWonWrapper);
+    return () => {
+      window.removeEventListener("atlas:pipeline-add-deal", handleAddDeal as EventListener);
+      window.removeEventListener("atlas:pipeline-deal-lost", handleDealLost as EventListener);
+      window.removeEventListener("atlas:deal-won", dealWonWrapper);
+    };
+  }, [setNodes]);
+
   // Start presentation
   const handleStartPresentation = useCallback(() => {
     if (presentationEdges.length > 0 || presentationGroups.length > 0) {
@@ -2033,48 +2128,90 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     if (!parseFileDialog) return;
     const { rawFile, position, fileType } = parseFileDialog;
     const ts = Date.now();
-    const docSections: Array<{ id: string; pageNum: number; label: string; content: string }> = [];
+
+    let rawChunks: string[] = [];
 
     if (fileType === "pdf") {
       const { parsePDFToText } = await import("@/lib/pdf-parser");
       const pages = await parsePDFToText(rawFile);
-      pages.forEach((p, i) => {
-        const firstLine = p.text.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60);
-        docSections.push({
-          id: `s-${ts}-${i}`,
-          pageNum: p.pageNumber,
-          label: firstLine || `Page ${p.pageNumber}`,
-          content: p.text.slice(0, 6000),
-        });
-      });
+      // Join all pages, split on double-newlines (the visual spacers from the PDF layout)
+      const fullText = pages.map(p => p.text).join("\n\n");
+      const allChunks = fullText
+        .split(/\n{2,}/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      // Merge short heading chunks with body so headers stay attached to their content.
+      // Rule: take at most 1 additional short item before grabbing the next item.
+      // This keeps "Grounded + Real bodies..." as one node while preventing long
+      // chains of short items (like BIG IDEA + Practiced Ease + PRIMARY TARGET AUDIENCE)
+      // from all collapsing into a single giant node.
+      const merged: string[] = [];
+      let i = 0;
+      while (i < allChunks.length) {
+        const curr = allChunks[i];
+        if (curr.length >= 40) {
+          merged.push(curr);
+          i++;
+        } else {
+          // Short item: optionally absorb 1 more short, then take the next item
+          const group = [curr];
+          i++;
+          if (i < allChunks.length && allChunks[i].length < 40) {
+            group.push(allChunks[i]);
+            i++;
+          }
+          if (i < allChunks.length) {
+            group.push(allChunks[i]);
+            i++;
+          }
+          merged.push(group.join("\n"));
+        }
+      }
+      rawChunks = merged.slice(0, 24);
+      // Fallback: one node per page if nothing parsed
+      if (rawChunks.length === 0) {
+        rawChunks = pages.map(p => p.text).filter(t => t.trim().length > 0);
+      }
     } else {
       const text = await rawFile.text();
-      const chunks = text.split(/\n{2,}/).map((s: string) => s.trim()).filter((s: string) => s.length > 20).slice(0, 20);
-      chunks.forEach((chunk: string, i: number) => {
-        const firstLine = chunk.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60);
-        docSections.push({
-          id: `s-${ts}-${i}`,
-          pageNum: i + 1,
-          label: firstLine || `Section ${i + 1}`,
-          content: chunk.slice(0, 6000),
-        });
-      });
+      rawChunks = text.split(/\n{2,}/).map((s: string) => s.trim()).filter((s: string) => s.length > 20).slice(0, 24);
     }
 
-    const title = rawFile.name.replace(/\.[^.]+$/, "");
-    setNodes(nds => [
-      ...nds,
-      {
-        id: `doc-frame-${ts}`,
-        type: "docFrame" as const,
-        position: { x: position.x + 300, y: position.y },
+    // Create one independent text node per section, laid out in a 3-column grid
+    const COLS = 3;
+    const COL_W = 360;
+    const ROW_H = 260;
+    const newNodes = rawChunks.map((chunk, i) => {
+      const lines = chunk.split("\n");
+      const label = lines[0].replace(/^#+\s*/, "").slice(0, 80) || `Section ${i + 1}`;
+      const body = lines.slice(1).join("\n").trim() || chunk;
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      return {
+        id: `text-pdf-${ts}-${i}`,
+        type: "text" as const,
+        position: { x: position.x + 300 + col * COL_W, y: position.y + row * ROW_H },
         data: {
-          title,
-          pageCount: docSections.length,
-          sections: docSections,
-          collapsed: false,
+          label,
+          content: body.slice(0, 1200),
+          lastModified: new Date().toISOString(),
+          formatting: {
+            color: "var(--app-text-primary)",
+            font: "sans",
+            size: "medium",
+            bold: false,
+            strikethrough: false,
+            align: "left",
+          },
         },
-      },
+      };
+    });
+
+    const originalNodeId = parseFileDialog.nodeId;
+    setNodes(nds => [
+      ...nds.filter(n => n.id !== originalNodeId),
+      ...newNodes,
     ]);
     setParseFileDialog(null);
   }, [parseFileDialog, setNodes]);
@@ -2430,6 +2567,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
         <AtlasCanvas
+          key={canvas.id}
           nodes={nodes}
           edges={edges}
           searchQuery={searchQuery}
@@ -2560,6 +2698,8 @@ presentationMode={presentationMode}
   activityOpen={activityOpen}
   todoCount={nodes.filter(n => n.type === "file").reduce((sum, n) => sum + ((n.data as FileNodeData).tasks?.filter(t => !t.completed).length ?? 0), 0)}
   activityCount={comments.filter(c => !c.resolved).length}
+  canvases={canvases}
+  onOpenCanvas={onSwitchCanvas}
   />
 
       {/* Activity Side Panel — slides in from right edge, behind the toolbar */}
@@ -3153,62 +3293,54 @@ presentationMode={presentationMode}
 {/* Version Conflict Dialog */}
       {versionConflict && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div 
+          <div
             className="rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
-            style={{ 
-              backgroundColor: "#1C1C1E",
-              border: "1px solid #2C2C2E",
+            style={{
+              backgroundColor: "var(--app-card-elevated)",
+              border: "1px solid var(--app-border-strong)",
             }}
           >
-            <h2 
-              className="text-lg font-semibold mb-2"
-              style={{ color: "var(--app-text-primary)", fontFamily: "system-ui, Inter, sans-serif" }}
+            <h2
+              className="text-lg font-semibold mb-2 text-foreground"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               File Already Exists
             </h2>
-            <p 
-              className="text-sm mb-6"
-              style={{ color: "#8E8E93", fontFamily: "system-ui, Inter, sans-serif" }}
+            <p
+              className="text-sm mb-6 text-muted-foreground"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               A file named <span className="font-medium text-foreground">{versionConflict.newFile.fileName}</span> already exists on this canvas. Would you like to add this as a new version or create a separate file?
             </p>
-            
+
             <div className="flex flex-col gap-3">
               <button
                 type="button"
                 onClick={handleAddAsVersion}
-                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                style={{ 
-                  backgroundColor: "var(--app-text-primary)",
-                  color: "#000000",
-                  fontFamily: "system-ui, Inter, sans-serif"
-                }}
+                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 bg-foreground text-background hover:opacity-90"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 <Upload className="w-4 h-4" strokeWidth={1.5} />
                 Add as New Version
               </button>
-              
+
               <button
                 type="button"
                 onClick={handleCreateSeparate}
-                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors"
-                style={{ 
-                  backgroundColor: "#2C2C2E",
-                  color: "var(--app-text-primary)",
+                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors text-foreground hover:opacity-80"
+                style={{
+                  backgroundColor: "var(--app-border-strong)",
                   fontFamily: "system-ui, Inter, sans-serif"
                 }}
               >
                 Create Separate File
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setVersionConflict(null)}
-                className="w-full py-2 text-sm transition-colors"
-                style={{ 
-                  color: "#8E8E93",
-                  fontFamily: "system-ui, Inter, sans-serif"
-                }}
+                className="w-full py-2 text-sm transition-colors text-muted-foreground hover:text-foreground"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
                 Cancel
               </button>

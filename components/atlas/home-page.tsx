@@ -2064,8 +2064,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                         if (next.has(project.id)) next.delete(project.id); else next.add(project.id);
                         return next;
                       })}
-                      className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-200 hover:bg-white/5 transition-colors"
-                      style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="w-full flex items-center gap-0 px-6 py-2 text-sm text-foreground hover:bg-black/5 transition-colors"
+                      style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <ChevronRight
@@ -2074,11 +2074,11 @@ const [showSageChat, setShowSageChat] = useState(false);
                         />
                         <FolderOpen className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} style={{ color: project.color }} />
                         <span className="truncate font-medium">{project.name}</span>
-                        <span className="text-xs text-gray-600 ml-1 flex-shrink-0">{projectCanvases.length} canvases</span>
+                        <span className="text-xs text-muted-foreground ml-1 flex-shrink-0">{projectCanvases.length} canvases</span>
                       </div>
-                      <div className="w-36 flex-shrink-0 text-xs text-gray-600">—</div>
-                      <div className="w-40 flex-shrink-0 text-xs text-gray-600">Collection</div>
-                      <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{timeAgo(project.updatedAt)}</div>
+                      <div className="w-36 flex-shrink-0 text-xs text-muted-foreground">—</div>
+                      <div className="w-40 flex-shrink-0 text-xs text-muted-foreground">Collection</div>
+                      <div className="w-44 flex-shrink-0 text-xs text-muted-foreground text-left">{timeAgo(project.updatedAt)}</div>
                     </button>
                     {/* Canvases under collection */}
                     {!collapsed && projectCanvases.map((canvas) => {
@@ -2099,8 +2099,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                                 onOpenCanvas(canvas.id);
                               }
                             }}
-                            className="w-full flex items-center gap-0 pl-14 pr-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-foreground transition-colors"
-                            style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-2 text-sm text-foreground hover:bg-black/5 transition-colors"
+                            style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               {fileNodes.length > 0 ? (
@@ -2114,9 +2114,9 @@ const [showSageChat, setShowSageChat] = useState(false);
                               <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                               <span className="truncate">{canvas.name}</span>
                             </div>
-                            <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
-                            <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{project.name}</div>
-                            <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                            <div className="w-36 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.createdBy?.name ?? "—"}</div>
+                            <div className="w-40 flex-shrink-0 text-xs text-muted-foreground truncate">{project.name}</div>
+                            <div className="w-44 flex-shrink-0 text-xs text-muted-foreground text-left">{formatDate(canvas.updatedAt)}</div>
                           </button>
                           {/* File nodes under canvas */}
                           {canvasExpanded && fileNodes.map((node, idx) => (
@@ -2124,16 +2124,16 @@ const [showSageChat, setShowSageChat] = useState(false);
                               key={`${node.id}-${idx}`}
                               type="button"
                               onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
-                              className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-foreground transition-colors"
-                              style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                              className="w-full flex items-center gap-0 pl-24 pr-6 py-1.5 text-sm text-foreground hover:bg-black/5 transition-colors"
+                              style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2">
                                 <FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                                 <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
                               </div>
-                              <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
-                              <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.name}</div>
-                              <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                              <div className="w-36 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.createdBy?.name ?? "—"}</div>
+                              <div className="w-40 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.name}</div>
+                              <div className="w-44 flex-shrink-0 text-xs text-muted-foreground text-left">{formatDate(canvas.updatedAt)}</div>
                             </button>
                           ))}
                         </div>
@@ -2147,8 +2147,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                 <>
                   {projects.length > 0 && (
                     <div
-                      className="px-6 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider"
-                      style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                      className="px-6 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                      style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       Uncollected
                     </div>
@@ -2171,8 +2171,8 @@ const [showSageChat, setShowSageChat] = useState(false);
                               onOpenCanvas(canvas.id);
                             }
                           }}
-                          className="w-full flex items-center gap-0 px-6 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-foreground transition-colors"
-                          style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                          className="w-full flex items-center gap-0 px-6 py-2 text-sm text-foreground hover:bg-black/5 transition-colors"
+                          style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                         >
                           <div className="flex-1 min-w-0 flex items-center gap-2">
                             {fileNodes.length > 0 ? (
@@ -2190,25 +2190,25 @@ const [showSageChat, setShowSageChat] = useState(false);
                             </svg>
                             <span className="truncate">{canvas.name}</span>
                           </div>
-                          <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
-                          <div className="w-40 flex-shrink-0 text-xs text-gray-600">No collection</div>
-                          <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                          <div className="w-36 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.createdBy?.name ?? "—"}</div>
+                          <div className="w-40 flex-shrink-0 text-xs text-muted-foreground">No collection</div>
+                          <div className="w-44 flex-shrink-0 text-xs text-muted-foreground text-left">{formatDate(canvas.updatedAt)}</div>
                         </button>
                         {canvasExpanded && fileNodes.map((node, idx) => (
                           <button
                             key={`${node.id}-${idx}`}
                             type="button"
                             onClick={() => setFileDetail({ nodeId: node.id, canvasId: canvas.id })}
-                            className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-gray-500 hover:bg-white/5 hover:text-foreground transition-colors"
-                            style={{ borderBottom: "1px solid var(--app-card-elevated)", fontFamily: "system-ui, Inter, sans-serif" }}
+                            className="w-full flex items-center gap-0 pl-14 pr-6 py-1.5 text-sm text-foreground hover:bg-black/5 transition-colors"
+                            style={{ borderBottom: "1px solid var(--app-border)", fontFamily: "system-ui, Inter, sans-serif" }}
                           >
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                               <span className="truncate">{(node.data as { label?: string; fileName?: string }).label || (node.data as { label?: string; fileName?: string }).fileName || "Untitled"}</span>
                             </div>
-                            <div className="w-36 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.createdBy?.name ?? "—"}</div>
-                            <div className="w-40 flex-shrink-0 text-xs text-gray-600 truncate">{canvas.name}</div>
-                            <div className="w-44 flex-shrink-0 text-xs text-gray-600 text-left">{formatDate(canvas.updatedAt)}</div>
+                            <div className="w-36 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.createdBy?.name ?? "—"}</div>
+                            <div className="w-40 flex-shrink-0 text-xs text-muted-foreground truncate">{canvas.name}</div>
+                            <div className="w-44 flex-shrink-0 text-xs text-muted-foreground text-left">{formatDate(canvas.updatedAt)}</div>
                           </button>
                         ))}
                       </div>

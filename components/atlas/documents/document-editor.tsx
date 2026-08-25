@@ -162,15 +162,15 @@ function innerClass(mode: Mode): string {
 
 function editorClass(mode: Mode): string {
   const base =
-    "atlas-doc prose prose-invert max-w-none focus:outline-none " +
+    "atlas-doc prose prose-neutral dark:prose-invert max-w-none focus:outline-none " +
     "prose-p:my-2 prose-headings:font-semibold prose-headings:tracking-tight " +
     "prose-h1:text-3xl prose-h1:mt-6 prose-h1:mb-3 " +
     "prose-h2:text-2xl prose-h2:mt-5 prose-h2:mb-2 " +
     "prose-h3:text-xl prose-h3:mt-4 prose-h3:mb-2 " +
     "prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 " +
-    "prose-blockquote:border-l-2 prose-blockquote:border-white/20 prose-blockquote:pl-3 prose-blockquote:text-gray-300 prose-blockquote:not-italic " +
-    "prose-hr:border-white/10 prose-hr:my-6 " +
-    "prose-code:text-[0.9em] prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none"
+    "prose-blockquote:border-l-2 prose-blockquote:border-black/20 dark:prose-blockquote:border-white/20 prose-blockquote:pl-3 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-300 prose-blockquote:not-italic " +
+    "prose-hr:border-black/10 dark:prose-hr:border-white/10 prose-hr:my-6 " +
+    "prose-code:text-[0.9em] prose-code:bg-black/8 dark:prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none"
   switch (mode) {
     case "full":
       return `${base} text-[16px] leading-[1.7]`

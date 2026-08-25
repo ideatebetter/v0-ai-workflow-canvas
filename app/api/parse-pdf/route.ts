@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +14,15 @@ export async function POST(request: NextRequest) {
     const data = new Uint8Array(arrayBuffer);
 
     // Use pdfjs-dist legacy build — it works in Node.js without browser globals.
-    // pdf-parse v2 uses the browser ESM build which requires DOMMatrix (not in Node).
+    // Turbopack bundles server code into chunks at a different path, so the default
+    // relative worker resolution breaks. We point workerSrc to the actual node_modules
+    // file via process.cwd(), which is always the project root in Next.js.
     const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const workerPath = path.join(
+      process.cwd(),
+      "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
+    );
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${workerPath}`;
 
     const loadingTask = pdfjsLib.getDocument({
       data,
@@ -33,10 +41,15 @@ export async function POST(request: NextRequest) {
       const text = content.items
         .map((item: unknown) => {
           const it = item as { str?: string; hasEOL?: boolean };
-          return it.str ?? "";
+          const str = it.str ?? "";
+          // Empty items with hasEOL are visual spacers between sections in the PDF layout.
+          // Non-empty items with hasEOL are soft line wraps — treat them as spaces.
+          if (str === "" && it.hasEOL) return "\n\n";
+          return str + " ";
         })
-        .join(" ")
-        .replace(/ +/g, " ")
+        .join("")
+        .replace(/ {2,}/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
         .trim();
       if (text.length > 0) {
         pages.push({ pageNumber: i, text });

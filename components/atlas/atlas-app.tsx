@@ -76,6 +76,7 @@ export function AtlasApp() {
             pages: c.settings?.pages || [],
             activePageId: c.settings?.activePageId || undefined,
             presentationFlows: c.settings?.presentationFlows || [],
+            viewport: c.settings?.viewport || undefined,
             createdAt: c.created_at,
             updatedAt: c.updated_at,
           }));
@@ -137,6 +138,7 @@ export function AtlasApp() {
               activePageId: canvas.activePageId,
               workspaceId: canvas.workspaceId,
               presentationFlows: canvas.presentationFlows,
+              viewport: canvas.viewport,
             },
           }),
         });
@@ -153,7 +155,7 @@ export function AtlasApp() {
             description: canvas.description,
             nodes: canvas.nodes,
             edges: canvas.edges,
-            settings: { comments: canvas.comments, workspaceId: canvas.workspaceId, presentationFlows: canvas.presentationFlows },
+            settings: { comments: canvas.comments, workspaceId: canvas.workspaceId, presentationFlows: canvas.presentationFlows, viewport: canvas.viewport },
           }),
         });
         
@@ -393,6 +395,7 @@ export function AtlasApp() {
                   comments: c.settings?.comments || canvas.comments,
                   pages: c.settings?.pages || canvas.pages,
                   activePageId: c.settings?.activePageId || canvas.activePageId,
+                  viewport: c.settings?.viewport || canvas.viewport,
                   updatedAt: c.updated_at,
                 }
               : canvas

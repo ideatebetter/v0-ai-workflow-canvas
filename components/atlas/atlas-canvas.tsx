@@ -177,7 +177,23 @@ export function AtlasCanvas({
 const reactFlowInstance = useReactFlow();
   const viewport = useViewport();
   const viewportSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
+  const onViewportChangeRef = useRef(onViewportChange);
+  useEffect(() => { onViewportChangeRef.current = onViewportChange; }, [onViewportChange]);
+
+  // Flush the latest viewport immediately when unmounting (canvas switch / navigate away)
+  // so the in-memory state is up-to-date before the next canvas loads.
+  useEffect(() => {
+    return () => {
+      if (viewportSaveTimer.current) clearTimeout(viewportSaveTimer.current);
+      if (latestViewportRef.current && onViewportChangeRef.current) {
+        onViewportChangeRef.current(latestViewportRef.current);
+      }
+    };
+  }, []);
+
   const handleMoveEnd = useCallback((_: unknown, vp: { x: number; y: number; zoom: number }) => {
+    latestViewportRef.current = vp;
     if (!onViewportChange) return;
     if (viewportSaveTimer.current) clearTimeout(viewportSaveTimer.current);
     viewportSaveTimer.current = setTimeout(() => onViewportChange(vp), 500);
