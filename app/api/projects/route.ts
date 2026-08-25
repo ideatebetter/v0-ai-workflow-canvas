@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
     }
 
-    // 2. Insert phases
+    // 2. Insert phases (modal sends { name, dueDate } objects)
     if (phases && phases.length > 0) {
-      const phaseRows = (phases as string[]).map((phaseName, index) => ({
+      const phaseRows = (phases as ({ name: string; dueDate?: string | null } | string)[]).map((p, index) => ({
         project_id: project.id,
-        name: phaseName,
+        name: typeof p === "string" ? p : p.name,
         order: index,
         status: "pending",
       }));
