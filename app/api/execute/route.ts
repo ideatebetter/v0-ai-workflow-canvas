@@ -22,7 +22,7 @@ interface ExecutionContext {
 }
 
 async function fetchGitHub(data: GitHubNodeData): Promise<string> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://atlas-prototype.com"}/api/github`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://app.ideatebetter.com"}/api/github`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

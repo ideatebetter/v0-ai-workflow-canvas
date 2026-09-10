@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     // Send welcome email with temporary password using Supabase's email
     // The user will receive an email with their temporary password
     // Note: In production, you might want to use a custom email service
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://atlas-prototype.com";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.ideatebetter.com";
     
     // Use Supabase to send a custom email (or use Resend/SendGrid in production)
     // For now, we'll return the temp password to show in the UI

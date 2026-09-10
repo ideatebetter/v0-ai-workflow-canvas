@@ -211,7 +211,7 @@ export async function PATCH(request: Request) {
             data: {
               name: waitlistEntry.name,
             },
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://atlas-prototype.com'}/auth/callback`,
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://app.ideatebetter.com'}/auth/callback`,
           }
         );
 
