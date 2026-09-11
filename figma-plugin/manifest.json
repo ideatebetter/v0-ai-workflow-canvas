@@ -7,6 +7,6 @@
   "editorType": ["figma"],
   "documentAccess": "dynamic-page",
   "networkAccess": {
-    "allowedDomains": ["https://app.ideatebetter.com"]
+    "allowedDomains": ["https://atlas-prototype.com"]
   }
 }
