@@ -292,6 +292,11 @@ export function FileNode({ id, data, selected }: NodeProps) {
   // Get video URL for video files
   const videoUrl = isVideo ? fileData.uploadedFile?.url : null;
 
+  // Multi-frame Figma node
+  const isMultiFrameFigma = (fileData.figmaSync?.frameIds?.length ?? 0) > 1;
+  const extraFrameCount = isMultiFrameFigma ? (fileData.figmaSync!.frameIds!.length - 1) : 0;
+  const heroThumbnail = isMultiFrameFigma ? (fileData.figmaSync!.frameThumbnails?.[0] ?? fileData.previewImages?.[0] ?? null) : null;
+
   return (
     <div
       className="relative group cursor-move"
@@ -492,6 +497,50 @@ export function FileNode({ id, data, selected }: NodeProps) {
               </svg>
               <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>Figma Design</span>
             </div>
+          ) : isMultiFrameFigma && heroThumbnail ? (
+            // Multi-frame Figma: hero thumbnail + "+N more" badge
+            <div className="relative w-full" style={{ borderRadius: 12, overflow: "hidden" }}>
+              <img
+                src={heroThumbnail}
+                alt={fileData.label}
+                className="w-full"
+                style={{ display: "block", width: "100%", height: "auto", objectFit: "cover", maxHeight: 180 }}
+              />
+              {extraFrameCount > 0 && (
+                <div
+                  className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", backdropFilter: "blur(4px)", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  +{extraFrameCount}
+                </div>
+              )}
+              <div
+                className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md"
+                style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+              >
+                <svg width="10" height="12" viewBox="0 0 32 36" fill="none">
+                  <path d="M8 36C10.7614 36 13 33.7614 13 31V26H8C5.23858 26 3 28.2386 3 31C3 33.7614 5.23858 36 8 36Z" fill="#0ACF83"/>
+                  <path d="M3 20C3 17.2386 5.23858 15 8 15H13V25H8C5.23858 25 3 22.7614 3 20Z" fill="#A259FF"/>
+                  <path d="M3 9C3 6.23858 5.23858 4 8 4H13V14H8C5.23858 14 3 11.7614 3 9Z" fill="#F24E1E"/>
+                  <path d="M13 4H18C20.7614 4 23 6.23858 23 9C23 11.7614 20.7614 14 18 14H13V4Z" fill="#FF7262"/>
+                  <path d="M23 20C23 22.7614 20.7614 25 18 25C15.2386 25 13 22.7614 13 20C13 17.2386 15.2386 15 18 15C20.7614 15 23 17.2386 23 20Z" fill="#1ABCFE"/>
+                </svg>
+              </div>
+            </div>
+          ) : isMultiFrameFigma ? (
+            // Multi-frame Figma without thumbnails: icon + frame count
+            <div style={{ height: 120, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "var(--app-card-elevated)", borderRadius: 12 }}>
+              <svg width="28" height="32" viewBox="0 0 32 36" fill="none">
+                <path d="M8 36C10.7614 36 13 33.7614 13 31V26H8C5.23858 26 3 28.2386 3 31C3 33.7614 5.23858 36 8 36Z" fill="#0ACF83"/>
+                <path d="M3 20C3 17.2386 5.23858 15 8 15H13V25H8C5.23858 25 3 22.7614 3 20Z" fill="#A259FF"/>
+                <path d="M3 9C3 6.23858 5.23858 4 8 4H13V14H8C5.23858 14 3 11.7614 3 9Z" fill="#F24E1E"/>
+                <path d="M13 4H18C20.7614 4 23 6.23858 23 9C23 11.7614 20.7614 14 18 14H13V4Z" fill="#FF7262"/>
+                <path d="M23 20C23 22.7614 20.7614 25 18 25C15.2386 25 13 22.7614 13 20C13 17.2386 15.2386 15 18 15C20.7614 15 23 17.2386 23 20Z" fill="#1ABCFE"/>
+              </svg>
+              <span style={{ fontSize: 11, color: "var(--app-text-muted)", fontFamily: "system-ui, Inter, sans-serif" }}>
+                {fileData.figmaSync!.frameIds!.length} Figma frames
+              </span>
+            </div>
           ) : fileData.linkType === "generic" ? (
             <div style={{ height: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "var(--app-card-elevated)", borderRadius: 12, padding: "0 16px" }}>
               <Link2 className="w-6 h-6" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
@@ -551,12 +600,22 @@ export function FileNode({ id, data, selected }: NodeProps) {
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: isHovered 
-                ? "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" 
+              background: isHovered
+                ? "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)"
                 : "transparent",
               transition: "background 0.2s ease",
             }}
           />
+
+          {/* Multi-frame Figma badge (for .fig nodes without linkType) */}
+          {isMultiFrameFigma && !fileData.linkType && extraFrameCount > 0 && (
+            <div
+              className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-xs font-semibold pointer-events-none"
+              style={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", backdropFilter: "blur(4px)", fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              +{extraFrameCount}
+            </div>
+          )}
         </div>
 
         {/* Hover Details Panel */}

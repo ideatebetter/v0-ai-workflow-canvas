@@ -5,6 +5,19 @@ import { MessageSquare, LayoutGrid, Presentation, X, Search, Plus, Settings, Sen
 import { AddNodeMenu } from "./add-node-menu";
 import type { Canvas } from "@/lib/atlas-types";
 
+// Figma logo inline SVG icon
+function FigmaIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="16" viewBox="0 0 32 36" fill="none">
+      <path d="M8 36C10.7614 36 13 33.7614 13 31V26H8C5.23858 26 3 28.2386 3 31C3 33.7614 5.23858 36 8 36Z" fill="#0ACF83"/>
+      <path d="M3 20C3 17.2386 5.23858 15 8 15H13V25H8C5.23858 25 3 22.7614 3 20Z" fill="#A259FF"/>
+      <path d="M3 9C3 6.23858 5.23858 4 8 4H13V14H8C5.23858 14 3 11.7614 3 9Z" fill="#F24E1E"/>
+      <path d="M13 4H18C20.7614 4 23 6.23858 23 9C23 11.7614 20.7614 14 18 14H13V4Z" fill="#FF7262"/>
+      <path d="M23 20C23 22.7614 20.7614 25 18 25C15.2386 25 13 22.7614 13 20C13 17.2386 15.2386 15 18 15C20.7614 15 23 17.2386 23 20Z" fill="#1ABCFE"/>
+    </svg>
+  );
+}
+
 interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
   onAddTextNode: () => void;
@@ -31,6 +44,7 @@ interface CanvasSideToolbarProps {
   activityCount: number;
   canvases?: Canvas[];
   onOpenCanvas?: (canvasId: string) => void;
+  onFigmaImportClick?: () => void;
 }
 
 export function CanvasSideToolbar({
@@ -59,6 +73,7 @@ export function CanvasSideToolbar({
   activityCount,
   canvases,
   onOpenCanvas,
+  onFigmaImportClick,
 }: CanvasSideToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addMenuPosition, setAddMenuPosition] = useState({ x: 0, y: 0 });
@@ -240,6 +255,18 @@ export function CanvasSideToolbar({
 
       {/* Divider */}
       <div className="h-px mx-1 bg-border" />
+
+      {/* Figma Import */}
+      {onFigmaImportClick && (
+        <button
+          type="button"
+          onClick={onFigmaImportClick}
+          className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="Import from Figma"
+        >
+          <FigmaIcon className="opacity-80 hover:opacity-100 transition-opacity" />
+        </button>
+      )}
 
       {/* Add Node */}
       <div className="relative">
