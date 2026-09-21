@@ -1062,6 +1062,21 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [nodes.length, setNodes, setEdges]
   );
 
+  const handleAddDocumentNode = useCallback(
+    (docId: string, position?: { x: number; y: number }) => {
+      const nodeId = `document-${Date.now()}`;
+      const nodePosition = position ?? getNextPosition(nodes);
+      const newNode: AtlasNode = {
+        id: nodeId,
+        type: "document",
+        position: nodePosition,
+        data: { docId, displayMode: "card" },
+      };
+      setNodes(nds => [...nds, newNode]);
+    },
+    [nodes, setNodes]
+  );
+
   const handleAddOperationalNode = useCallback(
     (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" = "org", projectId?: string, projectName?: string) => {
       const nodeId = `op-${Date.now()}`;
@@ -2700,6 +2715,7 @@ presentationMode={presentationMode}
   activityCount={comments.filter(c => !c.resolved).length}
   canvases={canvases}
   onOpenCanvas={onSwitchCanvas}
+  onAddDocumentNode={handleAddDocumentNode}
   />
 
       {/* Activity Side Panel — slides in from right edge, behind the toolbar */}
@@ -2835,6 +2851,7 @@ presentationMode={presentationMode}
           onUploadFile={handleDoubleClickUploadFile}
           onOpenAIGenerate={handleDoubleClickOpenAIGenerate}
           onAddLink={handleDoubleClickAddLink}
+          onAddDocumentNode={handleAddDocumentNode}
           onClose={closeDoubleClickMenu}
           position={doubleClickMenuScreenPosition}
         />

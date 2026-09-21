@@ -4,6 +4,7 @@ import React, { useRef, useState, useCallback, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom";
 import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen, Upload, Link2, Search, FileText, LayoutGrid as CanvasIcon } from "lucide-react";
 import type { Canvas } from "@/lib/atlas-types";
+import { useDocumentsStore } from "@/lib/documents/store";
 
 type OpType = "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth";
 
@@ -21,6 +22,7 @@ interface AddNodeMenuProps {
   sourceHandlePosition?: "left" | "right";
   canvases?: Canvas[];
   onOpenCanvas?: (canvasId: string) => void;
+  onAddDocumentNode?: (docId: string) => void;
 }
 
 const PROJECTS = [
@@ -52,6 +54,7 @@ export function AddNodeMenu({
   sourceHandlePosition,
   canvases,
   onOpenCanvas,
+  onAddDocumentNode,
 }: AddNodeMenuProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const linkInputRef = useRef<HTMLInputElement>(null);
@@ -64,40 +67,69 @@ export function AddNodeMenu({
   const [linkInputValue, setLinkInputValue] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
 
+  const docTree = useDocumentsStore(s => s.tree);
+
   // Search results for "Add File → Search"
   const searchResults = useMemo(() => {
-    console.log("[AddNodeMenu search] canvases:", canvases?.length ?? "undefined", "names:", canvases?.map(c => c.name), "query:", JSON.stringify(fileSearchQuery));
-    if (!canvases || canvases.length === 0) return [];
-    const sorted = [...canvases].sort((a, b) =>
-      new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
-    );
+    type ResultType = "canvas" | "doc" | "file" | "standalone-doc";
+    const results: { type: ResultType; id: string; name: string; sub: string }[] = [];
+
+    // Standalone docs from the documents store
+    const allDocs = Object.values(docTree).filter(n => n.type === "document");
+    const sortedDocs = [...allDocs].sort((a, b) => b.updatedAt - a.updatedAt);
+
     if (!fileSearchQuery.trim()) {
-      return sorted.slice(0, 6).map(c => ({ type: "canvas" as const, id: c.id, name: c.name, sub: "" }));
+      // Recent: show up to 4 standalone docs + up to 4 canvases
+      sortedDocs.slice(0, 4).forEach(n =>
+        results.push({ type: "standalone-doc", id: n.id, name: n.title || "Untitled", sub: "Doc" })
+      );
+      if (canvases && canvases.length > 0) {
+        const sorted = [...canvases].sort((a, b) =>
+          new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+        );
+        sorted.slice(0, 4).forEach(c =>
+          results.push({ type: "canvas", id: c.id, name: c.name, sub: "" })
+        );
+      }
+      return results;
     }
+
     const q = fileSearchQuery.toLowerCase();
-    const results: { type: "canvas" | "doc" | "file"; id: string; name: string; sub: string }[] = [];
-    outer: for (const canvas of sorted) {
-      if (canvas.name.toLowerCase().includes(q)) {
-        results.push({ type: "canvas", id: canvas.id, name: canvas.name, sub: "" });
-        if (results.length >= 8) break;
-      }
-      const allNodes = canvas.pages?.flatMap(p => p.nodes) ?? canvas.nodes ?? [];
-      for (const node of allNodes) {
-        const d = node.data as Record<string, string | undefined>;
-        if (node.type === "document" && d.title?.toLowerCase().includes(q)) {
-          results.push({ type: "doc", id: canvas.id, name: d.title ?? "Untitled", sub: canvas.name });
-        } else if (node.type === "file") {
-          const label = d.label ?? d.fileName ?? "";
-          if (label.toLowerCase().includes(q)) {
-            results.push({ type: "file", id: canvas.id, name: label, sub: canvas.name });
-          }
-        }
-        if (results.length >= 8) break outer;
+
+    // Standalone docs first
+    for (const n of sortedDocs) {
+      if ((n.title || "").toLowerCase().includes(q)) {
+        results.push({ type: "standalone-doc", id: n.id, name: n.title || "Untitled", sub: "Doc" });
+        if (results.length >= 8) return results;
       }
     }
-    console.log("[AddNodeMenu search] results:", results.length, results.map(r => r.name));
+
+    // Then canvases + canvas-embedded nodes
+    if (canvases && canvases.length > 0) {
+      const sorted = [...canvases].sort((a, b) =>
+        new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+      );
+      outer: for (const canvas of sorted) {
+        if (canvas.name.toLowerCase().includes(q)) {
+          results.push({ type: "canvas", id: canvas.id, name: canvas.name, sub: "" });
+          if (results.length >= 8) break;
+        }
+        const allNodes = canvas.pages?.flatMap(p => p.nodes) ?? canvas.nodes ?? [];
+        for (const node of allNodes) {
+          const d = node.data as Record<string, string | undefined>;
+          if (node.type === "file") {
+            const label = d.label ?? d.fileName ?? "";
+            if (label.toLowerCase().includes(q)) {
+              results.push({ type: "file", id: canvas.id, name: label, sub: canvas.name });
+            }
+          }
+          if (results.length >= 8) break outer;
+        }
+      }
+    }
+
     return results;
-  }, [canvases, fileSearchQuery]);
+  }, [canvases, fileSearchQuery, docTree]);
 
   // Ops multi-level state
   const [opsLevel, setOpsLevel] = useState<"root" | "org" | "project-list" | "project-nodes">("root");
@@ -374,20 +406,26 @@ export function AddNodeMenu({
                 )}
                 {searchResults.length === 0 && fileSearchQuery.trim() && (
                   <div style={{ fontSize: 12, color: "var(--app-text-faint)", padding: "6px 2px", textAlign: "center", ...fontStyle }}>
-                    {(!canvases || canvases.length === 0) ? "No canvases loaded" : "No results"}
+                    No results
                   </div>
                 )}
                 {searchResults.map((r, i) => (
                   <button
                     key={`${r.id}-${i}`}
                     type="button"
-                    onClick={() => { onOpenCanvas?.(r.id); onClose(); }}
+                    onClick={() => {
+                      if (r.type === "standalone-doc") {
+                        onAddDocumentNode?.(r.id);
+                      } else {
+                        onOpenCanvas?.(r.id);
+                      }
+                      onClose();
+                    }}
                     style={{ ...menuItemStyle, fontSize: 12, padding: "5px 6px", gap: 6, borderRadius: 5 }}
                   >
                     <div style={{ flexShrink: 0, color: "var(--app-text-muted)" }}>
                       {r.type === "canvas" && <CanvasIcon className="w-3 h-3" strokeWidth={1.5} />}
-                      {r.type === "doc" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
-                      {r.type === "file" && <FileText className="w-3 h-3" strokeWidth={1.5} />}
+                      {(r.type === "doc" || r.type === "standalone-doc" || r.type === "file") && <FileText className="w-3 h-3" strokeWidth={1.5} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--app-text-primary)" }}>{r.name}</div>
