@@ -68,6 +68,11 @@ export function DocumentEditor({ docId, mode, onRequestFocus }: DocumentEditorPr
   )
 
   const contentRef = useRef<DocContent | null>(doc?.content ?? null)
+  // Keep latest values accessible in the unmount flush without stale closures.
+  const editorRef = useRef(editor)
+  editorRef.current = editor
+  const docRef = useRef(doc)
+  docRef.current = doc
 
   useDebouncedEffect(
     () => {
@@ -82,6 +87,20 @@ export function DocumentEditor({ docId, mode, onRequestFocus }: DocumentEditorPr
     [editor?.state.doc, doc?.id],
     400,
   )
+
+  // Flush any pending save immediately when the editor unmounts (e.g. navigating away).
+  useEffect(() => {
+    return () => {
+      const e = editorRef.current
+      const d = docRef.current
+      if (!e || !d) return
+      const json = e.getJSON() as unknown as DocContent
+      if (JSON.stringify(json) !== JSON.stringify(contentRef.current)) {
+        setDocumentContent(d.id, json)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!editor || !doc) return

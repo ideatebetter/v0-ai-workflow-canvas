@@ -31,6 +31,7 @@ interface CanvasSideToolbarProps {
   activityCount: number;
   canvases?: Canvas[];
   onOpenCanvas?: (canvasId: string) => void;
+  onAddDocumentNode?: (docId: string) => void;
 }
 
 export function CanvasSideToolbar({
@@ -59,6 +60,7 @@ export function CanvasSideToolbar({
   activityCount,
   canvases,
   onOpenCanvas,
+  onAddDocumentNode,
 }: CanvasSideToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addMenuPosition, setAddMenuPosition] = useState({ x: 0, y: 0 });
@@ -270,6 +272,7 @@ export function CanvasSideToolbar({
           position={addMenuPosition}
           canvases={canvases}
           onOpenCanvas={onOpenCanvas}
+          onAddDocumentNode={onAddDocumentNode}
         />
       )}
 
