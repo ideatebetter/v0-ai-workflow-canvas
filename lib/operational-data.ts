@@ -1,14 +1,15 @@
 // Shared operational data generation — used by atlas-editor (node creation) and
 // data-detail-panel (project switcher).
 
-export type ProjectId = "nike" | "google" | "deloitte" | "levis" | "patagonia";
+export type ProjectId = "nike" | "google" | "deloitte" | "levis" | "patagonia" | "secondnature";
 
 export const PROJECTS: { id: ProjectId; name: string; color: string }[] = [
   { id: "nike",      name: "Nike Running",        color: "#3a6bb5" },
   { id: "google",    name: "Google Brand Sprint",  color: "#2e8b57" },
   { id: "deloitte",  name: "Deloitte Digital",     color: "#c27030" },
   { id: "levis",     name: "Levi's Identity",      color: "#8b3a8b" },
-  { id: "patagonia", name: "Patagonia Social",     color: "#2e6b4f" },
+  { id: "patagonia",    name: "Patagonia Social",     color: "#2e6b4f" },
+  { id: "secondnature", name: "2nd Nature Rebrand",  color: "#3d7a5c" },
 ];
 
 export const STUDIO_TEAM = [
@@ -28,7 +29,8 @@ export const PROJECT_DATA: Record<ProjectId, {
   google:    { margin: 44, budgetH: 80,  loggedH: 26,  consumed: 33, phase: "research", touchpoint: 1, revisions: 2, feedbackCycles: 1, memberIds: ["m1","m2","m4"] },
   deloitte:  { margin: 29, budgetH: 60,  loggedH: 40,  consumed: 67, phase: "concept",  touchpoint: 4, revisions: 6, feedbackCycles: 3, memberIds: ["m1","m3","m4","m5"] },
   levis:     { margin: 41, budgetH: 90,  loggedH: 22,  consumed: 24, phase: "strategy", touchpoint: 3, revisions: 3, feedbackCycles: 2, memberIds: ["m2","m4","m5"] },
-  patagonia: { margin: 35, budgetH: 50,  loggedH: 20,  consumed: 40, phase: "design",   touchpoint: 2, revisions: 3, feedbackCycles: 2, memberIds: ["m2","m5"] },
+  patagonia:    { margin: 35, budgetH: 50,  loggedH: 20,  consumed: 40, phase: "design",   touchpoint: 2, revisions: 3, feedbackCycles: 2, memberIds: ["m2","m5"] },
+  secondnature: { margin: 36, budgetH: 110, loggedH: 35, consumed: 32, phase: "concept",  touchpoint: 3, revisions: 2, feedbackCycles: 1, memberIds: ["m1","m2","m4"] },
 };
 
 const UTIL_MAP: Record<string, {
@@ -239,6 +241,24 @@ const PIPELINE_DATA: Record<ProjectId, {
       { projectName: "Levi's Identity",      teamOverlap: ["Jordan Kim", "Riley Chen"],  impactLevel: "medium", hours: 85 },
     ],
   },
+  secondnature: {
+    forecast30Days: [
+      { projectName: "2nd Nature Brand Guidelines",     probability: 78, estimatedHours: 70 },
+    ],
+    forecast60Days: [
+      { projectName: "2nd Nature Packaging System",     probability: 56, estimatedHours: 100 },
+      { projectName: "2nd Nature Campaign Launch",      probability: 42, estimatedHours: 120 },
+    ],
+    forecast90Days: [
+      { projectName: "2nd Nature Retail Experience",    probability: 31, estimatedHours: 140 },
+      { projectName: "2nd Nature Annual Report 2026",   probability: 19, estimatedHours: 80 },
+    ],
+    teamCapacity: 180, projectedLoad: 160,
+    competingProjects: [
+      { projectName: "Google Brand Sprint",  teamOverlap: ["Alex Rivera", "Casey Morgan"],  impactLevel: "high",   hours: 96 },
+      { projectName: "Levi's Identity",      teamOverlap: ["Jordan Kim", "Casey Morgan"],   impactLevel: "medium", hours: 72 },
+    ],
+  },
 };
 
 export function generatePipelineData(projectId: ProjectId, projectName: string) {
@@ -277,7 +297,8 @@ const TEAM_HEALTH_META: Record<ProjectId, {
   google:    { feedbackLoop: 18, revisionRatio: 1.8, timeSaved: 24, trend: "improving", healthScore: 83, onTime: 93, blockers: 0, velocity: [4, 5, 4, 6, 5, 6, 7] },
   deloitte:  { feedbackLoop: 56, revisionRatio: 3.2, timeSaved: 12, trend: "declining", healthScore: 61, onTime: 72, blockers: 2, velocity: [2, 2, 1, 3, 2, 1, 2] },
   levis:     { feedbackLoop: 22, revisionRatio: 1.4, timeSaved: 20, trend: "stable",    healthScore: 85, onTime: 92, blockers: 0, velocity: [3, 4, 4, 5, 4, 5, 4] },
-  patagonia: { feedbackLoop: 14, revisionRatio: 1.1, timeSaved: 16, trend: "improving", healthScore: 91, onTime: 97, blockers: 0, velocity: [3, 4, 5, 5, 6, 5, 7] },
+  patagonia:    { feedbackLoop: 14, revisionRatio: 1.1, timeSaved: 16, trend: "improving", healthScore: 91, onTime: 97, blockers: 0, velocity: [3, 4, 5, 5, 6, 5, 7] },
+  secondnature: { feedbackLoop: 24, revisionRatio: 1.6, timeSaved: 22, trend: "improving", healthScore: 81, onTime: 90, blockers: 0, velocity: [3, 3, 4, 4, 5, 4, 5] },
 };
 
 export function generateTeamHealthData(projectId: ProjectId, projectName: string) {
