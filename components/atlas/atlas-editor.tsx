@@ -602,6 +602,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setRenamingPageId(null);
   }, [canvas, onCanvasChange]);
 
+  // Reorder pages by dragging tabs
+  const handleReorderPages = useCallback((newPageIds: string[]) => {
+    setPages(prev => {
+      const map = new Map(prev.map(p => [p.id, p]));
+      const reordered = newPageIds.map(id => map.get(id)).filter(Boolean) as typeof prev;
+      pagesRef.current = reordered;
+      onCanvasChange({ ...canvas, pages: reordered, updatedAt: new Date().toISOString() });
+      return reordered;
+    });
+  }, [canvas, onCanvasChange]);
+
   // Listen for Sage action events
   useEffect(() => {
     const handleSageActionEvent = (e: CustomEvent<{
@@ -2577,6 +2588,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
         onSwitchPage={switchPage}
         onAddPage={handleAddPage}
         onRenamePage={handleRenamePage}
+        onReorderPages={handleReorderPages}
         onShareClick={() => setShowShareDialog(true)}
       />
 

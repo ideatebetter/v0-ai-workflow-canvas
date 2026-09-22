@@ -5,7 +5,7 @@ import { X, Check, ChevronDown, ChevronRight, ChevronLeft, Plus, PlusSquare, Sea
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
+import type { Canvas, CanvasPage, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project, FileNodeData } from "@/lib/atlas-types";
 import { ShareCanvasDialog } from "./share-canvas-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { InviteDialog } from "./invite-dialog";
@@ -891,6 +891,10 @@ const [showSageChat, setShowSageChat] = useState(false);
   const [collectionMenuCanvasId, setCollectionMenuCanvasId] = useState<string | null>(null);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
+  // Canvas-onto-canvas drag state
+  const [draggingCanvasId, setDraggingCanvasId] = useState<string | null>(null);
+  const [dropTargetCanvasId, setDropTargetCanvasId] = useState<string | null>(null);
+
   const deleteCanvas = (canvasId: string) => {
     onCanvasesChange(canvases.filter((c) => c.id !== canvasId));
     setCanvasToDelete(null);
@@ -899,6 +903,27 @@ const [showSageChat, setShowSageChat] = useState(false);
   const handleSetCanvasCollection = (canvasId: string, projectId: string | undefined) => {
     onCanvasesChange(canvases.map(c => c.id === canvasId ? { ...c, projectId } : c));
     setCollectionMenuCanvasId(null);
+  };
+
+  const mergeCanvasAsPage = (sourceId: string, targetId: string) => {
+    const source = canvases.find(c => c.id === sourceId);
+    const target = canvases.find(c => c.id === targetId);
+    if (!source || !target) return;
+    const existingPages: CanvasPage[] = target.pages && target.pages.length > 0
+      ? target.pages
+      : [{ id: `page-${Date.now()}-root`, name: target.name || "Page 1", nodes: target.nodes, edges: target.edges }];
+    const newPage: CanvasPage = {
+      id: `page-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: source.name || "Untitled",
+      nodes: source.nodes,
+      edges: source.edges,
+    };
+    const updatedTarget: Canvas = {
+      ...target,
+      pages: [...existingPages, newPage],
+      updatedAt: new Date().toISOString(),
+    };
+    onCanvasesChange(canvases.map(c => c.id === targetId ? updatedTarget : c).filter(c => c.id !== sourceId));
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -3882,13 +3907,24 @@ All Frameworks
                       {getProjectCanvases(selectedCollectionId).map((canvas) => (
                 <div
                   key={canvas.id}
+                  draggable
+                  onClick={() => { if (!draggingCanvasId) onOpenCanvas(canvas.id); }}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDraggingCanvasId(canvas.id); }}
+                  onDragEnd={() => { setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
+                  onDragOver={(e) => { if (draggingCanvasId && draggingCanvasId !== canvas.id) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropTargetCanvasId(canvas.id); } }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTargetCanvasId(null); }}
+                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggingCanvasId && draggingCanvasId !== canvas.id) { mergeCanvasAsPage(draggingCanvasId, canvas.id); } setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
                   className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
-                  style={{ backgroundColor: "var(--app-card-elevated)" }}
-                  onClick={() => onOpenCanvas(canvas.id)}
+                  style={{ backgroundColor: "var(--app-card-elevated)", outline: dropTargetCanvasId === canvas.id ? "2px solid #3b82f6" : "none", opacity: draggingCanvasId === canvas.id ? 0.5 : 1 }}
                 >
                   {/* Canvas Preview */}
                   <div className="aspect-[16/10] overflow-hidden relative">
                     <CanvasPreview nodes={canvas.nodes} />
+                    {dropTargetCanvasId === canvas.id && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ backgroundColor: "rgba(59,130,246,0.18)" }}>
+                        <div className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ backgroundColor: "#3b82f6", fontFamily: "system-ui, Inter, sans-serif" }}>+ Add as page</div>
+                      </div>
+                    )}
                     {/* Action buttons */}
                     <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                       <button
@@ -4094,12 +4130,23 @@ All Frameworks
                         {filteredCanvases.filter(c => !c.projectId).map((canvas) => (
                           <div
                             key={canvas.id}
+                            draggable
+                            onClick={() => { if (!draggingCanvasId) onOpenCanvas(canvas.id); }}
+                            onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDraggingCanvasId(canvas.id); }}
+                            onDragEnd={() => { setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
+                            onDragOver={(e) => { if (draggingCanvasId && draggingCanvasId !== canvas.id) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropTargetCanvasId(canvas.id); } }}
+                            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTargetCanvasId(null); }}
+                            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggingCanvasId && draggingCanvasId !== canvas.id) { mergeCanvasAsPage(draggingCanvasId, canvas.id); } setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
                             className="group rounded-xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-white/20"
-                            style={{ backgroundColor: "var(--app-card-elevated)" }}
-                            onClick={() => onOpenCanvas(canvas.id)}
+                            style={{ backgroundColor: "var(--app-card-elevated)", outline: dropTargetCanvasId === canvas.id ? "2px solid #3b82f6" : "none", opacity: draggingCanvasId === canvas.id ? 0.5 : 1 }}
                           >
                             <div className="aspect-[16/10] overflow-hidden relative">
                               <CanvasPreview nodes={canvas.nodes} />
+                              {dropTargetCanvasId === canvas.id && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ backgroundColor: "rgba(59,130,246,0.18)" }}>
+                                  <div className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ backgroundColor: "#3b82f6", fontFamily: "system-ui, Inter, sans-serif" }}>+ Add as page</div>
+                                </div>
+                              )}
                               <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setShareCanvasId(canvas.id); }} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.6)" }} title="Share canvas">
                                   <Send className="w-4 h-4" strokeWidth={1.4} stroke="white" />
@@ -4216,13 +4263,25 @@ All Frameworks
               {filteredCanvases.map((canvas) => (
                 <div
                   key={canvas.id}
-                  onClick={() => onOpenCanvas(canvas.id)}
+                  draggable
+                  onClick={() => { if (!draggingCanvasId) onOpenCanvas(canvas.id); }}
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDraggingCanvasId(canvas.id); }}
+                  onDragEnd={() => { setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
+                  onDragOver={(e) => { if (draggingCanvasId && draggingCanvasId !== canvas.id) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropTargetCanvasId(canvas.id); } }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTargetCanvasId(null); }}
+                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggingCanvasId && draggingCanvasId !== canvas.id) { mergeCanvasAsPage(draggingCanvasId, canvas.id); } setDraggingCanvasId(null); setDropTargetCanvasId(null); }}
                   className="group cursor-pointer rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
-                  style={{ backgroundColor: "var(--app-card)", border: "1px solid var(--app-border)" }}
+                  style={{ backgroundColor: "var(--app-card)", border: dropTargetCanvasId === canvas.id ? "2px solid #3b82f6" : "1px solid var(--app-border)", opacity: draggingCanvasId === canvas.id ? 0.5 : 1 }}
                 >
                   {/* Preview */}
                   <div className="aspect-video relative overflow-hidden">
                     <CanvasPreview nodes={canvas.nodes} />
+                    {/* Drop-as-page overlay */}
+                    {dropTargetCanvasId === canvas.id && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-xl pointer-events-none" style={{ backgroundColor: "rgba(59,130,246,0.18)" }}>
+                        <div className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ backgroundColor: "#3b82f6", fontFamily: "system-ui, Inter, sans-serif" }}>+ Add as page</div>
+                      </div>
+                    )}
                     {/* Action buttons */}
                     <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                       <button

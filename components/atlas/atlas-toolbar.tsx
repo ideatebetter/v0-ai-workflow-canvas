@@ -19,6 +19,7 @@ interface AtlasToolbarProps {
   onSwitchPage?: (pageId: string) => void;
   onAddPage?: () => void;
   onRenamePage?: (pageId: string, newName: string) => void;
+  onReorderPages?: (newPageIds: string[]) => void;
   onBrowseFrameworks?: () => void;
 }
 
@@ -37,6 +38,7 @@ export function AtlasToolbar({
   onSwitchPage,
   onAddPage,
   onRenamePage,
+  onReorderPages,
   onBrowseFrameworks,
 }: AtlasToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -52,6 +54,9 @@ export function AtlasToolbar({
 
   const hasPages = pages && pages.length > 0;
   const activePage = pages?.find(p => p.id === activePageId);
+
+  const [dragPageId, setDragPageId] = useState<string | null>(null);
+  const [dragOverPageId, setDragOverPageId] = useState<string | null>(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -193,13 +198,43 @@ export function AtlasToolbar({
                 {pages!.map((page, idx) => {
                   const isActive = page.id === activePageId;
                   const isEditingThis = editingPageId === page.id;
+                  const isDraggingThis = dragPageId === page.id;
+                  const isDropTarget = dragOverPageId === page.id && dragPageId !== page.id;
                   return (
                     <div
                       key={page.id}
+                      draggable={!isEditingThis}
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        setDragPageId(page.id);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        setDragOverPageId(page.id);
+                      }}
+                      onDragLeave={() => setDragOverPageId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (!dragPageId || dragPageId === page.id || !pages) return;
+                        const ids = pages.map(p => p.id);
+                        const fromIdx = ids.indexOf(dragPageId);
+                        const toIdx = ids.indexOf(page.id);
+                        const reordered = [...ids];
+                        reordered.splice(fromIdx, 1);
+                        reordered.splice(toIdx, 0, dragPageId);
+                        onReorderPages?.(reordered);
+                        setDragPageId(null);
+                        setDragOverPageId(null);
+                      }}
+                      onDragEnd={() => { setDragPageId(null); setDragOverPageId(null); }}
                       className="flex items-center gap-2.5 px-3 py-2 transition-colors hover:bg-muted/50"
                       style={{
-                        backgroundColor: isActive ? "rgba(255,255,255,0.06)" : "transparent",
+                        backgroundColor: isDropTarget ? "rgba(59,130,246,0.15)" : isActive ? "rgba(255,255,255,0.06)" : "transparent",
                         color: isActive ? "var(--foreground)" : "var(--muted-foreground)",
+                        opacity: isDraggingThis ? 0.4 : 1,
+                        borderTop: isDropTarget ? "2px solid #3b82f6" : "2px solid transparent",
+                        cursor: isEditingThis ? "text" : "grab",
                       }}
                     >
                       <span className="text-[10px] text-muted-foreground/50 w-3 flex-shrink-0 text-right">{idx + 1}</span>
