@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { X, Check, ChevronDown, Plus, User, Users, Sparkles, Send, MessageSquare, Presentation, Link2, Upload, ArrowLeft, Trash2, TriangleAlert } from "lucide-react";
 import {
   ReactFlowProvider,
@@ -125,6 +125,18 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [dragTabId, setDragTabId] = useState<string | null>(null);
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+
+  // Read persisted viewport from localStorage on mount/canvas switch
+  const localViewport = useMemo(() => {
+    if (typeof window === "undefined") return canvas.viewport;
+    try {
+      const stored = localStorage.getItem(`atlas:vp:${canvas.id}`);
+      return stored ? JSON.parse(stored) : canvas.viewport;
+    } catch {
+      return canvas.viewport;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvas.id]);
   const activePageRef = useRef(activePageId);
   activePageRef.current = activePageId;
   const pagesRef = useRef(pages);
@@ -2676,8 +2688,11 @@ presentationMode={presentationMode}
       nodes: selectedNodes,
     });
   }}
-  initialViewport={canvas.viewport}
-  onViewportChange={(vp) => onCanvasChange({ ...canvas, viewport: vp })}
+  initialViewport={localViewport}
+  onViewportChange={(vp) => {
+    try { localStorage.setItem(`atlas:vp:${canvas.id}`, JSON.stringify(vp)); } catch {}
+    onCanvasChange({ ...canvas, viewport: vp });
+  }}
   />
 
 <CanvasSideToolbar
