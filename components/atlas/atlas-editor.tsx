@@ -123,6 +123,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return ps[0].id;
   });
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
+  const [dragTabId, setDragTabId] = useState<string | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
   const activePageRef = useRef(activePageId);
   activePageRef.current = activePageId;
   const pagesRef = useRef(pages);
@@ -3437,11 +3439,35 @@ presentationMode={presentationMode}
           {pages.map((page, idx) => {
             const isActive = page.id === activePageId;
             const isRenaming = renamingPageId === page.id;
+            const isDraggingThis = dragTabId === page.id;
+            const isDropTarget = dragOverTabId === page.id && dragTabId !== page.id;
             return (
               <div
                 key={page.id}
+                draggable={!isRenaming}
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragTabId(page.id); }}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverTabId(page.id); }}
+                onDragLeave={() => setDragOverTabId(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (!dragTabId || dragTabId === page.id) return;
+                  const ids = pages.map(p => p.id);
+                  const from = ids.indexOf(dragTabId);
+                  const to = ids.indexOf(page.id);
+                  const reordered = [...ids];
+                  reordered.splice(from, 1);
+                  reordered.splice(to, 0, dragTabId);
+                  handleReorderPages(reordered);
+                  setDragTabId(null);
+                  setDragOverTabId(null);
+                }}
+                onDragEnd={() => { setDragTabId(null); setDragOverTabId(null); }}
                 className="flex items-center group flex-shrink-0"
-                style={{ position: "relative" }}
+                style={{
+                  position: "relative",
+                  opacity: isDraggingThis ? 0.4 : 1,
+                  borderLeft: isDropTarget ? "2px solid #3a82f6" : "2px solid transparent",
+                }}
               >
                 {isRenaming ? (
                   <input
@@ -3468,6 +3494,7 @@ presentationMode={presentationMode}
                       backgroundColor: isActive ? "var(--app-card-elevated)" : "transparent",
                       height: 35,
                       fontFamily: "system-ui, Inter, sans-serif",
+                      cursor: "grab",
                     }}
                   >
                     {idx + 1 <= 9 && (
