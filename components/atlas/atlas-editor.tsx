@@ -126,17 +126,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [dragTabId, setDragTabId] = useState<string | null>(null);
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
-  // Read persisted viewport from localStorage on mount/canvas switch
+  // Read persisted viewport from localStorage on mount/canvas+page switch
   const localViewport = useMemo(() => {
     if (typeof window === "undefined") return canvas.viewport;
     try {
-      const stored = localStorage.getItem(`atlas:vp:${canvas.id}`);
+      const stored = localStorage.getItem(`atlas:vp:${canvas.id}:${activePageId}`);
       return stored ? JSON.parse(stored) : canvas.viewport;
     } catch {
       return canvas.viewport;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvas.id]);
+  }, [canvas.id, activePageId]);
   const activePageRef = useRef(activePageId);
   activePageRef.current = activePageId;
   const pagesRef = useRef(pages);
@@ -2608,7 +2608,7 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
         <AtlasCanvas
-          key={canvas.id}
+          key={`${canvas.id}:${activePageId}`}
           nodes={nodes}
           edges={edges}
           searchQuery={searchQuery}
@@ -2690,7 +2690,7 @@ presentationMode={presentationMode}
   }}
   initialViewport={localViewport}
   onViewportChange={(vp) => {
-    try { localStorage.setItem(`atlas:vp:${canvas.id}`, JSON.stringify(vp)); } catch {}
+    try { localStorage.setItem(`atlas:vp:${canvas.id}:${activePageId}`, JSON.stringify(vp)); } catch {}
     onCanvasChange({ ...canvas, viewport: vp });
   }}
   />
