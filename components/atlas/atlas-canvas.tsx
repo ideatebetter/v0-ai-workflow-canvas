@@ -100,7 +100,7 @@ interface AtlasCanvasProps {
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddTextNode?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
-  onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope?: "org" | "project", projectId?: string, projectName?: string) => void;
+  onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope?: "org" | "project" | "team", projectId?: string, projectName?: string, memberId?: string, memberName?: string) => void;
   onOpenAIGenerate?: (type: "mockup" | "collateral", sourceNodeId?: string) => void;
   onCreateMoodboard?: (nodeIds: string[]) => void;
   onMoodboardClick?: (nodeId: string) => void;
@@ -405,7 +405,7 @@ const reactFlowInstance = useReactFlow();
     setHandleMenu(null);
   }, [handleMenu, onAddSageNode]);
 
-  const handleMenuAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", _scope?: "org" | "project", _projectId?: string, _projectName?: string) => {
+  const handleMenuAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", _scope?: "org" | "project" | "team", _projectId?: string, _projectName?: string) => {
     if (handleMenu && onAddOperationalNode) {
       onAddOperationalNode(opType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
     }

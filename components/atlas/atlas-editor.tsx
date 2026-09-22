@@ -1103,10 +1103,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   );
 
   const handleAddOperationalNode = useCallback(
-    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" = "org", projectId?: string, projectName?: string) => {
+    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string, scope: "org" | "project" | "team" = "org", projectId?: string, projectName?: string, memberId?: string, memberName?: string) => {
       const nodeId = `op-${Date.now()}`;
       const nodePosition = position ?? getNextPosition(nodes);
-      const scopePrefix = scope === "project" && projectName ? `${projectName} · ` : "";
+      const scopePrefix = scope === "project" && projectName ? `${projectName} · ` : scope === "team" && memberName ? `${memberName} · ` : "";
 
       // ── team members matching time-tracking-page.tsx ──────────────────────
       const STUDIO_TEAM = [
@@ -1131,7 +1131,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       let newNode: AtlasNode;
 
       if (opType === "capacity") {
-        const members = proj
+        const members = scope === "team" && memberId
+          ? STUDIO_TEAM.filter(m => m.id === memberId)
+          : proj
           ? STUDIO_TEAM.filter(m => proj.memberIds.includes(m.id))
           : STUDIO_TEAM;
 
@@ -1169,6 +1171,56 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               overloadRisk:       utilMap[m.id]?.risk ?? "clear",
             })),
             lastUpdated: "just now",
+          },
+        };
+      } else if (opType === "financial" && scope === "team" && memberId) {
+        // Per-member bill/cost rates matching their seniority
+        const MEMBER_RATES: Record<string, { billRate: number; costRate: number; role: string; initials: string; name: string; billH: number; availH: number }> = {
+          m1: { name: "Alex Rivera",  initials: "AR", role: "Creative Director", billRate: 225, costRate: 140, billH: 36, availH: 40 },
+          m2: { name: "Jordan Kim",   initials: "JK", role: "Senior Designer",   billRate: 185, costRate: 115, billH: 34, availH: 40 },
+          m3: { name: "Sam Torres",   initials: "ST", role: "Motion Designer",   billRate: 175, costRate: 105, billH: 34, availH: 40 },
+          m4: { name: "Casey Morgan", initials: "CM", role: "Strategist",        billRate: 195, costRate: 120, billH: 25, availH: 40 },
+          m5: { name: "Riley Chen",   initials: "RC", role: "Designer",          billRate: 150, costRate: 90,  billH: 18, availH: 40 },
+        };
+        const mr = MEMBER_RATES[memberId];
+        const billH = mr?.billH ?? 30;
+        const availH = mr?.availH ?? 40;
+        const rev = billH * (mr?.billRate ?? 175);
+        const cost = billH * (mr?.costRate ?? 105);
+        const margin = Math.round(((rev - cost) / rev) * 100);
+        newNode = {
+          id: nodeId,
+          type: "financial",
+          position: nodePosition,
+          selected: true,
+          data: {
+            label: `${scopePrefix}Financial Performance`,
+            scope: "team",
+            memberId,
+            memberName: memberName ?? mr?.name,
+            billingType: "hourly",
+            currency: "USD",
+            viewRole: "owner",
+            status: "healthy",
+            lastUpdated: "just now",
+            revenue: rev,
+            costToDate: cost,
+            grossMarginPct: margin,
+            projectedMarginPct: Math.max(margin - 2, 10),
+            hoursLogged: billH,
+            hoursEstimated: availH,
+            effectiveBillRate: mr?.billRate ?? 175,
+            effectiveCostRate: mr?.costRate ?? 105,
+            rateEfficiencyRatio: Math.round(((mr?.billRate ?? 175) / (mr?.costRate ?? 105)) * 100) / 100,
+            teamBreakdown: [{ name: mr?.name ?? memberName ?? "", initials: mr?.initials ?? "?", role: mr?.role ?? "", hoursLogged: billH, billRate: mr?.billRate ?? 175, costRate: mr?.costRate ?? 105 }],
+            scopeVariance: 0,
+            staffingVariance: 0,
+            totalVariance: 0,
+            projectMargin: margin,
+            budgetConsumed: Math.round((billH / availH) * 100),
+            revenueRealized: Math.round((billH / availH) * 92),
+            blendedRateEfficiency: 94,
+            utilizationAdjustedMargin: Math.round(margin * 0.87),
           },
         };
       } else if (opType === "financial") {
@@ -2456,9 +2508,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddSageNode, closeDoubleClickMenu]);
 
-  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", scope: "org" | "project" = "org", projectId?: string, projectName?: string) => {
+  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", scope: "org" | "project" | "team" = "org", projectId?: string, projectName?: string, memberId?: string, memberName?: string) => {
     if (doubleClickPosition) {
-      handleAddOperationalNode(opType, doubleClickPosition, undefined, scope, projectId, projectName);
+      handleAddOperationalNode(opType, doubleClickPosition, undefined, scope, projectId, projectName, memberId, memberName);
     }
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddOperationalNode, closeDoubleClickMenu]);
@@ -2699,7 +2751,7 @@ presentationMode={presentationMode}
         onAddStatusPill={handleAddStatusPill}
         onAddTextNode={() => handleAddTextNode()}
   onAddSageNode={handleAddSageNode}
-  onAddOperationalNode={(opType, scope, projectId, projectName) => handleAddOperationalNode(opType, undefined, undefined, scope, projectId, projectName)}
+  onAddOperationalNode={(opType, scope, projectId, projectName, memberId, memberName) => handleAddOperationalNode(opType, undefined, undefined, scope, projectId, projectName, memberId, memberName)}
   onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
   onOpenAIGenerate={(type) => {
     if (type === "mockup") {

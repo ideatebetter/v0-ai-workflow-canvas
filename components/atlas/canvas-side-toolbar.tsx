@@ -9,7 +9,7 @@ interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
   onAddTextNode: () => void;
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
-  onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", scope: "org" | "project", projectId?: string, projectName?: string) => void;
+  onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", scope: "org" | "project" | "team", projectId?: string, projectName?: string, memberId?: string, memberName?: string) => void;
   onUploadFile: (files: FileList) => void;
   onOpenAIGenerate: (type: "mockup" | "collateral") => void;
   onAddLink?: (url: string) => void;
