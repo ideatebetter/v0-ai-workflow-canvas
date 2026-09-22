@@ -505,7 +505,9 @@ export interface FinancialNodeData {
   viewRole: "owner" | "manager";
   status: "healthy" | "at-risk" | "underperforming";
   lastUpdated: string;
-  scope?: "org" | "project";
+  scope?: "org" | "project" | "team";
+  memberId?: string;
+  memberName?: string;
 
   // Project Margin
   revenue: number;

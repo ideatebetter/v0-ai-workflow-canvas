@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen, Upload, Link2, Search, FileText, LayoutGrid as CanvasIcon } from "lucide-react";
+import { AlignLeft, ChevronRight, ChevronLeft, TrendingUp, Sparkles, Plus, ArrowRight, LayoutGrid, FolderOpen, Upload, Link2, Search, FileText, LayoutGrid as CanvasIcon, User } from "lucide-react";
 import type { Canvas } from "@/lib/atlas-types";
 import { useDocumentsStore } from "@/lib/documents/store";
 
@@ -12,7 +12,7 @@ interface AddNodeMenuProps {
   onAddStatusPill: () => void;
   onAddTextNode: () => void;
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
-  onAddOperationalNode: (opType: OpType, scope: "org" | "project", projectId?: string, projectName?: string) => void;
+  onAddOperationalNode: (opType: OpType, scope: "org" | "project" | "team", projectId?: string, projectName?: string, memberId?: string, memberName?: string) => void;
   onUploadFile: (files: FileList) => void;
   onOpenAIGenerate: (type: "mockup" | "collateral", sourceNodeId?: string) => void;
   onAddLink?: (url: string) => void;
@@ -26,11 +26,20 @@ interface AddNodeMenuProps {
 }
 
 const PROJECTS = [
-  { id: "nike",      name: "Nike Running",       color: "#3a6bb5" },
-  { id: "google",    name: "Google Brand Sprint", color: "#2e8b57" },
-  { id: "deloitte",  name: "Deloitte Digital",   color: "#c27030" },
-  { id: "levis",     name: "Levi's Identity",     color: "#8b3a8b" },
-  { id: "patagonia", name: "Patagonia Social",    color: "#2e6b4f" },
+  { id: "nike",         name: "Nike Running",        color: "#3a6bb5" },
+  { id: "google",       name: "Google Brand Sprint",  color: "#2e8b57" },
+  { id: "deloitte",     name: "Deloitte Digital",    color: "#c27030" },
+  { id: "levis",        name: "Levi's Identity",      color: "#8b3a8b" },
+  { id: "patagonia",    name: "Patagonia Social",     color: "#2e6b4f" },
+  { id: "secondnature", name: "2nd Nature Rebrand",   color: "#3d7a5c" },
+];
+
+const TEAM_MEMBERS = [
+  { id: "m1", name: "Alex Rivera",  initials: "AR", role: "Creative Director" },
+  { id: "m2", name: "Jordan Kim",   initials: "JK", role: "Senior Designer" },
+  { id: "m3", name: "Sam Torres",   initials: "ST", role: "Motion Designer" },
+  { id: "m4", name: "Casey Morgan", initials: "CM", role: "Strategist" },
+  { id: "m5", name: "Riley Chen",   initials: "RC", role: "Designer" },
 ];
 
 const OP_NODES: { key: OpType; label: string }[] = [
@@ -39,6 +48,11 @@ const OP_NODES: { key: OpType; label: string }[] = [
   { key: "projectHealth", label: "Project Health" },
   { key: "pipeline",      label: "Pipeline" },
   { key: "teamHealth",    label: "Team Health" },
+];
+
+const TEAM_OP_NODES: { key: OpType; label: string }[] = [
+  { key: "capacity",  label: "Capacity" },
+  { key: "financial", label: "Financial" },
 ];
 
 export function AddNodeMenu({
@@ -132,14 +146,16 @@ export function AddNodeMenu({
   }, [canvases, fileSearchQuery, docTree]);
 
   // Ops multi-level state
-  const [opsLevel, setOpsLevel] = useState<"root" | "org" | "project-list" | "project-nodes">("root");
+  const [opsLevel, setOpsLevel] = useState<"root" | "org" | "project-list" | "project-nodes" | "team-list" | "team-nodes">("root");
   const [selectedProject, setSelectedProject] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string; initials: string; role: string } | null>(null);
 
   // Reset ops level when ops submenu closes
   useEffect(() => {
     if (activeSubmenu !== "ops") {
       setOpsLevel("root");
       setSelectedProject(null);
+      setSelectedMember(null);
     }
   }, [activeSubmenu]);
 
@@ -498,6 +514,17 @@ export function AddNodeMenu({
                     </span>
                     <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpsLevel("team-list")}
+                    style={{ ...menuItemStyle, justifyContent: "space-between" }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <User className="w-3.5 h-3.5" strokeWidth={2} style={{ color: "#8b5cf6" }} />
+                      Team
+                    </span>
+                    <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
+                  </button>
                 </>
               )}
 
@@ -553,6 +580,58 @@ export function AddNodeMenu({
                       key={key}
                       type="button"
                       onClick={() => { onAddOperationalNode(key, "project", selectedProject.id, selectedProject.name); onClose(); }}
+                      style={menuItemStyle}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Level 2c: team member list */}
+              {opsLevel === "team-list" && (
+                <>
+                  <button type="button" onClick={() => setOpsLevel("root")} style={backButtonStyle}>
+                    <ChevronLeft className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
+                    Select member
+                  </button>
+                  {TEAM_MEMBERS.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => { setSelectedMember(m); setOpsLevel("team-nodes"); }}
+                      style={{ ...menuItemStyle, justifyContent: "space-between" }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: "50%", backgroundColor: "var(--app-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 600, color: "var(--app-text-muted)", flexShrink: 0 }}>
+                          {m.initials}
+                        </div>
+                        <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}>{m.name}</span>
+                          <span style={{ fontSize: 10, color: "var(--app-text-faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.role}</span>
+                        </span>
+                      </span>
+                      <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)", flexShrink: 0 }} />
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Level 3: node types for selected member (capacity + financial only) */}
+              {opsLevel === "team-nodes" && selectedMember && (
+                <>
+                  <button type="button" onClick={() => setOpsLevel("team-list")} style={backButtonStyle}>
+                    <ChevronLeft className="w-3 h-3" strokeWidth={1.5} style={{ color: "var(--app-text-muted)" }} />
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", backgroundColor: "var(--app-border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 600, color: "var(--app-text-muted)", flexShrink: 0 }}>
+                      {selectedMember.initials}
+                    </div>
+                    {selectedMember.name}
+                  </button>
+                  {TEAM_OP_NODES.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => { onAddOperationalNode(key, "team", undefined, undefined, selectedMember.id, selectedMember.name); onClose(); }}
                       style={menuItemStyle}
                     >
                       {label}
